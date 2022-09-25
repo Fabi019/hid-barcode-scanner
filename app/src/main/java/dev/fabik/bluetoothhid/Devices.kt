@@ -8,8 +8,11 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -96,7 +99,7 @@ fun DeviceList(bluetoothController: BluetoothController) {
         if (isRefreshing) {
             devices = bluetoothController.pairedDevices()
             bluetoothController.scanDevices()
-            delay(1000)
+            delay(500)
             isRefreshing = false
         }
     }
@@ -121,7 +124,7 @@ fun DeviceList(bluetoothController: BluetoothController) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                Text("Scanned devices")
+                Text("Scanned devices", color = MaterialTheme.colorScheme.primary)
             }
 
             if (isScanning) {
@@ -131,10 +134,7 @@ fun DeviceList(bluetoothController: BluetoothController) {
             } else {
                 if (foundDevices.isEmpty()) {
                     item {
-                        Text(
-                            "(Swipe from top to refresh)",
-                            color = MaterialTheme.colorScheme.secondary
-                        )
+                        Text("(Swipe from top to refresh)")
                     }
                 } else {
                     items(foundDevices) { d ->
@@ -148,15 +148,13 @@ fun DeviceList(bluetoothController: BluetoothController) {
 
 
             item {
-                Text("Paired devices")
+                Spacer(Modifier.height(8.dp))
+                Text("Paired devices", color = MaterialTheme.colorScheme.primary)
             }
 
             if (devices.isEmpty()) {
                 item {
-                    Text(
-                        "(No paired devices found)",
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Text("(No paired devices found)")
                 }
             } else {
                 items(devices.toList()) {
@@ -176,9 +174,17 @@ fun Device(name: String, address: String, onClick: () -> Unit) {
     Card(
         onClick, modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(4.dp)) {
-            Text(name)
-            Text(address)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                Modifier
+                    .padding(4.dp)
+                    .weight(1f)) {
+                Text(name)
+                Text(address)
+            }
+            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.PlayArrow, "Connect")
+            }
         }
     }
 }
