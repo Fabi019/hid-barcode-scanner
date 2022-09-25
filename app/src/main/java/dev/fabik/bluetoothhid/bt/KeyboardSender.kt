@@ -34,11 +34,9 @@ open class KeyboardSender(
     }
 
     fun sendKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
-        val byteKey = KeyboardReport.SCANCODE_TABLE[keyCode] ?: event?.scanCode
+        val byteKey = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
 
-        byteKey?.let {
-            keyboardReport.key1 = it.toByte()
-        }
+        keyboardReport.key1 = byteKey.toByte()
 
         event?.let {
             setModifiers(event)

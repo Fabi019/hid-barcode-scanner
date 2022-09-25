@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
@@ -49,7 +48,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     RequestPermissions {
                         val navHostController = rememberNavController()
-                        val context = LocalContext.current
 
                         NavGraph(navHostController, bluetoothController)
 
@@ -60,10 +58,20 @@ class MainActivity : ComponentActivity() {
 
                             bluetoothController.register(context, listener = { hid, dev ->
                                 keyboardSender = if (hid != null && dev != null) {
-                                    runOnUiThread { navHostController.navigate(Routes.Main) }
+                                    runOnUiThread {
+                                        navHostController.popBackStack()
+                                        navHostController.navigate(Routes.Main) {
+                                            launchSingleTop = true
+                                        }
+                                    }
                                     KeyboardSender(hid, dev)
                                 } else {
-                                    runOnUiThread { navHostController.navigate(Routes.Devices) }
+                                    runOnUiThread {
+                                        navHostController.popBackStack()
+                                        navHostController.navigate(Routes.Devices) {
+                                            launchSingleTop = true
+                                        }
+                                    }
                                     null
                                 }
                             })
@@ -75,7 +83,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        return keyboardSender?.sendKeyEvent(keyCode, event) ?: super.onKeyUp(keyCode, event)
+        return keyboardSender?.sendKeyEvent(keyCode, event) ?: false
+                || super.onKeyUp(keyCode, event)
     }
 
     override fun onDestroy() {
