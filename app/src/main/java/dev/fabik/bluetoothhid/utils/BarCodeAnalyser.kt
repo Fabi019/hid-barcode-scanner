@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @SuppressLint("UnsafeOptInUsageError")
 class BarCodeAnalyser(
+    private val onNothing: () -> Unit,
     private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
     companion object {
@@ -39,6 +40,7 @@ class BarCodeAnalyser(
                         if (barcodes.isNotEmpty()) {
                             onBarcodeDetected(barcodes, Size(image.width, image.height))
                         } else {
+                            onNothing()
                             Log.d(TAG, "analyze: No barcode Scanned")
                         }
                     }

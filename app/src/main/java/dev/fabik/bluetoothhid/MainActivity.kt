@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothDisabled
@@ -23,7 +22,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
@@ -33,7 +31,6 @@ import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
-import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.RequestPermissions
 import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
 import dev.fabik.bluetoothhid.utils.dynamicTheme
@@ -137,13 +134,6 @@ fun MainScreen(
             RequiresCameraPermission {
                 CameraPreview()
             }
-            Text(
-                "Connected!",
-                color = MaterialTheme.colorScheme.primary,
-                style = Typography.headlineSmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
