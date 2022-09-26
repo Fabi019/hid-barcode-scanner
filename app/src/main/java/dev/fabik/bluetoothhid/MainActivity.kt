@@ -28,12 +28,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.KeyboardSender
+import dev.fabik.bluetoothhid.ui.CameraPreview
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.RequestPermissions
+import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
 import dev.fabik.bluetoothhid.utils.dynamicTheme
 
 class MainActivity : ComponentActivity() {
@@ -132,6 +134,9 @@ fun MainScreen(
         })
     }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
+            RequiresCameraPermission {
+                CameraPreview()
+            }
             Text(
                 "Connected!",
                 color = MaterialTheme.colorScheme.primary,

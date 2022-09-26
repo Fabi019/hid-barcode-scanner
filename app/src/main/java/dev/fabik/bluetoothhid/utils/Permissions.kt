@@ -5,12 +5,15 @@ import android.location.LocationManager
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -70,10 +73,34 @@ fun RequestPermissions(
             Column {
                 Text("Not all required permissions have been granted.")
                 Text("The app can't function correctly without them.")
+                Button(onClick = {
+                    bluetoothPermission.launchMultiplePermissionRequest()
+                }) {
+                    Text("Request again")
+                }
             }
         }
         SideEffect {
             bluetoothPermission.launchMultiplePermissionRequest()
         }
     }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun RequiresCameraPermission(
+    content: @Composable () -> Unit
+) {
+    val cameraPermission = rememberPermissionState(android.Manifest.permission.CAMERA)
+
+    if (cameraPermission.status.isGranted) {
+        content()
+    } else {
+        Button(onClick = {
+            cameraPermission.launchPermissionRequest()
+        }) {
+            Text("Camera Permission")
+        }
+    }
+
 }
