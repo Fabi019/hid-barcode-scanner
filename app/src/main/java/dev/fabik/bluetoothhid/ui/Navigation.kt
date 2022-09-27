@@ -18,7 +18,8 @@ object Routes {
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    bluetoothController: BluetoothController
+    bluetoothController: BluetoothController,
+    onSendText: (String) -> Unit
 ) {
     NavHost(navController, startDestination = Routes.Devices) {
         composable(Routes.Devices) {
@@ -26,7 +27,7 @@ fun NavGraph(
         }
 
         composable(Routes.Main) {
-            MainScreen(navController, bluetoothController)
+            MainScreen(navController, bluetoothController, onSendText)
         }
 
         composable(Routes.Settings) {

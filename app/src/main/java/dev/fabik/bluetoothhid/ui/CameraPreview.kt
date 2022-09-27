@@ -9,6 +9,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
@@ -32,13 +33,17 @@ var transX = 0f
 var transY = 0f
 var markerRect = Rect(0f, 0f, 0f, 0f);
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CameraPreview() {
+fun CameraPreview(
+    onBarCodeReady: (String) -> Unit
+) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
+    var lastBarCode by remember { mutableStateOf<Barcode?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
     AndroidView(
@@ -89,14 +94,17 @@ fun CameraPreview() {
 
                     filtered.firstOrNull().let { barcode ->
                         barcode?.rawValue?.let { barcodeValue ->
-                            if ((currentBarCode?.rawValue ?: "") != barcodeValue) {
+                            if (lastBarCode == null || lastBarCode!!.rawValue != barcodeValue) {
                                 Toast.makeText(context, barcodeValue, Toast.LENGTH_SHORT).show()
+                                onBarCodeReady(barcodeValue)
+                                lastBarCode = barcode
                             }
                         }
                         currentBarCode = barcode
                     }
                 }
                 val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
+                    .setTargetResolution(android.util.Size(1280, 720))
                     .setOutputImageRotationEnabled(true)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().also {
                         it.setAnalyzer(executor, barcodeAnalyser)
@@ -158,14 +166,13 @@ fun CameraPreview() {
                         points.map { p -> p.toPointF() }.forEach { p ->
                             drawCircle(
                                 color = Color.Red,
-                                radius = 4f,
+                                radius = 8f,
                                 center = Offset(p.x, p.y)
                             )
                         }
                     }
                 }
             }
-
         }
     }
 }

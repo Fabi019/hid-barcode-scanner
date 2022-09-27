@@ -9,19 +9,20 @@ import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
@@ -31,6 +32,7 @@ import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
+import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.RequestPermissions
 import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
 import dev.fabik.bluetoothhid.utils.dynamicTheme
@@ -53,7 +55,9 @@ class MainActivity : ComponentActivity() {
                     RequestPermissions {
                         val navHostController = rememberNavController()
 
-                        NavGraph(navHostController, bluetoothController)
+                        NavGraph(navHostController, bluetoothController) {
+                            keyboardSender?.sendString(it)
+                        }
 
                         LaunchedEffect(bluetoothController) {
                             if (!bluetoothController.bluetoothEnabled()) {
@@ -98,41 +102,83 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun MainScreen(
     navHostController: NavHostController,
     bluetoothController: BluetoothController,
-    context: Context = LocalContext.current
+    onSendText: (String) -> Unit,
 ) {
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("BluetoothHID") }, actions = {
-            IconButton(onClick = {
-                val inputMethodManager =
-                    context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                inputMethodManager.toggleSoftInput(
-                    InputMethodManager.SHOW_FORCED, 0
-                )
-            }) {
-                Icon(
-                    imageVector = Icons.Default.Keyboard,
-                    contentDescription = "Toggle Keyboard"
-                )
+    val context = LocalContext.current
+
+    var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("BluetoothHID") }, actions = {
+                IconButton(onClick = {
+                    val inputMethodManager =
+                        context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputMethodManager.toggleSoftInput(
+                        InputMethodManager.SHOW_FORCED, 0
+                    )
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Keyboard,
+                        contentDescription = "Toggle Keyboard"
+                    )
+                }
+                IconButton(onClick = {
+                    bluetoothController.disconnect()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.BluetoothDisabled,
+                        contentDescription = "Disconnect"
+                    )
+                }
+                Dropdown(navHostController)
+            })
+        },
+        floatingActionButtonPosition = FabPosition.Center,
+        floatingActionButton = {
+            currentBarcode?.let {
+                ExtendedFloatingActionButton(
+                    onClick = { onSendText(it) }
+                ) {
+                    Icon(Icons.Filled.Send, "Send")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Send to Device")
+                }
             }
-            IconButton(onClick = {
-                bluetoothController.disconnect()
-            }) {
-                Icon(
-                    imageVector = Icons.Default.BluetoothDisabled,
-                    contentDescription = "Disconnect"
-                )
-            }
-            Dropdown(navHostController)
-        })
-    }) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
             RequiresCameraPermission {
-                CameraPreview()
+                CameraPreview {
+                    currentBarcode = it
+                }
+
+                currentBarcode?.let {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.TopCenter)
+                            .padding(4.dp, 16.dp)
+                    ) {
+                        Text(
+                            "Detected Barcode",
+                            style = Typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(it, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    }
+                }
             }
         }
     }

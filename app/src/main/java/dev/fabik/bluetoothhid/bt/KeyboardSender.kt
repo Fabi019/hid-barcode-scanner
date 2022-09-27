@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.util.Log
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
 
 @SuppressLint("MissingPermission")
@@ -16,6 +17,9 @@ open class KeyboardSender(
     }
 
     private val keyboardReport = KeyboardReport()
+
+    private val keyCharacterMap: KeyCharacterMap =
+        KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 
     protected open fun sendReport() {
         if (!hidDevice.sendReport(host, KeyboardReport.ID, keyboardReport.bytes)) {
@@ -33,10 +37,18 @@ open class KeyboardSender(
         }
     }
 
-    fun sendKeyEvent(keyCode: Int, event: KeyEvent?): Boolean {
-        val byteKey = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
+    fun sendString(string: String) {
+        keyCharacterMap.getEvents(string.toCharArray()).forEach {
+            sendKeyEvent(it.keyCode, it, false)
+        }
+        keyboardReport.reset()
+        sendReport()
+    }
 
-        keyboardReport.key1 = byteKey.toByte()
+    fun sendKeyEvent(keyCode: Int, event: KeyEvent?, singleChar: Boolean = true): Boolean {
+        val key = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
+
+        keyboardReport.key1 = key.toByte()
 
         event?.let {
             setModifiers(event)
@@ -44,9 +56,10 @@ open class KeyboardSender(
 
         sendReport()
 
-        keyboardReport.reset()
-
-        sendReport()
+        if (singleChar) {
+            keyboardReport.reset()
+            sendReport()
+        }
 
         return true
     }

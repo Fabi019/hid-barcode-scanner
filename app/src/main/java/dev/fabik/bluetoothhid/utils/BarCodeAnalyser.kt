@@ -5,7 +5,6 @@ import android.util.Log
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
@@ -16,8 +15,9 @@ class BarCodeAnalyser(
     private val onNothing: () -> Unit,
     private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
+
     companion object {
-        const val TAG = "BarCodeAnalyser"
+        const val TAG = "BarcodeAnalyser"
     }
 
     private var lastAnalyzedTimeStamp = 0L
@@ -28,9 +28,6 @@ class BarCodeAnalyser(
         val currentTimestamp = System.currentTimeMillis()
         if (isBusy.compareAndSet(false, true)) {
             image.image?.let { imageToAnalyze ->
-                val options = BarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
-                    .build()
                 val barcodeScanner = BarcodeScanning.getClient()
                 val imageToProcess =
                     InputImage.fromMediaImage(imageToAnalyze, image.imageInfo.rotationDegrees)
@@ -41,11 +38,11 @@ class BarCodeAnalyser(
                             onBarcodeDetected(barcodes, Size(image.width, image.height))
                         } else {
                             onNothing()
-                            Log.d(TAG, "analyze: No barcode Scanned")
+                            Log.d(TAG, "No barcode Scanned")
                         }
                     }
                     .addOnFailureListener { exception ->
-                        Log.d(TAG, "BarcodeAnalyser: Something went wrong $exception")
+                        Log.d(TAG, "Something went wrong $exception")
                     }
                     .addOnCompleteListener {
                         image.close()
