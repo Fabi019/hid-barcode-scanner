@@ -46,10 +46,8 @@ class BarCodeAnalyser(
 
     override fun analyze(image: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
-        if ((currentTimestamp - lastAnalyzedTimeStamp) > scanDelay && isBusy.compareAndSet(
-                false,
-                true
-            )
+        if ((currentTimestamp - lastAnalyzedTimeStamp) > scanDelay
+            && isBusy.compareAndSet(false, true)
         ) {
             image.image?.let { imageToAnalyze ->
                 val barcodeScanner = BarcodeScanning.getClient()

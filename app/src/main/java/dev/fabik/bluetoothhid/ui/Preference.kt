@@ -32,7 +32,6 @@ fun ButtonPreference(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(55.dp)
     ) {
         Row(
             Modifier

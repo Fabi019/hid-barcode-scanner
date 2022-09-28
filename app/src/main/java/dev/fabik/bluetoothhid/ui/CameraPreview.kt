@@ -1,15 +1,17 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.annotation.SuppressLint
+import android.graphics.ImageFormat
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.params.StreamConfigurationMap
+import android.util.Log
 import android.widget.Toast
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
+import androidx.camera.camera2.interop.Camera2CameraInfo
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
@@ -18,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -27,13 +28,15 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.toPointF
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
+import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 
 var scale = 1f
 var transX = 0f
 var transY = 0f
 var markerRect = Rect(0f, 0f, 0f, 0f);
 
-@OptIn(ExperimentalMaterial3Api::class)
+@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 @Composable
 fun CameraPreview(
     onBarCodeReady: (String) -> Unit
@@ -45,6 +48,8 @@ fun CameraPreview(
 
     var lastBarCode by remember { mutableStateOf<Barcode?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
+
+    val cameraResolution by context.getPreferenceState(PrefKeys.SCAN_RESOLUTION)
 
     AndroidView(
         factory = { ctx ->
@@ -104,7 +109,13 @@ fun CameraPreview(
                     }
                 }
                 val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
-                    .setTargetResolution(android.util.Size(1280, 720))
+                    .setTargetResolution(
+                        when (cameraResolution) {
+                            "FHD" -> android.util.Size(1080, 1440)
+                            "HD" -> android.util.Size(720, 960)
+                            else -> android.util.Size(480, 640)
+                        }
+                    )
                     .setOutputImageRotationEnabled(true)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().also {
                         it.setAnalyzer(executor, barcodeAnalyser)
@@ -161,18 +172,30 @@ fun CameraPreview(
             val corners = it.cornerPoints
 
             translate(-transX, -transY) {
-                scale(scale, pivot = Offset.Zero) {
-                    corners?.let { points ->
-                        points.map { p -> p.toPointF() }.forEach { p ->
-                            drawCircle(
-                                color = Color.Red,
-                                radius = 8f,
-                                center = Offset(p.x, p.y)
-                            )
-                        }
+                corners?.let { points ->
+                    points.map { p -> p.toPointF() }.forEach { p ->
+                        drawCircle(
+                            color = Color.Red,
+                            radius = 8f,
+                            center = Offset(p.x * scale, p.y * scale)
+                        )
                     }
                 }
             }
         }
     }
+}
+
+@SuppressLint("RestrictedApi")
+@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+fun getSupportedSizes(camera: Camera): Array<out android.util.Size>? {
+    val cInfo = camera.cameraInfo
+    val camChars = Camera2CameraInfo.extractCameraCharacteristics(cInfo)
+    val configs: StreamConfigurationMap? =
+        camChars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+    if (configs == null) {
+        Log.i("CameraPreview", "get camera out sizes fail, config empty")
+        return arrayOf()
+    }
+    return configs.getOutputSizes(ImageFormat.JPEG)
 }

@@ -95,6 +95,14 @@ fun Settings(
                     preference = PrefKeys.SCAN_FREQUENCY
                 )
 
+                ComboBoxPreference(
+                    title = "Scan Resolution",
+                    desc = "Resolution of the scan image. (Not all are supported on every device)",
+                    icon = Icons.Default.Hd,
+                    values = listOf("SD", "HD", "FHD"),
+                    preference = PrefKeys.SCAN_RESOLUTION
+                )
+
                 SwitchPreference(
                     title = "Auto Send",
                     desc = "Automatically send any detected codes.",
