@@ -1,40 +1,56 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-object SettingKeys {
-    val AUTO_CONNECT = booleanPreferencesKey("auto_connect")
-    val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme")
+object PrefKeys {
+    data class Pref<T>(
+        val key: Preferences.Key<T>,
+        val default: T
+    )
+
+    // Connection
+    val AUTO_CONNECT = Pref(booleanPreferencesKey("auto_connect"), false)
+
+    // Appearance
+    val DYNAMIC_THEME = Pref(booleanPreferencesKey("dynamic_theme"), false)
+
+    // Scanner
+    val SCAN_FREQUENCY = Pref(stringPreferencesKey("scan_freq"), "Normal")
+    val FRONT_CAMERA = Pref(booleanPreferencesKey("front_camera"), false)
+    val DISABLE_WARNINGS = Pref(booleanPreferencesKey("disable_warnings"), false)
+    val RESTRICT_AREA = Pref(booleanPreferencesKey("restrict_area"), true)
+    val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), true)
+    val EXTRA_KEYS = Pref(stringPreferencesKey("auto_send"), "None")
+    val PLAY_SOUND = Pref(booleanPreferencesKey("play_sound"), false)
+    val RAW_VALUE = Pref(booleanPreferencesKey("raw_value"), true)
 }
 
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore("settings")
 
-val Context.autoConnect: Flow<Boolean>
-    get() = dataStore.data.map {
-        it[SettingKeys.AUTO_CONNECT] ?: false
-    }
-
-suspend fun Context.setAutoConnect(value: Boolean) {
+suspend fun <T> Context.setPreference(pref: PrefKeys.Pref<T>, value: T) {
     dataStore.edit {
-        it[SettingKeys.AUTO_CONNECT] = value
+        it[pref.key] = value
     }
 }
 
-val Context.dynamicTheme: Flow<Boolean>
-    get() = dataStore.data.map {
-        it[SettingKeys.DYNAMIC_THEME] ?: false
-    }
-
-suspend fun Context.setDynamicTheme(value: Boolean) {
-    dataStore.edit {
-        it[SettingKeys.DYNAMIC_THEME] = value
+fun <T> Context.getPreference(pref: PrefKeys.Pref<T>, default: T = pref.default): Flow<T> {
+    return dataStore.data.map {
+        it[pref.key] ?: default
     }
 }
 
+@Composable
+fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>, default: T = pref.default): State<T?> {
+    return getPreference(pref, default).collectAsState(null)
+}

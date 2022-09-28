@@ -33,9 +33,10 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.theme.Typography
+import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.RequestPermissions
 import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
-import dev.fabik.bluetoothhid.utils.dynamicTheme
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 
 class MainActivity : ComponentActivity() {
 
@@ -47,8 +48,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val useDynTheme by context.dynamicTheme.collectAsState(false)
-            BluetoothHIDTheme(dynamicColor = useDynTheme) {
+            val useDynTheme by context.getPreferenceState(PrefKeys.DYNAMIC_THEME)
+            BluetoothHIDTheme(dynamicColor = useDynTheme ?: false) {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
