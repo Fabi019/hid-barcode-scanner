@@ -59,7 +59,7 @@ fun CameraPreview(
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
 
-                val barcodeAnalyser = BarCodeAnalyser(onNothing = {
+                val barcodeAnalyser = BarCodeAnalyser(context, onNothing = {
                     currentBarCode = null
                 }) { barcodes, source ->
                     val sw = source.width.toFloat()

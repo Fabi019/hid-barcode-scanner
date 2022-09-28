@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
@@ -8,10 +9,14 @@ import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 @SuppressLint("UnsafeOptInUsageError")
 class BarCodeAnalyser(
+    private val context: Context,
     private val onNothing: () -> Unit,
     private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
@@ -24,9 +29,28 @@ class BarCodeAnalyser(
 
     private var isBusy = AtomicBoolean(false)
 
+    private var scanDelay = 0
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            context.getPreference(PrefKeys.SCAN_FREQUENCY).collect {
+                scanDelay = when (it) {
+                    "Fastest" -> 0
+                    "Fast" -> 100
+                    "Slow" -> 1000
+                    else -> 500
+                }
+            }
+        }
+    }
+
     override fun analyze(image: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
-        if (isBusy.compareAndSet(false, true)) {
+        if ((currentTimestamp - lastAnalyzedTimeStamp) > scanDelay && isBusy.compareAndSet(
+                false,
+                true
+            )
+        ) {
             image.image?.let { imageToAnalyze ->
                 val barcodeScanner = BarcodeScanning.getClient()
                 val imageToProcess =
@@ -38,7 +62,6 @@ class BarCodeAnalyser(
                             onBarcodeDetected(barcodes, Size(image.width, image.height))
                         } else {
                             onNothing()
-                            Log.d(TAG, "No barcode Scanned")
                         }
                     }
                     .addOnFailureListener { exception ->
