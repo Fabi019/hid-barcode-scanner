@@ -1,9 +1,16 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.getPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 @SuppressLint("MissingPermission")
@@ -20,6 +27,16 @@ class BluetoothController(context: Context) {
     private var hostDevice: BluetoothDevice? = null
 
     private var deviceListener: ((BluetoothHidDevice?, BluetoothDevice?) -> Unit)? = null
+
+    private var autoConnectEnabled = false
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            context.getPreference(PrefKeys.AUTO_CONNECT).collect {
+                autoConnectEnabled = it
+            }
+        }
+    }
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
@@ -48,6 +65,20 @@ class BluetoothController(context: Context) {
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
             super.onConnectionStateChanged(device, state)
 
+            (context as Activity).runOnUiThread {
+                Toast.makeText(
+                    context, "$device: ${
+                        when (state) {
+                            BluetoothProfile.STATE_CONNECTING -> "connecting"
+                            BluetoothProfile.STATE_CONNECTED -> "connected"
+                            BluetoothProfile.STATE_DISCONNECTING -> "disconnecting"
+                            BluetoothProfile.STATE_DISCONNECTED -> "disconnected"
+                            else -> "unknown ($state)"
+                        }
+                    }", Toast.LENGTH_SHORT
+                ).show()
+            }
+
             hostDevice = if (state == BluetoothProfile.STATE_CONNECTED) {
                 device
             } else {
@@ -55,6 +86,36 @@ class BluetoothController(context: Context) {
             }
 
             deviceListener?.invoke(hidDevice, hostDevice)
+        }
+
+        override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
+            super.onAppStatusChanged(pluggedDevice, registered)
+
+            if (registered && autoConnectEnabled) {
+                if (pluggedDevice != null) {
+                    (context as Activity).runOnUiThread {
+                        Toast.makeText(context, "AutoConnect: $pluggedDevice", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    hidDevice?.connect(pluggedDevice)
+                } else {
+                    val devices = hidDevice?.getDevicesMatchingConnectionStates(
+                        intArrayOf(
+                            BluetoothProfile.STATE_CONNECTED,
+                            BluetoothProfile.STATE_CONNECTING,
+                            BluetoothProfile.STATE_DISCONNECTED,
+                            BluetoothProfile.STATE_DISCONNECTING
+                        )
+                    )
+
+                    devices?.firstOrNull()?.let {
+                        (context as Activity).runOnUiThread {
+                            Toast.makeText(context, "AutoConnect: $it", Toast.LENGTH_SHORT).show()
+                            hidDevice?.connect(it)
+                        }
+                    }
+                }
+            }
         }
     }
 

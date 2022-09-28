@@ -44,13 +44,13 @@ suspend fun <T> Context.setPreference(pref: PrefKeys.Pref<T>, value: T) {
     }
 }
 
-fun <T> Context.getPreference(pref: PrefKeys.Pref<T>, default: T = pref.default): Flow<T> {
+fun <T> Context.getPreference(pref: PrefKeys.Pref<T>): Flow<T> {
     return dataStore.data.map {
-        it[pref.key] ?: default
+        it[pref.key] ?: pref.default
     }
 }
 
 @Composable
-fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>, default: T = pref.default): State<T?> {
-    return getPreference(pref, default).collectAsState(null)
+fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>): State<T?> {
+    return getPreference(pref).collectAsState(null)
 }
