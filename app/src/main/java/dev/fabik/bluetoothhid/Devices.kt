@@ -8,7 +8,9 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +23,7 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
+import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import kotlinx.coroutines.delay
 
@@ -33,7 +36,7 @@ fun DeviceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Device List") },
+                title = { Text("Devices") },
                 actions = {
                     Dropdown(navHostController)
                 }
@@ -120,7 +123,7 @@ fun DeviceList(bluetoothController: BluetoothController) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
@@ -171,16 +174,26 @@ fun DeviceList(bluetoothController: BluetoothController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Device(name: String, address: String, onClick: () -> Unit) {
-    Card(
-        onClick, modifier = Modifier.fillMaxWidth()
+    ElevatedCard(
+        onClick,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Bluetooth, "Connect")
+            }
             Column(
                 Modifier
                     .padding(4.dp)
-                    .weight(1f)) {
+                    .weight(1f)
+            ) {
                 Text(name)
-                Text(address)
+                Text(
+                    address,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = Typography.labelSmall,
+                )
             }
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.PlayArrow, "Connect")
