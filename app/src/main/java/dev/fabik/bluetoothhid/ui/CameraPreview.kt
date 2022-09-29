@@ -50,6 +50,7 @@ fun CameraPreview(
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
     val cameraResolution by context.getPreferenceState(PrefKeys.SCAN_RESOLUTION)
+    val frontCamera by context.getPreferenceState(PrefKeys.FRONT_CAMERA)
 
     AndroidView(
         factory = { ctx ->
@@ -122,7 +123,12 @@ fun CameraPreview(
                     }
 
                 val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                    .requireLensFacing(
+                        when (frontCamera) {
+                            true -> CameraSelector.LENS_FACING_FRONT
+                            else -> CameraSelector.LENS_FACING_BACK
+                        }
+                    )
                     .build()
 
                 val useCaseGroup = UseCaseGroup.Builder()
