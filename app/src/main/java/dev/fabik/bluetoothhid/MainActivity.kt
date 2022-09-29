@@ -18,7 +18,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -103,7 +102,7 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navHostController: NavHostController,
@@ -116,7 +115,7 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("BluetoothHID") }, actions = {
+            TopAppBar(title = { Text("Scanner") }, actions = {
                 IconButton(onClick = {
                     val inputMethodManager =
                         context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -124,18 +123,15 @@ fun MainScreen(
                         InputMethodManager.SHOW_FORCED, 0
                     )
                 }) {
-                    Icon(
-                        imageVector = Icons.Default.Keyboard,
-                        contentDescription = "Toggle Keyboard"
-                    )
+                    Icon(Icons.Default.Keyboard, "Toggle Keyboard")
                 }
                 IconButton(onClick = {
-                    bluetoothController.disconnect()
+                    if (!bluetoothController.disconnect()) {
+                        navHostController.popBackStack()
+                        navHostController.navigate(Routes.Devices)
+                    }
                 }) {
-                    Icon(
-                        imageVector = Icons.Default.BluetoothDisabled,
-                        contentDescription = "Disconnect"
-                    )
+                    Icon(Icons.Default.BluetoothDisabled, "Disconnect")
                 }
                 Dropdown(navHostController)
             })
@@ -154,7 +150,7 @@ fun MainScreen(
         }
     ) { padding ->
         Box(
-            modifier = Modifier
+            Modifier
                 .padding(padding)
                 .fillMaxSize(),
             contentAlignment = Alignment.Center

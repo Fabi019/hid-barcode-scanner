@@ -40,7 +40,7 @@ class BluetoothController(context: Context) {
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
-            Log.i(TAG, "onServiceConnected")
+            Log.d(TAG, "onServiceConnected")
 
             hidDevice = proxy as BluetoothHidDevice
 
@@ -54,7 +54,7 @@ class BluetoothController(context: Context) {
         }
 
         override fun onServiceDisconnected(profile: Int) {
-            Log.i(TAG, "onServiceDisconnected")
+            Log.d(TAG, "onServiceDisconnected")
 
             hidDevice = null
             deviceListener?.invoke(null, null)
@@ -67,7 +67,7 @@ class BluetoothController(context: Context) {
 
             (context as Activity).runOnUiThread {
                 Toast.makeText(
-                    context, "$device: ${
+                    context, "$device ${
                         when (state) {
                             BluetoothProfile.STATE_CONNECTING -> "connecting"
                             BluetoothProfile.STATE_CONNECTED -> "connected"
@@ -94,7 +94,7 @@ class BluetoothController(context: Context) {
             if (registered && autoConnectEnabled) {
                 if (pluggedDevice != null) {
                     (context as Activity).runOnUiThread {
-                        Toast.makeText(context, "AutoConnect: $pluggedDevice", Toast.LENGTH_SHORT)
+                        Toast.makeText(context, "AutoConnect $pluggedDevice", Toast.LENGTH_SHORT)
                             .show()
                     }
                     hidDevice?.connect(pluggedDevice)
@@ -110,9 +110,9 @@ class BluetoothController(context: Context) {
 
                     devices?.firstOrNull()?.let {
                         (context as Activity).runOnUiThread {
-                            Toast.makeText(context, "AutoConnect: $it", Toast.LENGTH_SHORT).show()
-                            hidDevice?.connect(it)
+                            Toast.makeText(context, "AutoConnect $it", Toast.LENGTH_SHORT).show()
                         }
+                        hidDevice?.connect(it)
                     }
                 }
             }
@@ -145,10 +145,10 @@ class BluetoothController(context: Context) {
         hidDevice?.connect(device)
     }
 
-    fun disconnect() {
-        hostDevice?.let {
+    fun disconnect(): Boolean {
+        return hostDevice?.let {
             hidDevice?.disconnect(it)
-        }
+        } ?: false
     }
 
 }
