@@ -1,13 +1,10 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.annotation.SuppressLint
-import android.graphics.ImageFormat
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.params.StreamConfigurationMap
-import android.util.Log
 import android.widget.Toast
-import androidx.camera.camera2.interop.Camera2CameraInfo
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
@@ -20,12 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.toPointF
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.PrefKeys
@@ -34,9 +29,8 @@ import dev.fabik.bluetoothhid.utils.getPreferenceState
 var scale = 1f
 var transX = 0f
 var transY = 0f
-var markerRect = Rect(0f, 0f, 0f, 0f);
+var scanRect = Rect(0f, 0f, 0f, 0f);
 
-@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 @Composable
 fun CameraPreview(
     onBarCodeReady: (String) -> Unit
@@ -51,6 +45,7 @@ fun CameraPreview(
 
     val cameraResolution by context.getPreferenceState(PrefKeys.SCAN_RESOLUTION)
     val frontCamera by context.getPreferenceState(PrefKeys.FRONT_CAMERA)
+    val restrictArea by context.getPreferenceState(PrefKeys.RESTRICT_AREA)
 
     AndroidView(
         factory = { ctx ->
@@ -91,7 +86,7 @@ fun CameraPreview(
                         it.cornerPoints?.forEach { p ->
                             val px = p.x * scale - transX
                             val py = p.y * scale - transY
-                            if (!markerRect.contains(Offset(px, py))) {
+                            if (!scanRect.contains(Offset(px, py))) {
                                 return@filter false
                             }
                         }
@@ -157,51 +152,36 @@ fun CameraPreview(
         val length = (x * 1.5f).coerceAtMost(y * 1.5f)
         val radius = 30f
 
-        markerRect = Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+        if (restrictArea == true) {
+            scanRect = Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
 
-        val markerPath = Path().apply {
-            addRoundRect(RoundRect(markerRect, CornerRadius(radius)))
+            val markerPath = Path().apply {
+                addRoundRect(RoundRect(scanRect, CornerRadius(radius)))
+            }
+
+            clipPath(markerPath, clipOp = ClipOp.Difference) {
+                drawRect(
+                    color = Color.Black,
+                    topLeft = Offset.Zero,
+                    size = size,
+                    alpha = 0.5f
+                )
+            }
+
+            drawPath(markerPath, color = Color.White, style = Stroke(5f))
+        } else {
+            scanRect = Rect(Offset(0f, 0f), size)
         }
 
-        clipPath(markerPath, clipOp = ClipOp.Difference) {
-            drawRect(
-                color = Color.Black,
-                topLeft = Offset.Zero,
-                size = size,
-                alpha = 0.5f
-            )
-        }
-
-        drawPath(markerPath, color = Color.White, style = Stroke(5f))
 
         currentBarCode?.let {
-            val corners = it.cornerPoints
-
-            translate(-transX, -transY) {
-                corners?.let { points ->
-                    points.map { p -> p.toPointF() }.forEach { p ->
-                        drawCircle(
-                            color = Color.Red,
-                            radius = 8f,
-                            center = Offset(p.x * scale, p.y * scale)
-                        )
-                    }
-                }
+            it.cornerPoints?.forEach { p ->
+                drawCircle(
+                    color = Color.Red,
+                    radius = 8f,
+                    center = Offset(p.x * scale - transX, p.y * scale - transY)
+                )
             }
         }
     }
-}
-
-@SuppressLint("RestrictedApi")
-@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
-fun getSupportedSizes(camera: Camera): Array<out android.util.Size>? {
-    val cInfo = camera.cameraInfo
-    val camChars = Camera2CameraInfo.extractCameraCharacteristics(cInfo)
-    val configs: StreamConfigurationMap? =
-        camChars.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-    if (configs == null) {
-        Log.i("CameraPreview", "get camera out sizes fail, config empty")
-        return arrayOf()
-    }
-    return configs.getOutputSizes(ImageFormat.JPEG)
 }
