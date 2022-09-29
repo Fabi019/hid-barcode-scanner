@@ -111,8 +111,8 @@ fun CameraPreview(
                 val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
                     .setTargetResolution(
                         when (cameraResolution) {
-                            "FHD" -> android.util.Size(1080, 1440)
-                            "HD" -> android.util.Size(720, 960)
+                            2 -> android.util.Size(1080, 1440)
+                            1 -> android.util.Size(720, 960)
                             else -> android.util.Size(480, 640)
                         }
                     )

@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -15,6 +14,8 @@ import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -70,14 +71,13 @@ fun SwitchPreference(
     icon: ImageVector? = null,
     preference: PrefKeys.Pref<Boolean>
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val checked by context.getPreferenceState(preference)
 
     checked?.let {
         SwitchPreference(title, desc, icon, checked = it) {
-            scope.launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 context.setPreference(preference, it)
             }
         }
@@ -109,16 +109,15 @@ fun ComboBoxPreference(
     desc: String,
     values: List<String>,
     icon: ImageVector? = null,
-    preference: PrefKeys.Pref<String>
+    preference: PrefKeys.Pref<Int>
 ) {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val checked by context.getPreferenceState(preference)
 
     checked?.let {
         ComboBoxPreference(title, desc, selectedItem = it, values, icon) {
-            scope.launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 context.setPreference(preference, it)
             }
         }
@@ -129,10 +128,10 @@ fun ComboBoxPreference(
 fun ComboBoxPreference(
     title: String,
     desc: String,
-    selectedItem: String,
+    selectedItem: Int,
     values: List<String>,
     icon: ImageVector? = null,
-    onSelect: (String) -> Unit
+    onSelect: (Int) -> Unit
 ) {
     val dialogState = rememberDialogState()
 

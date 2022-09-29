@@ -35,9 +35,9 @@ class BarCodeAnalyser(
         CoroutineScope(Dispatchers.IO).launch {
             context.getPreference(PrefKeys.SCAN_FREQUENCY).collect {
                 scanDelay = when (it) {
-                    "Fastest" -> 0
-                    "Fast" -> 100
-                    "Slow" -> 1000
+                    0 -> 0
+                    1 -> 100
+                    3 -> 1000
                     else -> 500
                 }
             }

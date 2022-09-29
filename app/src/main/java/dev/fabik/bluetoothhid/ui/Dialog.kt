@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -40,10 +40,10 @@ fun rememberDialogState(initialOpen: Boolean = false) = remember {
 fun ComboBoxDialog(
     dialogState: DialogState,
     title: String,
-    selectedItem: String,
+    selectedItem: Int,
     values: List<String>,
     onDismiss: DialogState.() -> Unit = {},
-    onConfirm: DialogState.(String) -> Unit
+    onConfirm: DialogState.(Int) -> Unit
 ) {
     var currentSelection by remember {
         mutableStateOf(selectedItem)
@@ -56,15 +56,17 @@ fun ComboBoxDialog(
         onDismiss()
     }) {
         LazyColumn {
-            items(values) {
+            itemsIndexed(values) { index, item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { currentSelection = it }) {
+                    modifier = Modifier.clickable {
+                        currentSelection = index
+                    }) {
                     RadioButton(
-                        selected = (it == currentSelection),
-                        onClick = { currentSelection = it })
+                        selected = (index == currentSelection),
+                        onClick = { currentSelection = index })
                     Spacer(Modifier.width(8.dp))
-                    Text(it, modifier = Modifier.weight(1f))
+                    Text(item, modifier = Modifier.weight(1f))
                 }
             }
         }
