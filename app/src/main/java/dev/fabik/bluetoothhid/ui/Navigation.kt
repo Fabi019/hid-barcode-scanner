@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -28,6 +29,11 @@ fun NavGraph(
 
         composable(Routes.Main) {
             MainScreen(navController, bluetoothController, onSendText)
+            BackHandler {
+                if (!bluetoothController.disconnect()) {
+                    navController.navigateUp()
+                }
+            }
         }
 
         composable(Routes.Settings) {

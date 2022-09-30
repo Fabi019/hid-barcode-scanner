@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,8 +46,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val useDynTheme by context.getPreferenceState(PrefKeys.DYNAMIC_THEME)
-            BluetoothHIDTheme(dynamicColor = useDynTheme ?: false) {
+            val useDynTheme by context.getPreferenceState(PrefKeys.DYNAMIC_THEME, false)
+            BluetoothHIDTheme(dynamicColor = useDynTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
@@ -67,18 +66,13 @@ class MainActivity : ComponentActivity() {
                             bluetoothController.register(context, listener = { hid, dev ->
                                 keyboardSender = if (hid != null && dev != null) {
                                     runOnUiThread {
-                                        navHostController.popBackStack()
-                                        navHostController.navigate(Routes.Main) {
-                                            launchSingleTop = true
-                                        }
+                                        navHostController.navigate(Routes.Main)
                                     }
                                     KeyboardSender(hid, dev)
                                 } else {
                                     runOnUiThread {
                                         navHostController.popBackStack()
-                                        navHostController.navigate(Routes.Devices) {
-                                            launchSingleTop = true
-                                        }
+                                        navHostController.navigate(Routes.Devices)
                                     }
                                     null
                                 }
@@ -111,7 +105,7 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
 
-    var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentBarcode by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -127,8 +121,7 @@ fun MainScreen(
                 }
                 IconButton(onClick = {
                     if (!bluetoothController.disconnect()) {
-                        navHostController.popBackStack()
-                        navHostController.navigate(Routes.Devices)
+                        navHostController.navigateUp()
                     }
                 }) {
                     Icon(Icons.Default.BluetoothDisabled, "Disconnect")
