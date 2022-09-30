@@ -22,7 +22,7 @@ jobs:
         cache: gradle
         
     - name: Extract keystore file
-      run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > ./signing-key.jks
+      run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -36,12 +36,12 @@ jobs:
     - name: Build Release APK
       run: |
         ./gradlew assembleRelease \
-          -Pandroid.injected.signing.store.file=./signing-key.jks \
+          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
           -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PW }} \
           -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
           -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PW }}
     
-    - run: rm ./signing-key.jks
+    - run: rm $GITHUB_WORKSPACE/signing-key.jks
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v3
