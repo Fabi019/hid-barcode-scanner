@@ -26,7 +26,7 @@ fun ButtonPreference(
     desc: String,
     icon: ImageVector? = null,
     extra: (@Composable () -> Unit)? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ) {
     ElevatedCard(
         onClick,
@@ -45,7 +45,7 @@ fun ButtonPreference(
                 contentAlignment = Alignment.Center
             ) {
                 icon?.let {
-                    Icon(imageVector = icon, contentDescription = null)
+                    Icon(icon, null)
                 }
             }
             Column(Modifier.weight(1f)) {

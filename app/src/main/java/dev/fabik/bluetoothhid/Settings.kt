@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,7 +8,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.fabik.bluetoothhid.ui.ButtonPreference
@@ -20,8 +19,7 @@ import dev.fabik.bluetoothhid.utils.PrefKeys
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(
-    navHostController: NavHostController,
-    context: Context = LocalContext.current
+    navHostController: NavHostController
 ) {
     Scaffold(
         topBar = {
@@ -132,12 +130,19 @@ fun Settings(
                 Spacer(Modifier.height(8.dp))
                 Text("About", color = MaterialTheme.colorScheme.primary)
 
+                val uriHandler = LocalUriHandler.current
+
                 ButtonPreference(
-                    title = "BluetoothHID v1.0.0",
+                    title = "Repository",
                     desc = "https://github.com/Fabi019/AndroidBluetoothHID"
                 ) {
-
+                    uriHandler.openUri("https://github.com/Fabi019/AndroidBluetoothHID")
                 }
+
+                ButtonPreference(
+                    title = "Build-Version",
+                    desc = "v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+                )
             }
         }
     }
