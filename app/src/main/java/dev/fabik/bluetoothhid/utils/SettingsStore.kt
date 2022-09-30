@@ -52,6 +52,11 @@ fun <T> Context.getPreference(pref: PrefKeys.Pref<T>): Flow<T> {
 }
 
 @Composable
+fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>, initial: T): State<T> {
+    return getPreference(pref).collectAsState(initial)
+}
+
+@Composable
 fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>): State<T?> {
     return getPreference(pref).collectAsState(null)
 }

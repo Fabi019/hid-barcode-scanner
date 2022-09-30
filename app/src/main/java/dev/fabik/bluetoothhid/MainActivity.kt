@@ -7,9 +7,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.Keyboard
@@ -18,8 +20,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -104,6 +111,7 @@ fun MainScreen(
     onSendText: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     var currentBarcode by remember { mutableStateOf<String?>(null) }
 
@@ -153,20 +161,47 @@ fun MainScreen(
                     currentBarcode = it
                 }
 
-                currentBarcode?.let {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter)
-                            .padding(4.dp, 16.dp)
-                    ) {
+                Column(
+                    Modifier
+                        .fillMaxHeight(0.3f)
+                        .fillMaxWidth()
+                        .align(Alignment.TopStart),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (currentBarcode != null) {
                         Text(
-                            "Detected Barcode",
+                            "Detected Code",
                             style = Typography.headlineSmall,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Text(it, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                        val text = AnnotatedString(
+                            currentBarcode!!,
+                            SpanStyle(MaterialTheme.colorScheme.onBackground),
+                            ParagraphStyle(TextAlign.Center)
+                        )
+                        ClickableText(
+                            text,
+                            maxLines = 6,
+                            overflow = TextOverflow.Ellipsis,
+                            style = Typography.labelMedium,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            clipboardManager.setText(text)
+                            Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    } else {
+                        Text(
+                            "Place the QR Code / Barcode",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            "in the frame below.",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }
