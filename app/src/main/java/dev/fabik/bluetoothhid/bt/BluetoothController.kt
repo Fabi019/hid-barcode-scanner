@@ -69,10 +69,10 @@ class BluetoothController(context: Context) {
                 Toast.makeText(
                     context, "$device ${
                         when (state) {
-                            BluetoothProfile.STATE_CONNECTING -> "connecting"
-                            BluetoothProfile.STATE_CONNECTED -> "connected"
-                            BluetoothProfile.STATE_DISCONNECTING -> "disconnecting"
-                            BluetoothProfile.STATE_DISCONNECTED -> "disconnected"
+                            BluetoothProfile.STATE_CONNECTING -> "connecting..."
+                            BluetoothProfile.STATE_CONNECTED -> "connected!"
+                            BluetoothProfile.STATE_DISCONNECTING -> "disconnecting..."
+                            BluetoothProfile.STATE_DISCONNECTED -> "disconnected!"
                             else -> "unknown ($state)"
                         }
                     }", Toast.LENGTH_SHORT

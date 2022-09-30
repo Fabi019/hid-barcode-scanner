@@ -6,6 +6,10 @@ import android.bluetooth.BluetoothHidDevice
 import android.util.Log
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 open class KeyboardSender(
@@ -28,24 +32,24 @@ open class KeyboardSender(
     }
 
     protected open fun setModifiers(event: KeyEvent) {
-        if (event.isShiftPressed) keyboardReport.leftShift = true
-        if (event.isAltPressed) keyboardReport.leftAlt = true
-        if (event.isCtrlPressed) keyboardReport.leftControl = true
-        if (event.isMetaPressed) keyboardReport.leftGui = true
-        if (event.keyCode == KeyEvent.KEYCODE_AT || event.keyCode == KeyEvent.KEYCODE_POUND || event.keyCode == KeyEvent.KEYCODE_STAR) {
-            keyboardReport.leftShift = true
-        }
+        keyboardReport.leftShift = event.isShiftPressed
+        keyboardReport.leftAlt = event.isAltPressed
+        keyboardReport.leftControl = event.isCtrlPressed
+        keyboardReport.leftGui = event.isMetaPressed
     }
 
     fun sendString(string: String) {
-        keyCharacterMap.getEvents(string.toCharArray()).forEach {
-            sendKeyEvent(it.keyCode, it, false)
+        CoroutineScope(Dispatchers.IO).launch {
+            keyCharacterMap.getEvents(string.toCharArray()).forEach {
+                if (it.action == KeyEvent.ACTION_DOWN) {
+                    sendKeyEvent(it.keyCode, it, true)
+                    delay(1)
+                }
+            }
         }
-        keyboardReport.reset()
-        sendReport()
     }
 
-    fun sendKeyEvent(keyCode: Int, event: KeyEvent?, singleChar: Boolean = true): Boolean {
+    fun sendKeyEvent(keyCode: Int, event: KeyEvent?, releaseKey: Boolean = true): Boolean {
         val key = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
 
         keyboardReport.key1 = key.toByte()
@@ -56,7 +60,7 @@ open class KeyboardSender(
 
         sendReport()
 
-        if (singleChar) {
+        if (releaseKey) {
             keyboardReport.reset()
             sendReport()
         }
