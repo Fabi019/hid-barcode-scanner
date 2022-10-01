@@ -134,9 +134,9 @@ fun Settings(
 
                 ButtonPreference(
                     title = "Repository",
-                    desc = "https://github.com/Fabi019/AndroidBluetoothHID"
+                    desc = "https://github.com/Fabi019/hid-barcode-scanner"
                 ) {
-                    uriHandler.openUri("https://github.com/Fabi019/AndroidBluetoothHID")
+                    uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
                 }
 
                 ButtonPreference(
