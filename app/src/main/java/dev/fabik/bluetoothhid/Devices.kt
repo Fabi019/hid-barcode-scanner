@@ -23,6 +23,7 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
+import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import kotlinx.coroutines.delay
@@ -43,14 +44,17 @@ fun DeviceScreen(
             )
         }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            DeviceList(bluetoothController)
+            DeviceList(navHostController, bluetoothController)
         }
     }
 }
 
 @SuppressLint("MissingPermission")
 @Composable
-fun DeviceList(bluetoothController: BluetoothController) {
+fun DeviceList(
+    navHostController: NavHostController,
+    bluetoothController: BluetoothController
+) {
     val foundDevices = remember {
         mutableListOf<BluetoothDevice>()
     }
@@ -163,6 +167,17 @@ fun DeviceList(bluetoothController: BluetoothController) {
                 items(devices.toList()) {
                     Device(it.name, it.address) {
                         bluetoothController.connect(it)
+                    }
+                }
+            }
+
+            item {
+                Box(Modifier.fillMaxWidth()) {
+                    TextButton(
+                        onClick = { navHostController.navigate(Routes.Main) },
+                        Modifier.align(Alignment.Center)
+                    ) {
+                        Text("Skip")
                     }
                 }
             }
