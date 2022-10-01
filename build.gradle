@@ -2,10 +2,11 @@ buildscript {
     ext {
         compose_version = '1.2.1'
         camerax_version = '1.2.0-beta02'
+        accomp_version = '0.26.4-beta'
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     id 'com.android.application' version '7.3.0' apply false
     id 'com.android.library' version '7.3.0' apply false
-    id 'org.jetbrains.kotlin.android' version '1.6.10' apply false
+    id 'org.jetbrains.kotlin.android' version '1.7.10' apply false
 }
