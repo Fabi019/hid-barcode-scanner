@@ -123,6 +123,8 @@ fun MainScreen(
         ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
     }
 
+    val autoSend by context.getPreferenceState(PrefKeys.AUTO_SEND, false)
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Scanner") }, actions = {
@@ -169,6 +171,9 @@ fun MainScreen(
                     currentBarcode = it
                     if (playSound) {
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
+                    }
+                    if (autoSend) {
+                        onSendText(it)
                     }
                 }
 
