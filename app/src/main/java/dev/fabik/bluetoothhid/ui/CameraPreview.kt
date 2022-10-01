@@ -1,15 +1,19 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.widget.Toast
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CenterFocusStrong
+import androidx.compose.material.icons.filled.FlashlightOff
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.ClipOp
@@ -19,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -29,10 +34,13 @@ import dev.fabik.bluetoothhid.utils.getPreferenceState
 var scale = 1f
 var transX = 0f
 var transY = 0f
-var scanRect = Rect(0f, 0f, 0f, 0f);
+var scanRect = Rect(0f, 0f, 0f, 0f)
+
+var cameraController: CameraControl? = null
+var cameraInfo: CameraInfo? = null
 
 @Composable
-fun CameraPreview(
+fun BoxScope.CameraPreview(
     onBarCodeReady: (String) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -133,20 +141,22 @@ fun CameraPreview(
                     .build()
 
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+
+                val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,
                     useCaseGroup
                 )
+
+                cameraController = camera.cameraControl
+                cameraInfo = camera.cameraInfo
             }, executor)
             previewView
         },
         modifier = Modifier.fillMaxSize(),
     )
 
-    Canvas(
-        Modifier.fillMaxSize()
-    ) {
+    Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
         val y = this.size.height / 2
         val length = (x * 1.5f).coerceAtMost(y * 1.5f)
@@ -184,4 +194,31 @@ fun CameraPreview(
             }
         }
     }
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .align(Alignment.BottomCenter)
+            .padding(150.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FloatingActionButton(
+            onClick = {
+
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) {
+            Icon(Icons.Default.FlashlightOff, "Flash")
+        }
+
+        FloatingActionButton(
+            onClick = {
+
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) {
+            Icon(Icons.Default.CenterFocusStrong, "Focus")
+        }
+    }
+
 }
