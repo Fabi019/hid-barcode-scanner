@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
@@ -115,6 +117,12 @@ fun MainScreen(
 
     var currentBarcode by remember { mutableStateOf<String?>(null) }
 
+    val playSound by context.getPreferenceState(PrefKeys.PLAY_SOUND, false)
+
+    val toneGenerator = remember {
+        ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Scanner") }, actions = {
@@ -159,6 +167,9 @@ fun MainScreen(
             RequiresCameraPermission {
                 CameraPreview {
                     currentBarcode = it
+                    if (playSound) {
+                        toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
+                    }
                 }
 
                 Column(

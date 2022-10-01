@@ -116,7 +116,7 @@ fun Settings(
 
                 SwitchPreference(
                     title = "Play Sound",
-                    desc = "Plays a sound after scanning a code.",
+                    desc = "Plays a sound when scanning a new code.",
                     icon = Icons.Default.VolumeUp,
                     preference = PrefKeys.PLAY_SOUND
                 )
