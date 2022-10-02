@@ -33,11 +33,12 @@ fun ButtonPreference(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(56.dp)
     ) {
         Row(
             Modifier
                 .padding(4.dp)
-                .fillMaxHeight(),
+                .heightIn(48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(

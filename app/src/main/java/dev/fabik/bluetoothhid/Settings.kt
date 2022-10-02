@@ -38,7 +38,7 @@ fun Settings(
         Box(modifier = Modifier.padding(padding)) {
             Column(
                 Modifier
-                    .padding(12.dp)
+                    .padding(12.dp, 0.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -95,7 +95,7 @@ fun Settings(
 
                 ComboBoxPreference(
                     title = "Scan Resolution",
-                    desc = "Resolution of the scan image. (Not all are supported on every device)",
+                    desc = "Resolution of the analysed image.",
                     icon = Icons.Default.Hd,
                     values = listOf("SD", "HD", "FHD"),
                     preference = PrefKeys.SCAN_RESOLUTION
