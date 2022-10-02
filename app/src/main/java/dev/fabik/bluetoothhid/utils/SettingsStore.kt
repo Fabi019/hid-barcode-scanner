@@ -24,6 +24,7 @@ object PrefKeys {
     val DISABLE_WARNINGS = Pref(booleanPreferencesKey("disable_warnings"), false)
 
     // Appearance
+    val THEME = Pref(intPreferencesKey("theme"), 0) // System
     val DYNAMIC_THEME = Pref(booleanPreferencesKey("dynamic_theme"), false)
 
     // Scanner

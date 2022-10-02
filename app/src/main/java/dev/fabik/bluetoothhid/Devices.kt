@@ -77,12 +77,12 @@ fun DeviceList(
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
         val device: BluetoothDevice? =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                it!!.getParcelableExtra(
+                it?.getParcelableExtra(
                     BluetoothDevice.EXTRA_DEVICE,
                     BluetoothDevice::class.java
                 )
             } else {
-                it!!.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             }
 
         device?.let { dev ->
@@ -127,7 +127,7 @@ fun DeviceList(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(12.dp, 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {

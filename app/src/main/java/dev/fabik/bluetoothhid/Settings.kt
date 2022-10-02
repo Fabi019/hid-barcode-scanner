@@ -61,6 +61,14 @@ fun Settings(
                 Spacer(Modifier.height(8.dp))
                 Text("Appearance", color = MaterialTheme.colorScheme.primary)
 
+                ComboBoxPreference(
+                    title = "Theme",
+                    desc = "Preferred UI Theme.",
+                    icon = Icons.Default.DarkMode,
+                    values = listOf("System", "Light", "Dark"),
+                    preference = PrefKeys.THEME
+                )
+
                 SwitchPreference(
                     title = "Dynamic Theme",
                     desc = "Use the dynamic theme on Android 12+.",

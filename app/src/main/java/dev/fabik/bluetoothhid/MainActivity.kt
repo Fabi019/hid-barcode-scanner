@@ -12,6 +12,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
@@ -55,8 +56,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
+            val theme by context.getPreferenceState(PrefKeys.THEME, 0)
             val useDynTheme by context.getPreferenceState(PrefKeys.DYNAMIC_THEME, false)
-            BluetoothHIDTheme(dynamicColor = useDynTheme) {
+            BluetoothHIDTheme(
+                darkTheme = when (theme) {
+                    1 -> false
+                    2 -> true
+                    else -> isSystemInDarkTheme()
+                },
+                dynamicColor = useDynTheme
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
