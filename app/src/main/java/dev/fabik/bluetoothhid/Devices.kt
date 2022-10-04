@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -25,7 +26,9 @@ import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Typography
+import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +58,8 @@ fun DeviceList(
     navHostController: NavHostController,
     bluetoothController: BluetoothController
 ) {
+    val context = LocalContext.current
+
     val foundDevices = remember {
         mutableListOf<BluetoothDevice>()
     }
@@ -111,6 +116,8 @@ fun DeviceList(
         }
     }
 
+    val showUnnamed by context.getPreferenceState(PrefKeys.SHOW_UNNAMED, false)
+
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
@@ -145,14 +152,14 @@ fun DeviceList(
                     }
                 } else {
                     items(foundDevices) { d ->
-                        // TODO: add setting to show devices with no name
+                        if (d.name == null && !showUnnamed)
+                            return@items
                         Device(d.name ?: "<unknown>", d.address) {
                             bluetoothController.connect(d)
                         }
                     }
                 }
             }
-
 
             item {
                 Spacer(Modifier.height(8.dp))

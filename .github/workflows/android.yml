@@ -39,7 +39,8 @@ jobs:
             -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PW }}
 
-      - run: rm $GITHUB_WORKSPACE/signing-key.jks
+      - name: Remove keystore file
+        run: rm $GITHUB_WORKSPACE/signing-key.jks
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v3

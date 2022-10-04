@@ -58,6 +58,12 @@ fun Settings(
                     preference = PrefKeys.DISABLE_WARNINGS
                 )
 
+                SwitchPreference(
+                    title = "Show unnamed devices",
+                    desc = "Displays bluetooth devices without a name.",
+                    preference = PrefKeys.SHOW_UNNAMED
+                )
+
                 Spacer(Modifier.height(8.dp))
                 Text("Appearance", color = MaterialTheme.colorScheme.primary)
 
@@ -151,6 +157,8 @@ fun Settings(
                     title = "Build-Version",
                     desc = "v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
                 )
+
+                Spacer(Modifier.height(8.dp))
             }
         }
     }

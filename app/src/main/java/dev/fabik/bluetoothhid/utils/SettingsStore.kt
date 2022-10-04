@@ -22,6 +22,7 @@ object PrefKeys {
     // Connection
     val AUTO_CONNECT = Pref(booleanPreferencesKey("auto_connect"), false)
     val DISABLE_WARNINGS = Pref(booleanPreferencesKey("disable_warnings"), false)
+    val SHOW_UNNAMED = Pref(booleanPreferencesKey("show_unnamed"), false)
 
     // Appearance
     val THEME = Pref(intPreferencesKey("theme"), 0) // System
