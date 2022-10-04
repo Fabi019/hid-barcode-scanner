@@ -7,12 +7,13 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.FlashlightOff
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
@@ -202,13 +203,29 @@ fun BoxScope.CameraPreview(
             .padding(150.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        FloatingActionButton(
-            onClick = {
+        cameraInfo?.let {
+            if (it.hasFlashUnit()) {
+                val torchState by it.torchState.observeAsState()
 
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) {
-            Icon(Icons.Default.FlashlightOff, "Flash")
+                SmallFloatingActionButton(
+                    onClick = {
+                        cameraController?.enableTorch(
+                            when (torchState) {
+                                TorchState.OFF -> true
+                                else -> false
+                            }
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    Icon(
+                        when (torchState) {
+                            TorchState.OFF -> Icons.Default.FlashlightOn
+                            else -> Icons.Default.FlashlightOff
+                        }, "Flash"
+                    )
+                }
+            }
         }
 
         FloatingActionButton(
