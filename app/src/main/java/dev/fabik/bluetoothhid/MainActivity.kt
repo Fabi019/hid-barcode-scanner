@@ -41,10 +41,7 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.theme.Typography
-import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.RequestPermissions
-import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
-import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.*
 
 class MainActivity : ComponentActivity() {
 
@@ -86,7 +83,11 @@ class MainActivity : ComponentActivity() {
                                     runOnUiThread {
                                         navHostController.navigate(Routes.Main)
                                     }
-                                    KeyboardSender(hid, dev)
+                                    KeyboardSender(
+                                        context.getPreference(PrefKeys.EXTRA_KEYS),
+                                        hid,
+                                        dev
+                                    )
                                 } else {
                                     runOnUiThread {
                                         navHostController.popBackStack()

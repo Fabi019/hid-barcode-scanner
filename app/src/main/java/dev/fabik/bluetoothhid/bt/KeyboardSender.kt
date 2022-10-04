@@ -9,10 +9,12 @@ import android.view.KeyEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 open class KeyboardSender(
+    private val appendKeysFlow: Flow<Int>,
     private val hidDevice: BluetoothHidDevice,
     private val host: BluetoothDevice
 ) {
@@ -24,6 +26,16 @@ open class KeyboardSender(
 
     private val keyCharacterMap: KeyCharacterMap =
         KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
+
+    private var appendKey = 0
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            appendKeysFlow.collect {
+                appendKey = it
+            }
+        }
+    }
 
     protected open fun sendReport() {
         if (!hidDevice.sendReport(host, KeyboardReport.ID, keyboardReport.bytes)) {
@@ -39,8 +51,14 @@ open class KeyboardSender(
     }
 
     fun sendString(string: String) {
+        val appended = string + when (appendKey) {
+            1 -> "\n"
+            2 -> "\t"
+            else -> ""
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
-            keyCharacterMap.getEvents(string.toCharArray()).forEach {
+            keyCharacterMap.getEvents(appended.toCharArray()).forEach {
                 if (it.action == KeyEvent.ACTION_DOWN) {
                     sendKeyEvent(it.keyCode, it, true)
                     delay(1)

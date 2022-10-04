@@ -124,7 +124,7 @@ fun Settings(
                 ComboBoxPreference(
                     title = "Extra keys",
                     desc = "Specify which key should be appended.",
-                    values = listOf("None", "Enter", "Tab"),
+                    values = listOf("None", "Return", "Tab"),
                     preference = PrefKeys.EXTRA_KEYS
                 )
 
