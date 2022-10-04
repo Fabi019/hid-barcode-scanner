@@ -1,17 +1,20 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FlashlightOff
 import androidx.compose.material.icons.filled.FlashlightOn
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -151,6 +154,31 @@ fun BoxScope.CameraPreview(
 
                 cameraController = camera.cameraControl
                 cameraInfo = camera.cameraInfo
+
+                previewView.setOnTouchListener { view, event ->
+                    return@setOnTouchListener when (event.action) {
+                        MotionEvent.ACTION_DOWN -> true
+                        MotionEvent.ACTION_UP -> {
+                            val factory = DisplayOrientedMeteringPointFactory(
+                                previewView.display,
+                                camera.cameraInfo,
+                                previewView.width.toFloat(),
+                                previewView.height.toFloat()
+                            )
+                            val focusPoint = factory.createPoint(event.x, event.y)
+                            camera.cameraControl.startFocusAndMetering(
+                                FocusMeteringAction.Builder(
+                                    focusPoint,
+                                    FocusMeteringAction.FLAG_AF
+                                ).apply {
+                                    disableAutoCancel()
+                                }.build()
+                            )
+                            view.performClick()
+                        }
+                        else -> false
+                    }
+                }
             }, executor)
             previewView
         },
@@ -196,45 +224,31 @@ fun BoxScope.CameraPreview(
         }
     }
 
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .align(Alignment.BottomCenter)
-            .padding(150.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        cameraInfo?.let {
-            if (it.hasFlashUnit()) {
-                val torchState by it.torchState.observeAsState()
+    cameraInfo?.let {
+        if (it.hasFlashUnit()) {
+            val torchState by it.torchState.observeAsState()
 
-                SmallFloatingActionButton(
-                    onClick = {
-                        cameraController?.enableTorch(
-                            when (torchState) {
-                                TorchState.OFF -> true
-                                else -> false
-                            }
-                        )
-                    },
-                    containerColor = MaterialTheme.colorScheme.background
-                ) {
-                    Icon(
+            FloatingActionButton(
+                onClick = {
+                    cameraController?.enableTorch(
                         when (torchState) {
-                            TorchState.OFF -> Icons.Default.FlashlightOn
-                            else -> Icons.Default.FlashlightOff
-                        }, "Flash"
+                            TorchState.OFF -> true
+                            else -> false
+                        }
                     )
-                }
+                },
+                containerColor = MaterialTheme.colorScheme.background,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(0.dp, 150.dp)
+            ) {
+                Icon(
+                    when (torchState) {
+                        TorchState.OFF -> Icons.Default.FlashlightOn
+                        else -> Icons.Default.FlashlightOff
+                    }, "Flash"
+                )
             }
-        }
-
-        FloatingActionButton(
-            onClick = {
-
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) {
-            Icon(Icons.Default.CenterFocusStrong, "Focus")
         }
     }
 
