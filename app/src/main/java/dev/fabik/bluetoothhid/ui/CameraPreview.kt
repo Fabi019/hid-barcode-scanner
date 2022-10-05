@@ -33,7 +33,7 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 var scale = 1f
 var transX = 0f
@@ -55,9 +55,9 @@ fun BoxScope.CameraPreview(
     var lastBarCode by remember { mutableStateOf<Barcode?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
-    val cameraResolution by context.getPreferenceState(PrefKeys.SCAN_RESOLUTION)
-    val frontCamera by context.getPreferenceState(PrefKeys.FRONT_CAMERA)
-    val restrictArea by context.getPreferenceState(PrefKeys.RESTRICT_AREA)
+    val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
+    val frontCamera by rememberPreferenceNull(PrefKeys.FRONT_CAMERA)
+    val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
 
     AndroidView(
         factory = { ctx ->

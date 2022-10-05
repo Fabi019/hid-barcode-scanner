@@ -1,17 +1,16 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
+import android.util.Log
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 object PrefKeys {
     data class Pref<T>(
@@ -48,17 +47,72 @@ suspend fun <T> Context.setPreference(pref: PrefKeys.Pref<T>, value: T) {
 }
 
 fun <T> Context.getPreference(pref: PrefKeys.Pref<T>): Flow<T> {
-    return dataStore.data.map {
-        it[pref.key] ?: pref.default
-    }
+    return dataStore.data
+        .catch { e ->
+            Log.e("SettingsStore", "Error reading preference", e)
+            emit(preferencesOf(pref.key to pref.default))
+        }.map {
+            it[pref.key] ?: pref.default
+        }
 }
 
 @Composable
 fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>, initial: T): State<T> {
-    return getPreference(pref).collectAsState(initial)
+    return remember { getPreference(pref) }.collectAsState(initial)
 }
 
 @Composable
 fun <T> Context.getPreferenceState(pref: PrefKeys.Pref<T>): State<T?> {
-    return getPreference(pref).collectAsState(null)
+    return remember { getPreference(pref) }.collectAsState(null)
+}
+
+@Composable
+fun <T> rememberPreferenceNull(
+    pref: PrefKeys.Pref<T>,
+): MutableState<T?> {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val state = context.getPreferenceState(pref)
+
+    return remember {
+        object : MutableState<T?> {
+            override var value: T?
+                get() = state.value
+                set(value) {
+                    scope.launch {
+                        context.setPreference(pref, value!!)
+                    }
+                }
+
+            override fun component1(): T? = value
+            override fun component2(): (T?) -> Unit = { value = it }
+        }
+    }
+}
+
+@Composable
+fun <T> rememberPreferenceDefault(
+    pref: PrefKeys.Pref<T>,
+    initial: T = pref.default
+): MutableState<T> {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val state = context.getPreferenceState(pref, initial)
+
+    return remember {
+        object : MutableState<T> {
+            override var value: T
+                get() = state.value
+                set(value) {
+                    scope.launch {
+                        context.setPreference(pref, value)
+                    }
+                }
+
+            override fun component1(): T = value
+            override fun component2(): (T) -> Unit = { value = it }
+        }
+    }
 }

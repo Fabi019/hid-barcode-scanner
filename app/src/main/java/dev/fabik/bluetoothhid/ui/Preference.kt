@@ -5,18 +5,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.getPreferenceState
-import dev.fabik.bluetoothhid.utils.setPreference
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,16 +68,10 @@ fun SwitchPreference(
     icon: ImageVector? = null,
     preference: PrefKeys.Pref<Boolean>
 ) {
-    val context = LocalContext.current
+    var checked by rememberPreferenceNull(preference)
 
-    val checked by context.getPreferenceState(preference)
-
-    checked?.let {
-        SwitchPreference(title, desc, icon, checked = it) {
-            CoroutineScope(Dispatchers.IO).launch {
-                context.setPreference(preference, it)
-            }
-        }
+    SwitchPreference(title, desc, icon, checked) {
+        checked = it
     }
 }
 
@@ -90,17 +80,21 @@ fun SwitchPreference(
     title: String,
     desc: String,
     icon: ImageVector? = null,
-    checked: Boolean,
+    checked: Boolean?,
     onToggle: (Boolean) -> Unit
 ) {
     ButtonPreference(
         title, desc, icon, {
-            Switch(checked, onCheckedChange = {
-                onToggle(it)
-            })
+            checked?.let { c ->
+                Switch(c, onCheckedChange = {
+                    onToggle(it)
+                })
+            }
         }
     ) {
-        onToggle(!checked)
+        checked?.let {
+            onToggle(!it)
+        }
     }
 }
 
@@ -112,16 +106,10 @@ fun ComboBoxPreference(
     icon: ImageVector? = null,
     preference: PrefKeys.Pref<Int>
 ) {
-    val context = LocalContext.current
+    var selectedItem by rememberPreferenceNull(preference)
 
-    val checked by context.getPreferenceState(preference)
-
-    checked?.let {
-        ComboBoxPreference(title, desc, selectedItem = it, values, icon) {
-            CoroutineScope(Dispatchers.IO).launch {
-                context.setPreference(preference, it)
-            }
-        }
+    ComboBoxPreference(title, desc, selectedItem, values, icon) {
+        selectedItem = it
     }
 }
 
@@ -129,16 +117,18 @@ fun ComboBoxPreference(
 fun ComboBoxPreference(
     title: String,
     desc: String,
-    selectedItem: Int,
+    selectedItem: Int?,
     values: List<String>,
     icon: ImageVector? = null,
     onSelect: (Int) -> Unit
 ) {
     val dialogState = rememberDialogState()
 
-    ComboBoxDialog(dialogState, title, selectedItem, values, onDismiss = { close() }) {
-        onSelect(it)
-        close()
+    selectedItem?.let { s ->
+        ComboBoxDialog(dialogState, title, s, values, onDismiss = { close() }) {
+            onSelect(it)
+            close()
+        }
     }
 
     ButtonPreference(title, desc, icon) {

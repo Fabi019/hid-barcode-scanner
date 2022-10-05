@@ -28,7 +28,7 @@ import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
-import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,7 +116,7 @@ fun DeviceList(
         }
     }
 
-    val showUnnamed by context.getPreferenceState(PrefKeys.SHOW_UNNAMED, false)
+    val showUnnamed by rememberPreferenceDefault(PrefKeys.SHOW_UNNAMED)
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 

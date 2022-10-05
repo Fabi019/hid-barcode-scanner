@@ -53,8 +53,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val theme by context.getPreferenceState(PrefKeys.THEME, 0)
-            val useDynTheme by context.getPreferenceState(PrefKeys.DYNAMIC_THEME, false)
+
+            val theme by rememberPreferenceDefault(PrefKeys.THEME)
+            val useDynTheme by rememberPreferenceDefault(PrefKeys.DYNAMIC_THEME)
+
             BluetoothHIDTheme(
                 darkTheme = when (theme) {
                     1 -> false
@@ -127,13 +129,13 @@ fun MainScreen(
 
     var currentBarcode by remember { mutableStateOf<String?>(null) }
 
-    val playSound by context.getPreferenceState(PrefKeys.PLAY_SOUND, false)
+    val playSound by rememberPreferenceDefault(PrefKeys.PLAY_SOUND)
 
     val toneGenerator = remember {
         ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
     }
 
-    val autoSend by context.getPreferenceState(PrefKeys.AUTO_SEND, false)
+    val autoSend by rememberPreferenceDefault(PrefKeys.AUTO_SEND)
 
     Scaffold(
         topBar = {

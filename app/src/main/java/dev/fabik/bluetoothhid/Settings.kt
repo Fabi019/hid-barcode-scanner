@@ -27,10 +27,7 @@ fun Settings(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = { navHostController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
             )
@@ -152,7 +149,6 @@ fun Settings(
                 ) {
                     uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
                 }
-
                 ButtonPreference(
                     title = "Build-Version",
                     desc = "v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
