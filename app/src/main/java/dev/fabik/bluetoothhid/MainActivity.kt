@@ -40,7 +40,6 @@ import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
-import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.*
 
 class MainActivity : ComponentActivity() {
@@ -147,7 +146,7 @@ fun MainScreen(
                         InputMethodManager.SHOW_FORCED, 0
                     )
                 }) {
-                    Icon(Icons.Default.Keyboard, "Toggle Keyboard")
+                    Icon(Icons.Default.Keyboard, "Keyboard")
                 }
                 IconButton(onClick = {
                     if (!bluetoothController.disconnect()) {
@@ -197,12 +196,6 @@ fun MainScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     if (currentBarcode != null) {
-                        Text(
-                            "Detected Code",
-                            style = Typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                         val text = AnnotatedString(
                             currentBarcode!!,
                             SpanStyle(MaterialTheme.colorScheme.onBackground),
@@ -212,7 +205,6 @@ fun MainScreen(
                             text,
                             maxLines = 6,
                             overflow = TextOverflow.Ellipsis,
-                            style = Typography.labelMedium,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             clipboardManager.setText(text)
