@@ -33,6 +33,7 @@ import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 var scale = 1f
@@ -52,12 +53,13 @@ fun BoxScope.CameraPreview(
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
-    var lastBarCode by remember { mutableStateOf<Barcode?>(null) }
+    var lastBarCodeValue by remember { mutableStateOf<String?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
     val frontCamera by rememberPreferenceNull(PrefKeys.FRONT_CAMERA)
     val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
+    val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
 
     AndroidView(
         factory = { ctx ->
@@ -106,11 +108,16 @@ fun BoxScope.CameraPreview(
                     }
 
                     filtered.firstOrNull().let { barcode ->
-                        barcode?.rawValue?.let { barcodeValue ->
-                            if (lastBarCode == null || lastBarCode!!.rawValue != barcodeValue) {
+                        val value = if (useRawValue) {
+                            barcode?.rawValue
+                        } else {
+                            barcode?.displayValue
+                        }
+                        value?.let { barcodeValue ->
+                            if (lastBarCodeValue != barcodeValue) {
                                 Toast.makeText(context, barcodeValue, Toast.LENGTH_SHORT).show()
                                 onBarCodeReady(barcodeValue)
-                                lastBarCode = barcode
+                                lastBarCodeValue = barcodeValue
                             }
                         }
                         currentBarCode = barcode

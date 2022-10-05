@@ -35,7 +35,7 @@ object PrefKeys {
     val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), true)
     val EXTRA_KEYS = Pref(intPreferencesKey("extra_keys"), 0) // None
     val PLAY_SOUND = Pref(booleanPreferencesKey("play_sound"), false)
-    val RAW_VALUE = Pref(booleanPreferencesKey("raw_value"), true)
+    val RAW_VALUE = Pref(booleanPreferencesKey("raw_value"), false)
 }
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore("settings")
