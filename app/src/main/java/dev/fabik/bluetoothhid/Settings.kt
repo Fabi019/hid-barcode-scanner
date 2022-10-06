@@ -63,6 +63,7 @@ fun Settings(
                     SwitchPreference(
                         title = "Show unnamed devices",
                         desc = "Displays bluetooth devices without a name.",
+                        icon = Icons.Default.DeviceUnknown,
                         preference = PrefKeys.SHOW_UNNAMED
                     )
                 }
@@ -76,7 +77,7 @@ fun Settings(
                     ComboBoxPreference(
                         title = "Theme",
                         desc = "Preferred UI Theme.",
-                        icon = Icons.Default.DarkMode,
+                        icon = Icons.Default.AutoFixHigh,
                         values = listOf("System", "Light", "Dark"),
                         preference = PrefKeys.THEME
                     )
@@ -138,6 +139,7 @@ fun Settings(
                     SwitchPreference(
                         title = "Auto Send",
                         desc = "Automatically send any detected codes.",
+                        icon = Icons.Default.Send,
                         preference = PrefKeys.AUTO_SEND
                     )
                 }
@@ -147,6 +149,7 @@ fun Settings(
                         title = "Extra keys",
                         desc = "Specify which key should be appended.",
                         values = listOf("None", "Return", "Tab"),
+                        icon = Icons.Default.AddCircle,
                         preference = PrefKeys.EXTRA_KEYS
                     )
                 }
@@ -164,6 +167,7 @@ fun Settings(
                     SwitchPreference(
                         title = "Raw Value",
                         desc = "Extracts the raw data value from the code.",
+                        icon = Icons.Default.Description,
                         preference = PrefKeys.RAW_VALUE
                     )
                 }
@@ -178,7 +182,8 @@ fun Settings(
 
                     ButtonPreference(
                         title = "Repository",
-                        desc = "https://github.com/Fabi019/hid-barcode-scanner"
+                        desc = "https://github.com/Fabi019/hid-barcode-scanner",
+                        icon = Icons.Default.Code
                     ) {
                         uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
                     }
@@ -187,7 +192,8 @@ fun Settings(
                 item {
                     ButtonPreference(
                         title = "Build-Version",
-                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
+                        icon = Icons.Default.Info
                     )
 
                     Spacer(Modifier.height(8.dp))
