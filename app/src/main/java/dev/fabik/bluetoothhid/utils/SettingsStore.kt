@@ -32,7 +32,7 @@ object PrefKeys {
     val SCAN_RESOLUTION = Pref(intPreferencesKey("scan_res"), 0) // SD
     val FRONT_CAMERA = Pref(booleanPreferencesKey("front_camera"), false)
     val RESTRICT_AREA = Pref(booleanPreferencesKey("restrict_area"), true)
-    val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), true)
+    val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), false)
     val EXTRA_KEYS = Pref(intPreferencesKey("extra_keys"), 0) // None
     val PLAY_SOUND = Pref(booleanPreferencesKey("play_sound"), false)
     val RAW_VALUE = Pref(booleanPreferencesKey("raw_value"), false)
