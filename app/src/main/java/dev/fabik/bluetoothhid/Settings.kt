@@ -1,8 +1,7 @@
 package dev.fabik.bluetoothhid
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -33,128 +32,166 @@ fun Settings(
             )
         }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            Column(
+            LazyColumn(
                 Modifier
-                    .padding(12.dp, 0.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(12.dp, 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Connection", color = MaterialTheme.colorScheme.primary)
-
-                SwitchPreference(
-                    title = "Auto Connect",
-                    desc = "Connects with the last device on start.",
-                    icon = Icons.Default.Link,
-                    preference = PrefKeys.AUTO_CONNECT
-                )
-
-                SwitchPreference(
-                    title = "Disable Warnings",
-                    desc = "Disables warnings if permissions missing.",
-                    icon = Icons.Default.ReportOff,
-                    preference = PrefKeys.DISABLE_WARNINGS
-                )
-
-                SwitchPreference(
-                    title = "Show unnamed devices",
-                    desc = "Displays bluetooth devices without a name.",
-                    preference = PrefKeys.SHOW_UNNAMED
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Text("Appearance", color = MaterialTheme.colorScheme.primary)
-
-                ComboBoxPreference(
-                    title = "Theme",
-                    desc = "Preferred UI Theme.",
-                    icon = Icons.Default.DarkMode,
-                    values = listOf("System", "Light", "Dark"),
-                    preference = PrefKeys.THEME
-                )
-
-                SwitchPreference(
-                    title = "Dynamic Theme",
-                    desc = "Use the dynamic theme on Android 12+.",
-                    icon = Icons.Default.AutoAwesome,
-                    preference = PrefKeys.DYNAMIC_THEME
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Text("Scanner", color = MaterialTheme.colorScheme.primary)
-
-                SwitchPreference(
-                    title = "Front Camera",
-                    desc = "Use the front camera instead.",
-                    icon = Icons.Default.FlipCameraAndroid,
-                    preference = PrefKeys.FRONT_CAMERA
-                )
-
-                SwitchPreference(
-                    title = "Restrict Scan Area",
-                    desc = "Displays a rectangle in the screen middle.",
-                    icon = Icons.Default.CenterFocusWeak,
-                    preference = PrefKeys.RESTRICT_AREA
-                )
-
-                ComboBoxPreference(
-                    title = "Scan Frequency",
-                    desc = "How often the image should be scanned.",
-                    icon = Icons.Default.ShutterSpeed,
-                    values = listOf("Fastest", "Fast", "Normal", "Slow"),
-                    preference = PrefKeys.SCAN_FREQUENCY
-                )
-
-                ComboBoxPreference(
-                    title = "Scan Resolution",
-                    desc = "Resolution of the analysed image.",
-                    icon = Icons.Default.Hd,
-                    values = listOf("SD", "HD", "FHD"),
-                    preference = PrefKeys.SCAN_RESOLUTION
-                )
-
-                SwitchPreference(
-                    title = "Auto Send",
-                    desc = "Automatically send any detected codes.",
-                    preference = PrefKeys.AUTO_SEND
-                )
-
-                ComboBoxPreference(
-                    title = "Extra keys",
-                    desc = "Specify which key should be appended.",
-                    values = listOf("None", "Return", "Tab"),
-                    preference = PrefKeys.EXTRA_KEYS
-                )
-
-                SwitchPreference(
-                    title = "Play Sound",
-                    desc = "Plays a sound when scanning a new code.",
-                    icon = Icons.Default.VolumeUp,
-                    preference = PrefKeys.PLAY_SOUND
-                )
-
-                SwitchPreference(
-                    title = "Raw Value",
-                    desc = "Extracts the raw data value from the code.",
-                    preference = PrefKeys.RAW_VALUE
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Text("About", color = MaterialTheme.colorScheme.primary)
-
-                val uriHandler = LocalUriHandler.current
-
-                ButtonPreference(
-                    title = "Repository",
-                    desc = "https://github.com/Fabi019/hid-barcode-scanner"
-                ) {
-                    uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
+                item {
+                    Text("Connection", color = MaterialTheme.colorScheme.primary)
                 }
-                ButtonPreference(
-                    title = "Build-Version",
-                    desc = "v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
-                )
 
-                Spacer(Modifier.height(8.dp))
+                item {
+                    SwitchPreference(
+                        title = "Auto Connect",
+                        desc = "Connects with the last device on start.",
+                        icon = Icons.Default.Link,
+                        preference = PrefKeys.AUTO_CONNECT
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Disable Warnings",
+                        desc = "Disables warnings if permissions missing.",
+                        icon = Icons.Default.ReportOff,
+                        preference = PrefKeys.DISABLE_WARNINGS
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Show unnamed devices",
+                        desc = "Displays bluetooth devices without a name.",
+                        preference = PrefKeys.SHOW_UNNAMED
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    Text("Appearance", color = MaterialTheme.colorScheme.primary)
+                }
+
+                item {
+                    ComboBoxPreference(
+                        title = "Theme",
+                        desc = "Preferred UI Theme.",
+                        icon = Icons.Default.DarkMode,
+                        values = listOf("System", "Light", "Dark"),
+                        preference = PrefKeys.THEME
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Dynamic Theme",
+                        desc = "Use the dynamic theme on Android 12+.",
+                        icon = Icons.Default.AutoAwesome,
+                        preference = PrefKeys.DYNAMIC_THEME
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    Text("Scanner", color = MaterialTheme.colorScheme.primary)
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Front Camera",
+                        desc = "Use the front camera instead.",
+                        icon = Icons.Default.FlipCameraAndroid,
+                        preference = PrefKeys.FRONT_CAMERA
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Restrict Scan Area",
+                        desc = "Displays a rectangle in the screen middle.",
+                        icon = Icons.Default.CenterFocusWeak,
+                        preference = PrefKeys.RESTRICT_AREA
+                    )
+                }
+
+                item {
+                    ComboBoxPreference(
+                        title = "Scan Frequency",
+                        desc = "How often the image should be scanned.",
+                        icon = Icons.Default.ShutterSpeed,
+                        values = listOf("Fastest", "Fast", "Normal", "Slow"),
+                        preference = PrefKeys.SCAN_FREQUENCY
+                    )
+                }
+
+                item {
+                    ComboBoxPreference(
+                        title = "Scan Resolution",
+                        desc = "Resolution of the analysed image.",
+                        icon = Icons.Default.Hd,
+                        values = listOf("SD", "HD", "FHD"),
+                        preference = PrefKeys.SCAN_RESOLUTION
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Auto Send",
+                        desc = "Automatically send any detected codes.",
+                        preference = PrefKeys.AUTO_SEND
+                    )
+                }
+
+                item {
+                    ComboBoxPreference(
+                        title = "Extra keys",
+                        desc = "Specify which key should be appended.",
+                        values = listOf("None", "Return", "Tab"),
+                        preference = PrefKeys.EXTRA_KEYS
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Play Sound",
+                        desc = "Plays a sound when scanning a new code.",
+                        icon = Icons.Default.VolumeUp,
+                        preference = PrefKeys.PLAY_SOUND
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        title = "Raw Value",
+                        desc = "Extracts the raw data value from the code.",
+                        preference = PrefKeys.RAW_VALUE
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    Text("About", color = MaterialTheme.colorScheme.primary)
+                }
+
+                item {
+                    val uriHandler = LocalUriHandler.current
+
+                    ButtonPreference(
+                        title = "Repository",
+                        desc = "https://github.com/Fabi019/hid-barcode-scanner"
+                    ) {
+                        uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
+                    }
+                }
+
+                item {
+                    ButtonPreference(
+                        title = "Build-Version",
+                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+                }
             }
         }
     }
