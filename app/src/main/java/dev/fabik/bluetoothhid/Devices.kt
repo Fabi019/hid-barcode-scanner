@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -58,8 +57,6 @@ fun DeviceList(
     navHostController: NavHostController,
     bluetoothController: BluetoothController
 ) {
-    val context = LocalContext.current
-
     val foundDevices = remember {
         mutableListOf<BluetoothDevice>()
     }
