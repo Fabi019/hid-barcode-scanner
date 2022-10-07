@@ -34,6 +34,7 @@ fun Settings(
         Box(modifier = Modifier.padding(padding)) {
             LazyColumn(
                 Modifier
+                    .fillMaxSize()
                     .padding(12.dp, 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -47,15 +48,6 @@ fun Settings(
                         desc = "Connects with the last device on start.",
                         icon = Icons.Default.Link,
                         preference = PrefKeys.AUTO_CONNECT
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        title = "Disable Warnings",
-                        desc = "Disables warnings if permissions missing.",
-                        icon = Icons.Default.ReportOff,
-                        preference = PrefKeys.DISABLE_WARNINGS
                     )
                 }
 
@@ -120,7 +112,7 @@ fun Settings(
                         title = "Scan Frequency",
                         desc = "How often the image should be scanned.",
                         icon = Icons.Default.ShutterSpeed,
-                        values = listOf("Fastest", "Fast", "Normal", "Slow"),
+                        values = listOf("Fastest", "Fast (100ms)", "Normal (500ms)", "Slow (1s)"),
                         preference = PrefKeys.SCAN_FREQUENCY
                     )
                 }
