@@ -100,12 +100,22 @@ fun Settings(
 
                 item {
                     SwitchPreference(
+                        title = "Flash toggle",
+                        desc = "Displays a button if the camera supports it.",
+                        icon = Icons.Default.FlashOn,
+                        preference = PrefKeys.SHOW_FLASH
+                    )
+                }
+
+                item {
+                    SwitchPreference(
                         title = "Restrict Scan Area",
                         desc = "Displays a rectangle in the screen middle.",
                         icon = Icons.Default.CenterFocusWeak,
                         preference = PrefKeys.RESTRICT_AREA
                     )
                 }
+
 
                 item {
                     ComboBoxPreference(

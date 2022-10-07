@@ -31,6 +31,7 @@ object PrefKeys {
     val SCAN_FREQUENCY = Pref(intPreferencesKey("scan_freq"), 2) // Normal
     val SCAN_RESOLUTION = Pref(intPreferencesKey("scan_res"), 0) // SD
     val FRONT_CAMERA = Pref(booleanPreferencesKey("front_camera"), false)
+    val SHOW_FLASH = Pref(booleanPreferencesKey("show_flash"), false)
     val RESTRICT_AREA = Pref(booleanPreferencesKey("restrict_area"), true)
     val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), false)
     val EXTRA_KEYS = Pref(intPreferencesKey("extra_keys"), 0) // None

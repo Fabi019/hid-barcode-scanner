@@ -232,7 +232,9 @@ fun BoxScope.CameraPreview(
     }
 
     cameraInfo?.let {
-        if (it.hasFlashUnit()) {
+        val showFlash by rememberPreferenceNull(PrefKeys.SHOW_FLASH)
+
+        if (it.hasFlashUnit() && showFlash == true) {
             val torchState by it.torchState.observeAsState()
 
             FloatingActionButton(
