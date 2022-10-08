@@ -192,6 +192,8 @@ fun BoxScope.CameraPreview(
         modifier = Modifier.fillMaxSize(),
     )
 
+    val overlayType by rememberPreferenceNull(PrefKeys.OVERLAY_TYPE)
+
     Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
         val y = this.size.height / 2
@@ -199,7 +201,10 @@ fun BoxScope.CameraPreview(
         val radius = 30f
 
         if (restrictArea == true) {
-            scanRect = Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+            scanRect = when (overlayType) {
+                1 -> Rect(Offset(x - length / 2, y - length / 4), Size(length, length / 2))
+                else -> Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+            }
 
             val markerPath = Path().apply {
                 addRoundRect(RoundRect(scanRect, CornerRadius(radius)))

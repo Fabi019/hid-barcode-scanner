@@ -110,12 +110,21 @@ fun Settings(
                 item {
                     SwitchPreference(
                         title = "Restrict Scan Area",
-                        desc = "Displays a rectangle in the screen middle.",
-                        icon = Icons.Default.CenterFocusWeak,
+                        desc = "Displays a overlay on the camera screen.",
+                        icon = Icons.Default.CropFree,
                         preference = PrefKeys.RESTRICT_AREA
                     )
                 }
 
+                item {
+                    ComboBoxPreference(
+                        title = "Overlay type",
+                        desc = "Specify the shape of the overlay.",
+                        icon = Icons.Default.CenterFocusWeak,
+                        values = listOf("Square (QR-Code)", "Rectangle (Barcode)"),
+                        preference = PrefKeys.OVERLAY_TYPE
+                    )
+                }
 
                 item {
                     ComboBoxPreference(
