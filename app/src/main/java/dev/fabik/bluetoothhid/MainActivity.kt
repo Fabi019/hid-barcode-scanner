@@ -193,7 +193,8 @@ fun MainScreen(
                         .fillMaxHeight(0.3f)
                         .fillMaxWidth()
                         .align(Alignment.TopStart),
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (currentBarcode != null) {
                         val text = AnnotatedString(
@@ -204,8 +205,7 @@ fun MainScreen(
                         ClickableText(
                             text,
                             maxLines = 6,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth()
+                            overflow = TextOverflow.Ellipsis
                         ) {
                             clipboardManager.setText(text)
                             Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT)
@@ -213,14 +213,9 @@ fun MainScreen(
                         }
                     } else {
                         Text(
-                            "Place the QR Code / Barcode",
+                            "Scan any QR Code / Barcode to get started.",
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Text(
-                            "in the frame below.",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.width(230.dp)
                         )
                     }
                 }

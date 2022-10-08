@@ -60,7 +60,7 @@ open class KeyboardSender(
         CoroutineScope(Dispatchers.IO).launch {
             keyCharacterMap.getEvents(appended.toCharArray()).forEach {
                 if (it.action == KeyEvent.ACTION_DOWN) {
-                    sendKeyEvent(it.keyCode, it, true)
+                    sendKeyEvent(it.keyCode, it)
                     delay(1)
                 }
             }
