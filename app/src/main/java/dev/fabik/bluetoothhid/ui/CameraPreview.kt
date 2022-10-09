@@ -60,6 +60,7 @@ fun BoxScope.CameraPreview(
     val frontCamera by rememberPreferenceNull(PrefKeys.FRONT_CAMERA)
     val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
     val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
+    val fullyInside by rememberPreferenceDefault(PrefKeys.FULL_INSIDE)
 
     AndroidView(
         factory = { ctx ->
@@ -97,14 +98,25 @@ fun BoxScope.CameraPreview(
                     }
 
                     val filtered = barcodes.filter {
-                        it.cornerPoints?.forEach { p ->
-                            val px = p.x * scale - transX
-                            val py = p.y * scale - transY
-                            if (!scanRect.contains(Offset(px, py))) {
-                                return@filter false
+                        if (fullyInside) {
+                            it.cornerPoints?.forEach { p ->
+                                val px = p.x * scale - transX
+                                val py = p.y * scale - transY
+                                if (!scanRect.contains(Offset(px, py))) {
+                                    return@filter false
+                                }
                             }
+                            true
+                        } else {
+                            it.cornerPoints?.forEach { p ->
+                                val px = p.x * scale - transX
+                                val py = p.y * scale - transY
+                                if (scanRect.contains((Offset(px, py)))) {
+                                    return@filter true
+                                }
+                            }
+                            false
                         }
-                        true
                     }
 
                     filtered.firstOrNull().let { barcode ->

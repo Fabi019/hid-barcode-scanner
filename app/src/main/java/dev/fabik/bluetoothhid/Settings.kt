@@ -138,6 +138,15 @@ fun Settings(
                 }
 
                 item {
+                    SwitchPreference(
+                        title = stringResource(R.string.full_inside),
+                        desc = stringResource(R.string.full_inside_desc),
+                        icon = Icons.Default.QrCodeScanner,
+                        preference = PrefKeys.FULL_INSIDE
+                    )
+                }
+
+                item {
                     ComboBoxPreference(
                         title = stringResource(R.string.scan_freq),
                         desc = stringResource(R.string.scan_freq_desc),
