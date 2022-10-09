@@ -1,3 +1,78 @@
 <resources>
     <string name="app_name">BT Scanner</string>
+    <string name="scanner">Scanner</string>
+    <string name="send_to_device">Send to Device</string>
+    <string name="scan_code_to_start">Scan any QR Code / Barcode to get started.</string>
+    <string name="settings">Settings</string>
+    <string name="connection">Connection</string>
+    <string name="auto_connect">Auto Connect</string>
+    <string name="auto_connect_desc">Connects with the last device on start.</string>
+    <string name="show_unnamed">Show unnamed devices</string>
+    <string name="show_unnamed_desc">Displays bluetooth devices without a name.</string>
+    <string name="appearance">Appearance</string>
+    <string name="theme">Theme</string>
+    <string name="theme_desc">Preferred UI Theme.</string>
+    <string name="dynamic_theme">Dynamic Theme</string>
+    <string name="dynamic_theme_desc">Use the dynamic theme on Android 12+.</string>
+    <string name="front_camera">Front Camera</string>
+    <string name="front_camera_desc">Use the front camera instead.</string>
+    <string name="flash_toggle">Flash toggle</string>
+    <string name="flash_toggle_desc">Displays a button if the camera supports it.</string>
+    <string name="restrict_area">Restrict Scan Area</string>
+    <string name="restrict_area_desc">Displays a overlay on the camera screen.</string>
+    <string name="overlay_type">Overlay type</string>
+    <string name="overlay_type_desc">Specify the shape of the overlay.</string>
+    <string name="full_inside">Full Inside</string>
+    <string name="full_inside_desc">Require codes to be fully inside the area.</string>
+    <string name="scan_freq">Scan Frequency</string>
+    <string name="scan_freq_desc">How often the image should be scanned.</string>
+    <string name="scan_res">Scan Resolution</string>
+    <string name="scan_res_desc">Resolution of the analysed image.</string>
+    <string name="auto_send">Auto Send</string>
+    <string name="auto_send_desc">Automatically send any detected codes.</string>
+    <string name="extra_keys">Extra keys</string>
+    <string name="extra_keys_desc">Specify which key should be appended.</string>
+    <string name="play_sound">Play Sound</string>
+    <string name="play_sound_desc">Plays a sound when scanning a new code.</string>
+    <string name="raw_value">Raw Value</string>
+    <string name="raw_value_desc">Extracts the raw data value from the code.</string>
+    <string name="about">About</string>
+    <string name="repository">Repository</string>
+    <string name="build_version">Build-Version</string>
+    <string name="confirm">Confirm</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="scanned_devices">Scanned devices</string>
+    <string name="swipe_refresh">(Swipe from top to refresh)</string>
+    <string name="unknown"><![CDATA[<unknown>]]></string>
+    <string name="paired_devices">Paired devices</string>
+    <string name="no_paired_devices">(No paired devices found)</string>
+    <string name="skip">Skip</string>
+    <string name="camera_permission">Camera Permission</string>
+    <string name="request_again">Request again</string>
+    <string name="exit">Exit</string>
+    <string-array name="theme_values">
+        <item>System</item>
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+    <string-array name="overlay_values">
+        <item>Square (QR-Code)</item>
+        <item>Rectangle (Barcode)</item>
+    </string-array>
+    <string-array name="scan_freq_values">
+        <item>Fastest</item>
+        <item>Fast (100ms)</item>
+        <item>Normal (500ms)</item>
+        <item>Slow (1s)</item>
+    </string-array>
+    <string-array name="scan_res_values">
+        <item>SD</item>
+        <item>HD</item>
+        <item>FHD</item>
+    </string-array>
+    <string-array name="extra_keys_values">
+        <item>None</item>
+        <item>Return</item>
+        <item>Tab</item>
+    </string-array>
 </resources>

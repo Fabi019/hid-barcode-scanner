@@ -32,6 +32,7 @@ object PrefKeys {
     val FRONT_CAMERA = Pref(booleanPreferencesKey("front_camera"), false)
     val SHOW_FLASH = Pref(booleanPreferencesKey("show_flash"), false)
     val RESTRICT_AREA = Pref(booleanPreferencesKey("restrict_area"), true)
+    val FULL_INSIDE = Pref(booleanPreferencesKey("full_inside"), true)
     val OVERLAY_TYPE = Pref(intPreferencesKey("overlay_type"), 0) // Square
     val AUTO_SEND = Pref(booleanPreferencesKey("auto_send"), false)
     val EXTRA_KEYS = Pref(intPreferencesKey("extra_keys"), 0) // None

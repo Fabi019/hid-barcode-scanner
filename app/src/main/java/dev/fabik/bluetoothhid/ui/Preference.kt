@@ -101,7 +101,7 @@ fun SwitchPreference(
 fun ComboBoxPreference(
     title: String,
     desc: String,
-    values: List<String>,
+    values: Array<String>,
     icon: ImageVector? = null,
     preference: PrefKeys.Pref<Int>
 ) {
@@ -117,7 +117,7 @@ fun ComboBoxPreference(
     title: String,
     desc: String,
     selectedItem: Int?,
-    values: List<String>,
+    values: Array<String>,
     icon: ImageVector? = null,
     onSelect: (Int) -> Unit
 ) {

@@ -10,10 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import dev.fabik.bluetoothhid.R
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -76,7 +78,7 @@ fun RequestPermissions(
                 Button(onClick = {
                     bluetoothPermission.launchMultiplePermissionRequest()
                 }) {
-                    Text("Request again")
+                    Text(stringResource(R.string.request_again))
                 }
             }
         }
@@ -99,7 +101,7 @@ fun RequiresCameraPermission(
         Button(onClick = {
             cameraPermission.launchPermissionRequest()
         }) {
-            Text("Camera Permission")
+            Text(stringResource(R.string.camera_permission))
         }
     }
 

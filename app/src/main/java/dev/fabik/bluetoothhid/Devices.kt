@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -135,7 +136,10 @@ fun DeviceList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                Text("Scanned devices", color = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.scanned_devices),
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
 
             if (isScanning) {
@@ -145,13 +149,13 @@ fun DeviceList(
             } else {
                 if (foundDevices.isEmpty()) {
                     item {
-                        Text("(Swipe from top to refresh)")
+                        Text(stringResource(R.string.swipe_refresh))
                     }
                 } else {
                     items(foundDevices) { d ->
                         if (d.name == null && !showUnnamed)
                             return@items
-                        Device(d.name ?: "<unknown>", d.address) {
+                        Device(d.name ?: stringResource(R.string.unknown), d.address) {
                             bluetoothController.connect(d)
                         }
                     }
@@ -160,12 +164,15 @@ fun DeviceList(
 
             item {
                 Spacer(Modifier.height(8.dp))
-                Text("Paired devices", color = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.paired_devices),
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
 
             if (devices.isEmpty()) {
                 item {
-                    Text("(No paired devices found)")
+                    Text(stringResource(R.string.no_paired_devices))
                 }
             } else {
                 items(devices.toList()) {
@@ -181,7 +188,7 @@ fun DeviceList(
                         onClick = { navHostController.navigate(Routes.Main) },
                         Modifier.align(Alignment.Center)
                     ) {
-                        Text("Skip")
+                        Text(stringResource(R.string.skip))
                     }
                 }
             }

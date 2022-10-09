@@ -8,6 +8,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.fabik.bluetoothhid.ui.ButtonPreference
@@ -23,7 +25,7 @@ fun Settings(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = { navHostController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
@@ -39,13 +41,16 @@ fun Settings(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
-                    Text("Connection", color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(R.string.connection),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 item {
                     SwitchPreference(
-                        title = "Auto Connect",
-                        desc = "Connects with the last device on start.",
+                        title = stringResource(R.string.auto_connect),
+                        desc = stringResource(R.string.auto_connect_desc),
                         icon = Icons.Default.Link,
                         preference = PrefKeys.AUTO_CONNECT
                     )
@@ -53,8 +58,8 @@ fun Settings(
 
                 item {
                     SwitchPreference(
-                        title = "Show unnamed devices",
-                        desc = "Displays bluetooth devices without a name.",
+                        title = stringResource(R.string.show_unnamed),
+                        desc = stringResource(R.string.show_unnamed_desc),
                         icon = Icons.Default.DeviceUnknown,
                         preference = PrefKeys.SHOW_UNNAMED
                     )
@@ -62,23 +67,26 @@ fun Settings(
 
                 item {
                     Spacer(Modifier.height(8.dp))
-                    Text("Appearance", color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(R.string.appearance),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 item {
                     ComboBoxPreference(
-                        title = "Theme",
-                        desc = "Preferred UI Theme.",
+                        title = stringResource(R.string.theme),
+                        desc = stringResource(R.string.theme_desc),
                         icon = Icons.Default.AutoFixHigh,
-                        values = listOf("System", "Light", "Dark"),
+                        values = stringArrayResource(R.array.theme_values),
                         preference = PrefKeys.THEME
                     )
                 }
 
                 item {
                     SwitchPreference(
-                        title = "Dynamic Theme",
-                        desc = "Use the dynamic theme on Android 12+.",
+                        title = stringResource(R.string.dynamic_theme),
+                        desc = stringResource(R.string.dynamic_theme_desc),
                         icon = Icons.Default.AutoAwesome,
                         preference = PrefKeys.DYNAMIC_THEME
                     )
@@ -86,13 +94,16 @@ fun Settings(
 
                 item {
                     Spacer(Modifier.height(8.dp))
-                    Text("Scanner", color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(R.string.scanner),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 item {
                     SwitchPreference(
-                        title = "Front Camera",
-                        desc = "Use the front camera instead.",
+                        title = stringResource(R.string.front_camera),
+                        desc = stringResource(R.string.front_camera_desc),
                         icon = Icons.Default.FlipCameraAndroid,
                         preference = PrefKeys.FRONT_CAMERA
                     )
@@ -100,8 +111,8 @@ fun Settings(
 
                 item {
                     SwitchPreference(
-                        title = "Flash toggle",
-                        desc = "Displays a button if the camera supports it.",
+                        title = stringResource(R.string.flash_toggle),
+                        desc = stringResource(R.string.flash_toggle_desc),
                         icon = Icons.Default.FlashOn,
                         preference = PrefKeys.SHOW_FLASH
                     )
@@ -109,8 +120,8 @@ fun Settings(
 
                 item {
                     SwitchPreference(
-                        title = "Restrict Scan Area",
-                        desc = "Displays a overlay on the camera screen.",
+                        title = stringResource(R.string.restrict_area),
+                        desc = stringResource(R.string.restrict_area_desc),
                         icon = Icons.Default.CropFree,
                         preference = PrefKeys.RESTRICT_AREA
                     )
@@ -118,38 +129,38 @@ fun Settings(
 
                 item {
                     ComboBoxPreference(
-                        title = "Overlay type",
-                        desc = "Specify the shape of the overlay.",
+                        title = stringResource(R.string.overlay_type),
+                        desc = stringResource(R.string.overlay_type_desc),
                         icon = Icons.Default.CenterFocusWeak,
-                        values = listOf("Square (QR-Code)", "Rectangle (Barcode)"),
+                        values = stringArrayResource(R.array.overlay_values),
                         preference = PrefKeys.OVERLAY_TYPE
                     )
                 }
 
                 item {
                     ComboBoxPreference(
-                        title = "Scan Frequency",
-                        desc = "How often the image should be scanned.",
+                        title = stringResource(R.string.scan_freq),
+                        desc = stringResource(R.string.scan_freq_desc),
                         icon = Icons.Default.ShutterSpeed,
-                        values = listOf("Fastest", "Fast (100ms)", "Normal (500ms)", "Slow (1s)"),
+                        values = stringArrayResource(R.array.scan_freq_values),
                         preference = PrefKeys.SCAN_FREQUENCY
                     )
                 }
 
                 item {
                     ComboBoxPreference(
-                        title = "Scan Resolution",
-                        desc = "Resolution of the analysed image.",
+                        title = stringResource(R.string.scan_res),
+                        desc = stringResource(R.string.scan_res_desc),
                         icon = Icons.Default.Hd,
-                        values = listOf("SD", "HD", "FHD"),
+                        values = stringArrayResource(R.array.scan_res_values),
                         preference = PrefKeys.SCAN_RESOLUTION
                     )
                 }
 
                 item {
                     SwitchPreference(
-                        title = "Auto Send",
-                        desc = "Automatically send any detected codes.",
+                        title = stringResource(R.string.auto_send),
+                        desc = stringResource(R.string.auto_send_desc),
                         icon = Icons.Default.Send,
                         preference = PrefKeys.AUTO_SEND
                     )
@@ -157,18 +168,18 @@ fun Settings(
 
                 item {
                     ComboBoxPreference(
-                        title = "Extra keys",
-                        desc = "Specify which key should be appended.",
-                        values = listOf("None", "Return", "Tab"),
+                        title = stringResource(R.string.extra_keys),
+                        desc = stringResource(R.string.extra_keys_desc),
                         icon = Icons.Default.AddCircle,
+                        values = stringArrayResource(R.array.extra_keys_values),
                         preference = PrefKeys.EXTRA_KEYS
                     )
                 }
 
                 item {
                     SwitchPreference(
-                        title = "Play Sound",
-                        desc = "Plays a sound when scanning a new code.",
+                        title = stringResource(R.string.play_sound),
+                        desc = stringResource(R.string.play_sound_desc),
                         icon = Icons.Default.VolumeUp,
                         preference = PrefKeys.PLAY_SOUND
                     )
@@ -176,8 +187,8 @@ fun Settings(
 
                 item {
                     SwitchPreference(
-                        title = "Raw Value",
-                        desc = "Extracts the raw data value from the code.",
+                        title = stringResource(R.string.raw_value),
+                        desc = stringResource(R.string.raw_value_desc),
                         icon = Icons.Default.Description,
                         preference = PrefKeys.RAW_VALUE
                     )
@@ -185,14 +196,14 @@ fun Settings(
 
                 item {
                     Spacer(Modifier.height(8.dp))
-                    Text("About", color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.about), color = MaterialTheme.colorScheme.primary)
                 }
 
                 item {
                     val uriHandler = LocalUriHandler.current
 
                     ButtonPreference(
-                        title = "Repository",
+                        title = stringResource(R.string.repository),
                         desc = "https://github.com/Fabi019/hid-barcode-scanner",
                         icon = Icons.Default.Code
                     ) {
@@ -202,7 +213,7 @@ fun Settings(
 
                 item {
                     ButtonPreference(
-                        title = "Build-Version",
+                        title = stringResource(R.string.build_version),
                         desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
                         icon = Icons.Default.Info
                     )

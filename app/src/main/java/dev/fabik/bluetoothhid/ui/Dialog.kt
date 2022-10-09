@@ -13,7 +13,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.R
 
 class DialogState(initialOpen: Boolean = false) {
     var openState by mutableStateOf(initialOpen)
@@ -41,7 +43,7 @@ fun ComboBoxDialog(
     dialogState: DialogState,
     title: String,
     selectedItem: Int,
-    values: List<String>,
+    values: Array<String>,
     onDismiss: DialogState.() -> Unit = {},
     onConfirm: DialogState.(Int) -> Unit
 ) {
@@ -103,14 +105,14 @@ fun ConfirmDialog(
                 TextButton(
                     onClick = { onConfirm(dialogState) }
                 ) {
-                    Text("Confirm")
+                    Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { onDismiss(dialogState) }
                 ) {
-                    Text("Dismiss")
+                    Text(stringResource(R.string.dismiss))
                 }
             },
         )

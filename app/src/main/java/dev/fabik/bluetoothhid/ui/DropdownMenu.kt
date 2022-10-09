@@ -7,7 +7,9 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import dev.fabik.bluetoothhid.R
 
 @Composable
 fun Dropdown(
@@ -28,14 +30,14 @@ fun Dropdown(
             expanded = showMenu,
             onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
-                text = { Text("Settings") },
+                text = { Text(stringResource(R.string.settings)) },
                 onClick = {
                     navHostController.navigate(Routes.Settings)
                     showMenu = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("Exit") },
+                text = { Text(stringResource(R.string.exit)) },
                 onClick = { activity.finishAfterTransition() }
             )
         }

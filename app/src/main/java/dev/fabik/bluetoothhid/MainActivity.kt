@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -138,7 +139,7 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Scanner") }, actions = {
+            TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
                 IconButton(onClick = {
                     val inputMethodManager =
                         context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -166,7 +167,7 @@ fun MainScreen(
                 ) {
                     Icon(Icons.Filled.Send, "Send")
                     Spacer(Modifier.width(8.dp))
-                    Text("Send to Device")
+                    Text(stringResource(R.string.send_to_device))
                 }
             }
         }
@@ -213,7 +214,7 @@ fun MainScreen(
                         }
                     } else {
                         Text(
-                            "Scan any QR Code / Barcode to get started.",
+                            stringResource(R.string.scan_code_to_start),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.width(230.dp)
                         )
