@@ -98,25 +98,22 @@ fun BoxScope.CameraPreview(
                     }
 
                     val filtered = barcodes.filter {
-                        if (fullyInside) {
-                            it.cornerPoints?.forEach { p ->
-                                val px = p.x * scale - transX
-                                val py = p.y * scale - transY
-                                if (!scanRect.contains(Offset(px, py))) {
+                        it.cornerPoints?.map { p ->
+                            val px = p.x * scale - transX
+                            val py = p.y * scale - transY
+                            Offset(px, py)
+                        }?.forEach { o ->
+                            if (fullyInside) {
+                                if (!scanRect.contains(o)) {
                                     return@filter false
                                 }
-                            }
-                            true
-                        } else {
-                            it.cornerPoints?.forEach { p ->
-                                val px = p.x * scale - transX
-                                val py = p.y * scale - transY
-                                if (scanRect.contains((Offset(px, py)))) {
+                            } else {
+                                if (scanRect.contains(o)) {
                                     return@filter true
                                 }
                             }
-                            false
                         }
+                        fullyInside
                     }
 
                     filtered.firstOrNull().let { barcode ->
