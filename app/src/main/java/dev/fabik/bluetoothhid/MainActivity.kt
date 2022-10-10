@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                     KeyboardSender(
                                         context.getPreference(PrefKeys.EXTRA_KEYS),
+                                        context.getPreference(PrefKeys.SEND_DELAY),
                                         hid,
                                         dev
                                     )

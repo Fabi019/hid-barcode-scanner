@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
+import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.utils.PrefKeys
 
@@ -71,6 +72,17 @@ fun Settings(
                         desc = stringResource(R.string.show_status_desc),
                         icon = Icons.Default.CallToAction,
                         preference = PrefKeys.SHOW_STATE
+                    )
+                }
+
+                item {
+                    SliderPreference(
+                        title = stringResource(R.string.send_delay),
+                        desc = stringResource(R.string.send_delay_desc),
+                        valueFormat = stringResource(R.string.send_delay_template),
+                        range = 0f..100f,
+                        icon = Icons.Default.Timer,
+                        preference = PrefKeys.SEND_DELAY
                     )
                 }
 

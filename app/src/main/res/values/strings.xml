@@ -52,6 +52,9 @@
     <string name="exit">Exit</string>
     <string name="show_status">Show Status</string>
     <string name="show_status_desc">Displays connection state updates of a device.</string>
+    <string name="send_delay">Send Delay</string>
+    <string name="send_delay_desc">Time between each char when sending a text.</string>
+    <string name="send_delay_template">Delay (ms): %.0f</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -173,7 +173,8 @@ fun SliderPreference(
             value,
             range,
             steps,
-            onDismiss = { close() }) {
+            onDismiss = { close() }
+        ) {
             onSelect(it)
             close()
         }

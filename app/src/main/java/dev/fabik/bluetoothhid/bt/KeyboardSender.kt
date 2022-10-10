@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("MissingPermission")
 open class KeyboardSender(
     private val appendKeysFlow: Flow<Int>,
+    private val sendDelayFlow: Flow<Float>,
     private val hidDevice: BluetoothHidDevice,
     private val host: BluetoothDevice
 ) {
@@ -28,11 +29,17 @@ open class KeyboardSender(
         KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 
     private var appendKey = 0
+    private var sendDelay = 0L
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
             appendKeysFlow.collect {
                 appendKey = it
+            }
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            sendDelayFlow.collect {
+                sendDelay = it.toLong()
             }
         }
     }
@@ -61,7 +68,7 @@ open class KeyboardSender(
             keyCharacterMap.getEvents(appended.toCharArray()).forEach {
                 if (it.action == KeyEvent.ACTION_DOWN) {
                     sendKeyEvent(it.keyCode, it)
-                    delay(1)
+                    delay(sendDelay)
                 }
             }
         }
