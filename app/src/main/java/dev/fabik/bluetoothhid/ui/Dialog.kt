@@ -1,15 +1,13 @@
 package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +69,45 @@ fun ComboBoxDialog(
                     Text(item, modifier = Modifier.weight(1f))
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SliderDialog(
+    dialogState: DialogState,
+    title: String,
+    valueFormat: String = "%f",
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int = 0,
+    onDismiss: DialogState.() -> Unit = {},
+    onValueChange: DialogState.(Float) -> Unit
+) {
+    var sliderPosition by remember {
+        mutableStateOf(value)
+    }
+
+    ConfirmDialog(dialogState, title, onConfirm = {
+        onValueChange(sliderPosition)
+    }, onDismiss = {
+        sliderPosition = value
+        onDismiss()
+    }
+    ) {
+        Column {
+            Text(valueFormat.format(sliderPosition))
+
+            Slider(
+                value = sliderPosition,
+                onValueChange = { sliderPosition = it },
+                valueRange = range,
+                steps = steps,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.secondary,
+                    activeTrackColor = MaterialTheme.colorScheme.secondary
+                )
+            )
         }
     }
 }

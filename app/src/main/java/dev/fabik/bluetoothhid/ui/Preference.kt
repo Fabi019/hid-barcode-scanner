@@ -134,3 +134,52 @@ fun ComboBoxPreference(
         dialogState.open()
     }
 }
+
+@Composable
+fun SliderPreference(
+    title: String,
+    desc: String,
+    valueFormat: String = "%f",
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int = 0,
+    icon: ImageVector? = null,
+    preference: PrefKeys.Pref<Float>
+) {
+    var value by rememberPreferenceNull(preference)
+
+    SliderPreference(title, desc, valueFormat, value, steps, range, icon) {
+        value = it
+    }
+}
+
+@Composable
+fun SliderPreference(
+    title: String,
+    desc: String,
+    valueFormat: String = "%f",
+    value: Float?,
+    steps: Int = 0,
+    range: ClosedFloatingPointRange<Float>,
+    icon: ImageVector? = null,
+    onSelect: (Float) -> Unit
+) {
+    val dialogState = rememberDialogState()
+
+    value?.let {
+        SliderDialog(
+            dialogState,
+            title,
+            valueFormat,
+            value,
+            range,
+            steps,
+            onDismiss = { close() }) {
+            onSelect(it)
+            close()
+        }
+    }
+
+    ButtonPreference(title, desc, icon) {
+        dialogState.open()
+    }
+}
