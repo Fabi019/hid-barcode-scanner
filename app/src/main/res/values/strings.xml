@@ -50,6 +50,8 @@
     <string name="camera_permission">Camera Permission</string>
     <string name="request_again">Request again</string>
     <string name="exit">Exit</string>
+    <string name="show_status">Show Status</string>
+    <string name="show_status_desc">Displays connection state updates of a device.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

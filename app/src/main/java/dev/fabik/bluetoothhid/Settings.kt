@@ -66,6 +66,15 @@ fun Settings(
                 }
 
                 item {
+                    SwitchPreference(
+                        title = stringResource(R.string.show_status),
+                        desc = stringResource(R.string.show_status_desc),
+                        icon = Icons.Default.CallToAction,
+                        preference = PrefKeys.SHOW_STATE
+                    )
+                }
+
+                item {
                     Spacer(Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.appearance),
