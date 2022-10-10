@@ -83,7 +83,9 @@ class MainActivity : ComponentActivity() {
                             bluetoothController.register(context, listener = { hid, dev ->
                                 keyboardSender = if (hid != null && dev != null) {
                                     runOnUiThread {
-                                        navHostController.navigate(Routes.Main)
+                                        navHostController.navigate(Routes.Main) {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     KeyboardSender(
                                         context.getPreference(PrefKeys.EXTRA_KEYS),
@@ -92,8 +94,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                 } else {
                                     runOnUiThread {
-                                        navHostController.popBackStack()
-                                        navHostController.navigate(Routes.Devices)
+                                        navHostController.navigate(Routes.Devices) {
+                                            launchSingleTop = true
+                                        }
                                     }
                                     null
                                 }
