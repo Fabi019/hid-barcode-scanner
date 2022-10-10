@@ -4,13 +4,16 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -19,10 +22,11 @@ import dev.fabik.bluetoothhid.R
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun RequestPermissions(
-    context: Context = LocalContext.current,
+fun RequiresBluetoothPermission(
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+
     val permissions = mutableListOf(
         android.Manifest.permission.BLUETOOTH,
         android.Manifest.permission.BLUETOOTH_ADMIN
@@ -72,18 +76,26 @@ fun RequestPermissions(
         content()
     } else {
         if (bluetoothPermission.shouldShowRationale) {
-            Column {
+            Column(
+                Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text("Not all required permissions have been granted.")
                 Text("The app can't function correctly without them.")
+
+                Spacer(Modifier.height(16.dp))
+
                 Button(onClick = {
                     bluetoothPermission.launchMultiplePermissionRequest()
                 }) {
                     Text(stringResource(R.string.request_again))
                 }
             }
-        }
-        SideEffect {
-            bluetoothPermission.launchMultiplePermissionRequest()
+        } else {
+            SideEffect {
+                bluetoothPermission.launchMultiplePermissionRequest()
+            }
         }
     }
 }
