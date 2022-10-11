@@ -27,6 +27,7 @@ import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.RequireLocationPermission
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
@@ -59,7 +60,7 @@ fun DeviceList(
     bluetoothController: BluetoothController
 ) {
     val foundDevices = remember {
-        mutableListOf<BluetoothDevice>()
+        mutableStateListOf<BluetoothDevice>()
     }
 
     var isScanning by remember {
@@ -85,16 +86,17 @@ fun DeviceList(
                     BluetoothDevice::class.java
                 )
             } else {
+                @Suppress("DEPRECATION")
                 it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             }
 
         device?.let { dev ->
-            if (!foundDevices.contains(device)) {
+            if (!foundDevices.contains(dev)) {
                 foundDevices.add(dev)
             }
-        }
 
-        Log.d("Discovery", "Found: $device")
+            Log.d("Discovery", "Found: $dev")
+        }
     }
 
     var isRefreshing by remember {
@@ -144,20 +146,24 @@ fun DeviceList(
 
             if (isScanning) {
                 item {
-                    CircularProgressIndicator()
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                }
+            }
+
+            if (foundDevices.isEmpty()) {
+                item {
+                    RequireLocationPermission {
+                        if (foundDevices.isEmpty() && !isScanning) {
+                            Text(stringResource(R.string.swipe_refresh))
+                        }
+                    }
                 }
             } else {
-                if (foundDevices.isEmpty()) {
-                    item {
-                        Text(stringResource(R.string.swipe_refresh))
-                    }
-                } else {
-                    items(foundDevices) { d ->
-                        if (d.name == null && !showUnnamed)
-                            return@items
-                        Device(d.name ?: stringResource(R.string.unknown), d.address) {
-                            bluetoothController.connect(d)
-                        }
+                items(foundDevices) { d ->
+                    if (d.name == null && !showUnnamed)
+                        return@items
+                    Device(d.name ?: stringResource(R.string.unknown), d.address) {
+                        bluetoothController.connect(d)
                     }
                 }
             }

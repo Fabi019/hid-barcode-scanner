@@ -1,14 +1,14 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
+import android.content.Intent
 import android.location.LocationManager
 import android.os.Build
-import android.widget.Toast
+import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,14 +19,13 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.ui.theme.Typography
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RequiresBluetoothPermission(
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
-
     val permissions = mutableListOf(
         android.Manifest.permission.BLUETOOTH,
         android.Manifest.permission.BLUETOOTH_ADMIN
@@ -39,56 +38,21 @@ fun RequiresBluetoothPermission(
 
     val bluetoothPermission = rememberMultiplePermissionsState(permissions)
 
-    val locationPermission = rememberMultiplePermissionsState(
-        listOf(
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-        )
-    )
-
     if (bluetoothPermission.allPermissionsGranted) {
-        if (!locationPermission.allPermissionsGranted) {
-            if (locationPermission.shouldShowRationale) {
-                Toast.makeText(
-                    context,
-                    "No location permission. Scanning for new devices will NOT work on most devices!",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            SideEffect {
-                locationPermission.launchMultiplePermissionRequest()
-            }
-        } else {
-            // Check if Location is enabled
-            val locationManager =
-                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                Toast.makeText(
-                    context,
-                    "Location is not enabled. Scanning for new devices will NOT work!",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                //startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            }
-        }
-
         content()
     } else {
         if (bluetoothPermission.shouldShowRationale) {
             Column(
                 Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                verticalArrangement = Arrangement.Center
             ) {
-                Text("Not all required permissions have been granted.")
-                Text("The app can't function correctly without them.")
+                Text(stringResource(R.string.bluetooth_permission))
 
                 Spacer(Modifier.height(16.dp))
 
                 Button(onClick = {
                     bluetoothPermission.launchMultiplePermissionRequest()
-                }) {
+                }, Modifier.align(Alignment.CenterHorizontally)) {
                     Text(stringResource(R.string.request_again))
                 }
             }
@@ -110,11 +74,77 @@ fun RequiresCameraPermission(
     if (cameraPermission.status.isGranted) {
         content()
     } else {
-        Button(onClick = {
-            cameraPermission.launchPermissionRequest()
-        }) {
+        Column(Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.camera_permission))
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(onClick = {
+                cameraPermission.launchPermissionRequest()
+            }, Modifier.align(Alignment.CenterHorizontally)) {
+                Text(stringResource(R.string.request_permission))
+            }
         }
     }
+}
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun RequireLocationPermission(
+    content: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+
+    val locationPermission = rememberMultiplePermissionsState(
+        listOf(
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+        )
+    )
+
+    if (!locationPermission.allPermissionsGranted) {
+        Column {
+            Text(stringResource(R.string.location_permission), style = Typography.labelMedium)
+
+            Button(onClick = {
+                locationPermission.launchMultiplePermissionRequest()
+            }) {
+                Text(stringResource(R.string.request_permission))
+            }
+        }
+    } else {
+        var enabledState by remember { mutableStateOf(false) }
+
+        val locationManager = remember {
+            context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        }
+
+        SideEffect {
+            enabledState = locationManager.isLocationEnabled
+        }
+
+        SystemBroadcastReceiver(LocationManager.MODE_CHANGED_ACTION) {
+            it?.let {
+                enabledState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    it.getBooleanExtra(LocationManager.EXTRA_LOCATION_ENABLED, false)
+                } else {
+                    locationManager.isLocationEnabled
+                }
+            }
+        }
+
+        if (!enabledState) {
+            Column {
+                Text(stringResource(R.string.location_enable), style = Typography.labelMedium)
+
+                Button(onClick = {
+                    context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }) {
+                    Text(stringResource(R.string.open_location_settings))
+                }
+            }
+        } else {
+            content()
+        }
+    }
 }
