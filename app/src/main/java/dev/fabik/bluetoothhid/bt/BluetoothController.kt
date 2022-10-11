@@ -1,11 +1,9 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.CoroutineScope
@@ -14,22 +12,24 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 @SuppressLint("MissingPermission")
-class BluetoothController(context: Context) {
+class BluetoothController(var context: Context) {
     companion object {
         private const val TAG = "BluetoothController"
     }
 
     private val bluetoothManager: BluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
     private val bluetoothAdapter: BluetoothAdapter by lazy { bluetoothManager.adapter }
+
+    var keyboardSender: KeyboardSender? = null
 
     private var hidDevice: BluetoothHidDevice? = null
     private var hostDevice: BluetoothDevice? = null
 
-    private var deviceListener: ((BluetoothHidDevice?, BluetoothDevice?) -> Unit)? = null
+    private var deviceListener: ((BluetoothDevice?, Int) -> Unit)? = null
 
     private var autoConnectEnabled = false
-    private var showStatus = false
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -37,20 +37,15 @@ class BluetoothController(context: Context) {
                 autoConnectEnabled = it
             }
         }
-        CoroutineScope(Dispatchers.IO).launch {
-            context.getPreference(PrefKeys.SHOW_STATE).collect {
-                showStatus = it
-            }
-        }
     }
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
-        override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
+        override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
 
-            hidDevice = proxy as BluetoothHidDevice
+            hidDevice = proxy as? BluetoothHidDevice
 
-            hidDevice!!.registerApp(
+            hidDevice?.registerApp(
                 Descriptor.SDP_RECORD,
                 null,
                 Descriptor.QOS_OUT,
@@ -63,37 +58,29 @@ class BluetoothController(context: Context) {
             Log.d(TAG, "onServiceDisconnected")
 
             hidDevice = null
-            deviceListener?.invoke(null, null)
         }
     }
 
     private val hidDeviceCallback = object : BluetoothHidDevice.Callback() {
-        override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
+        override fun onConnectionStateChanged(device: BluetoothDevice, state: Int) {
             super.onConnectionStateChanged(device, state)
 
-            if (showStatus) {
-                (context as Activity).runOnUiThread {
-                    Toast.makeText(
-                        context, "$device ${
-                            when (state) {
-                                BluetoothProfile.STATE_CONNECTING -> "connecting..."
-                                BluetoothProfile.STATE_CONNECTED -> "connected!"
-                                BluetoothProfile.STATE_DISCONNECTING -> "disconnecting..."
-                                BluetoothProfile.STATE_DISCONNECTED -> "disconnected!"
-                                else -> "unknown ($state)"
-                            }
-                        }", Toast.LENGTH_SHORT
-                    ).show()
+            if (state == BluetoothProfile.STATE_CONNECTED) {
+                hostDevice = device
+                hidDevice?.let { hid ->
+                    keyboardSender = KeyboardSender(
+                        context.getPreference(PrefKeys.EXTRA_KEYS),
+                        context.getPreference(PrefKeys.SEND_DELAY),
+                        hid,
+                        device
+                    )
                 }
-            }
-
-            hostDevice = if (state == BluetoothProfile.STATE_CONNECTED) {
-                device
             } else {
-                null
+                hostDevice = null
+                keyboardSender = null
             }
 
-            deviceListener?.invoke(hidDevice, hostDevice)
+            deviceListener?.invoke(device, state)
         }
 
         override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
@@ -104,16 +91,14 @@ class BluetoothController(context: Context) {
                     Log.d(TAG, "onAppStatusChanged: connecting with $pluggedDevice")
                     hidDevice?.connect(pluggedDevice)
                 } else {
-                    val devices = hidDevice?.getDevicesMatchingConnectionStates(
+                    hidDevice?.getDevicesMatchingConnectionStates(
                         intArrayOf(
                             BluetoothProfile.STATE_CONNECTED,
                             BluetoothProfile.STATE_CONNECTING,
                             BluetoothProfile.STATE_DISCONNECTED,
                             BluetoothProfile.STATE_DISCONNECTING
                         )
-                    )
-
-                    devices?.firstOrNull()?.let {
+                    )?.firstOrNull()?.let {
                         Log.d(TAG, "onAppStatusChanged: connecting with $it")
                         hidDevice?.connect(it)
                     }
@@ -124,7 +109,7 @@ class BluetoothController(context: Context) {
 
     fun bluetoothEnabled(): Boolean = bluetoothAdapter.isEnabled
 
-    fun register(context: Context, listener: ((BluetoothHidDevice?, BluetoothDevice?) -> Unit)?) {
+    fun register(listener: ((BluetoothDevice?, Int) -> Unit)?) {
         deviceListener = listener
         bluetoothAdapter.getProfileProxy(context, serviceListener, BluetoothProfile.HID_DEVICE)
     }

@@ -1,16 +1,17 @@
 package dev.fabik.bluetoothhid
 
-import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.camera.core.Camera
 import androidx.camera.core.TorchState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.BluetoothDisabled
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -37,8 +38,7 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 @Composable
 fun Scanner(
     navHostController: NavHostController,
-    bluetoothController: BluetoothController,
-    onSendText: (String) -> Unit,
+    bluetoothController: BluetoothController
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -82,15 +82,6 @@ fun Scanner(
                         }
                     }
                     IconButton(onClick = {
-                        val inputMethodManager =
-                            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputMethodManager.toggleSoftInput(
-                            InputMethodManager.SHOW_FORCED, 0
-                        )
-                    }) {
-                        Icon(Icons.Default.Keyboard, "Keyboard")
-                    }
-                    IconButton(onClick = {
                         if (!bluetoothController.disconnect()) {
                             navHostController.navigateUp()
                         }
@@ -105,7 +96,7 @@ fun Scanner(
         floatingActionButton = {
             currentBarcode?.let {
                 ExtendedFloatingActionButton(
-                    onClick = { onSendText(it) }
+                    onClick = { bluetoothController.keyboardSender?.sendString(it) }
                 ) {
                     Icon(Icons.Filled.Send, "Send")
                     Spacer(Modifier.width(8.dp))
@@ -127,7 +118,7 @@ fun Scanner(
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
                     }
                     if (autoSend) {
-                        onSendText(it)
+                        bluetoothController.keyboardSender?.sendString(it)
                     }
                 }
 
@@ -139,9 +130,9 @@ fun Scanner(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (currentBarcode != null) {
+                    currentBarcode?.let {
                         val text = AnnotatedString(
-                            currentBarcode!!,
+                            it,
                             SpanStyle(MaterialTheme.colorScheme.onBackground),
                             ParagraphStyle(TextAlign.Center)
                         )
@@ -154,7 +145,7 @@ fun Scanner(
                             Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT)
                                 .show()
                         }
-                    } else {
+                    } ?: run {
                         Text(
                             stringResource(R.string.scan_code_to_start),
                             textAlign = TextAlign.Center,
