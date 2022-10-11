@@ -217,7 +217,6 @@ fun CameraPreview(
             scanRect = Rect(Offset(0f, 0f), size)
         }
 
-
         currentBarCode?.let {
             it.cornerPoints?.forEach { p ->
                 drawCircle(

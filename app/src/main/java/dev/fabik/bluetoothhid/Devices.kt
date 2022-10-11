@@ -79,18 +79,13 @@ fun DeviceList(
     }
 
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
-        val device: BluetoothDevice? =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                it?.getParcelableExtra(
-                    BluetoothDevice.EXTRA_DEVICE,
-                    BluetoothDevice::class.java
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            }
-
-        device?.let { dev ->
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            it?.getParcelableExtra(
+                BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java
+            )
+        } else {
+            @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+        }?.let { dev ->
             if (!foundDevices.contains(dev)) {
                 foundDevices.add(dev)
             }
@@ -132,7 +127,7 @@ fun DeviceList(
         )
     }) {
         LazyColumn(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .padding(12.dp, 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)

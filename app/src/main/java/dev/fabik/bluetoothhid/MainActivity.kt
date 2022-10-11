@@ -77,7 +77,6 @@ class MainActivity : ComponentActivity() {
                                     if (dev != null && state == BluetoothProfile.STATE_CONNECTED) {
                                         navHostController.navigate(Routes.Main) {
                                             launchSingleTop = true
-
                                         }
                                     } else {
                                         navHostController.navigate(Routes.Devices) {
