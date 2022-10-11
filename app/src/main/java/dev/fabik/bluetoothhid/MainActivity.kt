@@ -12,15 +12,16 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.camera.core.Camera
+import androidx.camera.core.TorchState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BluetoothDisabled
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -141,27 +142,53 @@ fun MainScreen(
 
     val autoSend by rememberPreferenceDefault(PrefKeys.AUTO_SEND)
 
+    var camera by remember { mutableStateOf<Camera?>(null) }
+
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
-                IconButton(onClick = {
-                    val inputMethodManager =
-                        context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputMethodManager.toggleSoftInput(
-                        InputMethodManager.SHOW_FORCED, 0
-                    )
-                }) {
-                    Icon(Icons.Default.Keyboard, "Keyboard")
-                }
-                IconButton(onClick = {
-                    if (!bluetoothController.disconnect()) {
-                        navHostController.navigateUp()
+            TopAppBar(
+                title = { Text(stringResource(R.string.scanner)) },
+                actions = {
+                    camera?.let {
+                        if (it.cameraInfo.hasFlashUnit()) {
+                            val torchState by it.cameraInfo.torchState.observeAsState()
+
+                            IconButton(onClick = {
+                                it.cameraControl.enableTorch(
+                                    when (torchState) {
+                                        TorchState.OFF -> true
+                                        else -> false
+                                    }
+                                )
+                            }) {
+                                Icon(
+                                    when (torchState) {
+                                        TorchState.OFF -> Icons.Default.FlashOn
+                                        else -> Icons.Default.FlashOff
+                                    }, "Flash"
+                                )
+                            }
+                        }
                     }
-                }) {
-                    Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+                    IconButton(onClick = {
+                        val inputMethodManager =
+                            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputMethodManager.toggleSoftInput(
+                            InputMethodManager.SHOW_FORCED, 0
+                        )
+                    }) {
+                        Icon(Icons.Default.Keyboard, "Keyboard")
+                    }
+                    IconButton(onClick = {
+                        if (!bluetoothController.disconnect()) {
+                            navHostController.navigateUp()
+                        }
+                    }) {
+                        Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+                    }
+                    Dropdown(navHostController)
                 }
-                Dropdown(navHostController)
-            })
+            )
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -183,7 +210,7 @@ fun MainScreen(
             contentAlignment = Alignment.Center
         ) {
             RequiresCameraPermission {
-                CameraPreview {
+                CameraPreview(onCameraReady = { camera = it }) {
                     currentBarcode = it
                     if (playSound) {
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)

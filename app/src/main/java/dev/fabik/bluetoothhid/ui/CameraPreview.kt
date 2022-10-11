@@ -6,18 +6,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FlashlightOff
-import androidx.compose.material.icons.filled.FlashlightOn
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.ClipOp
@@ -27,7 +17,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -41,11 +30,9 @@ var transX = 0f
 var transY = 0f
 var scanRect = Rect(0f, 0f, 0f, 0f)
 
-var cameraController: CameraControl? = null
-var cameraInfo: CameraInfo? = null
-
 @Composable
-fun BoxScope.CameraPreview(
+fun CameraPreview(
+    onCameraReady: (Camera) -> Unit,
     onBarCodeReady: (String) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -99,9 +86,7 @@ fun BoxScope.CameraPreview(
 
                     val filtered = barcodes.filter {
                         it.cornerPoints?.map { p ->
-                            val px = p.x * scale - transX
-                            val py = p.y * scale - transY
-                            Offset(px, py)
+                            Offset(p.x * scale - transX, p.y * scale - transY)
                         }?.forEach { o ->
                             if (fullyInside) {
                                 if (!scanRect.contains(o)) {
@@ -168,8 +153,7 @@ fun BoxScope.CameraPreview(
                     useCaseGroup
                 )
 
-                cameraController = camera.cameraControl
-                cameraInfo = camera.cameraInfo
+                onCameraReady(camera)
 
                 previewView.setOnTouchListener { view, event ->
                     return@setOnTouchListener when (event.action) {
@@ -244,35 +228,4 @@ fun BoxScope.CameraPreview(
             }
         }
     }
-
-    cameraInfo?.let {
-        val showFlash by rememberPreferenceNull(PrefKeys.SHOW_FLASH)
-
-        if (it.hasFlashUnit() && showFlash == true) {
-            val torchState by it.torchState.observeAsState()
-
-            FloatingActionButton(
-                onClick = {
-                    cameraController?.enableTorch(
-                        when (torchState) {
-                            TorchState.OFF -> true
-                            else -> false
-                        }
-                    )
-                },
-                containerColor = MaterialTheme.colorScheme.background,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(0.dp, 150.dp)
-            ) {
-                Icon(
-                    when (torchState) {
-                        TorchState.OFF -> Icons.Default.FlashlightOn
-                        else -> Icons.Default.FlashlightOff
-                    }, "Flash"
-                )
-            }
-        }
-    }
-
 }
