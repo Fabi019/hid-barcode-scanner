@@ -132,15 +132,6 @@ fun Settings(
 
                 item {
                     SwitchPreference(
-                        title = stringResource(R.string.flash_toggle),
-                        desc = stringResource(R.string.flash_toggle_desc),
-                        icon = Icons.Default.FlashOn,
-                        preference = PrefKeys.SHOW_FLASH
-                    )
-                }
-
-                item {
-                    SwitchPreference(
                         title = stringResource(R.string.restrict_area),
                         desc = stringResource(R.string.restrict_area_desc),
                         icon = Icons.Default.CropFree,
