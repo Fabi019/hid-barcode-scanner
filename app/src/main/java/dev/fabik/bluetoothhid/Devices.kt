@@ -34,7 +34,7 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceScreen(
+fun Devices(
     navHostController: NavHostController,
     bluetoothController: BluetoothController
 ) {

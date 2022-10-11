@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import dev.fabik.bluetoothhid.DeviceScreen
-import dev.fabik.bluetoothhid.MainScreen
+import dev.fabik.bluetoothhid.Devices
+import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.Settings
 import dev.fabik.bluetoothhid.bt.BluetoothController
 
@@ -24,11 +24,11 @@ fun NavGraph(
 ) {
     NavHost(navController, startDestination = Routes.Devices) {
         composable(Routes.Devices) {
-            DeviceScreen(navController, bluetoothController)
+            Devices(navController, bluetoothController)
         }
 
         composable(Routes.Main) {
-            MainScreen(navController, bluetoothController, onSendText)
+            Scanner(navController, bluetoothController, onSendText)
             BackHandler {
                 if (!bluetoothController.disconnect()) {
                     navController.navigateUp()
