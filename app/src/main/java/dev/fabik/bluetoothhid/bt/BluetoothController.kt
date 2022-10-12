@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
+typealias Listener = (BluetoothDevice?, Int) -> Unit
+
 @SuppressLint("MissingPermission")
 class BluetoothController(var context: Context) {
     companion object {
@@ -27,7 +29,7 @@ class BluetoothController(var context: Context) {
     private var hidDevice: BluetoothHidDevice? = null
     private var hostDevice: BluetoothDevice? = null
 
-    private var deviceListener: ((BluetoothDevice?, Int) -> Unit)? = null
+    private var deviceListener: MutableList<Listener> = mutableListOf()
 
     private var autoConnectEnabled = false
 
@@ -80,7 +82,7 @@ class BluetoothController(var context: Context) {
                 keyboardSender = null
             }
 
-            deviceListener?.invoke(device, state)
+            deviceListener.forEach { it.invoke(device, state) }
         }
 
         override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
@@ -109,15 +111,21 @@ class BluetoothController(var context: Context) {
 
     fun bluetoothEnabled(): Boolean = bluetoothAdapter.isEnabled
 
-    fun register(listener: ((BluetoothDevice?, Int) -> Unit)?) {
-        deviceListener = listener
+    fun registerListener(listener: Listener): Listener {
+        deviceListener.add(listener)
+        return listener
+    }
+
+    fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
+
+    fun register() {
         bluetoothAdapter.getProfileProxy(context, serviceListener, BluetoothProfile.HID_DEVICE)
     }
 
     fun unregister() {
         bluetoothAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         hidDevice = null
-        deviceListener = null
+        deviceListener.clear()
     }
 
     fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter.bondedDevices

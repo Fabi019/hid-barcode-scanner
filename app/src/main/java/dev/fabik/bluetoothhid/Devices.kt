@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothProfile
 import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.layout.*
@@ -24,7 +25,9 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
+import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.Routes
+import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.RequireLocationPermission
@@ -66,6 +69,26 @@ fun DeviceList(
     var isScanning by remember {
         mutableStateOf(false)
     }
+
+    val dialogState = rememberDialogState()
+
+    DisposableEffect(bluetoothController) {
+        val listener = bluetoothController.registerListener { _, state ->
+            dialogState.openState = when (state) {
+                BluetoothProfile.STATE_CONNECTING -> true
+                BluetoothProfile.STATE_DISCONNECTING -> true
+                else -> false // Only close if connected or fully disconnected
+            }
+        }
+
+        onDispose {
+            bluetoothController.unregisterListener(listener)
+        }
+    }
+
+    LoadingDialog(
+        dialogState, stringResource(R.string.connecting), stringResource(R.string.please_wait)
+    )
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
         Log.d("Discovery", "isDiscovering")

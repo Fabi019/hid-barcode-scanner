@@ -58,11 +58,13 @@ class MainActivity : ComponentActivity() {
                                 startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                             }
 
-                            bluetoothController.register(listener = { dev, state ->
+                            bluetoothController.register()
+
+                            bluetoothController.registerListener { device, state ->
                                 runOnUiThread {
                                     if (showConnectionState) {
                                         Toast.makeText(
-                                            this@MainActivity, "$dev ${
+                                            this@MainActivity, "$device ${
                                                 when (state) {
                                                     BluetoothProfile.STATE_CONNECTING -> "connecting..."
                                                     BluetoothProfile.STATE_CONNECTED -> "connected!"
@@ -74,7 +76,7 @@ class MainActivity : ComponentActivity() {
                                         ).show()
                                     }
 
-                                    if (dev != null && state == BluetoothProfile.STATE_CONNECTED) {
+                                    if (device != null && state == BluetoothProfile.STATE_CONNECTED) {
                                         navHostController.navigate(Routes.Main) {
                                             launchSingleTop = true
                                         }
@@ -84,7 +86,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                            })
+                            }
 
                             onDispose {
                                 bluetoothController.unregister()
