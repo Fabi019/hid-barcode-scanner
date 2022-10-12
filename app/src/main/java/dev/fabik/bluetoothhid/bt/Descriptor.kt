@@ -35,9 +35,9 @@ object Descriptor {
     )
 
     val SDP_RECORD = BluetoothHidDeviceAppSdpSettings(
-        "Wear Input",
-        "Wear OS HID Device",
-        "Google Inc.",
+        "Keyboard Input",
+        "HID Device",
+        "Android",
         BluetoothHidDevice.SUBCLASS1_KEYBOARD,
         KEYBOARD
     )

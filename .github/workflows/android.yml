@@ -26,14 +26,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Build Release APK
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew build \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PW }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
@@ -46,10 +40,22 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: APK(s) debug generated
-          path: ./app/build/outputs/apk/debug/
+          path: ./app/build/outputs/apk/standard/debug/
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v3
         with:
           name: APK(s) release generated
-          path: ./app/build/outputs/apk/release/
+          path: ./app/build/outputs/apk/standard/release/
+
+      - name: Upload Debug APK (Bundled)
+        uses: actions/upload-artifact@v3
+        with:
+          name: APK(s) debug generated (Bundled)
+          path: ./app/build/outputs/apk/bundled/debug/
+
+      - name: Upload Release APK (Bundled)
+        uses: actions/upload-artifact@v3
+        with:
+          name: APK(s) release generated (Bundled)
+          path: ./app/build/outputs/apk/bundled/release/

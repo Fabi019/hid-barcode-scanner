@@ -27,6 +27,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions "default"
+    productFlavors {
+        bundled {
+            applicationIdSuffix ".bundled"
+            manifestPlaceholders = [dep: ""]
+        }
+        standard {
+            manifestPlaceholders = [dep: "barcode"]
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -64,7 +76,8 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
 
-    implementation 'com.google.mlkit:barcode-scanning:17.0.2'
+    bundledImplementation 'com.google.mlkit:barcode-scanning:17.0.2'
+    standardImplementation 'com.google.android.gms:play-services-mlkit-barcode-scanning:18.1.0'
 
     implementation "com.google.accompanist:accompanist-permissions:$accomp_version"
     implementation "com.google.accompanist:accompanist-systemuicontroller:$accomp_version"
