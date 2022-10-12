@@ -235,7 +235,7 @@ fun Settings(
                 item {
                     ButtonPreference(
                         title = stringResource(R.string.build_version),
-                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
+                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR} (build ${BuildConfig.VERSION_CODE})",
                         icon = Icons.Default.Info
                     )
 
