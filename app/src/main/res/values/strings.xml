@@ -61,8 +61,11 @@
     <string name="location_permission">Location permission is required for scanning new devices.</string>
     <string name="location_enable">Location needs to be enabled on your system.</string>
     <string name="open_location_settings">Open Location Settings</string>
-    <string name="connecting">Connecting...</string>
+    <string name="connecting">Connecting…</string>
     <string name="please_wait">Please wait!</string>
+    <string name="haptic_feedback">Haptic Feedback</string>
+    <string name="haptic_feedback_desc">Vibrate when scanning a new code.</string>
+    <string name="connected_with">Connected with: %s</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -208,6 +208,15 @@ fun Settings(
 
                 item {
                     SwitchPreference(
+                        title = stringResource(R.string.haptic_feedback),
+                        desc = stringResource(R.string.haptic_feedback_desc),
+                        icon = Icons.Default.Vibration,
+                        preference = PrefKeys.VIBRATE
+                    )
+                }
+
+                item {
+                    SwitchPreference(
                         title = stringResource(R.string.raw_value),
                         desc = stringResource(R.string.raw_value_desc),
                         icon = Icons.Default.Description,
