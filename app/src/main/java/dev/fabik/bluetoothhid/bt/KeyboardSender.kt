@@ -65,16 +65,18 @@ open class KeyboardSender(
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            keyCharacterMap.getEvents(appended.toCharArray()).forEach {
+            keyCharacterMap.getEvents(appended.toCharArray())?.forEach {
                 if (it.action == KeyEvent.ACTION_DOWN) {
                     sendKeyEvent(it.keyCode, it)
                     delay(sendDelay)
                 }
+            } ?: run {
+                Log.w(TAG, "sendString: Unable to map string into key events")
             }
         }
     }
 
-    fun sendKeyEvent(keyCode: Int, event: KeyEvent?, releaseKey: Boolean = true): Boolean {
+    private fun sendKeyEvent(keyCode: Int, event: KeyEvent?, releaseKey: Boolean = true): Boolean {
         val key = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
 
         keyboardReport.key1 = key.toByte()
