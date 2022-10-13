@@ -19,12 +19,7 @@ running Android 9 or greater.
 
 ## Screenshots
 
-<a>
-<img src="img/devices.png" width="200px" />
-<img src="img/main2.png" width="200px" />
-<img src="img/settings1.png" width="200px" />
-<img src="img/settings2.png" width="200px" />
-</a>
+<img src="img/devices.png" width="200px" /> <img src="img/main.png" width="200px" /> <img src="img/settings1.png" width="200px" /> <img src="img/settings2.png" width="200px" />
 
 ## Download
 
