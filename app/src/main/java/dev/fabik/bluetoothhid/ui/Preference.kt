@@ -173,9 +173,55 @@ fun SliderPreference(
             value,
             range,
             steps,
-            onDismiss = { close() }
-        ) {
+            onDismiss = { close() }) {
             onSelect(it)
+            close()
+        }
+    }
+
+    ButtonPreference(title, desc, icon) {
+        dialogState.open()
+    }
+}
+
+@Composable
+fun CheckBoxPreference(
+    title: String,
+    desc: String,
+    values: Array<Int>,
+    valueStrings: Array<String>,
+    icon: ImageVector? = null,
+    preference: PrefKeys.Pref<Set<String>>
+) {
+    var value by rememberPreferenceNull(preference)
+
+    CheckBoxPreference(
+        title,
+        desc,
+        selectedValues = value?.map { v -> v.toInt() }?.toSet(),
+        values,
+        valueStrings,
+        icon
+    ) {
+        value = it.map { v -> v.toString() }.toSet()
+    }
+}
+
+@Composable
+fun CheckBoxPreference(
+    title: String,
+    desc: String,
+    selectedValues: Set<Int>?,
+    values: Array<Int>,
+    valueStrings: Array<String>,
+    icon: ImageVector? = null,
+    onSelect: (Set<Int>) -> Unit
+) {
+    val dialogState = rememberDialogState()
+
+    selectedValues?.let {
+        CheckBoxDialog(dialogState, title, it, values, valueStrings, onDismiss = { close() }) { v ->
+            onSelect(v.toSet())
             close()
         }
     }

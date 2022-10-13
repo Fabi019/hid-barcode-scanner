@@ -6,6 +6,7 @@ import android.util.Log
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
@@ -30,6 +31,7 @@ class BarCodeAnalyser(
     private var isBusy = AtomicBoolean(false)
 
     private var scanDelay = 0
+    private var formats: IntArray = intArrayOf(0)
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -42,6 +44,11 @@ class BarCodeAnalyser(
                 }
             }
         }
+        CoroutineScope(Dispatchers.IO).launch {
+            context.getPreference(PrefKeys.CODE_TYPES).collect {
+                formats = it.map { v -> v.toInt() }.toIntArray()
+            }
+        }
     }
 
     override fun analyze(image: ImageProxy) {
@@ -50,7 +57,10 @@ class BarCodeAnalyser(
             && isBusy.compareAndSet(false, true)
         ) {
             image.image?.let { imageToAnalyze ->
-                val barcodeScanner = BarcodeScanning.getClient()
+                val options = BarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(0, *formats)
+                    .build()
+                val barcodeScanner = BarcodeScanning.getClient(options)
                 val imageToProcess =
                     InputImage.fromMediaImage(imageToAnalyze, image.imageInfo.rotationDegrees)
 

@@ -12,10 +12,7 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import dev.fabik.bluetoothhid.ui.ButtonPreference
-import dev.fabik.bluetoothhid.ui.ComboBoxPreference
-import dev.fabik.bluetoothhid.ui.SliderPreference
-import dev.fabik.bluetoothhid.ui.SwitchPreference
+import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PrefKeys
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +115,17 @@ fun Settings(
                     Text(
                         stringResource(R.string.scanner),
                         color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                item {
+                    CheckBoxPreference(
+                        title = "Code Types",
+                        desc = "Only enable desired types to improve scanning speed.\nSelect none to enable all.",
+                        values = arrayOf(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096),
+                        valueStrings = stringArrayResource(R.array.code_types_values),
+                        icon = Icons.Default.QrCode2,
+                        preference = PrefKeys.CODE_TYPES
                     )
                 }
 

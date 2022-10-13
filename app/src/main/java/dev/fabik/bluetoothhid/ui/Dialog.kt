@@ -32,6 +32,55 @@ fun rememberDialogState(initialOpen: Boolean = false) = remember {
 }
 
 @Composable
+fun CheckBoxDialog(
+    dialogState: DialogState,
+    title: String,
+    selectedValues: Set<Int>,
+    values: Array<Int>,
+    valueStrings: Array<String>,
+    onDismiss: DialogState.() -> Unit = {},
+    onConfirm: DialogState.(List<Int>) -> Unit
+) {
+    var currentSelection = remember {
+        selectedValues.toMutableStateList()
+    }
+
+    ConfirmDialog(dialogState, title, onConfirm = {
+        onConfirm(currentSelection)
+    }, onDismiss = {
+        currentSelection = selectedValues.toMutableStateList()
+        onDismiss()
+    }) {
+        LazyColumn {
+            itemsIndexed(valueStrings) { index, item ->
+                val value = values[index]
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        if (!currentSelection.contains(value)) {
+                            currentSelection.add(value)
+                        } else {
+                            currentSelection.remove(value)
+                        }
+                    }) {
+                    Checkbox(
+                        checked = currentSelection.contains(value),
+                        onCheckedChange = {
+                            if (it && !currentSelection.contains(value)) {
+                                currentSelection.add(value)
+                            } else {
+                                currentSelection.remove(value)
+                            }
+                        })
+                    Spacer(Modifier.width(8.dp))
+                    Text(item, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun ComboBoxDialog(
     dialogState: DialogState,
     title: String,
