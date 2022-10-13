@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid
 
+import android.bluetooth.BluetoothDevice
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -8,6 +9,7 @@ import android.widget.Toast
 import androidx.camera.core.Camera
 import androidx.camera.core.TorchState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,9 +35,9 @@ import androidx.navigation.NavHostController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.CameraPreview
 import dev.fabik.bluetoothhid.ui.Dropdown
-import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.RequiresCameraPermission
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import dev.fabik.bluetoothhid.ui.InfoDialog
+import dev.fabik.bluetoothhid.ui.rememberDialogState
+import dev.fabik.bluetoothhid.utils.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,16 +87,16 @@ fun Scanner(
                             )
                         }
                     }
-                    }
-                    IconButton(onClick = {
-                        if (!bluetoothController.disconnect()) {
-                            navHostController.navigateUp()
-                        }
-                    }) {
-                        Icon(Icons.Default.BluetoothDisabled, "Disconnect")
-                    }
-                    Dropdown(navHostController)
                 }
+                IconButton(onClick = {
+                    if (!bluetoothController.disconnect()) {
+                        navHostController.navigateUp()
+                    }
+                }) {
+                    Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+                }
+                Dropdown(navHostController)
+            }
             )
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -166,6 +169,93 @@ fun Scanner(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.width(230.dp)
                         )
+                    }
+                }
+            }
+
+            @Suppress("MissingPermission")
+            bluetoothController.currentDevice()?.let {
+                val dialogState = rememberDialogState()
+
+                ElevatedCard(
+                    onClick = {
+                        dialogState.open()
+                    },
+                    Modifier
+                        .padding(12.dp)
+                        .align(Alignment.TopCenter)
+                ) {
+                    Row(
+                        Modifier.padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, "Info")
+                        Text(stringResource(R.string.connected_with, it.name))
+                    }
+                }
+
+                InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item {
+                            Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
+                            Text(it.name)
+                        }
+
+                        item {
+                            Text(
+                                stringResource(R.string.mac_address) + ":",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(it.address)
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            item {
+                                Text(
+                                    stringResource(R.string.alias) + ":",
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(it.alias ?: "")
+                            }
+                        }
+
+                        item {
+                            Text(stringResource(R.string.type) + ":", fontWeight = FontWeight.Bold)
+                            Text(
+                                when (it.type) {
+                                    BluetoothDevice.DEVICE_TYPE_DUAL -> "Dual"
+                                    BluetoothDevice.DEVICE_TYPE_LE -> "LE"
+                                    BluetoothDevice.DEVICE_TYPE_CLASSIC -> "Classic"
+                                    BluetoothDevice.DEVICE_TYPE_UNKNOWN -> "Unknown"
+                                    else -> ""
+                                } + " (${it.type})"
+                            )
+                        }
+
+                        item {
+                            Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
+                            with(it.bluetoothClass.majorDeviceClass) {
+                                Text("${deviceClassString(this)} (${this})")
+                            }
+                        }
+
+                        item {
+                            Text(
+                                stringResource(R.string.services) + ":",
+                                fontWeight = FontWeight.Bold
+                            )
+                            serviceInfo(it.bluetoothClass).forEach {
+                                Text(it)
+                            }
+                        }
+
+                        item {
+                            Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
+                            it.uuids.forEach {
+                                Text(it.toString())
+                            }
+                        }
                     }
                 }
             }

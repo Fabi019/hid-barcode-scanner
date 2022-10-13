@@ -109,6 +109,8 @@ class BluetoothController(var context: Context) {
         }
     }
 
+    fun currentDevice(): BluetoothDevice? = hostDevice
+
     fun bluetoothEnabled(): Boolean = bluetoothAdapter.isEnabled
 
     fun registerListener(listener: Listener): Listener {

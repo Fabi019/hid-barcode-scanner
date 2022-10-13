@@ -17,10 +17,6 @@ import dev.fabik.bluetoothhid.ui.theme.Typography
 class DialogState(initialOpen: Boolean = false) {
     var openState by mutableStateOf(initialOpen)
 
-    fun toggle() {
-        openState = !openState
-    }
-
     fun open() {
         openState = true
     }
@@ -112,15 +108,26 @@ fun SliderDialog(
 }
 
 @Composable
-fun TextDialog(
+fun InfoDialog(
     dialogState: DialogState,
     title: String,
-    desc: String,
     onDismiss: DialogState.() -> Unit = {},
-    onConfirm: DialogState.() -> Unit
+    content: @Composable () -> Unit
 ) {
-    ConfirmDialog(dialogState, title, onConfirm, onDismiss) {
-        Text(desc)
+    if (dialogState.openState) {
+        AlertDialog(
+            onDismissRequest = { onDismiss(dialogState) },
+            title = { Text(title) },
+            text = { content() },
+            confirmButton = { },
+            dismissButton = {
+                TextButton(
+                    onClick = { onDismiss(dialogState) }
+                ) {
+                    Text("Ok")
+                }
+            },
+        )
     }
 }
 

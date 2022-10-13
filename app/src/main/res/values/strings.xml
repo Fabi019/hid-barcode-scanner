@@ -66,6 +66,14 @@
     <string name="haptic_feedback">Haptic Feedback</string>
     <string name="haptic_feedback_desc">Vibrate when scanning a new code.</string>
     <string name="connected_with">Connected with: %s</string>
+    <string name="info">Info</string>
+    <string name="name">Name</string>
+    <string name="mac_address">MAC-Address</string>
+    <string name="alias">Alias</string>
+    <string name="type">Type</string>
+    <string name="clazz">Class</string>
+    <string name="services">Services</string>
+    <string name="uuids">UUIDS</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
