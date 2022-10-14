@@ -11,7 +11,7 @@
     <string name="show_unnamed_desc">Displays bluetooth devices without a name.</string>
     <string name="appearance">Appearance</string>
     <string name="theme">Theme</string>
-    <string name="theme_desc">Preferred UI Theme.</string>
+    <string name="theme_desc">Change the preferred UI Theme.</string>
     <string name="dynamic_theme">Dynamic Theme</string>
     <string name="dynamic_theme_desc">Use the dynamic theme on Android 12+.</string>
     <string name="front_camera">Front Camera</string>
@@ -25,9 +25,9 @@
     <string name="full_inside">Full Inside</string>
     <string name="full_inside_desc">Require codes to be fully inside the area.</string>
     <string name="scan_freq">Scan Frequency</string>
-    <string name="scan_freq_desc">How often the image should be scanned.</string>
+    <string name="scan_freq_desc">Interval in which the image is analyzed.</string>
     <string name="scan_res">Scan Resolution</string>
-    <string name="scan_res_desc">Resolution of the analysed image.</string>
+    <string name="scan_res_desc">Resolution of the analysed image.\nHigher resolutions will take longer to analyze.</string>
     <string name="auto_send">Auto Send</string>
     <string name="auto_send_desc">Automatically send any detected codes.</string>
     <string name="extra_keys">Extra keys</string>
@@ -74,6 +74,8 @@
     <string name="clazz">Class</string>
     <string name="services">Services</string>
     <string name="uuids">UUIDS</string>
+    <string name="code_types">Code Types</string>
+    <string name="code_types_desc">Only enable desired types to improve scanning speed.\nSelect none to enable all.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

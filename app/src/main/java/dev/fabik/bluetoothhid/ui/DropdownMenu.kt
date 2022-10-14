@@ -15,7 +15,7 @@ import dev.fabik.bluetoothhid.R
 fun Dropdown(
     navHostController: NavHostController
 ) {
-    val activity: Activity = LocalContext.current as Activity
+    val context = LocalContext.current
 
     var showMenu by remember {
         mutableStateOf(false)
@@ -38,7 +38,7 @@ fun Dropdown(
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.exit)) },
-                onClick = { activity.finishAfterTransition() }
+                onClick = { (context as Activity).finishAfterTransition() }
             )
         }
     }

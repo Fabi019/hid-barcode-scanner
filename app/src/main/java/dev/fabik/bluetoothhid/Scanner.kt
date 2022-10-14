@@ -33,11 +33,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import dev.fabik.bluetoothhid.bt.BluetoothController
-import dev.fabik.bluetoothhid.ui.CameraPreview
-import dev.fabik.bluetoothhid.ui.Dropdown
-import dev.fabik.bluetoothhid.ui.InfoDialog
-import dev.fabik.bluetoothhid.ui.rememberDialogState
-import dev.fabik.bluetoothhid.utils.*
+import dev.fabik.bluetoothhid.ui.*
+import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.deviceClassString
+import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import dev.fabik.bluetoothhid.utils.serviceInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

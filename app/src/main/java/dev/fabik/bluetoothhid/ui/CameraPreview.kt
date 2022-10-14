@@ -1,7 +1,6 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.view.MotionEvent
-import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -109,7 +108,6 @@ fun CameraPreview(
                         }
                         value?.let { barcodeValue ->
                             if (lastBarCodeValue != barcodeValue) {
-                                Toast.makeText(context, barcodeValue, Toast.LENGTH_SHORT).show()
                                 onBarCodeReady(barcodeValue)
                                 lastBarCodeValue = barcodeValue
                             }

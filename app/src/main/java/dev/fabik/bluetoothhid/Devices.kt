@@ -26,11 +26,11 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
+import dev.fabik.bluetoothhid.ui.RequireLocationPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.RequireLocationPermission
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay

@@ -18,10 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.NavGraph
+import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
 class MainActivity : ComponentActivity() {
@@ -97,5 +97,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 }

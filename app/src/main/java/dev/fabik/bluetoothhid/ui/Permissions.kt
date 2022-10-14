@@ -1,4 +1,4 @@
-package dev.fabik.bluetoothhid.utils
+package dev.fabik.bluetoothhid.ui
 
 import android.content.Context
 import android.content.Intent
@@ -20,6 +20,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.theme.Typography
+import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

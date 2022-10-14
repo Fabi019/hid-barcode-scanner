@@ -31,7 +31,7 @@ class BarCodeAnalyser(
     private var isBusy = AtomicBoolean(false)
 
     private var scanDelay = 0
-    private var formats: IntArray = intArrayOf(0)
+    private var formats: IntArray = intArrayOf()
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
