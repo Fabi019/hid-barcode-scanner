@@ -4,6 +4,8 @@ import android.view.MotionEvent
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
@@ -23,11 +25,28 @@ import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
+import kotlinx.coroutines.launch
 
+var sourceRes: android.util.Size? = null
 var scale = 1f
 var transX = 0f
 var transY = 0f
-var scanRect = Rect(0f, 0f, 0f, 0f)
+var scanRect = Rect.Zero
+
+fun updateScale(sw: Float, sh: Float, vw: Float, vh: Float) {
+    val viewAspectRatio = vw / vh
+    val sourceAspectRatio = sw / sh
+
+    if (sourceAspectRatio > viewAspectRatio) {
+        scale = vh / sh
+        transX = (sw * scale - vw) / 2
+        transY = 0f
+    } else {
+        scale = vw / sw
+        transX = 0f
+        transY = (sh * scale - vh) / 2
+    }
+}
 
 @Composable
 fun CameraPreview(
@@ -36,11 +55,15 @@ fun CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
     var lastBarCodeValue by remember { mutableStateOf<String?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
+
+    val circleAlpha = remember { Animatable(0f) }
+    var focusTouchPoint by remember { mutableStateOf<Offset?>(null) }
 
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
     val frontCamera by rememberPreferenceNull(PrefKeys.FRONT_CAMERA)
@@ -51,7 +74,6 @@ fun CameraPreview(
     AndroidView(
         factory = { ctx ->
             val previewView = PreviewView(ctx)
-            previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
 
             val executor = ContextCompat.getMainExecutor(ctx)
             cameraProviderFuture.addListener({
@@ -64,23 +86,14 @@ fun CameraPreview(
                 val barcodeAnalyser = BarCodeAnalyser(context, onNothing = {
                     currentBarCode = null
                 }) { barcodes, source ->
-                    val sw = source.width.toFloat()
-                    val sh = source.height.toFloat()
-
-                    val vw = previewView.width.toFloat()
-                    val vh = previewView.height.toFloat()
-
-                    val viewAspectRatio = vw / vh
-                    val sourceAspectRatio = sw / sh
-
-                    if (sourceAspectRatio > viewAspectRatio) {
-                        scale = vh / sh
-                        transX = (sw * scale - vw) / 2
-                        transY = 0f
-                    } else {
-                        scale = vw / sw
-                        transX = 0f
-                        transY = (sh * scale - vh) / 2
+                    if (sourceRes != source) {
+                        updateScale(
+                            source.width.toFloat(),
+                            source.height.toFloat(),
+                            previewView.width.toFloat(),
+                            previewView.height.toFloat()
+                        )
+                        sourceRes = source
                     }
 
                     val filtered = barcodes.filter {
@@ -157,21 +170,32 @@ fun CameraPreview(
                     return@setOnTouchListener when (event.action) {
                         MotionEvent.ACTION_DOWN -> true
                         MotionEvent.ACTION_UP -> {
-                            val factory = DisplayOrientedMeteringPointFactory(
-                                previewView.display,
-                                camera.cameraInfo,
-                                previewView.width.toFloat(),
-                                previewView.height.toFloat()
-                            )
-                            val focusPoint = factory.createPoint(event.x, event.y)
-                            camera.cameraControl.startFocusAndMetering(
-                                FocusMeteringAction.Builder(
-                                    focusPoint,
-                                    FocusMeteringAction.FLAG_AF
-                                ).apply {
-                                    disableAutoCancel()
-                                }.build()
-                            )
+                            if (focusTouchPoint == null) {
+                                focusTouchPoint = Offset(event.x, event.y)
+                                scope.launch {
+                                    circleAlpha.animateTo(1f, tween(100))
+                                }
+                                val factory = DisplayOrientedMeteringPointFactory(
+                                    previewView.display,
+                                    camera.cameraInfo,
+                                    previewView.width.toFloat(),
+                                    previewView.height.toFloat()
+                                )
+                                val focusPoint = factory.createPoint(event.x, event.y)
+                                camera.cameraControl.startFocusAndMetering(
+                                    FocusMeteringAction.Builder(
+                                        focusPoint,
+                                        FocusMeteringAction.FLAG_AF
+                                    ).apply {
+                                        disableAutoCancel()
+                                    }.build()
+                                ).addListener({
+                                    scope.launch {
+                                        circleAlpha.animateTo(0f, tween(100))
+                                        focusTouchPoint = null
+                                    }
+                                }, executor)
+                            }
                             view.performClick()
                         }
                         else -> false
@@ -223,6 +247,16 @@ fun CameraPreview(
                     center = Offset(p.x * scale - transX, p.y * scale - transY)
                 )
             }
+        }
+
+        focusTouchPoint?.let {
+            drawCircle(
+                color = Color.White,
+                radius = 80f,
+                center = it,
+                style = Stroke(5f),
+                alpha = circleAlpha.value
+            )
         }
     }
 }
