@@ -139,7 +139,9 @@ fun DeviceList(
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        isRefreshing = true
+        if (!isScanning) {
+            isRefreshing = true
+        }
     }, indicator = { state, trigger ->
         SwipeRefreshIndicator(
             state = state,
@@ -171,7 +173,7 @@ fun DeviceList(
             if (foundDevices.isEmpty()) {
                 item {
                     RequireLocationPermission {
-                        if (foundDevices.isEmpty() && !isScanning) {
+                        if (!isScanning) {
                             Text(stringResource(R.string.swipe_refresh))
                         }
                     }
