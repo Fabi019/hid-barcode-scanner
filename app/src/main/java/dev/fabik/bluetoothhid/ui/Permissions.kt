@@ -114,15 +114,11 @@ fun RequireLocationPermission(
             }
         }
     } else {
-        var enabledState by remember { mutableStateOf(false) }
-
         val locationManager = remember {
             context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         }
 
-        SideEffect {
-            enabledState = locationManager.isLocationEnabled
-        }
+        var enabledState by remember { mutableStateOf(locationManager.isLocationEnabled) }
 
         SystemBroadcastReceiver(LocationManager.MODE_CHANGED_ACTION) {
             it?.let {
