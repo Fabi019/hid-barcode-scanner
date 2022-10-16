@@ -36,14 +36,13 @@ import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.deviceClassString
+import dev.fabik.bluetoothhid.utils.deviceServiceInfo
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
-import dev.fabik.bluetoothhid.utils.serviceInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Scanner(
-    navHostController: NavHostController,
-    bluetoothController: BluetoothController
+    navHostController: NavHostController, bluetoothController: BluetoothController
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -64,59 +63,55 @@ fun Scanner(
 
     var camera by remember { mutableStateOf<Camera?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
-                camera?.let {
-                    if (it.cameraInfo.hasFlashUnit()) {
-                        val torchState by it.cameraInfo.torchState.observeAsState()
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
+            camera?.let {
+                if (it.cameraInfo.hasFlashUnit()) {
+                    val torchState by it.cameraInfo.torchState.observeAsState()
 
-                        IconButton(onClick = {
-                            it.cameraControl.enableTorch(
-                                when (torchState) {
-                                    TorchState.OFF -> true
-                                    else -> false
-                                }
-                            )
-                        }) {
-                            Icon(
-                                when (torchState) {
-                                    TorchState.OFF -> Icons.Default.FlashOn
-                                    else -> Icons.Default.FlashOff
-                                }, "Flash"
-                            )
-                        }
+                    IconButton(onClick = {
+                        it.cameraControl.enableTorch(
+                            when (torchState) {
+                                TorchState.OFF -> true
+                                else -> false
+                            }
+                        )
+                    }) {
+                        Icon(
+                            when (torchState) {
+                                TorchState.OFF -> Icons.Default.FlashOn
+                                else -> Icons.Default.FlashOff
+                            }, "Flash"
+                        )
                     }
                 }
-                IconButton(onClick = {
-                    if (!bluetoothController.disconnect()) {
-                        navHostController.navigateUp()
-                    }
-                }) {
-                    Icon(Icons.Default.BluetoothDisabled, "Disconnect")
-                }
-                Dropdown(navHostController)
             }
-            )
-        },
-        floatingActionButtonPosition = FabPosition.Center,
-        floatingActionButton = {
-            currentBarcode?.let {
-                ExtendedFloatingActionButton(
-                    onClick = { bluetoothController.keyboardSender?.sendString(it) }
-                ) {
-                    Icon(Icons.Filled.Send, "Send")
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.send_to_device))
+            IconButton(onClick = {
+                if (!bluetoothController.disconnect()) {
+                    navHostController.navigateUp()
                 }
+            }) {
+                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+            }
+            Dropdown(navHostController)
+        })
+    }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
+        currentBarcode?.let {
+            ExtendedFloatingActionButton(onClick = {
+                bluetoothController.keyboardSender?.sendString(
+                    it
+                )
+            }) {
+                Icon(Icons.Filled.Send, "Send")
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.send_to_device))
             }
         }
-    ) { padding ->
+    }) { padding ->
         Box(
             Modifier
                 .padding(padding)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize(), contentAlignment = Alignment.Center
         ) {
             RequiresCameraPermission {
                 CameraPreview(onCameraReady = { camera = it }) {
@@ -155,9 +150,7 @@ fun Scanner(
                             ParagraphStyle(TextAlign.Center)
                         )
                         ClickableText(
-                            text,
-                            maxLines = 6,
-                            overflow = TextOverflow.Ellipsis
+                            text, maxLines = 6, overflow = TextOverflow.Ellipsis
                         ) {
                             clipboardManager.setText(text)
                             Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT)
@@ -166,97 +159,99 @@ fun Scanner(
                     } ?: run {
                         Text(
                             stringResource(R.string.scan_code_to_start),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.width(230.dp)
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             }
 
-            @Suppress("MissingPermission")
             bluetoothController.currentDevice()?.let {
-                val dialogState = rememberDialogState()
+                DeviceInfoDialog(it)
+            }
+        }
+    }
+}
 
-                ElevatedCard(
-                    onClick = {
-                        dialogState.open()
-                    },
-                    Modifier
-                        .padding(12.dp)
-                        .align(Alignment.TopCenter)
-                ) {
-                    Row(
-                        Modifier.padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Info, "Info")
-                        Text(stringResource(R.string.connected_with, it.name))
-                    }
+@Suppress("MissingPermission")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BoxScope.DeviceInfoDialog(device: BluetoothDevice) {
+    val dialogState = rememberDialogState()
+
+    ElevatedCard(
+        onClick = {
+            dialogState.open()
+        },
+        Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
+        Row(
+            Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Info, "Info")
+            Text(stringResource(R.string.connected_with, device.name))
+        }
+    }
+
+    InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
+                Text(device.name)
+            }
+
+            item {
+                Text(stringResource(R.string.mac_address) + ":", fontWeight = FontWeight.Bold)
+                Text(device.address)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                item {
+                    Text(stringResource(R.string.alias) + ":", fontWeight = FontWeight.Bold)
+                    Text(device.alias ?: "")
                 }
+            }
 
-                InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        item {
-                            Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
-                            Text(it.name)
-                        }
+            item {
+                Text(stringResource(R.string.type) + ":", fontWeight = FontWeight.Bold)
+                Text(
+                    when (device.type) {
+                        BluetoothDevice.DEVICE_TYPE_DUAL -> "Dual"
+                        BluetoothDevice.DEVICE_TYPE_LE -> "LE"
+                        BluetoothDevice.DEVICE_TYPE_CLASSIC -> "Classic"
+                        BluetoothDevice.DEVICE_TYPE_UNKNOWN -> "Unknown"
+                        else -> "?"
+                    } + " (${device.type})"
+                )
+            }
 
-                        item {
-                            Text(
-                                stringResource(R.string.mac_address) + ":",
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(it.address)
-                        }
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            item {
-                                Text(
-                                    stringResource(R.string.alias) + ":",
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(it.alias ?: "")
-                            }
-                        }
-
-                        item {
-                            Text(stringResource(R.string.type) + ":", fontWeight = FontWeight.Bold)
-                            Text(
-                                when (it.type) {
-                                    BluetoothDevice.DEVICE_TYPE_DUAL -> "Dual"
-                                    BluetoothDevice.DEVICE_TYPE_LE -> "LE"
-                                    BluetoothDevice.DEVICE_TYPE_CLASSIC -> "Classic"
-                                    BluetoothDevice.DEVICE_TYPE_UNKNOWN -> "Unknown"
-                                    else -> ""
-                                } + " (${it.type})"
-                            )
-                        }
-
-                        item {
-                            Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
-                            with(it.bluetoothClass.majorDeviceClass) {
-                                Text("${deviceClassString(this)} (${this})")
-                            }
-                        }
-
-                        item {
-                            Text(
-                                stringResource(R.string.services) + ":",
-                                fontWeight = FontWeight.Bold
-                            )
-                            serviceInfo(it.bluetoothClass).forEach {
-                                Text(it)
-                            }
-                        }
-
-                        item {
-                            Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
-                            it.uuids.forEach {
-                                Text(it.toString())
-                            }
-                        }
+            item {
+                Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
+                with(device.bluetoothClass.majorDeviceClass) {
+                    val classString = remember(device) {
+                        deviceClassString(this)
                     }
+                    Text("$classString (${this})")
+                }
+            }
+
+            item {
+                Text(stringResource(R.string.services) + ":", fontWeight = FontWeight.Bold)
+                val serviceInfo = remember(device) {
+                    deviceServiceInfo(device.bluetoothClass)
+                }
+                serviceInfo.forEach {
+                    Text(it)
+                }
+            }
+
+            item {
+                Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
+                device.uuids.forEach {
+                    Text(it.toString())
                 }
             }
         }

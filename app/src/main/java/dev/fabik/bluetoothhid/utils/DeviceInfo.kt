@@ -17,7 +17,7 @@ fun deviceClassString(classMajor: Int): String = when (classMajor) {
     else -> "UNKNOWN"
 }
 
-fun serviceInfo(bluetoothClass: BluetoothClass): List<String> {
+fun deviceServiceInfo(bluetoothClass: BluetoothClass): List<String> {
     val services = mutableListOf<String>()
     if (bluetoothClass.hasService(BluetoothClass.Service.AUDIO))
         services.add("AUDIO")
