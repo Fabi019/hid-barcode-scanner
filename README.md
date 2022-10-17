@@ -1,6 +1,7 @@
 # Android HID Barcode Scanner
 
 [![Android CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg)](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main)](https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main)
 
 Android app for scanning barcodes with the phone camera and sending them to a PC via bluetooth. No
 special software is required on the PC as this app uses the BluetoothHID API available on devices
