@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 
+// adapted from: https://developer.android.com/jetpack/compose/interop/interop-apis#case-study-broadcastreceivers
 @Composable
 fun SystemBroadcastReceiver(
     systemAction: String,

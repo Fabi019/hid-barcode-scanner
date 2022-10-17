@@ -57,19 +57,24 @@ class MainActivity : ComponentActivity() {
                             NavGraph(navHostController)
                         }
 
-                        val showConnectionState by rememberPreferenceDefault(PrefKeys.SHOW_STATE)
-
-                        DisposableEffect(bluetoothController) {
-                            if (!bluetoothController.bluetoothEnabled()) {
-                                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                        ComposableLifecycle { _, event ->
+                            if (event == Lifecycle.Event.ON_START) {
+                                if (!bluetoothController.bluetoothEnabled()) {
+                                    startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                                }
+                            } else if (event == Lifecycle.Event.ON_RESUME) {
+                                bluetoothController.register()
+                            } else if (event == Lifecycle.Event.ON_PAUSE) {
+                                bluetoothController.unregister()
                             }
-
-                            bluetoothController.register()
+                        }
 
                         val autoConnect by rememberPreferenceDefault(PrefKeys.AUTO_CONNECT)
                         LaunchedEffect(autoConnect) {
                             bluetoothController.autoConnectEnabled = autoConnect
                         }
+
+                        val showConnectionState by rememberPreferenceDefault(PrefKeys.SHOW_STATE)
 
                         DisposableEffect(bluetoothController) {
                             val listener = bluetoothController.registerListener { device, state ->
