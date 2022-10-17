@@ -21,10 +21,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.common.Barcode
-import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
-import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
-import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
+import dev.fabik.bluetoothhid.utils.*
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 var sourceRes: android.util.Size? = null
@@ -50,8 +48,7 @@ fun updateScale(sw: Float, sh: Float, vw: Float, vh: Float) {
 
 @Composable
 fun CameraPreview(
-    onCameraReady: (Camera) -> Unit,
-    onBarCodeReady: (String) -> Unit
+    onCameraReady: (Camera) -> Unit, onBarCodeReady: (String) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -71,6 +68,23 @@ fun CameraPreview(
     val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
     val fullyInside by rememberPreferenceDefault(PrefKeys.FULL_INSIDE)
 
+    val scanFrequency by remember {
+        context.getPreference(PrefKeys.SCAN_FREQUENCY).map {
+            when (it) {
+                0 -> 0
+                1 -> 100
+                3 -> 1000
+                else -> 500
+            }
+        }
+    }.collectAsState(500)
+
+    val scanFormats by remember {
+        context.getPreference(PrefKeys.CODE_TYPES).map {
+            it.map { v -> v.toInt() }.toIntArray()
+        }
+    }.collectAsState(intArrayOf(0))
+
     AndroidView(
         factory = { ctx ->
             val previewView = PreviewView(ctx)
@@ -83,9 +97,11 @@ fun CameraPreview(
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
 
-                val barcodeAnalyser = BarCodeAnalyser(context, onNothing = {
-                    currentBarCode = null
-                }) { barcodes, source ->
+                val barcodeAnalyser = BarCodeAnalyser(
+                    scanDelay = scanFrequency,
+                    formats = scanFormats,
+                    onNothing = { currentBarCode = null }
+                ) { barcodes, source ->
                     if (sourceRes != source) {
                         updateScale(
                             source.width.toFloat(),
@@ -128,15 +144,14 @@ fun CameraPreview(
                         currentBarCode = barcode
                     }
                 }
-                val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
-                    .setTargetResolution(
-                        when (cameraResolution) {
-                            2 -> android.util.Size(1080, 1440)
-                            1 -> android.util.Size(720, 960)
-                            else -> android.util.Size(480, 640)
-                        }
-                    )
-                    .setOutputImageRotationEnabled(true)
+
+                val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder().setTargetResolution(
+                    when (cameraResolution) {
+                        2 -> android.util.Size(1080, 1440)
+                        1 -> android.util.Size(720, 960)
+                        else -> android.util.Size(480, 640)
+                    }
+                ).setOutputImageRotationEnabled(true)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().also {
                         it.setAnalyzer(executor, barcodeAnalyser)
                     }
@@ -159,9 +174,7 @@ fun CameraPreview(
                 cameraProvider.unbindAll()
 
                 val camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    useCaseGroup
+                    lifecycleOwner, cameraSelector, useCaseGroup
                 )
 
                 onCameraReady(camera)
@@ -184,8 +197,7 @@ fun CameraPreview(
                                 val focusPoint = factory.createPoint(event.x, event.y)
                                 camera.cameraControl.startFocusAndMetering(
                                     FocusMeteringAction.Builder(
-                                        focusPoint,
-                                        FocusMeteringAction.FLAG_AF
+                                        focusPoint, FocusMeteringAction.FLAG_AF
                                     ).apply {
                                         disableAutoCancel()
                                     }.build()
@@ -226,12 +238,7 @@ fun CameraPreview(
             }
 
             clipPath(markerPath, clipOp = ClipOp.Difference) {
-                drawRect(
-                    color = Color.Black,
-                    topLeft = Offset.Zero,
-                    size = size,
-                    alpha = 0.5f
-                )
+                drawRect(color = Color.Black, topLeft = Offset.Zero, size = size, alpha = 0.5f)
             }
 
             drawPath(markerPath, color = Color.White, style = Stroke(5f))

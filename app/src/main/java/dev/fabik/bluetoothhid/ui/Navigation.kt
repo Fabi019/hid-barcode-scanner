@@ -8,9 +8,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import dev.fabik.bluetoothhid.Devices
+import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.Settings
-import dev.fabik.bluetoothhid.bt.BluetoothController
 
 object Routes {
     const val Devices = "Devices"
@@ -21,22 +21,22 @@ object Routes {
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    bluetoothController: BluetoothController
 ) {
     val context = LocalContext.current
+    val controller = LocalController.current
 
     NavHost(navController, startDestination = Routes.Devices) {
         composable(Routes.Devices) {
-            Devices(navController, bluetoothController)
+            Devices(navController)
             BackHandler {
                 (context as Activity).finishAfterTransition()
             }
         }
 
         composable(Routes.Main) {
-            Scanner(navController, bluetoothController)
+            Scanner(navController)
             BackHandler {
-                if (!bluetoothController.disconnect()) {
+                if (!controller.disconnect()) {
                     navController.navigateUp()
                 }
             }
