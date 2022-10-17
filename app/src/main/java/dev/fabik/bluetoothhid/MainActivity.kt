@@ -2,10 +2,8 @@ package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
-import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PrefKeys
@@ -58,10 +55,8 @@ class MainActivity : ComponentActivity() {
                         }
 
                         ComposableLifecycle { _, event ->
-                            if (event == Lifecycle.Event.ON_START) {
-                                if (!bluetoothController.bluetoothEnabled()) {
-                                    startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                                }
+                            if (event == Lifecycle.Event.ON_START && !bluetoothController.bluetoothEnabled()) {
+                                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                             } else if (event == Lifecycle.Event.ON_RESUME) {
                                 bluetoothController.register()
                             } else if (event == Lifecycle.Event.ON_PAUSE) {
@@ -72,42 +67,6 @@ class MainActivity : ComponentActivity() {
                         val autoConnect by rememberPreferenceDefault(PrefKeys.AUTO_CONNECT)
                         LaunchedEffect(autoConnect) {
                             bluetoothController.autoConnectEnabled = autoConnect
-                        }
-
-                        val showConnectionState by rememberPreferenceDefault(PrefKeys.SHOW_STATE)
-
-                        DisposableEffect(bluetoothController) {
-                            val listener = bluetoothController.registerListener { device, state ->
-                                runOnUiThread {
-                                    if (showConnectionState) {
-                                        Toast.makeText(
-                                            this@MainActivity, "$device ${
-                                                when (state) {
-                                                    BluetoothProfile.STATE_CONNECTING -> "connecting..."
-                                                    BluetoothProfile.STATE_CONNECTED -> "connected!"
-                                                    BluetoothProfile.STATE_DISCONNECTING -> "disconnecting..."
-                                                    BluetoothProfile.STATE_DISCONNECTED -> "disconnected!"
-                                                    else -> "unknown ($state)"
-                                                }
-                                            }", Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-
-                                    if (device != null && state == BluetoothProfile.STATE_CONNECTED) {
-                                        navHostController.navigate(Routes.Main) {
-                                            launchSingleTop = true
-                                        }
-                                    } else {
-                                        navHostController.navigate(Routes.Devices) {
-                                            launchSingleTop = true
-                                        }
-                                    }
-                                }
-                            }
-
-                            onDispose {
-                                bluetoothController.unregisterListener(listener)
-                            }
                         }
                     }
                 }

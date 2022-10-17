@@ -8,12 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.R
 
 @Composable
 fun Dropdown(
-    navHostController: NavHostController
+    navController: NavController
 ) {
     val context = LocalContext.current
 
@@ -26,20 +26,14 @@ fun Dropdown(
             Icon(Icons.Default.MoreVert, "More")
         }
 
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.settings)) },
-                onClick = {
-                    navHostController.navigate(Routes.Settings)
-                    showMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.exit)) },
-                onClick = { (context as Activity).finishAfterTransition() }
-            )
+        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.settings)) }, onClick = {
+                showMenu = false
+                navController.navigate(Routes.Settings)
+            })
+            DropdownMenuItem(text = { Text(stringResource(R.string.exit)) }, onClick = {
+                (context as Activity).finishAfterTransition()
+            })
         }
     }
 }

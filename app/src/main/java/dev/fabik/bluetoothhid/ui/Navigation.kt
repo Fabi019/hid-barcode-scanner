@@ -1,8 +1,10 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.app.Activity
+import android.bluetooth.BluetoothProfile
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -44,6 +46,26 @@ fun NavGraph(
 
         composable(Routes.Settings) {
             Settings(navController)
+        }
+    }
+
+    DisposableEffect(controller) {
+        val listener = controller.registerListener { device, state ->
+            (context as Activity).runOnUiThread {
+                if (device != null && state == BluetoothProfile.STATE_CONNECTED) {
+                    navController.navigate(Routes.Main) {
+                        launchSingleTop = true
+                    }
+                } else {
+                    navController.navigate(Routes.Devices) {
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
+
+        onDispose {
+            controller.unregisterListener(listener)
         }
     }
 }
