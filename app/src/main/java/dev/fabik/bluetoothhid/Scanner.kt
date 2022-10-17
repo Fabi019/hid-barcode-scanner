@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.deviceClassString
@@ -41,13 +40,13 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Scanner(
-    navController: NavController, bluetoothController: BluetoothController
-) {
+fun Scanner(navController: NavController) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
+
+    val controller = LocalController.current
 
     var currentBarcode by remember { mutableStateOf<String?>(null) }
 
@@ -71,7 +70,7 @@ fun Scanner(
                 }
             }
             IconButton(onClick = {
-                if (!bluetoothController.disconnect()) {
+                if (!controller.disconnect()) {
                     navController.navigateUp()
                 }
             }) {
@@ -82,7 +81,7 @@ fun Scanner(
     }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
         currentBarcode?.let {
             ExtendedFloatingActionButton(onClick = {
-                bluetoothController.keyboardSender?.sendString(it)
+                controller.keyboardSender?.sendString(it)
             }) {
                 Icon(Icons.Filled.Send, "Send")
                 Spacer(Modifier.width(8.dp))
@@ -102,7 +101,7 @@ fun Scanner(
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
                     }
                     if (autoSend) {
-                        bluetoothController.keyboardSender?.sendString(it)
+                        controller.keyboardSender?.sendString(it)
                     }
                     if (vibrate) {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -147,7 +146,7 @@ fun Scanner(
                 }
             }
 
-            bluetoothController.currentDevice()?.let {
+            controller.currentDevice()?.let {
                 DeviceInfoDialog(it)
             }
         }

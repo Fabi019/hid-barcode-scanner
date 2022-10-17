@@ -6,11 +6,8 @@ import android.bluetooth.*
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.getPreference
-import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.Executors
 
 typealias Listener = (BluetoothDevice?, Int) -> Unit
@@ -33,8 +30,7 @@ class BluetoothController(var context: Context) {
 
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
-    private var autoConnectEnabled: LiveData<Boolean> =
-        context.getPreference(PrefKeys.AUTO_CONNECT).asLiveData(Dispatchers.IO)
+    var autoConnectEnabled: Boolean = false
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -91,7 +87,7 @@ class BluetoothController(var context: Context) {
         override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
             super.onAppStatusChanged(pluggedDevice, registered)
 
-            if (registered && autoConnectEnabled.value == true) {
+            if (registered && autoConnectEnabled) {
                 if (pluggedDevice != null) {
                     Log.d(TAG, "onAppStatusChanged: connecting with $pluggedDevice")
                     hidDevice?.connect(pluggedDevice)

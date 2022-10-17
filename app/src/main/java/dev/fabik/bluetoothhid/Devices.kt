@@ -19,11 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.RequireLocationPermission
@@ -38,20 +37,19 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Devices(
-    navHostController: NavHostController,
-    bluetoothController: BluetoothController
+    navController: NavController
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Devices") },
                 actions = {
-                    Dropdown(navHostController)
+                    Dropdown(navController)
                 }
             )
         }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            DeviceList(navHostController, bluetoothController)
+            DeviceList(navController)
         }
     }
 }
@@ -59,9 +57,10 @@ fun Devices(
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceList(
-    navHostController: NavHostController,
-    bluetoothController: BluetoothController
+    navController: NavController
 ) {
+    val controller = LocalController.current
+
     val foundDevices = remember {
         mutableStateListOf<BluetoothDevice>()
     }
@@ -72,8 +71,8 @@ fun DeviceList(
 
     val dialogState = rememberDialogState()
 
-    DisposableEffect(bluetoothController) {
-        val listener = bluetoothController.registerListener { _, state ->
+    DisposableEffect(controller) {
+        val listener = controller.registerListener { _, state ->
             dialogState.openState = when (state) {
                 BluetoothProfile.STATE_CONNECTING -> true
                 BluetoothProfile.STATE_DISCONNECTING -> true
@@ -82,7 +81,7 @@ fun DeviceList(
         }
 
         onDispose {
-            bluetoothController.unregisterListener(listener)
+            controller.unregisterListener(listener)
         }
     }
 
@@ -122,13 +121,13 @@ fun DeviceList(
     }
 
     var devices by remember {
-        mutableStateOf(bluetoothController.pairedDevices())
+        mutableStateOf(controller.pairedDevices())
     }
 
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            devices = bluetoothController.pairedDevices()
-            bluetoothController.scanDevices()
+            devices = controller.pairedDevices()
+            controller.scanDevices()
             delay(500)
             isRefreshing = false
         }
@@ -183,7 +182,7 @@ fun DeviceList(
                     if (d.name == null && !showUnnamed)
                         return@items
                     Device(d.name ?: stringResource(R.string.unknown), d.address) {
-                        bluetoothController.connect(d)
+                        controller.connect(d)
                     }
                 }
             }
@@ -203,7 +202,7 @@ fun DeviceList(
             } else {
                 items(devices.toList()) {
                     Device(it.name, it.address) {
-                        bluetoothController.connect(it)
+                        controller.connect(it)
                     }
                 }
             }
@@ -211,7 +210,7 @@ fun DeviceList(
             item {
                 Box(Modifier.fillMaxWidth()) {
                     TextButton(
-                        onClick = { navHostController.navigate(Routes.Main) },
+                        onClick = { navController.navigate(Routes.Main) },
                         Modifier.align(Alignment.Center)
                     ) {
                         Text(stringResource(R.string.skip))

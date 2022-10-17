@@ -12,17 +12,21 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+
+val LocalController =
+    staticCompositionLocalOf<BluetoothController> { error("No controller injected!") }
 
 class MainActivity : ComponentActivity() {
 
@@ -49,7 +53,9 @@ class MainActivity : ComponentActivity() {
                     RequiresBluetoothPermission {
                         val navHostController = rememberNavController()
 
-                        NavGraph(navHostController, bluetoothController)
+                        CompositionLocalProvider(LocalController provides bluetoothController) {
+                            NavGraph(navHostController)
+                        }
 
                         val showConnectionState by rememberPreferenceDefault(PrefKeys.SHOW_STATE)
 
@@ -60,7 +66,13 @@ class MainActivity : ComponentActivity() {
 
                             bluetoothController.register()
 
-                            bluetoothController.registerListener { device, state ->
+                        val autoConnect by rememberPreferenceDefault(PrefKeys.AUTO_CONNECT)
+                        LaunchedEffect(autoConnect) {
+                            bluetoothController.autoConnectEnabled = autoConnect
+                        }
+
+                        DisposableEffect(bluetoothController) {
+                            val listener = bluetoothController.registerListener { device, state ->
                                 runOnUiThread {
                                     if (showConnectionState) {
                                         Toast.makeText(
@@ -89,7 +101,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             onDispose {
-                                bluetoothController.unregister()
+                                bluetoothController.unregisterListener(listener)
                             }
                         }
                     }
