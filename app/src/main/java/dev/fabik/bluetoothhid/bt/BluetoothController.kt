@@ -1,14 +1,16 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.getPreference
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 typealias Listener = (BluetoothDevice?, Int) -> Unit
@@ -31,15 +33,8 @@ class BluetoothController(var context: Context) {
 
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
-    private var autoConnectEnabled = false
-
-    init {
-        CoroutineScope(Dispatchers.IO).launch {
-            context.getPreference(PrefKeys.AUTO_CONNECT).collect {
-                autoConnectEnabled = it
-            }
-        }
-    }
+    private var autoConnectEnabled: LiveData<Boolean> =
+        context.getPreference(PrefKeys.AUTO_CONNECT).asLiveData(Dispatchers.IO)
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -54,12 +49,20 @@ class BluetoothController(var context: Context) {
                 Executors.newCachedThreadPool(),
                 hidDeviceCallback
             )
+
+            (context as Activity).runOnUiThread {
+                Toast.makeText(context, "BT-Proxy connected!", Toast.LENGTH_SHORT).show()
+            }
         }
 
         override fun onServiceDisconnected(profile: Int) {
             Log.d(TAG, "onServiceDisconnected")
 
             hidDevice = null
+
+            (context as Activity).runOnUiThread {
+                Toast.makeText(context, "BT-Proxy disconnected!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -88,7 +91,7 @@ class BluetoothController(var context: Context) {
         override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
             super.onAppStatusChanged(pluggedDevice, registered)
 
-            if (registered && autoConnectEnabled) {
+            if (registered && autoConnectEnabled.value == true) {
                 if (pluggedDevice != null) {
                     Log.d(TAG, "onAppStatusChanged: connecting with $pluggedDevice")
                     hidDevice?.connect(pluggedDevice)
@@ -127,7 +130,6 @@ class BluetoothController(var context: Context) {
     fun unregister() {
         bluetoothAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         hidDevice = null
-        deviceListener.clear()
     }
 
     fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
