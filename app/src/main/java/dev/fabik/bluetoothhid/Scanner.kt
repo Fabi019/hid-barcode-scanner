@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PrefKeys
@@ -42,7 +42,7 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Scanner(
-    navHostController: NavHostController, bluetoothController: BluetoothController
+    navController: NavController, bluetoothController: BluetoothController
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -67,40 +67,22 @@ fun Scanner(
         TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
             camera?.let {
                 if (it.cameraInfo.hasFlashUnit()) {
-                    val torchState by it.cameraInfo.torchState.observeAsState()
-
-                    IconButton(onClick = {
-                        it.cameraControl.enableTorch(
-                            when (torchState) {
-                                TorchState.OFF -> true
-                                else -> false
-                            }
-                        )
-                    }) {
-                        Icon(
-                            when (torchState) {
-                                TorchState.OFF -> Icons.Default.FlashOn
-                                else -> Icons.Default.FlashOff
-                            }, "Flash"
-                        )
-                    }
+                    ToggleFlashButton(it)
                 }
             }
             IconButton(onClick = {
                 if (!bluetoothController.disconnect()) {
-                    navHostController.navigateUp()
+                    navController.navigateUp()
                 }
             }) {
                 Icon(Icons.Default.BluetoothDisabled, "Disconnect")
             }
-            Dropdown(navHostController)
+            Dropdown(navController)
         })
     }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
         currentBarcode?.let {
             ExtendedFloatingActionButton(onClick = {
-                bluetoothController.keyboardSender?.sendString(
-                    it
-                )
+                bluetoothController.keyboardSender?.sendString(it)
             }) {
                 Icon(Icons.Filled.Send, "Send")
                 Spacer(Modifier.width(8.dp))
@@ -169,6 +151,27 @@ fun Scanner(
                 DeviceInfoDialog(it)
             }
         }
+    }
+}
+
+@Composable
+fun ToggleFlashButton(camera: Camera) {
+    val torchState by camera.cameraInfo.torchState.observeAsState()
+
+    IconButton(onClick = {
+        camera.cameraControl.enableTorch(
+            when (torchState) {
+                TorchState.OFF -> true
+                else -> false
+            }
+        )
+    }) {
+        Icon(
+            when (torchState) {
+                TorchState.OFF -> Icons.Default.FlashOn
+                else -> Icons.Default.FlashOff
+            }, "Flash"
+        )
     }
 }
 
