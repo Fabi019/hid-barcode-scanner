@@ -11,21 +11,21 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PrefKeys
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(
-    navHostController: NavHostController
+    navController: NavController
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = { navHostController.navigateUp() }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
@@ -60,15 +60,6 @@ fun Settings(
                         desc = stringResource(R.string.show_unnamed_desc),
                         icon = Icons.Default.DeviceUnknown,
                         preference = PrefKeys.SHOW_UNNAMED
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        title = stringResource(R.string.show_status),
-                        desc = stringResource(R.string.show_status_desc),
-                        icon = Icons.Default.CallToAction,
-                        preference = PrefKeys.SHOW_STATE
                     )
                 }
 

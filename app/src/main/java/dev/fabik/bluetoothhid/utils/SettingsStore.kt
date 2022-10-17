@@ -21,7 +21,6 @@ object PrefKeys {
     // Connection
     val AUTO_CONNECT = Pref(booleanPreferencesKey("auto_connect"), false)
     val SHOW_UNNAMED = Pref(booleanPreferencesKey("show_unnamed"), false)
-    val SHOW_STATE = Pref(booleanPreferencesKey("show_state"), false)
     val SEND_DELAY = Pref(floatPreferencesKey("send_delay"), 1f)
 
     // Appearance
