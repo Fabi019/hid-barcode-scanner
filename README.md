@@ -1,7 +1,15 @@
-# Android HID Barcode Scanner
+<div align="center">
+  <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg" /></a>
+  <a href="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main"><img src="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main" /></a>
 
-[![Android CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg)](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml)
-[![CodeFactor](https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main)](https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main)
+  <br/>
+  <br/>
+
+  <img alt="App Logo" src="app/src/main/ic_launcher-playstore.png" width="100" />
+
+  <h1>HID Barcode Scanner</h1>
+</div>
+
 
 Android app for scanning barcodes with the phone camera and sending them to a PC via bluetooth. No
 special software is required on the PC as this app uses the BluetoothHID API available on devices
@@ -20,7 +28,19 @@ running Android 9 or greater.
 
 ## Screenshots
 
-<img src="img/devices.png" width="200px" /> <img src="img/main.png" width="200px" /> <img src="img/settings1.png" width="200px" /> <img src="img/settings2.png" width="200px" />
+Device list and Scanner screen. If you don't want to connect with any device now and just want to
+try out the scanner, pressing the 'Skip'-Button at the bottom of the paired devices will bring you
+directly to the scanner.
+
+Otherwise the app tries to connect with the selected device and automatically sends you to the
+scanner once connected.
+
+<img alt="Devices" src="img/devices.png" width="200px" /> <img alt="Main" src="img/main.png" width="200px" />
+
+All configurable Settings. *(Newer versions might contain more or less settings as shown in the
+pictures)*
+
+<img alt="Settings" src="img/settings1.png" width="200px" /> <img alt="Settings" src="img/settings2.png" width="200px" />
 
 ## Download
 
