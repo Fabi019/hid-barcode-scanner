@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -48,7 +49,7 @@ fun Scanner(navController: NavController) {
 
     val controller = LocalController.current
 
-    var currentBarcode by remember { mutableStateOf<String?>(null) }
+    var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
 
     val playSound by rememberPreferenceDefault(PrefKeys.PLAY_SOUND)
 
@@ -79,13 +80,15 @@ fun Scanner(navController: NavController) {
             Dropdown(navController)
         })
     }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
-        currentBarcode?.let {
-            ExtendedFloatingActionButton(onClick = {
-                controller.keyboardSender?.sendString(it)
-            }) {
-                Icon(Icons.Filled.Send, "Send")
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.send_to_device))
+        controller.currentDevice()?.let {
+            currentBarcode?.let {
+                ExtendedFloatingActionButton(onClick = {
+                    controller.keyboardSender?.sendString(it)
+                }) {
+                    Icon(Icons.Filled.Send, "Send")
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.send_to_device))
+                }
             }
         }
     }) { padding ->
