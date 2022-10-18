@@ -5,6 +5,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,6 +62,7 @@ fun CameraPreview(
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
     val circleAlpha = remember { Animatable(0f) }
+    val circleRadius = remember { Animatable(100f) }
     var focusTouchPoint by remember { mutableStateOf<Offset?>(null) }
 
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
@@ -188,6 +191,12 @@ fun CameraPreview(
                                 scope.launch {
                                     circleAlpha.animateTo(1f, tween(100))
                                 }
+                                scope.launch {
+                                    circleRadius.snapTo(100f)
+                                    circleRadius.animateTo(
+                                        80f, spring(Spring.DampingRatioMediumBouncy)
+                                    )
+                                }
                                 val factory = DisplayOrientedMeteringPointFactory(
                                     previewView.display,
                                     camera.cameraInfo,
@@ -259,7 +268,7 @@ fun CameraPreview(
         focusTouchPoint?.let {
             drawCircle(
                 color = Color.White,
-                radius = 80f,
+                radius = circleRadius.value,
                 center = it,
                 style = Stroke(5f),
                 alpha = circleAlpha.value
