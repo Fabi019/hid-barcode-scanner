@@ -113,7 +113,6 @@ fun Settings(
                     CheckBoxPreference(
                         title = stringResource(R.string.code_types),
                         desc = stringResource(R.string.code_types_desc),
-                        values = arrayOf(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096),
                         valueStrings = stringArrayResource(R.array.code_types_values),
                         icon = Icons.Default.QrCode2,
                         preference = PrefKeys.CODE_TYPES

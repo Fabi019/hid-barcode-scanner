@@ -36,7 +36,6 @@ fun CheckBoxDialog(
     dialogState: DialogState,
     title: String,
     selectedValues: Set<Int>,
-    values: Array<Int>,
     valueStrings: Array<String>,
     onDismiss: DialogState.() -> Unit = {},
     onConfirm: DialogState.(List<Int>) -> Unit
@@ -53,23 +52,22 @@ fun CheckBoxDialog(
     }) {
         LazyColumn {
             itemsIndexed(valueStrings) { index, item ->
-                val value = values[index]
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
-                        if (!currentSelection.contains(value)) {
-                            currentSelection.add(value)
+                        if (!currentSelection.contains(index)) {
+                            currentSelection.add(index)
                         } else {
-                            currentSelection.remove(value)
+                            currentSelection.remove(index)
                         }
                     }) {
                     Checkbox(
-                        checked = currentSelection.contains(value),
+                        checked = currentSelection.contains(index),
                         onCheckedChange = {
-                            if (it && !currentSelection.contains(value)) {
-                                currentSelection.add(value)
+                            if (!currentSelection.contains(index)) {
+                                currentSelection.add(index)
                             } else {
-                                currentSelection.remove(value)
+                                currentSelection.remove(index)
                             }
                         })
                     Spacer(Modifier.width(8.dp))

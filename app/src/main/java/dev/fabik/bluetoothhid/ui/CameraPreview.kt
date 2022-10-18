@@ -81,7 +81,7 @@ fun CameraPreview(
 
     val scanFormats by remember {
         context.getPreference(PrefKeys.CODE_TYPES).map {
-            it.map { v -> v.toInt() }.toIntArray()
+            it.map { v -> 1 shl v.toInt() }.toIntArray()
         }
     }.collectAsState(intArrayOf(0))
 

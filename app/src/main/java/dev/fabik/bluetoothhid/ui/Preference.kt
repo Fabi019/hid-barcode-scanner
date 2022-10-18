@@ -188,7 +188,6 @@ fun SliderPreference(
 fun CheckBoxPreference(
     title: String,
     desc: String,
-    values: Array<Int>,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
     preference: PrefKeys.Pref<Set<String>>
@@ -199,7 +198,6 @@ fun CheckBoxPreference(
         title,
         desc,
         selectedValues = value?.map { v -> v.toInt() }?.toSet(),
-        values,
         valueStrings,
         icon
     ) {
@@ -212,7 +210,6 @@ fun CheckBoxPreference(
     title: String,
     desc: String,
     selectedValues: Set<Int>?,
-    values: Array<Int>,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
     onSelect: (Set<Int>) -> Unit
@@ -220,7 +217,7 @@ fun CheckBoxPreference(
     val dialogState = rememberDialogState()
 
     selectedValues?.let {
-        CheckBoxDialog(dialogState, title, it, values, valueStrings, onDismiss = { close() }) { v ->
+        CheckBoxDialog(dialogState, title, it, valueStrings, onDismiss = { close() }) { v ->
             onSelect(v.toSet())
             close()
         }
