@@ -6,7 +6,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,7 +51,7 @@ fun RequiresBluetoothPermission(
 
                 Spacer(Modifier.height(16.dp))
 
-                Button(onClick = {
+                FilledTonalButton(onClick = {
                     bluetoothPermission.launchMultiplePermissionRequest()
                 }, Modifier.align(Alignment.CenterHorizontally)) {
                     Text(stringResource(R.string.request_again))
@@ -80,7 +80,7 @@ fun RequiresCameraPermission(
 
             Spacer(Modifier.height(16.dp))
 
-            Button(onClick = {
+            FilledTonalButton(onClick = {
                 cameraPermission.launchPermissionRequest()
             }, Modifier.align(Alignment.CenterHorizontally)) {
                 Text(stringResource(R.string.request_permission))
@@ -107,7 +107,7 @@ fun RequireLocationPermission(
         Column {
             Text(stringResource(R.string.location_permission), style = Typography.labelMedium)
 
-            Button(onClick = {
+            FilledTonalButton(onClick = {
                 locationPermission.launchMultiplePermissionRequest()
             }) {
                 Text(stringResource(R.string.request_permission))
@@ -134,7 +134,7 @@ fun RequireLocationPermission(
             Column {
                 Text(stringResource(R.string.location_enable), style = Typography.labelMedium)
 
-                Button(onClick = {
+                FilledTonalButton(onClick = {
                     context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }) {
                     Text(stringResource(R.string.open_location_settings))
