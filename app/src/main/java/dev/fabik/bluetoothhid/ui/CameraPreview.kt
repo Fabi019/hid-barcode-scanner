@@ -61,8 +61,8 @@ fun CameraPreview(
     var lastBarCodeValue by remember { mutableStateOf<String?>(null) }
     var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
 
-    val circleAlpha = remember { Animatable(0f) }
-    val circleRadius = remember { Animatable(100f) }
+    val focusCircleAlpha = remember { Animatable(0f) }
+    val focusCircleRadius = remember { Animatable(100f) }
     var focusTouchPoint by remember { mutableStateOf<Offset?>(null) }
 
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
@@ -189,11 +189,11 @@ fun CameraPreview(
                             if (focusTouchPoint == null) {
                                 focusTouchPoint = Offset(event.x, event.y)
                                 scope.launch {
-                                    circleAlpha.animateTo(1f, tween(100))
+                                    focusCircleAlpha.animateTo(1f, tween(100))
                                 }
                                 scope.launch {
-                                    circleRadius.snapTo(100f)
-                                    circleRadius.animateTo(
+                                    focusCircleRadius.snapTo(100f)
+                                    focusCircleRadius.animateTo(
                                         80f, spring(Spring.DampingRatioMediumBouncy)
                                     )
                                 }
@@ -212,7 +212,7 @@ fun CameraPreview(
                                     }.build()
                                 ).addListener({
                                     scope.launch {
-                                        circleAlpha.animateTo(0f, tween(100))
+                                        focusCircleAlpha.animateTo(0f, tween(100))
                                         focusTouchPoint = null
                                     }
                                 }, executor)
@@ -228,6 +228,23 @@ fun CameraPreview(
         modifier = Modifier.fillMaxSize(),
     )
 
+    OverlayCanvas(
+        restrictArea,
+        currentBarCode,
+        focusTouchPoint,
+        focusCircleRadius.value,
+        focusCircleAlpha.value
+    )
+}
+
+@Composable
+fun OverlayCanvas(
+    restrictArea: Boolean?,
+    currentBarCode: Barcode?,
+    focusTouchPoint: Offset?,
+    focusCircleRadius: Float,
+    focusCircleAlpha: Float
+) {
     val overlayType by rememberPreferenceNull(PrefKeys.OVERLAY_TYPE)
 
     Canvas(Modifier.fillMaxSize()) {
@@ -268,10 +285,10 @@ fun CameraPreview(
         focusTouchPoint?.let {
             drawCircle(
                 color = Color.White,
-                radius = circleRadius.value,
+                radius = focusCircleRadius,
                 center = it,
                 style = Stroke(5f),
-                alpha = circleAlpha.value
+                alpha = focusCircleAlpha
             )
         }
     }
