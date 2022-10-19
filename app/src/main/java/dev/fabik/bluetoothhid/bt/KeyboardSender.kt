@@ -46,7 +46,7 @@ open class KeyboardSender(
 
     protected open fun sendReport() {
         if (!hidDevice.sendReport(host, KeyboardReport.ID, keyboardReport.bytes)) {
-            Log.e(TAG, "Report wasn't sent")
+            Log.e(TAG, "Error sending keyboard report")
         }
     }
 

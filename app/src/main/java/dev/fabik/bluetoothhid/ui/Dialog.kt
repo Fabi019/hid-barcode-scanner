@@ -105,7 +105,7 @@ fun ComboBoxDialog(
                         currentSelection = index
                     }) {
                     RadioButton(
-                        selected = (index == currentSelection),
+                        selected = index == currentSelection,
                         onClick = { currentSelection = index })
                     Spacer(Modifier.width(8.dp))
                     Text(item, modifier = Modifier.weight(1f))
