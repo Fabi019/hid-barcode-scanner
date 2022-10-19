@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -55,12 +56,21 @@ class MainActivity : ComponentActivity() {
                         }
 
                         ComposableLifecycle { _, event ->
-                            if (event == Lifecycle.Event.ON_START && !bluetoothController.bluetoothEnabled()) {
-                                startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                            } else if (event == Lifecycle.Event.ON_RESUME) {
-                                bluetoothController.register()
-                            } else if (event == Lifecycle.Event.ON_PAUSE) {
-                                bluetoothController.unregister()
+                            when (event) {
+                                Lifecycle.Event.ON_START ->
+                                    if (!bluetoothController.bluetoothEnabled()) {
+                                        startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                                    }
+                                Lifecycle.Event.ON_RESUME ->
+                                    if (!bluetoothController.register()) {
+                                        Toast.makeText(
+                                            this,
+                                            getString(R.string.bt_proxy_error),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                Lifecycle.Event.ON_PAUSE -> bluetoothController.unregister()
+                                else -> {}
                             }
                         }
 

@@ -6,6 +6,7 @@ import android.bluetooth.*
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.getPreference
 import java.util.concurrent.Executors
@@ -47,7 +48,11 @@ class BluetoothController(var context: Context) {
             )
 
             (context as Activity).runOnUiThread {
-                Toast.makeText(context, "BT-Proxy connected!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_proxy_connected),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -57,7 +62,11 @@ class BluetoothController(var context: Context) {
             hidDevice = null
 
             (context as Activity).runOnUiThread {
-                Toast.makeText(context, "BT-Proxy disconnected!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_proxy_disconnected),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -119,11 +128,11 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
-    fun register() {
+    fun register(): Boolean =
         bluetoothAdapter.getProfileProxy(context, serviceListener, BluetoothProfile.HID_DEVICE)
-    }
 
     fun unregister() {
+        disconnect()
         bluetoothAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         hidDevice = null
     }

@@ -76,6 +76,9 @@
     <string name="uuids">UUIDs</string>
     <string name="code_types">Code Types</string>
     <string name="code_types_desc">Only enable desired types to improve scanning speed.\nSelect none to enable all.</string>
+    <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
+    <string name="bt_proxy_disconnected">BT-Proxy disconnected!</string>
+    <string name="bt_proxy_connected">BT-Proxy connected!</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
