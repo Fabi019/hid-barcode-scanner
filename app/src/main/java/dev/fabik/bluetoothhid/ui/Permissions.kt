@@ -2,6 +2,7 @@ package dev.fabik.bluetoothhid.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
@@ -27,6 +28,11 @@ import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 fun RequiresBluetoothPermission(
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    val hasBT = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
+    }
+
     val permissions = mutableListOf(
         android.Manifest.permission.BLUETOOTH,
         android.Manifest.permission.BLUETOOTH_ADMIN
@@ -39,9 +45,18 @@ fun RequiresBluetoothPermission(
 
     val bluetoothPermission = rememberMultiplePermissionsState(permissions)
 
-    if (bluetoothPermission.allPermissionsGranted) {
+    if (bluetoothPermission.allPermissionsGranted && hasBT) {
         content()
     } else {
+        if (!hasBT) {
+            Column(
+                Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(stringResource(R.string.no_bt))
+            }
+            return
+        }
         if (bluetoothPermission.shouldShowRationale) {
             Column(
                 Modifier.fillMaxSize(),
