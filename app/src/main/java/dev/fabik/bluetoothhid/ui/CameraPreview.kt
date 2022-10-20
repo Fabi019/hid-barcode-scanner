@@ -40,9 +40,9 @@ fun CameraPreview(
     val scope = rememberCoroutineScope()
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
-    var lastBarCodeValue by remember { mutableStateOf<String?>(null) }
-    var currentBarCode by remember { mutableStateOf<Barcode?>(null) }
+    val hasFrontCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
+    }
 
     val focusCircleAlpha = remember { Animatable(0f) }
     val focusCircleRadius = remember { Animatable(100f) }
@@ -145,14 +145,14 @@ fun CameraPreview(
                             it.setAnalyzer(executor, barcodeAnalyser)
                         }
 
-                val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(
-                        when (frontCamera) {
-                            true -> CameraSelector.LENS_FACING_FRONT
-                            else -> CameraSelector.LENS_FACING_BACK
-                        }
-                    )
-                    .build()
+                    val cameraSelector = CameraSelector.Builder()
+                        .requireLensFacing(
+                            when {
+                                frontCamera && hasFrontCamera -> CameraSelector.LENS_FACING_FRONT
+                                else -> CameraSelector.LENS_FACING_BACK
+                            }
+                        )
+                        .build()
 
                     val useCaseGroup = UseCaseGroup.Builder()
                         .setViewPort(previewView.viewPort!!)
