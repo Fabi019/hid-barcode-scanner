@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
+import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.deviceClassString
 import dev.fabik.bluetoothhid.utils.deviceServiceInfo
@@ -130,7 +131,7 @@ fun Scanner(navController: NavController) {
                     currentBarcode?.let {
                         val text = AnnotatedString(
                             it,
-                            SpanStyle(MaterialTheme.colorScheme.onBackground),
+                            SpanStyle(Neutral95),
                             ParagraphStyle(TextAlign.Center)
                         )
                         ClickableText(
@@ -143,6 +144,7 @@ fun Scanner(navController: NavController) {
                     } ?: run {
                         Text(
                             stringResource(R.string.scan_code_to_start),
+                            color = Neutral95,
                             textAlign = TextAlign.Center
                         )
                     }
