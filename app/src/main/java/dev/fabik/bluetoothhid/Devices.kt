@@ -19,15 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import dev.fabik.bluetoothhid.ui.Dropdown
-import dev.fabik.bluetoothhid.ui.LoadingDialog
-import dev.fabik.bluetoothhid.ui.RequireLocationPermission
-import dev.fabik.bluetoothhid.ui.Routes
-import dev.fabik.bluetoothhid.ui.rememberDialogState
+import dev.fabik.bluetoothhid.ui.*
+import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
@@ -57,21 +55,18 @@ fun Devices(
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceList(
-    navController: NavController
+    navController: NavController,
+    viewModel: DevicesViewModel = viewModel()
 ) {
     val controller = LocalController.current
-
-    val foundDevices = remember {
-        mutableStateListOf<BluetoothDevice>()
-    }
-
-    var isScanning by remember {
-        mutableStateOf(false)
-    }
 
     val dialogState = rememberDialogState()
 
     DisposableEffect(controller) {
+        if (viewModel.pairedDevices.isEmpty()) {
+            viewModel.pairedDevices.addAll(controller.pairedDevices())
+        }
+
         val listener = controller.registerListener { _, state ->
             dialogState.openState = when (state) {
                 BluetoothProfile.STATE_CONNECTING -> true
@@ -91,13 +86,13 @@ fun DeviceList(
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
         Log.d("Discovery", "isDiscovering")
-        isScanning = true
-        foundDevices.clear()
+        viewModel.isScanning = true
+        viewModel.foundDevices.clear()
     }
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
         Log.d("Discovery", "FinishedDiscovering")
-        isScanning = false
+        viewModel.isScanning = false
     }
 
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
@@ -108,38 +103,31 @@ fun DeviceList(
         } else {
             @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         }?.let { dev ->
-            if (!foundDevices.contains(dev)) {
-                foundDevices.add(dev)
+            if (!viewModel.foundDevices.contains(dev)) {
+                viewModel.foundDevices.add(dev)
             }
 
             Log.d("Discovery", "Found: $dev")
         }
     }
 
-    var isRefreshing by remember {
-        mutableStateOf(false)
-    }
-
-    var devices by remember {
-        mutableStateOf(controller.pairedDevices())
-    }
-
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            devices = controller.pairedDevices()
+    LaunchedEffect(viewModel.isRefreshing) {
+        if (viewModel.isRefreshing) {
+            viewModel.pairedDevices.clear()
+            viewModel.pairedDevices.addAll(controller.pairedDevices())
             controller.scanDevices()
             delay(500)
-            isRefreshing = false
+            viewModel.isRefreshing = false
         }
     }
 
     val showUnnamed by rememberPreferenceDefault(PrefKeys.SHOW_UNNAMED)
 
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+    val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        if (!isScanning) {
-            isRefreshing = true
+        if (!viewModel.isScanning) {
+            viewModel.isRefreshing = true
         }
     }, indicator = { state, trigger ->
         SwipeRefreshIndicator(
@@ -163,22 +151,22 @@ fun DeviceList(
                 )
             }
 
-            if (isScanning) {
+            if (viewModel.isScanning) {
                 item {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
             }
 
-            if (foundDevices.isEmpty()) {
+            if (viewModel.foundDevices.isEmpty()) {
                 item {
                     RequireLocationPermission {
-                        if (!isScanning) {
+                        if (!viewModel.isScanning) {
                             Text(stringResource(R.string.swipe_refresh))
                         }
                     }
                 }
             } else {
-                items(foundDevices) { d ->
+                items(viewModel.foundDevices) { d ->
                     if (d.name == null && !showUnnamed)
                         return@items
                     Device(d.name ?: stringResource(R.string.unknown), d.address) {
@@ -195,12 +183,12 @@ fun DeviceList(
                 )
             }
 
-            if (devices.isEmpty()) {
+            if (viewModel.pairedDevices.isEmpty()) {
                 item {
                     Text(stringResource(R.string.no_paired_devices))
                 }
             } else {
-                items(devices.toList()) {
+                items(viewModel.pairedDevices) {
                     Device(it.name, it.address) {
                         controller.connect(it)
                     }
