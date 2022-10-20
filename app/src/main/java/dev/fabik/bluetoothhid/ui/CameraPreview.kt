@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.content.pm.PackageManager
 import android.view.MotionEvent
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -22,35 +23,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.common.Barcode
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-var sourceRes: android.util.Size? = null
-var scale = 1f
-var transX = 0f
-var transY = 0f
-var scanRect = Rect.Zero
-
-fun updateScale(sw: Float, sh: Float, vw: Float, vh: Float) {
-    val viewAspectRatio = vw / vh
-    val sourceAspectRatio = sw / sh
-
-    if (sourceAspectRatio > viewAspectRatio) {
-        scale = vh / sh
-        transX = (sw * scale - vw) / 2
-        transY = 0f
-    } else {
-        scale = vw / sw
-        transX = 0f
-        transY = (sh * scale - vh) / 2
-    }
-}
-
 @Composable
 fun CameraPreview(
-    onCameraReady: (Camera) -> Unit, onBarCodeReady: (String) -> Unit
+    viewModel: CameraViewModel = viewModel(),
+    onCameraReady: (Camera) -> Unit, onBarCodeReady: (String) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -63,10 +46,9 @@ fun CameraPreview(
 
     val focusCircleAlpha = remember { Animatable(0f) }
     val focusCircleRadius = remember { Animatable(100f) }
-    var focusTouchPoint by remember { mutableStateOf<Offset?>(null) }
 
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
-    val frontCamera by rememberPreferenceNull(PrefKeys.FRONT_CAMERA)
+    val frontCamera by rememberPreferenceDefault(PrefKeys.FRONT_CAMERA)
     val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
     val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
     val fullyInside by rememberPreferenceDefault(PrefKeys.FULL_INSIDE)
@@ -93,71 +75,75 @@ fun CameraPreview(
             val previewView = PreviewView(ctx)
 
             val executor = ContextCompat.getMainExecutor(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder()
-                    .build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
+            cameraProviderFuture.addListener(
+                {
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder()
+                        .build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
 
-                val barcodeAnalyser = BarCodeAnalyser(
-                    scanDelay = scanFrequency,
-                    formats = scanFormats,
-                    onNothing = { currentBarCode = null }
-                ) { barcodes, source ->
-                    if (sourceRes != source) {
-                        updateScale(
-                            source.width.toFloat(),
-                            source.height.toFloat(),
-                            previewView.width.toFloat(),
-                            previewView.height.toFloat()
-                        )
-                        sourceRes = source
-                    }
+                    val barcodeAnalyser = BarCodeAnalyser(
+                        scanDelay = scanFrequency,
+                        formats = scanFormats,
+                        onNothing = { viewModel.currentBarCode = null }
+                    ) { barcodes, source ->
+                        if (viewModel.sourceRes != source) {
+                            viewModel.updateScale(
+                                source.width.toFloat(),
+                                source.height.toFloat(),
+                                previewView.width.toFloat(),
+                                previewView.height.toFloat()
+                            )
+                            viewModel.sourceRes = source
+                        }
 
-                    val filtered = barcodes.filter {
-                        it.cornerPoints?.map { p ->
-                            Offset(p.x * scale - transX, p.y * scale - transY)
-                        }?.forEach { o ->
-                            if (fullyInside) {
-                                if (!scanRect.contains(o)) {
-                                    return@filter false
+                        val filtered = barcodes.filter {
+                            it.cornerPoints?.map { p ->
+                                with(viewModel) {
+                                    Offset(p.x * scale - transX, p.y * scale - transY)
                                 }
+                            }?.forEach { o ->
+                                if (fullyInside) {
+                                    if (!viewModel.scanRect.contains(o)) {
+                                        return@filter false
+                                    }
+                                } else {
+                                    if (viewModel.scanRect.contains(o)) {
+                                        return@filter true
+                                    }
+                                }
+                            }
+                            fullyInside
+                        }
+
+                        filtered.firstOrNull().let { barcode ->
+                            val value = if (useRawValue) {
+                                barcode?.rawValue
                             } else {
-                                if (scanRect.contains(o)) {
-                                    return@filter true
+                                barcode?.displayValue
+                            }
+                            value?.let { barcodeValue ->
+                                if (viewModel.lastBarCodeValue != barcodeValue) {
+                                    onBarCodeReady(barcodeValue)
+                                    viewModel.lastBarCodeValue = barcodeValue
                                 }
                             }
+                            viewModel.currentBarCode = barcode
                         }
-                        fullyInside
                     }
 
-                    filtered.firstOrNull().let { barcode ->
-                        val value = if (useRawValue) {
-                            barcode?.rawValue
-                        } else {
-                            barcode?.displayValue
+                    val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder().setTargetResolution(
+                        when (cameraResolution) {
+                            2 -> android.util.Size(1080, 1440)
+                            1 -> android.util.Size(720, 960)
+                            else -> android.util.Size(480, 640)
                         }
-                        value?.let { barcodeValue ->
-                            if (lastBarCodeValue != barcodeValue) {
-                                onBarCodeReady(barcodeValue)
-                                lastBarCodeValue = barcodeValue
-                            }
+                    ).setOutputImageRotationEnabled(true)
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
+                        .also {
+                            it.setAnalyzer(executor, barcodeAnalyser)
                         }
-                        currentBarCode = barcode
-                    }
-                }
-
-                val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder().setTargetResolution(
-                    when (cameraResolution) {
-                        2 -> android.util.Size(1080, 1440)
-                        1 -> android.util.Size(720, 960)
-                        else -> android.util.Size(480, 640)
-                    }
-                ).setOutputImageRotationEnabled(true)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build().also {
-                        it.setAnalyzer(executor, barcodeAnalyser)
-                    }
 
                 val cameraSelector = CameraSelector.Builder()
                     .requireLensFacing(
@@ -168,61 +154,62 @@ fun CameraPreview(
                     )
                     .build()
 
-                val useCaseGroup = UseCaseGroup.Builder()
-                    .setViewPort(previewView.viewPort!!)
-                    .addUseCase(preview)
-                    .addUseCase(imageAnalysis)
-                    .build()
+                    val useCaseGroup = UseCaseGroup.Builder()
+                        .setViewPort(previewView.viewPort!!)
+                        .addUseCase(preview)
+                        .addUseCase(imageAnalysis)
+                        .build()
 
-                cameraProvider.unbindAll()
+                    cameraProvider.unbindAll()
 
-                val camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, useCaseGroup
-                )
+                    val camera = cameraProvider.bindToLifecycle(
+                        lifecycleOwner, cameraSelector, useCaseGroup
+                    )
 
-                onCameraReady(camera)
+                    onCameraReady(camera)
 
-                previewView.setOnTouchListener { view, event ->
-                    return@setOnTouchListener when (event.action) {
-                        MotionEvent.ACTION_DOWN -> true
-                        MotionEvent.ACTION_UP -> {
-                            if (focusTouchPoint == null) {
-                                focusTouchPoint = Offset(event.x, event.y)
-                                scope.launch {
-                                    focusCircleAlpha.animateTo(1f, tween(100))
-                                }
-                                scope.launch {
-                                    focusCircleRadius.snapTo(100f)
-                                    focusCircleRadius.animateTo(
-                                        80f, spring(Spring.DampingRatioMediumBouncy)
-                                    )
-                                }
-                                val factory = DisplayOrientedMeteringPointFactory(
-                                    previewView.display,
-                                    camera.cameraInfo,
-                                    previewView.width.toFloat(),
-                                    previewView.height.toFloat()
-                                )
-                                val focusPoint = factory.createPoint(event.x, event.y)
-                                camera.cameraControl.startFocusAndMetering(
-                                    FocusMeteringAction.Builder(
-                                        focusPoint, FocusMeteringAction.FLAG_AF
-                                    ).apply {
-                                        disableAutoCancel()
-                                    }.build()
-                                ).addListener({
+                    previewView.setOnTouchListener { view, event ->
+                        return@setOnTouchListener when (event.action) {
+                            MotionEvent.ACTION_DOWN -> true
+                            MotionEvent.ACTION_UP -> {
+                                if (viewModel.focusTouchPoint == null) {
+                                    viewModel.focusTouchPoint = Offset(event.x, event.y)
                                     scope.launch {
-                                        focusCircleAlpha.animateTo(0f, tween(100))
-                                        focusTouchPoint = null
+                                        focusCircleAlpha.animateTo(1f, tween(100))
                                     }
-                                }, executor)
+                                    scope.launch {
+                                        focusCircleRadius.snapTo(100f)
+                                        focusCircleRadius.animateTo(
+                                            80f, spring(Spring.DampingRatioMediumBouncy)
+                                        )
+                                    }
+                                    val factory = DisplayOrientedMeteringPointFactory(
+                                        previewView.display,
+                                        camera.cameraInfo,
+                                        previewView.width.toFloat(),
+                                        previewView.height.toFloat()
+                                    )
+                                    val focusPoint = factory.createPoint(event.x, event.y)
+                                    camera.cameraControl.startFocusAndMetering(
+                                        FocusMeteringAction.Builder(
+                                            focusPoint, FocusMeteringAction.FLAG_AF
+                                        ).apply {
+                                            disableAutoCancel()
+                                        }.build()
+                                    ).addListener({
+                                        scope.launch {
+                                            focusCircleAlpha.animateTo(0f, tween(100))
+                                            viewModel.focusTouchPoint = null
+                                        }
+                                    }, executor)
+                                }
+                                view.performClick()
                             }
-                            view.performClick()
+                            else -> false
                         }
-                        else -> false
                     }
-                }
-            }, executor)
+                }, executor
+            )
             previewView
         },
         modifier = Modifier.fillMaxSize(),
@@ -230,10 +217,11 @@ fun CameraPreview(
 
     OverlayCanvas(
         restrictArea,
-        currentBarCode,
-        focusTouchPoint,
+        viewModel.currentBarCode,
+        viewModel.focusTouchPoint,
         focusCircleRadius.value,
-        focusCircleAlpha.value
+        focusCircleAlpha.value,
+        viewModel
     )
 }
 
@@ -243,7 +231,8 @@ fun OverlayCanvas(
     currentBarCode: Barcode?,
     focusTouchPoint: Offset?,
     focusCircleRadius: Float,
-    focusCircleAlpha: Float
+    focusCircleAlpha: Float,
+    viewModel: CameraViewModel
 ) {
     val overlayType by rememberPreferenceNull(PrefKeys.OVERLAY_TYPE)
 
@@ -254,13 +243,13 @@ fun OverlayCanvas(
         val radius = 30f
 
         if (restrictArea == true) {
-            scanRect = when (overlayType) {
+            viewModel.scanRect = when (overlayType) {
                 1 -> Rect(Offset(x - length / 2, y - length / 4), Size(length, length / 2))
                 else -> Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
             }
 
             val markerPath = Path().apply {
-                addRoundRect(RoundRect(scanRect, CornerRadius(radius)))
+                addRoundRect(RoundRect(viewModel.scanRect, CornerRadius(radius)))
             }
 
             clipPath(markerPath, clipOp = ClipOp.Difference) {
@@ -269,7 +258,7 @@ fun OverlayCanvas(
 
             drawPath(markerPath, color = Color.White, style = Stroke(5f))
         } else {
-            scanRect = Rect(Offset(0f, 0f), size)
+            viewModel.scanRect = Rect(Offset(0f, 0f), size)
         }
 
         currentBarCode?.let {
@@ -277,7 +266,9 @@ fun OverlayCanvas(
                 drawCircle(
                     color = Color.Red,
                     radius = 8f,
-                    center = Offset(p.x * scale - transX, p.y * scale - transY)
+                    center = with(viewModel) {
+                        Offset(p.x * scale - transX, p.y * scale - transY)
+                    }
                 )
             }
         }
