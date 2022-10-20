@@ -42,13 +42,16 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Scanner(navController: NavController) {
+fun Scanner(
+    navController: NavController,
+    currentDevice: BluetoothDevice?,
+    onDisconnect: () -> Unit,
+    sendText: (String) -> Unit
+) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
-
-    val controller = LocalController.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -71,21 +74,15 @@ fun Scanner(navController: NavController) {
                     ToggleFlashButton(it)
                 }
             }
-            IconButton(onClick = {
-                if (!controller.disconnect()) {
-                    navController.navigateUp()
-                }
-            }) {
+            IconButton(onDisconnect) {
                 Icon(Icons.Default.BluetoothDisabled, "Disconnect")
             }
             Dropdown(navController)
         })
     }, floatingActionButtonPosition = FabPosition.Center, floatingActionButton = {
-        controller.currentDevice()?.let {
+        currentDevice?.let {
             currentBarcode?.let {
-                ExtendedFloatingActionButton(onClick = {
-                    controller.keyboardSender?.sendString(it)
-                }) {
+                ExtendedFloatingActionButton(onClick = { sendText(it) }) {
                     Icon(Icons.Filled.Send, "Send")
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.send_to_device))
@@ -105,7 +102,7 @@ fun Scanner(navController: NavController) {
                         toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
                     }
                     if (autoSend) {
-                        controller.keyboardSender?.sendString(it)
+                        sendText(it)
                     }
                     if (vibrate) {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -151,7 +148,7 @@ fun Scanner(navController: NavController) {
                 }
             }
 
-            controller.currentDevice()?.let {
+            currentDevice?.let {
                 DeviceInfoDialog(it)
             }
         }

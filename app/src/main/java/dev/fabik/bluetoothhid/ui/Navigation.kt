@@ -36,12 +36,16 @@ fun NavGraph(
         }
 
         composable(Routes.Main) {
-            Scanner(navController)
-            BackHandler {
+            val disconnectOrBack = {
                 if (!controller.disconnect()) {
                     navController.navigateUp()
                 }
             }
+
+            Scanner(navController, controller.currentDevice(), disconnectOrBack) {
+                controller.keyboardSender?.sendString(it)
+            }
+            BackHandler(onBack = disconnectOrBack)
         }
 
         composable(Routes.Settings) {
