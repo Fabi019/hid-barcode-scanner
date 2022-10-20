@@ -22,6 +22,7 @@ import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 val LocalController =
     staticCompositionLocalOf<BluetoothController> { error("No controller injected!") }
@@ -34,8 +35,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val theme by rememberPreferenceDefault(PrefKeys.THEME)
+            val theme by rememberPreferenceNull(PrefKeys.THEME)
             val useDynTheme by rememberPreferenceDefault(PrefKeys.DYNAMIC_THEME)
+
+            if (theme == null)
+                return@setContent
 
             BluetoothHIDTheme(
                 darkTheme = when (theme) {
