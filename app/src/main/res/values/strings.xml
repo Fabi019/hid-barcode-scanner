@@ -41,7 +41,7 @@
     <string name="dismiss">Dismiss</string>
     <string name="scanned_devices">Scanned devices</string>
     <string name="swipe_refresh">(Swipe from top to refresh)</string>
-    <string name="unknown"><![CDATA[<unknown>]]></string>
+    <string name="unknown">Unnamed</string>
     <string name="paired_devices">Paired devices</string>
     <string name="no_paired_devices">(No paired devices found)</string>
     <string name="skip">Skip</string>
@@ -57,7 +57,7 @@
     <string name="location_enable">Location needs to be enabled on your system.</string>
     <string name="open_location_settings">Open Location Settings</string>
     <string name="connecting">Connecting…</string>
-    <string name="please_wait">Please wait!</string>
+    <string name="please_wait">If you are unable to connect, unpair the device first then try connecting to it again from within the app.</string>
     <string name="haptic_feedback">Haptic Feedback</string>
     <string name="haptic_feedback_desc">Vibrate when scanning a new code.</string>
     <string name="connected_with">Connected with: %s</string>
@@ -91,9 +91,9 @@
         <item>Slow (1s)</item>
     </string-array>
     <string-array name="scan_res_values">
-        <item>SD</item>
-        <item>HD</item>
-        <item>FHD</item>
+        <item>SD (0.3MP)</item>
+        <item>HD (0.6MP)</item>
+        <item>FHD (1.5MP)</item>
     </string-array>
     <string-array name="extra_keys_values">
         <item>None</item>
