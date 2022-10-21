@@ -11,8 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +28,7 @@ import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PrefKeys
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
+import dev.fabik.bluetoothhid.utils.deviceClassString
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
 
@@ -169,7 +169,11 @@ fun DeviceList(
                 items(viewModel.foundDevices) { d ->
                     if (d.name == null && !showUnnamed)
                         return@items
-                    Device(d.name ?: stringResource(R.string.unknown), d.address) {
+                    Device(
+                        d.name ?: stringResource(R.string.unknown),
+                        d.address,
+                        deviceClassString(d.bluetoothClass.majorDeviceClass)
+                    ) {
                         controller.connect(d)
                     }
                 }
@@ -189,7 +193,11 @@ fun DeviceList(
                 }
             } else {
                 items(viewModel.pairedDevices) {
-                    Device(it.name, it.address) {
+                    Device(
+                        it.name,
+                        it.address,
+                        deviceClassString(it.bluetoothClass.majorDeviceClass)
+                    ) {
                         controller.connect(it)
                     }
                 }
@@ -212,7 +220,7 @@ fun DeviceList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Device(name: String, address: String, onClick: () -> Unit) {
+fun Device(name: String, address: String, type: String, onClick: () -> Unit) {
     ElevatedCard(
         onClick,
         shape = RoundedCornerShape(8.dp),
@@ -220,7 +228,16 @@ fun Device(name: String, address: String, onClick: () -> Unit) {
     ) {
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Bluetooth, "Connect")
+                Icon(
+                    when (type) {
+                        "PHONE" -> Icons.Default.Smartphone
+                        "AUDIO_VIDEO" -> Icons.Default.Headphones
+                        "COMPUTER" -> Icons.Default.Computer
+                        "PERIPHERAL" -> Icons.Default.Keyboard
+                        else -> Icons.Default.Bluetooth
+                    },
+                    "Type"
+                )
             }
             Column(
                 Modifier
