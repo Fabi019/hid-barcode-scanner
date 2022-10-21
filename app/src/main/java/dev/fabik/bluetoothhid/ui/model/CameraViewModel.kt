@@ -10,6 +10,12 @@ import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 
 class CameraViewModel : ViewModel() {
+    companion object {
+        val SD_480P = Size(480, 640)
+        val HD_720P = Size(720, 960)
+        val FHD_1080P = Size(1080, 1440)
+    }
+
     var lastBarCodeValue by mutableStateOf<String?>(null)
     var currentBarCode by mutableStateOf<Barcode?>(null)
     var focusTouchPoint by mutableStateOf<Offset?>(null)

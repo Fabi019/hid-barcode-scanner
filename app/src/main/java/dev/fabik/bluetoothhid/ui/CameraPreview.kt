@@ -135,9 +135,9 @@ fun CameraPreview(
 
                     val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder().setTargetResolution(
                         when (cameraResolution) {
-                            2 -> android.util.Size(1080, 1440)
-                            1 -> android.util.Size(720, 960)
-                            else -> android.util.Size(480, 640)
+                            2 -> CameraViewModel.FHD_1080P
+                            1 -> CameraViewModel.HD_720P
+                            else -> CameraViewModel.SD_480P
                         }
                     ).setOutputImageRotationEnabled(true)
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
