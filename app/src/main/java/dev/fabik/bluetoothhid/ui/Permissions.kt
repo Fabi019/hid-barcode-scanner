@@ -50,7 +50,9 @@ fun RequiresBluetoothPermission(
     } else {
         if (!hasBT) {
             Column(
-                Modifier.fillMaxSize(),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(stringResource(R.string.no_bt))
@@ -59,7 +61,9 @@ fun RequiresBluetoothPermission(
         }
         if (bluetoothPermission.shouldShowRationale) {
             Column(
-                Modifier.fillMaxSize(),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(stringResource(R.string.bluetooth_permission))
@@ -90,7 +94,11 @@ fun RequiresCameraPermission(
     if (cameraPermission.status.isGranted) {
         content()
     } else {
-        Column(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+        ) {
             Text(stringResource(R.string.camera_permission))
 
             Spacer(Modifier.height(16.dp))
