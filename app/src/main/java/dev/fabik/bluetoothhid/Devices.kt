@@ -81,7 +81,7 @@ fun DeviceList(
     }
 
     LoadingDialog(
-        dialogState, stringResource(R.string.connecting), stringResource(R.string.please_wait)
+        dialogState, stringResource(R.string.connecting), stringResource(R.string.connect_help)
     )
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {

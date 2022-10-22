@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import dev.fabik.bluetoothhid.R
@@ -226,8 +227,12 @@ fun LoadingDialog(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Text(title, style = Typography.headlineMedium)
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-                    Text(desc)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator()
+                        Spacer(Modifier.width(16.dp))
+                        Text(stringResource(R.string.please_wait))
+                    }
+                    Text(desc, fontStyle = FontStyle.Italic)
                 }
             }
         }
