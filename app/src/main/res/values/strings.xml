@@ -76,6 +76,7 @@
     <string name="bt_proxy_connected">BT-Proxy connected!</string>
     <string name="no_bt">Your device doesn\'t seem to have bluetooth compatibility?</string>
     <string name="please_wait">Please wait!</string>
+    <string name="copied_to_clipboard">Copied to clipboard!</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
