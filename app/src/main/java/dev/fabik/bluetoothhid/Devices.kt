@@ -57,14 +57,14 @@ fun Devices(
 fun DeviceList(
     navController: NavController,
     viewModel: DevicesViewModel = viewModel()
-) {
+) = with(viewModel) {
     val controller = LocalController.current
 
     val dialogState = rememberDialogState()
 
     DisposableEffect(controller) {
-        if (viewModel.pairedDevices.isEmpty()) {
-            viewModel.pairedDevices.addAll(controller.pairedDevices())
+        if (pairedDevices.isEmpty()) {
+            pairedDevices.addAll(controller.pairedDevices())
         }
 
         val listener = controller.registerListener { _, state ->
@@ -86,13 +86,13 @@ fun DeviceList(
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
         Log.d("Discovery", "isDiscovering")
-        viewModel.isScanning = true
-        viewModel.foundDevices.clear()
+        isScanning = true
+        foundDevices.clear()
     }
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
         Log.d("Discovery", "FinishedDiscovering")
-        viewModel.isScanning = false
+        isScanning = false
     }
 
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
@@ -103,31 +103,31 @@ fun DeviceList(
         } else {
             @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         }?.let { dev ->
-            if (!viewModel.foundDevices.contains(dev)) {
-                viewModel.foundDevices.add(dev)
+            if (!foundDevices.contains(dev)) {
+                foundDevices.add(dev)
             }
 
             Log.d("Discovery", "Found: $dev")
         }
     }
 
-    LaunchedEffect(viewModel.isRefreshing) {
-        if (viewModel.isRefreshing) {
-            viewModel.pairedDevices.clear()
-            viewModel.pairedDevices.addAll(controller.pairedDevices())
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pairedDevices.clear()
+            pairedDevices.addAll(controller.pairedDevices())
             controller.scanDevices()
             delay(500)
-            viewModel.isRefreshing = false
+            isRefreshing = false
         }
     }
 
     val showUnnamed by rememberPreferenceDefault(PrefKeys.SHOW_UNNAMED)
 
-    val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        if (!viewModel.isScanning) {
-            viewModel.isRefreshing = true
+        if (!isScanning) {
+            isRefreshing = true
         }
     }, indicator = { state, trigger ->
         SwipeRefreshIndicator(
@@ -151,25 +151,25 @@ fun DeviceList(
                 )
             }
 
-            if (viewModel.isScanning) {
+            if (isScanning) {
                 item {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
             }
 
-            if (viewModel.foundDevices.isEmpty()) {
+            if (foundDevices.isEmpty()) {
                 item {
                     RequireLocationPermission {
-                        if (!viewModel.isScanning) {
+                        if (!isScanning) {
                             Text(stringResource(R.string.swipe_refresh))
                         }
                     }
                 }
             } else {
-                items(viewModel.foundDevices) { d ->
+                items(foundDevices) { d ->
                     if (d.name == null && !showUnnamed)
                         return@items
-                    Device(
+                    DeviceCard(
                         d.name ?: stringResource(R.string.unknown),
                         d.address,
                         deviceClassString(d.bluetoothClass.majorDeviceClass)
@@ -187,13 +187,13 @@ fun DeviceList(
                 )
             }
 
-            if (viewModel.pairedDevices.isEmpty()) {
+            if (pairedDevices.isEmpty()) {
                 item {
                     Text(stringResource(R.string.no_paired_devices))
                 }
             } else {
-                items(viewModel.pairedDevices) {
-                    Device(
+                items(pairedDevices) {
+                    DeviceCard(
                         it.name,
                         it.address,
                         deviceClassString(it.bluetoothClass.majorDeviceClass)
@@ -220,7 +220,12 @@ fun DeviceList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Device(name: String, address: String, type: String, onClick: () -> Unit) {
+fun DeviceCard(
+    name: String,
+    address: String,
+    type: String,
+    onClick: () -> Unit
+) {
     ElevatedCard(
         onClick,
         shape = RoundedCornerShape(8.dp),
