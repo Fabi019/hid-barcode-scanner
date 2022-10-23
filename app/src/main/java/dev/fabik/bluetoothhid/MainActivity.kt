@@ -61,11 +61,10 @@ class MainActivity : ComponentActivity() {
 
                         ComposableLifecycle { _, event ->
                             when (event) {
-                                Lifecycle.Event.ON_START ->
+                                Lifecycle.Event.ON_START -> {
                                     if (!bluetoothController.bluetoothEnabled()) {
                                         startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                                     }
-                                Lifecycle.Event.ON_RESUME ->
                                     if (!bluetoothController.register()) {
                                         Toast.makeText(
                                             this,
@@ -73,7 +72,8 @@ class MainActivity : ComponentActivity() {
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                Lifecycle.Event.ON_PAUSE -> bluetoothController.unregister()
+                                }
+                                Lifecycle.Event.ON_STOP -> bluetoothController.unregister()
                                 else -> {}
                             }
                         }
