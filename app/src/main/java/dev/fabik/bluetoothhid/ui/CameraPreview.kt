@@ -5,7 +5,6 @@ import android.view.MotionEvent
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -24,7 +23,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
@@ -33,8 +31,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun CameraPreview(
     viewModel: CameraViewModel = viewModel(),
-    onCameraReady: (Camera) -> Unit, onBarCodeReady: (String) -> Unit,
-) {
+    onCameraReady: (Camera) -> Unit,
+    onBarCodeReady: (String) -> Unit
+) = with(viewModel) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -44,12 +43,8 @@ fun CameraPreview(
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
     }
 
-    val focusCircleAlpha = remember { Animatable(0f) }
-    val focusCircleRadius = remember { Animatable(100f) }
-
     val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
     val frontCamera by rememberPreferenceDefault(PrefKeys.FRONT_CAMERA)
-    val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
     val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
     val fullyInside by rememberPreferenceDefault(PrefKeys.FULL_INSIDE)
 
@@ -86,30 +81,28 @@ fun CameraPreview(
                     val barcodeAnalyser = BarCodeAnalyser(
                         scanDelay = scanFrequency,
                         formats = scanFormats,
-                        onNothing = { viewModel.currentBarCode = null }
+                        onNothing = { currentBarCode = null }
                     ) { barcodes, source ->
-                        if (viewModel.sourceRes != source) {
-                            viewModel.updateScale(
+                        if (sourceRes != source) {
+                            updateScale(
                                 source.width.toFloat(),
                                 source.height.toFloat(),
                                 previewView.width.toFloat(),
                                 previewView.height.toFloat()
                             )
-                            viewModel.sourceRes = source
+                            sourceRes = source
                         }
 
                         val filtered = barcodes.filter {
                             it.cornerPoints?.map { p ->
-                                with(viewModel) {
-                                    Offset(p.x * scale - transX, p.y * scale - transY)
-                                }
+                                Offset(p.x * scale - transX, p.y * scale - transY)
                             }?.forEach { o ->
                                 if (fullyInside) {
-                                    if (!viewModel.scanRect.contains(o)) {
+                                    if (!scanRect.contains(o)) {
                                         return@filter false
                                     }
                                 } else {
-                                    if (viewModel.scanRect.contains(o)) {
+                                    if (scanRect.contains(o)) {
                                         return@filter true
                                     }
                                 }
@@ -124,12 +117,12 @@ fun CameraPreview(
                                 barcode?.displayValue
                             }
                             value?.let { barcodeValue ->
-                                if (viewModel.lastBarCodeValue != barcodeValue) {
+                                if (lastBarCodeValue != barcodeValue) {
                                     onBarCodeReady(barcodeValue)
-                                    viewModel.lastBarCodeValue = barcodeValue
+                                    lastBarCodeValue = barcodeValue
                                 }
                             }
-                            viewModel.currentBarCode = barcode
+                            currentBarCode = barcode
                         }
                     }
 
@@ -172,8 +165,8 @@ fun CameraPreview(
                         return@setOnTouchListener when (event.action) {
                             MotionEvent.ACTION_DOWN -> true
                             MotionEvent.ACTION_UP -> {
-                                if (viewModel.focusTouchPoint == null) {
-                                    viewModel.focusTouchPoint = Offset(event.x, event.y)
+                                if (focusTouchPoint == null) {
+                                    focusTouchPoint = Offset(event.x, event.y)
                                     scope.launch {
                                         focusCircleAlpha.animateTo(1f, tween(100))
                                     }
@@ -199,7 +192,7 @@ fun CameraPreview(
                                     ).addListener({
                                         scope.launch {
                                             focusCircleAlpha.animateTo(0f, tween(100))
-                                            viewModel.focusTouchPoint = null
+                                            focusTouchPoint = null
                                         }
                                     }, executor)
                                 }
@@ -212,29 +205,16 @@ fun CameraPreview(
             )
             previewView
         },
-        modifier = Modifier.fillMaxSize(),
+        Modifier.fillMaxSize()
     )
 
-    OverlayCanvas(
-        restrictArea,
-        viewModel.currentBarCode,
-        viewModel.focusTouchPoint,
-        focusCircleRadius.value,
-        focusCircleAlpha.value,
-        viewModel
-    )
+    OverlayCanvas()
 }
 
 @Composable
-fun OverlayCanvas(
-    restrictArea: Boolean?,
-    currentBarCode: Barcode?,
-    focusTouchPoint: Offset?,
-    focusCircleRadius: Float,
-    focusCircleAlpha: Float,
-    viewModel: CameraViewModel
-) {
+fun CameraViewModel.OverlayCanvas() {
     val overlayType by rememberPreferenceNull(PrefKeys.OVERLAY_TYPE)
+    val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
 
     Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
@@ -243,13 +223,13 @@ fun OverlayCanvas(
         val radius = 30f
 
         if (restrictArea == true) {
-            viewModel.scanRect = when (overlayType) {
+            scanRect = when (overlayType) {
                 1 -> Rect(Offset(x - length / 2, y - length / 4), Size(length, length / 2))
                 else -> Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
             }
 
             val markerPath = Path().apply {
-                addRoundRect(RoundRect(viewModel.scanRect, CornerRadius(radius)))
+                addRoundRect(RoundRect(scanRect, CornerRadius(radius)))
             }
 
             clipPath(markerPath, clipOp = ClipOp.Difference) {
@@ -258,7 +238,7 @@ fun OverlayCanvas(
 
             drawPath(markerPath, color = Color.White, style = Stroke(5f))
         } else {
-            viewModel.scanRect = Rect(Offset(0f, 0f), size)
+            scanRect = Rect(Offset(0f, 0f), size)
         }
 
         currentBarCode?.let {
@@ -266,9 +246,7 @@ fun OverlayCanvas(
                 drawCircle(
                     color = Color.Red,
                     radius = 8f,
-                    center = with(viewModel) {
-                        Offset(p.x * scale - transX, p.y * scale - transY)
-                    }
+                    center = Offset(p.x * scale - transX, p.y * scale - transY)
                 )
             }
         }
@@ -276,10 +254,10 @@ fun OverlayCanvas(
         focusTouchPoint?.let {
             drawCircle(
                 color = Color.White,
-                radius = focusCircleRadius,
+                radius = focusCircleRadius.value,
                 center = it,
                 style = Stroke(5f),
-                alpha = focusCircleAlpha
+                alpha = focusCircleAlpha.value
             )
         }
     }

@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.ui.model
 
 import android.util.Size
+import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,6 +20,9 @@ class CameraViewModel : ViewModel() {
     var lastBarCodeValue by mutableStateOf<String?>(null)
     var currentBarCode by mutableStateOf<Barcode?>(null)
     var focusTouchPoint by mutableStateOf<Offset?>(null)
+
+    val focusCircleAlpha = Animatable(0f)
+    val focusCircleRadius = Animatable(100f)
 
     var sourceRes: Size? = null
     var scale = 1f
