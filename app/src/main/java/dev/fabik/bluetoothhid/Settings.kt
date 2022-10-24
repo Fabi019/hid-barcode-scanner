@@ -13,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
-import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +50,7 @@ fun Settings(
                         title = stringResource(R.string.auto_connect),
                         desc = stringResource(R.string.auto_connect_desc),
                         icon = Icons.Default.Link,
-                        preference = PrefKeys.AUTO_CONNECT
+                        preference = PreferenceStore.AUTO_CONNECT
                     )
                 }
 
@@ -59,7 +59,7 @@ fun Settings(
                         title = stringResource(R.string.show_unnamed),
                         desc = stringResource(R.string.show_unnamed_desc),
                         icon = Icons.Default.DeviceUnknown,
-                        preference = PrefKeys.SHOW_UNNAMED
+                        preference = PreferenceStore.SHOW_UNNAMED
                     )
                 }
 
@@ -70,7 +70,7 @@ fun Settings(
                         valueFormat = stringResource(R.string.send_delay_template),
                         range = 0f..100f,
                         icon = Icons.Default.Timer,
-                        preference = PrefKeys.SEND_DELAY
+                        preference = PreferenceStore.SEND_DELAY
                     )
                 }
 
@@ -88,7 +88,7 @@ fun Settings(
                         desc = stringResource(R.string.theme_desc),
                         icon = Icons.Default.AutoFixHigh,
                         values = stringArrayResource(R.array.theme_values),
-                        preference = PrefKeys.THEME
+                        preference = PreferenceStore.THEME
                     )
                 }
 
@@ -97,7 +97,7 @@ fun Settings(
                         title = stringResource(R.string.dynamic_theme),
                         desc = stringResource(R.string.dynamic_theme_desc),
                         icon = Icons.Default.AutoAwesome,
-                        preference = PrefKeys.DYNAMIC_THEME
+                        preference = PreferenceStore.DYNAMIC_THEME
                     )
                 }
 
@@ -115,7 +115,7 @@ fun Settings(
                         desc = stringResource(R.string.code_types_desc),
                         valueStrings = stringArrayResource(R.array.code_types_values),
                         icon = Icons.Default.QrCode2,
-                        preference = PrefKeys.CODE_TYPES
+                        preference = PreferenceStore.CODE_TYPES
                     )
                 }
 
@@ -124,7 +124,7 @@ fun Settings(
                         title = stringResource(R.string.front_camera),
                         desc = stringResource(R.string.front_camera_desc),
                         icon = Icons.Default.FlipCameraAndroid,
-                        preference = PrefKeys.FRONT_CAMERA
+                        preference = PreferenceStore.FRONT_CAMERA
                     )
                 }
 
@@ -133,7 +133,7 @@ fun Settings(
                         title = stringResource(R.string.restrict_area),
                         desc = stringResource(R.string.restrict_area_desc),
                         icon = Icons.Default.CropFree,
-                        preference = PrefKeys.RESTRICT_AREA
+                        preference = PreferenceStore.RESTRICT_AREA
                     )
                 }
 
@@ -143,7 +143,7 @@ fun Settings(
                         desc = stringResource(R.string.overlay_type_desc),
                         icon = Icons.Default.CenterFocusWeak,
                         values = stringArrayResource(R.array.overlay_values),
-                        preference = PrefKeys.OVERLAY_TYPE
+                        preference = PreferenceStore.OVERLAY_TYPE
                     )
                 }
 
@@ -152,7 +152,7 @@ fun Settings(
                         title = stringResource(R.string.full_inside),
                         desc = stringResource(R.string.full_inside_desc),
                         icon = Icons.Default.QrCodeScanner,
-                        preference = PrefKeys.FULL_INSIDE
+                        preference = PreferenceStore.FULL_INSIDE
                     )
                 }
 
@@ -162,7 +162,7 @@ fun Settings(
                         desc = stringResource(R.string.scan_freq_desc),
                         icon = Icons.Default.ShutterSpeed,
                         values = stringArrayResource(R.array.scan_freq_values),
-                        preference = PrefKeys.SCAN_FREQUENCY
+                        preference = PreferenceStore.SCAN_FREQUENCY
                     )
                 }
 
@@ -172,7 +172,7 @@ fun Settings(
                         desc = stringResource(R.string.scan_res_desc),
                         icon = Icons.Default.Hd,
                         values = stringArrayResource(R.array.scan_res_values),
-                        preference = PrefKeys.SCAN_RESOLUTION
+                        preference = PreferenceStore.SCAN_RESOLUTION
                     )
                 }
 
@@ -181,7 +181,7 @@ fun Settings(
                         title = stringResource(R.string.auto_send),
                         desc = stringResource(R.string.auto_send_desc),
                         icon = Icons.Default.Send,
-                        preference = PrefKeys.AUTO_SEND
+                        preference = PreferenceStore.AUTO_SEND
                     )
                 }
 
@@ -191,7 +191,7 @@ fun Settings(
                         desc = stringResource(R.string.extra_keys_desc),
                         icon = Icons.Default.AddCircle,
                         values = stringArrayResource(R.array.extra_keys_values),
-                        preference = PrefKeys.EXTRA_KEYS
+                        preference = PreferenceStore.EXTRA_KEYS
                     )
                 }
 
@@ -200,7 +200,7 @@ fun Settings(
                         title = stringResource(R.string.play_sound),
                         desc = stringResource(R.string.play_sound_desc),
                         icon = Icons.Default.VolumeUp,
-                        preference = PrefKeys.PLAY_SOUND
+                        preference = PreferenceStore.PLAY_SOUND
                     )
                 }
 
@@ -209,7 +209,7 @@ fun Settings(
                         title = stringResource(R.string.haptic_feedback),
                         desc = stringResource(R.string.haptic_feedback_desc),
                         icon = Icons.Default.Vibration,
-                        preference = PrefKeys.VIBRATE
+                        preference = PreferenceStore.VIBRATE
                     )
                 }
 
@@ -218,7 +218,7 @@ fun Settings(
                         title = stringResource(R.string.raw_value),
                         desc = stringResource(R.string.raw_value_desc),
                         icon = Icons.Default.Description,
-                        preference = PrefKeys.RAW_VALUE
+                        preference = PreferenceStore.RAW_VALUE
                     )
                 }
 

@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
-import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.deviceClassString
 import dev.fabik.bluetoothhid.utils.deviceServiceInfo
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
@@ -87,15 +87,15 @@ private fun CameraPreviewArea(
     val view = LocalView.current
     val haptic = LocalHapticFeedback.current
 
-    val playSound by rememberPreferenceDefault(PrefKeys.PLAY_SOUND)
+    val playSound by rememberPreferenceDefault(PreferenceStore.PLAY_SOUND)
 
     val toneGenerator = remember {
         ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
     }
 
-    val autoSend by rememberPreferenceDefault(PrefKeys.AUTO_SEND)
+    val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
 
-    val vibrate by rememberPreferenceDefault(PrefKeys.VIBRATE)
+    val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
     CameraPreview(onCameraReady = onCameraReady) {
         onBarcodeDetected(it, autoSend)

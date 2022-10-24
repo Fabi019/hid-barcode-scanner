@@ -23,10 +23,11 @@ import androidx.navigation.NavController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.theme.Typography
-import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.deviceClassString
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
@@ -35,7 +36,8 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Devices(
-    navController: NavController
+    navController: NavController,
+    controller: BluetoothController
 ) {
     Scaffold(
         topBar = {
@@ -47,7 +49,7 @@ fun Devices(
             )
         }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            DeviceList(navController)
+            DeviceList(navController, controller)
         }
     }
 }
@@ -56,10 +58,9 @@ fun Devices(
 @Composable
 fun DeviceList(
     navController: NavController,
+    controller: BluetoothController,
     viewModel: DevicesViewModel = viewModel()
 ) = with(viewModel) {
-    val controller = LocalController.current
-
     val dialogState = rememberDialogState()
 
     DisposableEffect(controller) {
@@ -121,7 +122,7 @@ fun DeviceList(
         }
     }
 
-    val showUnnamed by rememberPreferenceDefault(PrefKeys.SHOW_UNNAMED)
+    val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
 
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 

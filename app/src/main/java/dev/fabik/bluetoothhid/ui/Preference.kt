@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.theme.Typography
-import dev.fabik.bluetoothhid.utils.PrefKeys
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 
@@ -65,7 +65,7 @@ fun SwitchPreference(
     title: String,
     desc: String,
     icon: ImageVector? = null,
-    preference: PrefKeys.Pref<Boolean>
+    preference: PreferenceStore.Preference<Boolean>
 ) {
     var checked by rememberPreferenceNull(preference)
 
@@ -103,7 +103,7 @@ fun ComboBoxPreference(
     desc: String,
     values: Array<String>,
     icon: ImageVector? = null,
-    preference: PrefKeys.Pref<Int>
+    preference: PreferenceStore.Preference<Int>
 ) {
     var selectedItem by rememberPreferenceNull(preference)
 
@@ -143,7 +143,7 @@ fun SliderPreference(
     range: ClosedFloatingPointRange<Float>,
     steps: Int = 0,
     icon: ImageVector? = null,
-    preference: PrefKeys.Pref<Float>
+    preference: PreferenceStore.Preference<Float>
 ) {
     var value by rememberPreferenceNull(preference)
 
@@ -190,7 +190,7 @@ fun CheckBoxPreference(
     desc: String,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
-    preference: PrefKeys.Pref<Set<String>>
+    preference: PreferenceStore.Preference<Set<String>>
 ) {
     var value by rememberPreferenceNull(preference)
 

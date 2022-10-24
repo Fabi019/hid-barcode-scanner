@@ -19,13 +19,7 @@ import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
-import dev.fabik.bluetoothhid.utils.ComposableLifecycle
-import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
-import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
-
-val LocalController =
-    staticCompositionLocalOf<BluetoothController> { error("No controller injected!") }
+import dev.fabik.bluetoothhid.utils.*
 
 class MainActivity : ComponentActivity() {
 
@@ -35,8 +29,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val theme by rememberPreferenceNull(PrefKeys.THEME)
-            val useDynTheme by rememberPreferenceDefault(PrefKeys.DYNAMIC_THEME)
+            val theme by rememberPreferenceNull(PreferenceStore.THEME)
+            val useDynTheme by rememberPreferenceDefault(PreferenceStore.DYNAMIC_THEME)
 
             if (theme == null)
                 return@setContent
@@ -50,14 +44,13 @@ class MainActivity : ComponentActivity() {
                 dynamicColor = useDynTheme
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     RequiresBluetoothPermission {
                         val navHostController = rememberNavController()
 
-                        CompositionLocalProvider(LocalController provides bluetoothController) {
-                            NavGraph(navHostController)
-                        }
+                        NavGraph(navHostController, bluetoothController)
 
                         ComposableLifecycle { _, event ->
                             when (event) {
@@ -78,7 +71,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        val autoConnect by rememberPreferenceDefault(PrefKeys.AUTO_CONNECT)
+                        val autoConnect by rememberPreferenceDefault(PreferenceStore.AUTO_CONNECT)
                         LaunchedEffect(autoConnect) {
                             bluetoothController.autoConnectEnabled = autoConnect
                         }

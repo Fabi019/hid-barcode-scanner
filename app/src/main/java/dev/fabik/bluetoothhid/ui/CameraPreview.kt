@@ -43,13 +43,13 @@ fun CameraPreview(
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
     }
 
-    val cameraResolution by rememberPreferenceNull(PrefKeys.SCAN_RESOLUTION)
-    val frontCamera by rememberPreferenceDefault(PrefKeys.FRONT_CAMERA)
-    val useRawValue by rememberPreferenceDefault(PrefKeys.RAW_VALUE)
-    val fullyInside by rememberPreferenceDefault(PrefKeys.FULL_INSIDE)
+    val cameraResolution by rememberPreferenceNull(PreferenceStore.SCAN_RESOLUTION)
+    val frontCamera by rememberPreferenceDefault(PreferenceStore.FRONT_CAMERA)
+    val useRawValue by rememberPreferenceDefault(PreferenceStore.RAW_VALUE)
+    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
 
     val scanFrequency by remember {
-        context.getPreference(PrefKeys.SCAN_FREQUENCY).map {
+        context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
             when (it) {
                 0 -> 0
                 1 -> 100
@@ -60,7 +60,7 @@ fun CameraPreview(
     }.collectAsState(500)
 
     val scanFormats by remember {
-        context.getPreference(PrefKeys.CODE_TYPES).map {
+        context.getPreference(PreferenceStore.CODE_TYPES).map {
             it.map { v -> 1 shl v.toInt() }.toIntArray()
         }
     }.collectAsState(intArrayOf(0))
@@ -213,8 +213,8 @@ fun CameraPreview(
 
 @Composable
 fun CameraViewModel.OverlayCanvas() {
-    val overlayType by rememberPreferenceNull(PrefKeys.OVERLAY_TYPE)
-    val restrictArea by rememberPreferenceNull(PrefKeys.RESTRICT_AREA)
+    val overlayType by rememberPreferenceNull(PreferenceStore.OVERLAY_TYPE)
+    val restrictArea by rememberPreferenceNull(PreferenceStore.RESTRICT_AREA)
 
     Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
