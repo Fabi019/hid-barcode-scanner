@@ -53,7 +53,11 @@ fun NavGraph(
                     controller.keyboardSender?.sendString(
                         it,
                         context.getPreference(PreferenceStore.SEND_DELAY).first().toLong(),
-                        context.getPreference(PreferenceStore.EXTRA_KEYS).first()
+                        context.getPreference(PreferenceStore.EXTRA_KEYS).first(),
+                        when (context.getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()) {
+                            1 -> "de"
+                            else -> "us"
+                        }
                     )
                 }
             }

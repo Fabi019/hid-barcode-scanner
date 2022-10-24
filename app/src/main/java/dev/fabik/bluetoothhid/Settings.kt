@@ -75,6 +75,16 @@ fun Settings(
                 }
 
                 item {
+                    ComboBoxPreference(
+                        title = "Keyboard Layout",
+                        desc = "Set the keyboard layout",
+                        icon = Icons.Default.Keyboard,
+                        values = stringArrayResource(R.array.keyboard_layout_values),
+                        preference = PreferenceStore.KEYBOARD_LAYOUT
+                    )
+                }
+
+                item {
                     Spacer(Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.appearance),

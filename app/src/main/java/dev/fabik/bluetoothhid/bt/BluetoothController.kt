@@ -17,17 +17,19 @@ class BluetoothController(var context: Context) {
         private const val TAG = "BluetoothController"
     }
 
+    private val keyTranslator: KeyTranslator = KeyTranslator(context)
+
     private val bluetoothManager: BluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
     private val bluetoothAdapter: BluetoothAdapter by lazy { bluetoothManager.adapter }
 
-    var keyboardSender: KeyboardSender? = null
+    private var deviceListener: MutableList<Listener> = mutableListOf()
 
     private var hidDevice: BluetoothHidDevice? = null
     private var hostDevice: BluetoothDevice? = null
 
-    private var deviceListener: MutableList<Listener> = mutableListOf()
+    var keyboardSender: KeyboardSender? = null
 
     var autoConnectEnabled: Boolean = false
 
@@ -76,7 +78,7 @@ class BluetoothController(var context: Context) {
             if (state == BluetoothProfile.STATE_CONNECTED) {
                 hostDevice = device
                 hidDevice?.let { hid ->
-                    keyboardSender = KeyboardSender(hid, device)
+                    keyboardSender = KeyboardSender(keyTranslator, hid, device)
                 }
             } else {
                 hostDevice = null

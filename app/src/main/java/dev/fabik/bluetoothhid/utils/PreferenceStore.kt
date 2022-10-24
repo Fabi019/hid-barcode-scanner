@@ -27,6 +27,7 @@ open class PreferenceStore {
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
         val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 1f
+        val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout") defaultsTo 0
 
         // Appearance
         val THEME = intPreferencesKey("theme") defaultsTo 0 // System

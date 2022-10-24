@@ -4,12 +4,11 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.util.Log
-import android.view.KeyCharacterMap
-import android.view.KeyEvent
 import kotlinx.coroutines.delay
 
 @SuppressLint("MissingPermission")
 open class KeyboardSender(
+    private val keyboardTranslator: KeyTranslator,
     private val hidDevice: BluetoothHidDevice,
     private val host: BluetoothDevice
 ) {
@@ -17,59 +16,40 @@ open class KeyboardSender(
         const val TAG = "KeyboardSender"
     }
 
-    private val keyboardReport = KeyboardReport()
+    private val report = ByteArray(3) { 0 }
 
-    private val keyCharacterMap: KeyCharacterMap =
-        KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
-
-    protected open fun sendReport() {
-        if (!hidDevice.sendReport(host, KeyboardReport.ID, keyboardReport.bytes)) {
+    private fun sendReport(report: ByteArray) {
+        if (!hidDevice.sendReport(host, Descriptor.ID, report)) {
             Log.e(TAG, "Error sending keyboard report")
         }
     }
 
-    protected open fun setModifiers(event: KeyEvent) {
-        keyboardReport.leftShift = event.isShiftPressed
-        keyboardReport.leftAlt = event.isAltPressed
-        keyboardReport.leftControl = event.isCtrlPressed
-        keyboardReport.leftGui = event.isMetaPressed
-    }
+    suspend fun sendString(string: String, sendDelay: Long, appendKey: Int, locale: String) {
+        when (appendKey) {
+            1 -> string + "\n"
+            2 -> string + "\t"
+            else -> string
+        }.forEach {
+            val (modifier, key) = keyboardTranslator.translate(it, locale)
+                ?: return@forEach
 
-    suspend fun sendString(string: String, sendDelay: Long, appendKey: Int) {
-        val appended = string + when (appendKey) {
-            1 -> "\n"
-            2 -> "\t"
-            else -> ""
-        }
+            Log.d(TAG, "sendString: $it -> $modifier, $key")
 
-        keyCharacterMap.getEvents(appended.toCharArray())?.forEach {
-            if (it.action == KeyEvent.ACTION_DOWN) {
-                Log.d(TAG, "sendString: $it")
-                sendKeyEvent(it.keyCode, it)
-                delay(sendDelay)
-            }
-        } ?: run {
-            Log.w(TAG, "sendString: Unable to map string into key events")
+            sendKey(key, modifier)
+
+            delay(sendDelay)
         }
     }
 
-    private fun sendKeyEvent(keyCode: Int, event: KeyEvent?, releaseKey: Boolean = true): Boolean {
-        val key = KeyboardReport.SCANCODE_TABLE[keyCode] ?: return false
+    private fun sendKey(key: Byte, modifier: Byte = 0, releaseKey: Boolean = true) {
+        report[0] = modifier
+        report[2] = key
 
-        keyboardReport.key1 = key.toByte()
-
-        event?.let {
-            setModifiers(event)
-        }
-
-        sendReport()
+        sendReport(report)
 
         if (releaseKey) {
-            keyboardReport.reset()
-            sendReport()
+            report.fill(0)
+            sendReport(report)
         }
-
-        return true
     }
-
 }
