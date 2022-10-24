@@ -7,8 +7,6 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
-import dev.fabik.bluetoothhid.utils.PrefKeys
-import dev.fabik.bluetoothhid.utils.getPreference
 import java.util.concurrent.Executors
 
 typealias Listener = (BluetoothDevice?, Int) -> Unit
@@ -78,12 +76,7 @@ class BluetoothController(var context: Context) {
             if (state == BluetoothProfile.STATE_CONNECTED) {
                 hostDevice = device
                 hidDevice?.let { hid ->
-                    keyboardSender = KeyboardSender(
-                        context.getPreference(PrefKeys.EXTRA_KEYS),
-                        context.getPreference(PrefKeys.SEND_DELAY),
-                        hid,
-                        device
-                    )
+                    keyboardSender = KeyboardSender(hid, device)
                 }
             } else {
                 hostDevice = null

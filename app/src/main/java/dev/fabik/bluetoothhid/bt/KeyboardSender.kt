@@ -6,16 +6,10 @@ import android.bluetooth.BluetoothHidDevice
 import android.util.Log
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 open class KeyboardSender(
-    private val appendKeysFlow: Flow<Int>,
-    private val sendDelayFlow: Flow<Float>,
     private val hidDevice: BluetoothHidDevice,
     private val host: BluetoothDevice
 ) {
@@ -27,22 +21,6 @@ open class KeyboardSender(
 
     private val keyCharacterMap: KeyCharacterMap =
         KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
-
-    private var appendKey = 0
-    private var sendDelay = 0L
-
-    init {
-        CoroutineScope(Dispatchers.IO).launch {
-            appendKeysFlow.collect {
-                appendKey = it
-            }
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            sendDelayFlow.collect {
-                sendDelay = it.toLong()
-            }
-        }
-    }
 
     protected open fun sendReport() {
         if (!hidDevice.sendReport(host, KeyboardReport.ID, keyboardReport.bytes)) {
@@ -57,23 +35,21 @@ open class KeyboardSender(
         keyboardReport.leftGui = event.isMetaPressed
     }
 
-    fun sendString(string: String) {
+    suspend fun sendString(string: String, sendDelay: Long, appendKey: Int) {
         val appended = string + when (appendKey) {
             1 -> "\n"
             2 -> "\t"
             else -> ""
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            keyCharacterMap.getEvents(appended.toCharArray())?.forEach {
-                if (it.action == KeyEvent.ACTION_DOWN) {
-                    Log.d(TAG, "sendString: $it")
-                    sendKeyEvent(it.keyCode, it)
-                    delay(sendDelay)
-                }
-            } ?: run {
-                Log.w(TAG, "sendString: Unable to map string into key events")
+        keyCharacterMap.getEvents(appended.toCharArray())?.forEach {
+            if (it.action == KeyEvent.ACTION_DOWN) {
+                Log.d(TAG, "sendString: $it")
+                sendKeyEvent(it.keyCode, it)
+                delay(sendDelay)
             }
+        } ?: run {
+            Log.w(TAG, "sendString: Unable to map string into key events")
         }
     }
 
