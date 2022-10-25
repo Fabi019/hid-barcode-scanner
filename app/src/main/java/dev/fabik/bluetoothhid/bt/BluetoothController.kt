@@ -29,9 +29,9 @@ class BluetoothController(var context: Context) {
     private var hidDevice: BluetoothHidDevice? = null
     private var hostDevice: BluetoothDevice? = null
 
-    var keyboardSender: KeyboardSender? = null
+    private var autoConnectEnabled: Boolean = false
 
-    var autoConnectEnabled: Boolean = false
+    var keyboardSender: KeyboardSender? = null
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -123,8 +123,15 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
-    fun register(): Boolean =
-        bluetoothAdapter.getProfileProxy(context, serviceListener, BluetoothProfile.HID_DEVICE)
+    fun register(autoConnect: Boolean): Boolean {
+        autoConnectEnabled = autoConnect
+
+        return bluetoothAdapter.getProfileProxy(
+            context,
+            serviceListener,
+            BluetoothProfile.HID_DEVICE
+        )
+    }
 
     fun unregister() {
         disconnect()

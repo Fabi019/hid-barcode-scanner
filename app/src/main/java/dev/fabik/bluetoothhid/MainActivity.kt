@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
@@ -20,6 +21,8 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -48,6 +51,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     RequiresBluetoothPermission {
+                        val context = LocalContext.current
+                        val scope = rememberCoroutineScope()
                         val navHostController = rememberNavController()
 
                         NavGraph(navHostController, bluetoothController)
@@ -58,22 +63,24 @@ class MainActivity : ComponentActivity() {
                                     if (!bluetoothController.bluetoothEnabled()) {
                                         startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                                     }
-                                    if (!bluetoothController.register()) {
-                                        Toast.makeText(
-                                            this,
-                                            getString(R.string.bt_proxy_error),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+
+                                    scope.launch {
+                                        val autoConnect =
+                                            context.getPreference(PreferenceStore.AUTO_CONNECT)
+                                                .first()
+
+                                        if (!bluetoothController.register(autoConnect)) {
+                                            Toast.makeText(
+                                                context,
+                                                getString(R.string.bt_proxy_error),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
                                 }
                                 Lifecycle.Event.ON_STOP -> bluetoothController.unregister()
                                 else -> {}
                             }
-                        }
-
-                        val autoConnect by rememberPreferenceDefault(PreferenceStore.AUTO_CONNECT)
-                        LaunchedEffect(autoConnect) {
-                            bluetoothController.autoConnectEnabled = autoConnect
                         }
                     }
                 }
