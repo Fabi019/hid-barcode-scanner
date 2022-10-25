@@ -44,6 +44,12 @@ pictures)*
 
 ## Download
 
+<a href='https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/></a>
+
+*Google Play and the Google Play logo are trademarks of Google LLC.*
+
+### Download Latest APKs
+
 Since this app uses the ML-Kit there are two app version to choose from. The standard version
 doesn't contain the scanner library directly. Because of this the size much smaller than in the
 bundled but requires the user to have the Play Store installed on their device.
@@ -53,3 +59,4 @@ APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/android/m
 
 Latest Bundled
 APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/android/main/APK%28s%29%20release%20generated%20%28Bundled%29.zip)
+
