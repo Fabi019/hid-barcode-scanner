@@ -27,9 +27,9 @@ import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.theme.Typography
+import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
-import dev.fabik.bluetoothhid.utils.deviceClassString
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
 
@@ -173,7 +173,7 @@ fun DeviceList(
                     DeviceCard(
                         d.name ?: stringResource(R.string.unknown),
                         d.address,
-                        deviceClassString(d.bluetoothClass.majorDeviceClass)
+                        DeviceInfo.deviceClassString(d.bluetoothClass.majorDeviceClass)
                     ) {
                         controller.connect(d)
                     }
@@ -197,7 +197,7 @@ fun DeviceList(
                     DeviceCard(
                         it.name,
                         it.address,
-                        deviceClassString(it.bluetoothClass.majorDeviceClass)
+                        DeviceInfo.deviceClassString(it.bluetoothClass.majorDeviceClass)
                     ) {
                         controller.connect(it)
                     }

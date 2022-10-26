@@ -34,9 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
+import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.deviceClassString
-import dev.fabik.bluetoothhid.utils.deviceServiceInfo
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -273,7 +272,7 @@ fun BoxScope.DeviceInfoDialog(device: BluetoothDevice?) {
                     Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
                     with(it.bluetoothClass.majorDeviceClass) {
                         val classString = remember(it) {
-                            deviceClassString(this)
+                            DeviceInfo.deviceClassString(this)
                         }
                         Text("$classString (${this})")
                     }
@@ -282,7 +281,7 @@ fun BoxScope.DeviceInfoDialog(device: BluetoothDevice?) {
                 item {
                     Text(stringResource(R.string.services) + ":", fontWeight = FontWeight.Bold)
                     val serviceInfo = remember(it) {
-                        deviceServiceInfo(it.bluetoothClass)
+                        DeviceInfo.deviceServiceInfo(it.bluetoothClass)
                     }
                     serviceInfo.forEach {
                         Text(it)
