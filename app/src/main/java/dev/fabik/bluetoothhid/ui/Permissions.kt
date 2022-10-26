@@ -57,9 +57,7 @@ fun RequiresBluetoothPermission(
             ) {
                 Text(stringResource(R.string.no_bt))
             }
-            return
-        }
-        if (bluetoothPermission.shouldShowRationale) {
+        } else {
             Column(
                 Modifier
                     .padding(8.dp)
@@ -76,7 +74,7 @@ fun RequiresBluetoothPermission(
                     Text(stringResource(R.string.request_again))
                 }
             }
-        } else {
+
             SideEffect {
                 bluetoothPermission.launchMultiplePermissionRequest()
             }
