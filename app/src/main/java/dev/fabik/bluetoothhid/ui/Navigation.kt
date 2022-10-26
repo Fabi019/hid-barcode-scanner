@@ -65,7 +65,9 @@ fun NavGraph(
         }
 
         composable(Routes.Settings) {
-            Settings(navController)
+            Settings {
+                navController.navigateUp()
+            }
         }
     }
 

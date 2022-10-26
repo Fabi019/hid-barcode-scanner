@@ -11,21 +11,20 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(
-    navController: NavController
+    onBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
