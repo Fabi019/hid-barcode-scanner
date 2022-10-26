@@ -1,10 +1,13 @@
 package dev.fabik.bluetoothhid
 
 import android.bluetooth.BluetoothDevice
+import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
-import android.view.HapticFeedbackConstants
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.widget.Toast
 import androidx.camera.core.Camera
 import androidx.camera.core.TorchState
@@ -19,7 +22,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -84,8 +86,18 @@ private fun CameraPreviewArea(
     onCameraReady: (Camera) -> Unit,
     onBarcodeDetected: (String, Boolean) -> Unit,
 ) {
-    val view = LocalView.current
-    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+
+    val vibrator = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            manager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+    }
 
     val playSound by rememberPreferenceDefault(PreferenceStore.PLAY_SOUND)
 
@@ -103,15 +115,9 @@ private fun CameraPreviewArea(
             toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
         if (vibrate) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                @Suppress("DEPRECATION") view.performHapticFeedback(
-                    HapticFeedbackConstants.LONG_PRESS,
-                    HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING
-                )
-            } else {
-                // Might not always work
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            }
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
         }
     }
 }
