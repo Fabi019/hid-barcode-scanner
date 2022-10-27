@@ -49,17 +49,19 @@ fun Devices(
             )
         }) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            DeviceList(navController, controller)
+            DeviceContent(controller) {
+                navController.navigate(Routes.Main)
+            }
         }
     }
 }
 
 @SuppressLint("MissingPermission")
 @Composable
-fun DeviceList(
-    navController: NavController,
+fun DeviceContent(
     controller: BluetoothController,
-    viewModel: DevicesViewModel = viewModel()
+    viewModel: DevicesViewModel = viewModel(),
+    onSkip: () -> Unit
 ) = with(viewModel) {
     val dialogState = rememberDialogState()
 
@@ -122,8 +124,6 @@ fun DeviceList(
         }
     }
 
-    val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
-
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
@@ -139,82 +139,95 @@ fun DeviceList(
             shape = MaterialTheme.shapes.small,
         )
     }) {
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(12.dp, 0.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        DeviceList(
+            onClick = { controller.connect(it) },
+            onSkip = onSkip
+        )
+    }
+}
+
+@SuppressLint("MissingPermission")
+@Composable
+fun DevicesViewModel.DeviceList(
+    onClick: (BluetoothDevice) -> Unit,
+    onSkip: () -> Unit
+) {
+    val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
+
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .padding(12.dp, 0.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Text(
+                stringResource(R.string.scanned_devices),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (isScanning) {
             item {
-                Text(
-                    stringResource(R.string.scanned_devices),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                LinearProgressIndicator(Modifier.fillMaxWidth())
             }
+        }
 
-            if (isScanning) {
-                item {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                }
-            }
-
-            if (foundDevices.isEmpty()) {
-                item {
-                    RequireLocationPermission {
-                        if (!isScanning) {
-                            Text(stringResource(R.string.swipe_refresh))
-                        }
-                    }
-                }
-            } else {
-                items(foundDevices) { d ->
-                    if (d.name == null && !showUnnamed)
-                        return@items
-                    DeviceCard(
-                        d.name ?: stringResource(R.string.unknown),
-                        d.address,
-                        DeviceInfo.deviceClassString(d.bluetoothClass.majorDeviceClass)
-                    ) {
-                        controller.connect(d)
-                    }
-                }
-            }
-
+        if (foundDevices.isEmpty()) {
             item {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.paired_devices),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            if (pairedDevices.isEmpty()) {
-                item {
-                    Text(stringResource(R.string.no_paired_devices))
-                }
-            } else {
-                items(pairedDevices) {
-                    DeviceCard(
-                        it.name,
-                        it.address,
-                        DeviceInfo.deviceClassString(it.bluetoothClass.majorDeviceClass)
-                    ) {
-                        controller.connect(it)
+                RequireLocationPermission {
+                    if (!isScanning) {
+                        Text(stringResource(R.string.swipe_refresh))
                     }
                 }
             }
+        } else {
+            items(foundDevices) { d ->
+                if (d.name == null && !showUnnamed)
+                    return@items
+                DeviceCard(
+                    d.name ?: stringResource(R.string.unknown),
+                    d.address,
+                    DeviceInfo.deviceClassString(d.bluetoothClass.majorDeviceClass)
+                ) {
+                    onClick(d)
+                }
+            }
+        }
 
+        item {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.paired_devices),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (pairedDevices.isEmpty()) {
             item {
-                Box(Modifier.fillMaxWidth()) {
-                    TextButton(
-                        onClick = { navController.navigate(Routes.Main) },
-                        Modifier.align(Alignment.Center)
-                    ) {
-                        Text(stringResource(R.string.skip))
-                    }
+                Text(stringResource(R.string.no_paired_devices))
+            }
+        } else {
+            items(pairedDevices) {
+                DeviceCard(
+                    it.name,
+                    it.address,
+                    DeviceInfo.deviceClassString(it.bluetoothClass.majorDeviceClass)
+                ) {
+                    onClick(it)
                 }
             }
+        }
 
+        item {
+            Box(Modifier.fillMaxWidth()) {
+                TextButton(
+                    onClick = onSkip,
+                    Modifier.align(Alignment.Center)
+                ) {
+                    Text(stringResource(R.string.skip))
+                }
+            }
         }
     }
 }
