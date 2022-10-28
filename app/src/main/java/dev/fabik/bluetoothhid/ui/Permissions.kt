@@ -33,14 +33,14 @@ fun RequiresBluetoothPermission(
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
     }
 
-    val permissions = mutableListOf(
-        android.Manifest.permission.BLUETOOTH,
-        android.Manifest.permission.BLUETOOTH_ADMIN
-    )
+    val permissions = mutableListOf<String>()
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         permissions.add(android.Manifest.permission.BLUETOOTH_SCAN)
         permissions.add(android.Manifest.permission.BLUETOOTH_CONNECT)
+    } else {
+        permissions.add(android.Manifest.permission.BLUETOOTH)
+        permissions.add(android.Manifest.permission.BLUETOOTH_ADMIN)
     }
 
     val bluetoothPermission = rememberMultiplePermissionsState(permissions)
@@ -124,45 +124,49 @@ fun RequireLocationPermission(
         )
     )
 
-    if (!locationPermission.allPermissionsGranted) {
-        Column {
-            Text(stringResource(R.string.location_permission), style = Typography.labelMedium)
-
-            FilledTonalButton(onClick = {
-                locationPermission.launchMultiplePermissionRequest()
-            }) {
-                Text(stringResource(R.string.request_permission))
-            }
-        }
-    } else {
-        val locationManager = remember {
-            context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        }
-
-        var enabledState by remember { mutableStateOf(locationManager.isLocationEnabled) }
-
-        SystemBroadcastReceiver(LocationManager.MODE_CHANGED_ACTION) {
-            it?.let {
-                enabledState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    it.getBooleanExtra(LocationManager.EXTRA_LOCATION_ENABLED, false)
-                } else {
-                    locationManager.isLocationEnabled
-                }
-            }
-        }
-
-        if (!enabledState) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        if (!locationPermission.allPermissionsGranted) {
             Column {
-                Text(stringResource(R.string.location_enable), style = Typography.labelMedium)
+                Text(stringResource(R.string.location_permission), style = Typography.labelMedium)
 
                 FilledTonalButton(onClick = {
-                    context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    locationPermission.launchMultiplePermissionRequest()
                 }) {
-                    Text(stringResource(R.string.open_location_settings))
+                    Text(stringResource(R.string.request_permission))
                 }
             }
         } else {
-            content()
+            val locationManager = remember {
+                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            }
+
+            var enabledState by remember { mutableStateOf(locationManager.isLocationEnabled) }
+
+            SystemBroadcastReceiver(LocationManager.MODE_CHANGED_ACTION) {
+                it?.let {
+                    enabledState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        it.getBooleanExtra(LocationManager.EXTRA_LOCATION_ENABLED, false)
+                    } else {
+                        locationManager.isLocationEnabled
+                    }
+                }
+            }
+
+            if (!enabledState) {
+                Column {
+                    Text(stringResource(R.string.location_enable), style = Typography.labelMedium)
+
+                    FilledTonalButton(onClick = {
+                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }) {
+                        Text(stringResource(R.string.open_location_settings))
+                    }
+                }
+            } else {
+                content()
+            }
         }
+    } else {
+        content()
     }
 }
