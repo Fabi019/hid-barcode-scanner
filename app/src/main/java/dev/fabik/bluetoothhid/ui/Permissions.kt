@@ -2,7 +2,6 @@ package dev.fabik.bluetoothhid.ui
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
@@ -28,11 +27,6 @@ import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 fun RequiresBluetoothPermission(
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
-    val hasBT = remember {
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
-    }
-
     val permissions = mutableListOf<String>()
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -45,39 +39,28 @@ fun RequiresBluetoothPermission(
 
     val bluetoothPermission = rememberMultiplePermissionsState(permissions)
 
-    if (bluetoothPermission.allPermissionsGranted && hasBT) {
+    if (bluetoothPermission.allPermissionsGranted) {
         content()
     } else {
-        if (!hasBT) {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(stringResource(R.string.no_bt))
-            }
-        } else {
-            Column(
-                Modifier
-                    .padding(8.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(stringResource(R.string.bluetooth_permission))
+        Column(
+            Modifier
+                .padding(8.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(stringResource(R.string.bluetooth_permission))
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-                FilledTonalButton(onClick = {
-                    bluetoothPermission.launchMultiplePermissionRequest()
-                }, Modifier.align(Alignment.CenterHorizontally)) {
-                    Text(stringResource(R.string.request_again))
-                }
-            }
-
-            SideEffect {
+            FilledTonalButton(onClick = {
                 bluetoothPermission.launchMultiplePermissionRequest()
+            }, Modifier.align(Alignment.CenterHorizontally)) {
+                Text(stringResource(R.string.request_again))
             }
+        }
+
+        SideEffect {
+            bluetoothPermission.launchMultiplePermissionRequest()
         }
     }
 }
@@ -117,14 +100,17 @@ fun RequireLocationPermission(
 ) {
     val context = LocalContext.current
 
-    val locationPermission = rememberMultiplePermissionsState(
-        listOf(
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // On android 12+ we don't need location permission to scan for bluetooth devices
+        content()
+    } else {
+        val locationPermission = rememberMultiplePermissionsState(
+            listOf(
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+            )
         )
-    )
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         if (!locationPermission.allPermissionsGranted) {
             Column {
                 Text(stringResource(R.string.location_permission), style = Typography.labelMedium)
@@ -166,7 +152,5 @@ fun RequireLocationPermission(
                 content()
             }
         }
-    } else {
-        content()
     }
 }
