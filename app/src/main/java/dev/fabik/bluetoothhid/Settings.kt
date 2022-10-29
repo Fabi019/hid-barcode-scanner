@@ -75,8 +75,8 @@ fun Settings(
 
                 item {
                     ComboBoxPreference(
-                        title = "Keyboard Layout",
-                        desc = "Set the keyboard layout",
+                        title = stringResource(R.string.keyboard_layout),
+                        desc = stringResource(R.string.keyboard_layout_desc),
                         icon = Icons.Default.Keyboard,
                         values = stringArrayResource(R.array.keyboard_layout_values),
                         preference = PreferenceStore.KEYBOARD_LAYOUT
@@ -251,7 +251,13 @@ fun Settings(
                 item {
                     ButtonPreference(
                         title = stringResource(R.string.build_version),
-                        desc = "${BuildConfig.BUILD_TYPE} v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR} (build ${BuildConfig.VERSION_CODE})",
+                        desc = stringResource(
+                            R.string.build_version_desc,
+                            BuildConfig.BUILD_TYPE,
+                            BuildConfig.VERSION_NAME,
+                            BuildConfig.FLAVOR,
+                            BuildConfig.VERSION_CODE
+                        ),
                         icon = Icons.Default.Info
                     )
 

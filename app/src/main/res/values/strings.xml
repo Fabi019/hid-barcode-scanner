@@ -27,16 +27,16 @@
     <string name="scan_res">Scan Resolution</string>
     <string name="scan_res_desc">Resolution of the analysed image.\nHigher resolutions will take longer to analyze.</string>
     <string name="auto_send">Auto Send</string>
-    <string name="auto_send_desc">Automatically send any detected codes.</string>
+    <string name="auto_send_desc">Automatically send any new detected codes.</string>
     <string name="extra_keys">Extra keys</string>
     <string name="extra_keys_desc">Specify which key should be appended.</string>
-    <string name="play_sound">Play Sound</string>
+    <string name="play_sound">Scan Sound</string>
     <string name="play_sound_desc">Plays a sound when scanning a new code.</string>
     <string name="raw_value">Raw Value</string>
     <string name="raw_value_desc">Extracts the raw data value from the code.</string>
     <string name="about">About</string>
-    <string name="repository">Repository</string>
-    <string name="build_version">Build-Version</string>
+    <string name="repository" translatable="false">Repository</string>
+    <string name="build_version" translatable="false">Build-Version</string>
     <string name="confirm">Confirm</string>
     <string name="dismiss">Dismiss</string>
     <string name="scanned_devices">Scanned devices</string>
@@ -52,7 +52,7 @@
     <string name="send_delay_template">Delay (ms): %.0f</string>
     <string name="request_permission">Request Permission</string>
     <string name="bluetooth_permission">Bluetooth permission is required for communicating with other devices. The app can\'t function without it.</string>
-    <string name="camera_permission">Camera permission is required in order to scan codes with the camera.</string>
+    <string name="camera_permission">Camera permission is required for showing the preview and in order to scan codes with the camera.</string>
     <string name="location_permission">Location permission is required for scanning new devices.</string>
     <string name="location_enable">Location needs to be enabled on your system.</string>
     <string name="open_location_settings">Open Location Settings</string>
@@ -74,9 +74,12 @@
     <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
     <string name="bt_proxy_disconnected">BT-Proxy disconnected!</string>
     <string name="bt_proxy_connected">BT-Proxy connected!</string>
-    <string name="no_bt">Your device doesn\'t seem to have bluetooth compatibility?</string>
     <string name="please_wait">Please wait!</string>
     <string name="copied_to_clipboard">Copied to clipboard!</string>
+    <string name="devices">Devices</string>
+    <string name="keyboard_layout">Keyboard Layout</string>
+    <string name="keyboard_layout_desc">Set the keyboard layout</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

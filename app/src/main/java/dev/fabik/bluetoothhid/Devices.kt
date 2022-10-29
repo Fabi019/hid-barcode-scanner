@@ -42,7 +42,7 @@ fun Devices(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Devices") },
+                title = { Text(stringResource(R.string.devices)) },
                 actions = {
                     Dropdown(navController)
                 }
