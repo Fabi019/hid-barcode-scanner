@@ -1,6 +1,8 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.content.pm.PackageManager
+import android.util.Log
+import android.view.ViewGroup
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -14,32 +16,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.guava.await
+import java.util.concurrent.Executors
 
 @Composable
-fun CameraPreview(
+fun CameraArea(
     viewModel: CameraViewModel = viewModel(),
     onCameraReady: (Camera) -> Unit,
     onBarCodeReady: (String) -> Unit
 ) = with(viewModel) {
-    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val hasFrontCamera = remember {
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
-    }
 
     val cameraResolution by rememberPreferenceNull(PreferenceStore.SCAN_RESOLUTION)
-    val frontCamera by rememberPreferenceDefault(PreferenceStore.FRONT_CAMERA)
     val useRawValue by rememberPreferenceDefault(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
 
@@ -60,80 +56,113 @@ fun CameraPreview(
         }
     }.collectAsState(intArrayOf(0))
 
-    AndroidView(
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
+    val previewView = remember {
+        PreviewView(context).apply {
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        }
+    }
 
-            val executor = ContextCompat.getMainExecutor(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder()
-                    .build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
+    CameraPreview(onCameraReady, previewView) {
+        val barcodeAnalyser = BarCodeAnalyser(
+            scanDelay = scanFrequency,
+            formats = scanFormats,
+            onNothing = { currentBarCode = null }
+        ) { barcodes, source ->
+            updateScale(source, previewView)
 
-                val barcodeAnalyser = BarCodeAnalyser(
-                    scanDelay = scanFrequency,
-                    formats = scanFormats,
-                    onNothing = { currentBarCode = null }
-                ) { barcodes, source ->
-                    updateScale(source, previewView)
+            filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
+                onBarCodeReady(it)
+            }
+        }
 
-                    filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
-                        onBarCodeReady(it)
-                    }
+        ImageAnalysis.Builder()
+            .setTargetResolution(
+                when (cameraResolution) {
+                    2 -> CameraViewModel.FHD_1080P
+                    1 -> CameraViewModel.HD_720P
+                    else -> CameraViewModel.SD_480P
                 }
+            )
+            .setOutputImageRotationEnabled(true)
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build().apply {
+                setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyser)
+            }
+    }
 
-                val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder().setTargetResolution(
-                    when (cameraResolution) {
-                        2 -> CameraViewModel.FHD_1080P
-                        1 -> CameraViewModel.HD_720P
-                        else -> CameraViewModel.SD_480P
-                    }
-                ).setOutputImageRotationEnabled(true)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
-                    .also {
-                        it.setAnalyzer(executor, barcodeAnalyser)
-                    }
+    OverlayCanvas()
+}
 
-                val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(
-                        when {
-                            frontCamera && hasFrontCamera -> CameraSelector.LENS_FACING_FRONT
-                            else -> CameraSelector.LENS_FACING_BACK
-                        }
-                    )
-                    .build()
+@Composable
+fun CameraViewModel.CameraPreview(
+    onCameraReady: (Camera) -> Unit,
+    previewView: PreviewView,
+    imageAnalysis: () -> ImageAnalysis,
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
+    val frontCamera by rememberPreferenceDefault(PreferenceStore.FRONT_CAMERA)
+    val hasFrontCamera = remember {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
+    }
+
+    val preview = remember { Preview.Builder().build() }
+
+    val cameraProvider by produceState<ProcessCameraProvider?>(null) {
+        value = ProcessCameraProvider.getInstance(context).await()
+    }
+
+    val camera = remember(cameraProvider, imageAnalysis) {
+        cameraProvider?.let {
+            val cameraSelector = when {
+                frontCamera && hasFrontCamera -> CameraSelector.DEFAULT_FRONT_CAMERA
+                else -> CameraSelector.DEFAULT_BACK_CAMERA
+            }
+
+            runCatching {
                 val useCaseGroup = UseCaseGroup.Builder()
                     .setViewPort(previewView.viewPort!!)
                     .addUseCase(preview)
-                    .addUseCase(imageAnalysis)
+                    .addUseCase(imageAnalysis())
                     .build()
 
-                cameraProvider.unbindAll()
+                it.unbindAll()
+                it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
+                    onCameraReady(it)
+                }
+            }.onFailure {
+                Log.e("CameraPreview", "Use case binding failed", it)
+            }.getOrNull()
+        }
+    }
 
-                val camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, useCaseGroup
-                )
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraProvider?.unbindAll()
+        }
+    }
 
-                previewView.setOnTouchListener(
-                    tapToFocusTouchListener(
-                        previewView,
-                        camera,
-                        scope
-                    )
-                )
-
-                onCameraReady(camera)
-            }, executor)
-
-            previewView
-        },
-        Modifier.fillMaxSize()
+    AndroidView(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(camera) {
+                camera?.let {
+                    focusOnTap(it, scope)
+                }
+            },
+        factory = {
+            previewView.also {
+                preview.setSurfaceProvider(it.surfaceProvider)
+            }
+        }
     )
-
-    OverlayCanvas()
 }
 
 @Composable

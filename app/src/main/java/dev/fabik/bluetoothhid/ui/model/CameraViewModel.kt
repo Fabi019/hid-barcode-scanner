@@ -1,21 +1,21 @@
 package dev.fabik.bluetoothhid.ui.model
 
 import android.util.Size
-import android.view.MotionEvent
-import android.view.View
 import androidx.camera.core.Camera
-import androidx.camera.core.DisplayOrientedMeteringPointFactory
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import kotlinx.coroutines.CoroutineScope
@@ -110,47 +110,39 @@ class CameraViewModel : ViewModel() {
         return result
     }
 
-    fun tapToFocusTouchListener(previewView: PreviewView, camera: Camera, scope: CoroutineScope) =
-        View.OnTouchListener { view, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> true
-                MotionEvent.ACTION_UP -> {
-                    if (focusTouchPoint == null) {
-                        focusTouchPoint = Offset(event.x, event.y)
-                        scope.launch {
-                            focusCircleAlpha.animateTo(1f, tween(100))
-                        }
-                        scope.launch {
-                            focusCircleRadius.snapTo(100f)
-                            focusCircleRadius.animateTo(
-                                80f, spring(Spring.DampingRatioMediumBouncy)
-                            )
-                        }
-                        val factory = DisplayOrientedMeteringPointFactory(
-                            previewView.display,
-                            camera.cameraInfo,
-                            previewView.width.toFloat(),
-                            previewView.height.toFloat()
-                        )
+    suspend fun PointerInputScope.focusOnTap(camera: Camera, scope: CoroutineScope) =
+        detectTapGestures {
+            if (focusTouchPoint == null) {
+                focusTouchPoint = it
 
-                        val focusPoint = factory.createPoint(event.x, event.y)
-                        camera.cameraControl.startFocusAndMetering(
-                            FocusMeteringAction.Builder(
-                                focusPoint, FocusMeteringAction.FLAG_AF
-                            ).apply {
-                                disableAutoCancel()
-                            }.build()
-                        ).addListener({
-                            scope.launch {
-                                focusCircleAlpha.animateTo(0f, tween(100))
-                                focusTouchPoint = null
-                            }
-                        }, Executors.newSingleThreadExecutor())
-
-                    }
-                    view.performClick()
+                scope.launch {
+                    focusCircleAlpha.animateTo(1f, tween(100))
                 }
-                else -> false
+
+                scope.launch {
+                    focusCircleRadius.snapTo(100f)
+                    focusCircleRadius.animateTo(
+                        80f, spring(Spring.DampingRatioMediumBouncy)
+                    )
+                }
+
+                val meteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                    size.width.toFloat(),
+                    size.height.toFloat()
+                )
+
+                val meteringAction = FocusMeteringAction.Builder(
+                    meteringPointFactory.createPoint(it.x, it.y),
+                    FocusMeteringAction.FLAG_AF
+                ).disableAutoCancel().build()
+
+                camera.cameraControl.startFocusAndMetering(meteringAction)
+                    .addListener({
+                        scope.launch {
+                            focusCircleAlpha.animateTo(0f, tween(100))
+                            focusTouchPoint = null
+                        }
+                    }, Executors.newSingleThreadExecutor())
             }
         }
 

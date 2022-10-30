@@ -108,11 +108,13 @@ private fun CameraPreviewArea(
 
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
-    CameraPreview(onCameraReady = onCameraReady) {
+    CameraArea(onCameraReady = onCameraReady) {
         onBarcodeDetected(it, autoSend)
+
         if (playSound) {
             toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
+
         if (vibrate) {
             vibrator.vibrate(
                 VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
