@@ -2,7 +2,7 @@ buildscript {
     ext {
         compose_version = '1.2.1'
         camerax_version = '1.2.0-beta02'
-        accomp_version = '0.26.5-rc'
+        accomp_version = '0.27.0'
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
