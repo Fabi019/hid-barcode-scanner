@@ -96,9 +96,9 @@
         <item>Slow (1s)</item>
     </string-array>
     <string-array name="scan_res_values">
-        <item>SD (0.3MP)</item>
-        <item>HD (0.6MP)</item>
-        <item>FHD (1.5MP)</item>
+        <item>SD (480P)</item>
+        <item>HD (720P)</item>
+        <item>FHD (1080P)</item>
     </string-array>
     <string-array name="extra_keys_values">
         <item>None</item>
@@ -121,7 +121,7 @@
         <item>AZTEC</item>
     </string-array>
     <string-array name="keyboard_layout_values">
-        <item>US</item>
-        <item>German</item>
+        <item>English (US)</item>
+        <item>German (DE)</item>
     </string-array>
 </resources>

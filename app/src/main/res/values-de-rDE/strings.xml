@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BT Scanner</string>
+    <string name="scanner">Scanner</string>
+    <string name="send_to_device">An Gerät Senden</string>
+    <string name="scan_code_to_start">Scanne einen beliebigen QR Code / Barcode\num zu beginnen.</string>
+    <string name="settings">Einstellungen</string>
+    <string name="connection">Verbindung</string>
+    <string name="auto_connect">Automatisch Verbinden</string>
+    <string name="auto_connect_desc">Mit dem letzten Gerät beim Start verbinden.</string>
+    <string name="show_unnamed">Unbenannte Geräte</string>
+    <string name="show_unnamed_desc">Zeigt Bluetooth Geräte ohne Namen an.</string>
+    <string name="appearance">Darstellung</string>
+    <string name="theme">Design</string>
+    <string name="theme_desc">Änderert das App-Design</string>
+    <string name="dynamic_theme">Dynamisches Design</string>
+    <string name="dynamic_theme_desc">Benutzt das dynamische Design auf Android 12+.</string>
+    <string name="front_camera">Vorderkamera</string>
+    <string name="front_camera_desc">Benutzt die Frontkamera anstatt der Rückkamera falls es vom Gerät unterstützt wird.</string>
+    <string name="restrict_area">Einschränken des Scanbereichs</string>
+    <string name="restrict_area_desc">Zeigt ein Overlay im Scanner an.</string>
+    <string name="overlay_type">Overlay-Typ</string>
+    <string name="overlay_type_desc">Einstellen der Form des Overlays.</string>
+    <string name="full_inside">Komplett enthalten</string>
+    <string name="full_inside_desc">Codes müssen komplett im Bereich enthalten sein.</string>
+    <string name="scan_freq">Scan Geschwindigkeit</string>
+    <string name="scan_freq_desc">Intervall in dem das Bild analysiert wird.</string>
+    <string name="scan_res">Scan Auflösung</string>
+    <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen können länger zum Analysieren dauern.</string>
+    <string name="auto_send">Automatisch Senden</string>
+    <string name="auto_send_desc">Beim erkennen eines neuen Codes automatisch senden.</string>
+    <string name="extra_keys">Extra Tasten</string>
+    <string name="extra_keys_desc">Tasten die dem Text angehängt werden sollen.</string>
+    <string name="play_sound">Scan Ton</string>
+    <string name="play_sound_desc">Spielt einen Ton beim scannen eines neuen Codes ab.</string>
+    <string name="raw_value">Rohwert</string>
+    <string name="raw_value_desc">Nimmt den Rohwert eines Codes.</string>
+    <string name="about">Über</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="dismiss">Abbrechen</string>
+    <string name="scanned_devices">Gescannte Geräte</string>
+    <string name="swipe_refresh">(Von oben ziehen zum Aktualisieren)</string>
+    <string name="unknown">Unbennant</string>
+    <string name="paired_devices">Gekoppelte Geräte</string>
+    <string name="no_paired_devices">(Keine gekoppelten Geräte gefunden)</string>
+    <string name="skip">Überspringen</string>
+    <string name="request_again">Erneut anfragen</string>
+    <string name="exit">Beenden</string>
+    <string name="send_delay">Sende-Verzögerung</string>
+    <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben.</string>
+    <string name="send_delay_template">Verzögerung (ms): %.0f</string>
+    <string name="request_permission">Berechtigung anfragen</string>
+    <string name="bluetooth_permission">Bluetooth Berechtigung wird benötigt um mit anderen Geräten kommunizieren zu können. Die App kann ohne diese nicht funktionieren.</string>
+    <string name="camera_permission">"Kamera Berechtigung wird zum Anzeigen der Vorschau und zum Scannen der Codes benötigt. "</string>
+    <string name="location_permission">Standort Berechtigung wird zum scannen nach neuen Geräten benötigt.</string>
+    <string name="location_enable">Standort muss auf dem Gerät aktiviert sein.</string>
+    <string name="open_location_settings">Öffne Standort Einstellungen</string>
+    <string name="connecting">Verbinde…</string>
+    <string name="connect_help">Falls keine Verbindung möglich sein sollte, muss das Gerät zunächst entfernt werden und dann erneut von der App aus verbunden werden.</string>
+    <string name="haptic_feedback">Haptisches Feedback</string>
+    <string name="haptic_feedback_desc">Vibriert wenn ein neuer Code gescannt wird.</string>
+    <string name="connected_with">Verbunden mit: %s</string>
+    <string name="info">Info</string>
+    <string name="name">Name</string>
+    <string name="mac_address">MAC-Adresse</string>
+    <string name="alias">Alias</string>
+    <string name="type">Typ</string>
+    <string name="clazz">Klasse</string>
+    <string name="services">Service</string>
+    <string name="uuids">UUIDs</string>
+    <string name="code_types">Code Typen</string>
+    <string name="code_types_desc">Aktiviere nur benötigte Typen um die Scan-Geschwindigkeit zu verbessern. Wähle keinen um alle zu aktivieren.</string>
+    <string name="bt_proxy_error">Fehler in BT-Proxy! Versuche die App neuzustarten…</string>
+    <string name="bt_proxy_disconnected">BT-Proxy entfernt!</string>
+    <string name="bt_proxy_connected">BT-Proxy verbunden!</string>
+    <string name="please_wait">Bitte warten!</string>
+    <string name="copied_to_clipboard">In Zwischenablage kopiert!</string>
+    <string name="devices">Geräte</string>
+    <string name="keyboard_layout">Tastatur Layout</string>
+    <string name="keyboard_layout_desc">Stellt das verwentete Tastatus Layout ein.</string>
+    <string-array name="theme_values">
+        <item>System</item>
+        <item>Hell</item>
+        <item>Dunkel</item>
+    </string-array>
+    <string-array name="overlay_values">
+        <item>Quadratisch (QR-Code)</item>
+        <item>Rechteckig (Barcode)</item>
+    </string-array>
+    <string-array name="scan_freq_values">
+        <item>Am Schnellsten</item>
+        <item>Schnell (100ms)</item>
+        <item>Normal (500ms)</item>
+        <item>Langsam (1s)</item>
+    </string-array>
+    <string-array name="scan_res_values">
+        <item>SD (480P)</item>
+        <item>HD (720P)</item>
+        <item>FHD (1080P)</item>
+    </string-array>
+    <string-array name="extra_keys_values">
+        <item>Keine</item>
+        <item>Enter</item>
+        <item>Tab</item>
+    </string-array>
+    <string-array name="code_types_values">
+        <item>CODE_128</item>
+        <item>CODE_39</item>
+        <item>CODE_93</item>
+        <item>CODABAR</item>
+        <item>DATA_MATRIX</item>
+        <item>EAN_13</item>
+        <item>EAN_8</item>
+        <item>ITF</item>
+        <item>QR_CODE</item>
+        <item>UPC_A</item>
+        <item>UPC_E</item>
+        <item>PDF417</item>
+        <item>AZTEC</item>
+    </string-array>
+    <string-array name="keyboard_layout_values">
+        <item>English (US)</item>
+        <item>Deutsch (DE)</item>
+    </string-array>
+</resources>
