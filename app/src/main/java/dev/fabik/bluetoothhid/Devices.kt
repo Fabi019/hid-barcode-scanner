@@ -32,6 +32,7 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +65,7 @@ fun DeviceContent(
     onSkip: () -> Unit
 ) = with(viewModel) {
     val dialogState = rememberDialogState()
+    val scope = rememberCoroutineScope()
 
     DisposableEffect(controller) {
         if (pairedDevices.isEmpty()) {
@@ -114,33 +116,32 @@ fun DeviceContent(
         }
     }
 
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
+    fun refresh() = scope.launch {
+        isRefreshing = true
+        if (!isScanning) {
             pairedDevices.clear()
             pairedDevices.addAll(controller.pairedDevices())
             controller.scanDevices()
-            delay(500)
-            isRefreshing = false
         }
+        delay(500)
+        isRefreshing = false
     }
 
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
-
-    SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        if (!isScanning) {
-            isRefreshing = true
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
+        onRefresh = ::refresh,
+        indicator = { state, trigger ->
+            SwipeRefreshIndicator(
+                state = state,
+                refreshTriggerDistance = trigger,
+                scale = true,
+                backgroundColor = MaterialTheme.colorScheme.primary,
+                shape = MaterialTheme.shapes.small,
+            )
         }
-    }, indicator = { state, trigger ->
-        SwipeRefreshIndicator(
-            state = state,
-            refreshTriggerDistance = trigger,
-            scale = true,
-            backgroundColor = MaterialTheme.colorScheme.primary,
-            shape = MaterialTheme.shapes.small,
-        )
-    }) {
+    ) {
         DeviceList(
-            onClick = { controller.connect(it) },
+            onClick = controller::connect,
             onSkip = onSkip
         )
     }
