@@ -20,12 +20,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.guava.await
 import java.util.concurrent.Executors
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @Composable
 fun CameraArea(
@@ -116,7 +118,13 @@ fun CameraViewModel.CameraPreview(
     val preview = remember { Preview.Builder().build() }
 
     val cameraProvider by produceState<ProcessCameraProvider?>(null) {
-        value = ProcessCameraProvider.getInstance(context).await()
+        value = suspendCoroutine { cont ->
+            ProcessCameraProvider.getInstance(context).apply {
+                addListener({
+                    cont.resume(get())
+                }, ContextCompat.getMainExecutor(context))
+            }
+        }
     }
 
     val camera = remember(cameraProvider, imageAnalysis) {
