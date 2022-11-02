@@ -86,35 +86,12 @@ fun DeviceContent(
     }
 
     LoadingDialog(
-        dialogState, stringResource(R.string.connecting), stringResource(R.string.connect_help)
+        dialogState,
+        stringResource(R.string.connecting),
+        stringResource(R.string.connect_help)
     )
 
-    SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
-        Log.d("Discovery", "isDiscovering")
-        isScanning = true
-        foundDevices.clear()
-    }
-
-    SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-        Log.d("Discovery", "FinishedDiscovering")
-        isScanning = false
-    }
-
-    SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            it?.getParcelableExtra(
-                BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java
-            )
-        } else {
-            @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-        }?.let { dev ->
-            if (!foundDevices.contains(dev)) {
-                foundDevices.add(dev)
-            }
-
-            Log.d("Discovery", "Found: $dev")
-        }
-    }
+    BroadcastListener()
 
     fun refresh() = scope.launch {
         isRefreshing = true
@@ -144,6 +121,36 @@ fun DeviceContent(
             onClick = controller::connect,
             onSkip = onSkip
         )
+    }
+}
+
+@Composable
+fun DevicesViewModel.BroadcastListener() {
+    SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
+        Log.d("Discovery", "isDiscovering")
+        isScanning = true
+        foundDevices.clear()
+    }
+
+    SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
+        Log.d("Discovery", "FinishedDiscovering")
+        isScanning = false
+    }
+
+    SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            it?.getParcelableExtra(
+                BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java
+            )
+        } else {
+            @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+        }?.let { dev ->
+            if (!foundDevices.contains(dev)) {
+                foundDevices.add(dev)
+            }
+
+            Log.d("Discovery", "Found: $dev")
+        }
     }
 }
 
