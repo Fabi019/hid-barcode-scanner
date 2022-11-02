@@ -27,13 +27,19 @@ fun Dropdown(
         }
 
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.settings)) }, onClick = {
-                showMenu = false
-                navController.navigate(Routes.Settings)
-            })
-            DropdownMenuItem(text = { Text(stringResource(R.string.exit)) }, onClick = {
-                (context as Activity).finishAfterTransition()
-            })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.settings)) },
+                onClick = {
+                    showMenu = false
+                    navController.navigate(Routes.Settings)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.exit)) },
+                onClick = {
+                    (context as Activity).finishAfterTransition()
+                }
+            )
         }
     }
 }
