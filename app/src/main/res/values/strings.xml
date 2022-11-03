@@ -80,6 +80,9 @@
     <string name="keyboard_layout">Keyboard Layout</string>
     <string name="keyboard_layout_desc">Set the keyboard layout</string>
     <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="more">More</string>
+    <string name="toggle_flash">Toggle flash</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -78,6 +78,9 @@
     <string name="devices">Geräte</string>
     <string name="keyboard_layout">Tastatur Layout</string>
     <string name="keyboard_layout_desc">Stellt das verwentete Tastatus Layout ein.</string>
+    <string name="disconnect">Trennen</string>
+    <string name="more">Mehr</string>
+    <string name="toggle_flash">Blitz an/aus</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Hell</item>

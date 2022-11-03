@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
@@ -22,7 +23,10 @@ fun Dropdown(
     }
 
     Box {
-        IconButton(onClick = { showMenu = !showMenu }) {
+        IconButton(
+            onClick = { showMenu = !showMenu },
+            modifier = Modifier.tooltip(stringResource(R.string.more))
+        ) {
             Icon(Icons.Default.MoreVert, "More")
         }
 

@@ -179,31 +179,37 @@ private fun ScannerAppBar(
     onDisconnect: () -> Unit,
     navController: NavController
 ) {
-    TopAppBar(title = { Text(stringResource(R.string.scanner)) }, actions = {
-        camera?.let {
-            if (it.cameraInfo.hasFlashUnit()) {
-                ToggleFlashButton(it)
+    TopAppBar(
+        title = { Text(stringResource(R.string.scanner)) },
+        actions = {
+            camera?.let {
+                if (it.cameraInfo.hasFlashUnit()) {
+                    ToggleFlashButton(it)
+                }
             }
+            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
+                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+            }
+            Dropdown(navController)
         }
-        IconButton(onDisconnect) {
-            Icon(Icons.Default.BluetoothDisabled, "Disconnect")
-        }
-        Dropdown(navController)
-    })
+    )
 }
 
 @Composable
 fun ToggleFlashButton(camera: Camera) {
     val torchState by camera.cameraInfo.torchState.observeAsState()
 
-    IconButton(onClick = {
-        camera.cameraControl.enableTorch(
-            when (torchState) {
-                TorchState.OFF -> true
-                else -> false
-            }
-        )
-    }) {
+    IconButton(
+        onClick = {
+            camera.cameraControl.enableTorch(
+                when (torchState) {
+                    TorchState.OFF -> true
+                    else -> false
+                }
+            )
+        },
+        modifier = Modifier.tooltip(stringResource(R.string.toggle_flash))
+    ) {
         Icon(
             when (torchState) {
                 TorchState.OFF -> Icons.Default.FlashOn
