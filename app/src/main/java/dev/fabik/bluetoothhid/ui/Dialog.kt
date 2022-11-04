@@ -160,11 +160,13 @@ fun InfoDialog(
     dialogState: DialogState,
     title: String,
     onDismiss: DialogState.() -> Unit = {},
+    icon: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     if (dialogState.openState) {
         AlertDialog(
             onDismissRequest = { onDismiss(dialogState) },
+            icon = icon,
             title = { Text(title) },
             text = { content() },
             confirmButton = { },
