@@ -76,7 +76,10 @@ dependencies {
     implementation "androidx.camera:camera-view:$camerax_version"
 
     bundledImplementation 'com.google.mlkit:barcode-scanning:17.0.2'
+
     standardImplementation 'com.google.android.gms:play-services-mlkit-barcode-scanning:18.1.0'
+    standardImplementation 'com.google.android.gms:play-services-base:18.1.0'
+    standardImplementation 'com.google.android.gms:play-services-tflite-java:16.0.1'
 
     implementation "com.google.accompanist:accompanist-permissions:$accomp_version"
     implementation "com.google.accompanist:accompanist-swiperefresh:$accomp_version"

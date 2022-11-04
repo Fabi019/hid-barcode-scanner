@@ -81,6 +81,12 @@
     <string name="disconnect">Trennen</string>
     <string name="more">Mehr</string>
     <string name="toggle_flash">Blitz an/aus</string>
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="failed_to_download">Der Download und die Installation des ML-Kit Barcode-Moduls sind fehlgeschlagen.</string>
+    <string name="ensure_internet_and_play">Stellen Sie sicher, dass Sie eine aktive Internetverbindung haben und dass die Google Play Services auf Ihrem Gerät installiert sind.</string>
+    <string name="download_bundled">Alternativ können Sie die bundled APK-Version von der GitHub-Seite herunterladen welche das Modul bereits enthält.</string>
+    <string name="downloading_module">Herunterladen und Installieren des ML-Kit Barcode-Moduls.\nDies muss nur einmal durchgeführt werden. Normalerweise, wenn Sie die App als APK installieren oder die Daten der Google Play Services löschen.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Hell</item>

@@ -69,32 +69,34 @@ fun CameraArea(
         }
     }
 
-    CameraPreview(onCameraReady, previewView) {
-        val barcodeAnalyser = BarCodeAnalyser(
-            scanDelay = scanFrequency,
-            formats = scanFormats,
-            onNothing = { currentBarCode = null }
-        ) { barcodes, source ->
-            updateScale(source, previewView)
+    RequiresModuleInstallation {
+        CameraPreview(onCameraReady, previewView) {
+            val barcodeAnalyser = BarCodeAnalyser(
+                scanDelay = scanFrequency,
+                formats = scanFormats,
+                onNothing = { currentBarCode = null }
+            ) { barcodes, source ->
+                updateScale(source, previewView)
 
-            filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
-                onBarCodeReady(it)
-            }
-        }
-
-        ImageAnalysis.Builder()
-            .setTargetResolution(
-                when (cameraResolution) {
-                    2 -> CameraViewModel.FHD_1080P
-                    1 -> CameraViewModel.HD_720P
-                    else -> CameraViewModel.SD_480P
+                filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
+                    onBarCodeReady(it)
                 }
-            )
-            .setOutputImageRotationEnabled(true)
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build().apply {
-                setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyser)
             }
+
+            ImageAnalysis.Builder()
+                .setTargetResolution(
+                    when (cameraResolution) {
+                        2 -> CameraViewModel.FHD_1080P
+                        1 -> CameraViewModel.HD_720P
+                        else -> CameraViewModel.SD_480P
+                    }
+                )
+                .setOutputImageRotationEnabled(true)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build().apply {
+                    setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyser)
+                }
+        }
     }
 
     OverlayCanvas()
