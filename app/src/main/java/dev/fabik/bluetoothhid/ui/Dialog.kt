@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -163,7 +164,7 @@ fun InfoDialog(
     icon: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    if (dialogState.openState) {
+    AnimatedVisibility(visible = dialogState.openState) {
         AlertDialog(
             onDismissRequest = { onDismiss(dialogState) },
             icon = icon,
@@ -189,7 +190,7 @@ fun ConfirmDialog(
     onConfirm: DialogState.() -> Unit,
     content: @Composable () -> Unit,
 ) {
-    if (dialogState.openState) {
+    AnimatedVisibility(visible = dialogState.openState) {
         AlertDialog(
             onDismissRequest = { onDismiss(dialogState) },
             title = { Text(title) },
@@ -219,7 +220,7 @@ fun LoadingDialog(
     desc: String,
     onDismiss: DialogState.() -> Unit = {}
 ) {
-    if (dialogState.openState) {
+    AnimatedVisibility(visible = dialogState.openState) {
         Dialog(onDismissRequest = { onDismiss(dialogState) }) {
             Surface(shape = MaterialTheme.shapes.extraLarge) {
                 Column(
