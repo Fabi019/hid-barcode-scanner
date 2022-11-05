@@ -87,6 +87,10 @@
     <string name="ensure_internet_and_play">Stellen Sie sicher, dass Sie eine aktive Internetverbindung haben und dass die Google Play Services auf Ihrem Gerät installiert sind.</string>
     <string name="download_bundled">Alternativ können Sie die bundled APK-Version von der GitHub-Seite herunterladen welche das Modul bereits enthält.</string>
     <string name="downloading_module">Herunterladen und Installieren des ML-Kit Barcode-Moduls.\nDies muss nur einmal durchgeführt werden. Normalerweise, wenn Sie die App als APK installieren oder die Daten der Google Play Services löschen.</string>
+    <string name="unpair_device">Entkoppeln von %s?</string>
+    <string name="unpair_desc">Durch das Aufheben der Kopplung wird das Gerät aus der Liste der gekoppelten Geräte entfernt.</string>
+    <string name="connect">Verbinden</string>
+    <string name="unpair">Entkoppeln</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Hell</item>

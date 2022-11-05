@@ -9,7 +9,6 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,6 +23,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
+import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.theme.Typography
@@ -97,9 +97,9 @@ fun DeviceContent(
 
     fun refresh() = scope.launch {
         isRefreshing = true
+        pairedDevices.clear()
+        pairedDevices.addAll(controller.pairedDevices())
         if (!isScanning) {
-            pairedDevices.clear()
-            pairedDevices.addAll(controller.pairedDevices())
             controller.scanDevices()
         }
         delay(500)
@@ -120,7 +120,7 @@ fun DeviceContent(
         }
     ) {
         DeviceList(
-            onClick = controller::connect,
+            onConnect = controller::connect,
             onSkip = onSkip
         )
     }
@@ -159,7 +159,7 @@ fun DevicesViewModel.BroadcastListener() {
 @SuppressLint("MissingPermission")
 @Composable
 fun DevicesViewModel.DeviceList(
-    onClick: (BluetoothDevice) -> Unit,
+    onConnect: (BluetoothDevice) -> Unit,
     onSkip: () -> Unit
 ) {
     val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
@@ -195,12 +195,8 @@ fun DevicesViewModel.DeviceList(
             items(foundDevices) { d ->
                 if (d.name == null && !showUnnamed)
                     return@items
-                DeviceCard(
-                    d.name ?: stringResource(R.string.unknown),
-                    d.address,
-                    DeviceInfo.deviceClassString(d.bluetoothClass.majorDeviceClass)
-                ) {
-                    onClick(d)
+                DeviceCard(d) {
+                    onConnect(d)
                 }
             }
         }
@@ -219,12 +215,8 @@ fun DevicesViewModel.DeviceList(
             }
         } else {
             items(pairedDevices) {
-                DeviceCard(
-                    it.name,
-                    it.address,
-                    DeviceInfo.deviceClassString(it.bluetoothClass.majorDeviceClass)
-                ) {
-                    onClick(it)
+                DeviceCard(it) {
+                    onConnect(it)
                 }
             }
         }
@@ -242,23 +234,26 @@ fun DevicesViewModel.DeviceList(
     }
 }
 
+
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceCard(
-    name: String,
-    address: String,
-    type: String,
+    device: BluetoothDevice,
     onClick: () -> Unit
 ) {
+    val infoDialog = rememberDialogState()
+    val confirmDialog = rememberDialogState()
+
     ElevatedCard(
         onClick,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                 Icon(
-                    when (type) {
+                    when (DeviceInfo.deviceClassString(device.bluetoothClass.majorDeviceClass)) {
                         "PHONE" -> Icons.Default.Smartphone
                         "AUDIO_VIDEO" -> Icons.Default.Headphones
                         "COMPUTER" -> Icons.Default.Computer
@@ -273,16 +268,76 @@ fun DeviceCard(
                     .padding(4.dp)
                     .weight(1f)
             ) {
-                Text(name)
+                Text(device.name ?: stringResource(R.string.unknown))
                 Text(
-                    address,
+                    device.address,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = Typography.labelSmall,
                 )
             }
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.PlayArrow, "Connect")
+                if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                    DeviceDropdown(
+                        onConnect = onClick,
+                        onInfo = { infoDialog.open() },
+                        onRemove = { confirmDialog.open() }
+                    )
+                } else {
+                    Icon(Icons.Default.PlayArrow, "Connect")
+                }
             }
         }
+    }
+
+    DeviceInfoDialog(infoDialog, device)
+
+    ConfirmDialog(
+        confirmDialog,
+        stringResource(R.string.unpair_device, device.name ?: stringResource(R.string.unknown)),
+        onDismiss = { confirmDialog.close() },
+        onConfirm = {
+            device.removeBond()
+            confirmDialog.close()
+        }
+    ) {
+        Text(stringResource(R.string.unpair_desc))
+    }
+}
+
+@Composable
+fun DeviceDropdown(
+    onConnect: () -> Unit = {},
+    onInfo: () -> Unit = {},
+    onRemove: () -> Unit = {}
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { showMenu = true }) {
+        Icon(Icons.Default.MoreVert, "More")
+    }
+
+    DropdownMenu(
+        expanded = showMenu,
+        onDismissRequest = { showMenu = false },
+    ) {
+        DropdownMenuItem(
+            onClick = {
+                showMenu = false
+                onConnect()
+            },
+            text = { Text(stringResource(R.string.connect)) }
+        )
+        DropdownMenuItem(
+            onClick = {
+                showMenu = false
+                onInfo()
+            }, text = { Text(stringResource(R.string.info)) }
+        )
+        DropdownMenuItem(
+            onClick = {
+                showMenu = false
+                onRemove()
+            }, text = { Text(stringResource(R.string.unpair)) }
+        )
     }
 }
