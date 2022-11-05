@@ -141,6 +141,8 @@ class BluetoothController(var context: Context) {
 
     fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
 
+    fun isScanning() = bluetoothAdapter.isDiscovering
+
     fun scanDevices() {
         if (bluetoothAdapter.isDiscovering) {
             bluetoothAdapter.cancelDiscovery()

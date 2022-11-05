@@ -68,6 +68,8 @@ fun DeviceContent(
     val scope = rememberCoroutineScope()
 
     DisposableEffect(controller) {
+        isScanning = controller.isScanning()
+
         if (pairedDevices.isEmpty()) {
             pairedDevices.addAll(controller.pairedDevices())
         }
