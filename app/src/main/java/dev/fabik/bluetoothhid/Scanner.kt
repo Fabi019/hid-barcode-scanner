@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.media.AudioManager
@@ -75,7 +76,7 @@ fun Scanner(
                 }
                 BarcodeValue(currentBarcode)
             }
-            DeviceInfoDialog(currentDevice)
+            DeviceInfoCard(currentDevice)
         }
     }
 }
@@ -219,13 +220,13 @@ fun ToggleFlashButton(camera: Camera) {
     }
 }
 
-@Suppress("MissingPermission")
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.DeviceInfoDialog(device: BluetoothDevice?) {
-    val dialogState = rememberDialogState()
-
+fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
     device?.let {
+        val dialogState = rememberDialogState()
+
         ElevatedCard(
             onClick = {
                 dialogState.open()
@@ -244,63 +245,72 @@ fun BoxScope.DeviceInfoDialog(device: BluetoothDevice?) {
             }
         }
 
-        InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                item {
-                    Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
-                    Text(it.name)
-                }
+        DeviceInfoDialog(dialogState, it)
+    }
+}
 
-                item {
-                    Text(stringResource(R.string.mac_address) + ":", fontWeight = FontWeight.Bold)
-                    Text(it.address)
-                }
+@SuppressLint("MissingPermission")
+@Composable
+fun DeviceInfoDialog(
+    dialogState: DialogState,
+    device: BluetoothDevice
+) {
+    InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
+                Text(device.name)
+            }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    item {
-                        Text(stringResource(R.string.alias) + ":", fontWeight = FontWeight.Bold)
-                        Text(it.alias ?: "")
+            item {
+                Text(stringResource(R.string.mac_address) + ":", fontWeight = FontWeight.Bold)
+                Text(device.address)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                item {
+                    Text(stringResource(R.string.alias) + ":", fontWeight = FontWeight.Bold)
+                    Text(device.alias ?: "")
+                }
+            }
+
+            item {
+                Text(stringResource(R.string.type) + ":", fontWeight = FontWeight.Bold)
+                Text(
+                    when (device.type) {
+                        BluetoothDevice.DEVICE_TYPE_DUAL -> "Dual"
+                        BluetoothDevice.DEVICE_TYPE_LE -> "LE"
+                        BluetoothDevice.DEVICE_TYPE_CLASSIC -> "Classic"
+                        BluetoothDevice.DEVICE_TYPE_UNKNOWN -> "Unknown"
+                        else -> "?"
+                    } + " (${device.type})"
+                )
+            }
+
+            item {
+                Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
+                with(device.bluetoothClass.majorDeviceClass) {
+                    val classString = remember(device) {
+                        DeviceInfo.deviceClassString(this)
                     }
+                    Text("$classString (${this})")
                 }
+            }
 
-                item {
-                    Text(stringResource(R.string.type) + ":", fontWeight = FontWeight.Bold)
-                    Text(
-                        when (it.type) {
-                            BluetoothDevice.DEVICE_TYPE_DUAL -> "Dual"
-                            BluetoothDevice.DEVICE_TYPE_LE -> "LE"
-                            BluetoothDevice.DEVICE_TYPE_CLASSIC -> "Classic"
-                            BluetoothDevice.DEVICE_TYPE_UNKNOWN -> "Unknown"
-                            else -> "?"
-                        } + " (${it.type})"
-                    )
+            item {
+                Text(stringResource(R.string.services) + ":", fontWeight = FontWeight.Bold)
+                val serviceInfo = remember(device) {
+                    DeviceInfo.deviceServiceInfo(device.bluetoothClass)
                 }
-
-                item {
-                    Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
-                    with(it.bluetoothClass.majorDeviceClass) {
-                        val classString = remember(it) {
-                            DeviceInfo.deviceClassString(this)
-                        }
-                        Text("$classString (${this})")
-                    }
+                serviceInfo.forEach {
+                    Text(it)
                 }
+            }
 
-                item {
-                    Text(stringResource(R.string.services) + ":", fontWeight = FontWeight.Bold)
-                    val serviceInfo = remember(it) {
-                        DeviceInfo.deviceServiceInfo(it.bluetoothClass)
-                    }
-                    serviceInfo.forEach {
-                        Text(it)
-                    }
-                }
-
-                item {
-                    Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
-                    it.uuids.forEach {
-                        Text(it.toString())
-                    }
+            item {
+                Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
+                device.uuids.forEach {
+                    Text(it.toString())
                 }
             }
         }
