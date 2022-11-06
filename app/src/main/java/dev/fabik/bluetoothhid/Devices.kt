@@ -312,7 +312,10 @@ fun DeviceDropdown(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    IconButton(onClick = { showMenu = true }) {
+    IconButton(
+        onClick = { showMenu = true },
+        modifier = Modifier.tooltip(stringResource(R.string.more))
+    ) {
         Icon(Icons.Default.MoreVert, "More")
     }
 
@@ -331,13 +334,15 @@ fun DeviceDropdown(
             onClick = {
                 showMenu = false
                 onInfo()
-            }, text = { Text(stringResource(R.string.info)) }
+            },
+            text = { Text(stringResource(R.string.info)) }
         )
         DropdownMenuItem(
             onClick = {
                 showMenu = false
                 onRemove()
-            }, text = { Text(stringResource(R.string.unpair)) }
+            },
+            text = { Text(stringResource(R.string.unpair)) }
         )
     }
 }
