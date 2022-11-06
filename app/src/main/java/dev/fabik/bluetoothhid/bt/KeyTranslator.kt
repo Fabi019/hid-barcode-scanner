@@ -4,7 +4,11 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
 
-typealias Keymap = Map<Char, Pair<Byte, Byte>>
+// Represents a key with its modifier and hid scan code
+typealias Key = Pair<Byte, Byte>
+
+// Represents a keymap with a map of chars and their key codes
+typealias Keymap = Map<Char, Key>
 
 class KeyTranslator(context: Context) {
     companion object {
@@ -17,21 +21,26 @@ class KeyTranslator(context: Context) {
         private const val RCTRL: Byte = 0x10
         private const val RSHIFT: Byte = 0x20
         private const val RALT: Byte = 0x40
-        private const val RMETA: Byte = 0x80.toByte()
+        private const val RMETA = 0x80.toByte()
 
-        private val SPACE = ' ' to (0.toByte() to 0x2C.toByte())
-        private val TAB = '\t' to (0.toByte() to 0x2B.toByte())
-        private val RETURN = '\n' to (0.toByte() to 0x28.toByte())
+        private val SPACE = ' ' to Key(0, 0x2C)
+        private val TAB = '\t' to Key(0, 0x2B)
+        private val RETURN = '\n' to Key(0, 0x28)
     }
 
     private val assetManager: AssetManager = context.assets
 
-    private val baseMap: Keymap = loadKeymap("keymaps/us.cfg")
+    private val baseMap: Keymap
     private val keyMaps: MutableMap<String, Keymap> = mutableMapOf()
 
     init {
         assetManager.list("keymaps")?.forEach {
             keyMaps[it.removeSuffix(".cfg")] = loadKeymap("keymaps/$it")
+        }
+
+        baseMap = keyMaps.remove("us") ?: run {
+            Log.e(TAG, "No base keymap found")
+            emptyMap()
         }
     }
 
@@ -50,25 +59,29 @@ class KeyTranslator(context: Context) {
             if (it.startsWith("#") || it.isBlank())
                 return@forEach
 
-            val parts = it.split("\t")
-            val scanCode = parts[0].toInt(16).toByte()
+            runCatching {
+                val parts = it.split("\t")
+                val scanCode = parts[0].toInt(16).toByte()
 
-            val keys = parts.subList(1, parts.size)
+                val keys = parts.subList(1, parts.size)
 
-            keys.forEachIndexed { index, key ->
-                val char = key.first()
-                when (index) {
-                    0 -> keymap[char] = Pair(0, scanCode)
-                    1 -> keymap[char] = Pair(LSHIFT, scanCode)
-                    2 -> keymap[char] = Pair(RALT, scanCode)
+                keys.forEachIndexed { index, key ->
+                    val char = key.first()
+                    when (index) {
+                        0 -> keymap[char] = Key(0, scanCode)
+                        1 -> keymap[char] = Key(LSHIFT, scanCode)
+                        2 -> keymap[char] = Key(RALT, scanCode)
+                    }
                 }
+            }.onFailure {
+                Log.e(TAG, "Failed to parse keymap line: $it", it)
             }
         }
 
         return keymap
     }
 
-    fun translate(char: Char, locale: String): Pair<Byte, Byte>? {
+    fun translate(char: Char, locale: String): Key? {
         val keymap = keyMaps[locale] ?: baseMap
         return keymap[char] ?: baseMap[char]
     }
