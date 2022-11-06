@@ -22,7 +22,7 @@ class BluetoothController(var context: Context) {
     private val bluetoothManager: BluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
-    private val bluetoothAdapter: BluetoothAdapter by lazy { bluetoothManager.adapter }
+    private val bluetoothAdapter: BluetoothAdapter? by lazy { bluetoothManager.adapter }
 
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
@@ -32,6 +32,7 @@ class BluetoothController(var context: Context) {
     private var autoConnectEnabled: Boolean = false
 
     var keyboardSender: KeyboardSender? = null
+        private set
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -114,7 +115,7 @@ class BluetoothController(var context: Context) {
 
     fun currentDevice(): BluetoothDevice? = hostDevice
 
-    fun bluetoothEnabled(): Boolean = bluetoothAdapter.isEnabled
+    fun bluetoothEnabled(): Boolean = bluetoothAdapter?.isEnabled ?: false
 
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)
@@ -126,28 +127,28 @@ class BluetoothController(var context: Context) {
     fun register(autoConnect: Boolean): Boolean {
         autoConnectEnabled = autoConnect
 
-        return bluetoothAdapter.getProfileProxy(
+        return bluetoothAdapter?.getProfileProxy(
             context,
             serviceListener,
             BluetoothProfile.HID_DEVICE
-        )
+        ) ?: false
     }
 
     fun unregister() {
         disconnect()
-        bluetoothAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
+        bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         hidDevice = null
     }
 
-    fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+    fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter?.bondedDevices ?: emptySet()
 
-    fun isScanning() = bluetoothAdapter.isDiscovering
+    fun isScanning() = bluetoothAdapter?.isDiscovering ?: false
 
     fun scanDevices() {
-        if (bluetoothAdapter.isDiscovering) {
-            bluetoothAdapter.cancelDiscovery()
+        if (bluetoothAdapter?.isDiscovering == true) {
+            bluetoothAdapter?.cancelDiscovery()
         }
-        bluetoothAdapter.startDiscovery()
+        bluetoothAdapter?.startDiscovery()
     }
 
     fun connect(device: BluetoothDevice) {
@@ -166,6 +167,6 @@ fun BluetoothDevice.removeBond() {
     try {
         javaClass.getMethod("removeBond").invoke(this)
     } catch (e: Exception) {
-        Log.e("Devices", "Removing bond has been failed", e)
+        Log.e("BluetoothDevice", "Removing bond with $address has failed.", e)
     }
 }
