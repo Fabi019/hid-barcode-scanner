@@ -309,7 +309,7 @@ fun DeviceInfoDialog(
 
             item {
                 Text(stringResource(R.string.uuids) + ":", fontWeight = FontWeight.Bold)
-                device.uuids.forEach {
+                device.uuids?.forEach {
                     Text(it.toString())
                 }
             }
