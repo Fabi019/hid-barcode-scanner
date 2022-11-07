@@ -40,7 +40,7 @@
     <string name="dismiss">Abbrechen</string>
     <string name="scanned_devices">Gescannte Geräte</string>
     <string name="swipe_refresh">(Von oben ziehen zum Aktualisieren)</string>
-    <string name="unknown">Unbennant</string>
+    <string name="unknown"></string>
     <string name="paired_devices">Gekoppelte Geräte</string>
     <string name="no_paired_devices">(Keine gekoppelten Geräte gefunden)</string>
     <string name="skip">Überspringen</string>

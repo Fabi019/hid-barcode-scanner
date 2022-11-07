@@ -41,7 +41,7 @@
     <string name="dismiss">Cancel</string>
     <string name="scanned_devices">Scanned devices</string>
     <string name="swipe_refresh">(Swipe from top to refresh)</string>
-    <string name="unknown">Unnamed</string>
+    <string name="unknown"></string>
     <string name="paired_devices">Paired devices</string>
     <string name="no_paired_devices">(No paired devices found)</string>
     <string name="skip">Skip</string>
