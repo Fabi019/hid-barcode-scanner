@@ -183,20 +183,20 @@ fun DevicesViewModel.DeviceList(
             }
         }
 
-        if (foundDevices.isEmpty()) {
-            item {
-                RequireLocationPermission {
-                    if (!isScanning) {
-                        Text(stringResource(R.string.swipe_refresh))
+        with(foundDevices.filter { showUnnamed || it.name != null }) {
+            if (isEmpty()) {
+                item {
+                    RequireLocationPermission {
+                        if (!isScanning) {
+                            Text(stringResource(R.string.swipe_refresh))
+                        }
                     }
                 }
-            }
-        } else {
-            items(foundDevices) { d ->
-                if (d.name == null && !showUnnamed)
-                    return@items
-                DeviceCard(d) {
-                    onConnect(d)
+            } else {
+                items(this) { d ->
+                    DeviceCard(d) {
+                        onConnect(d)
+                    }
                 }
             }
         }
