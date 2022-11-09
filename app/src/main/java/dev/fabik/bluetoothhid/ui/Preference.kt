@@ -8,6 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -29,6 +31,9 @@ fun ButtonPreference(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(56.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = desc
+            }
     ) {
         Row(
             Modifier
@@ -53,9 +58,7 @@ fun ButtonPreference(
                     softWrap = true
                 )
             }
-            extra?.let {
-                extra()
-            }
+            extra?.invoke()
         }
     }
 }

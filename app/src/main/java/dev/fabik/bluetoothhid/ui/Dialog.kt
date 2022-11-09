@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -56,13 +58,18 @@ fun CheckBoxDialog(
             itemsIndexed(valueStrings) { index, item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable {
-                        if (!currentSelection.contains(index)) {
-                            currentSelection.add(index)
-                        } else {
-                            currentSelection.remove(index)
+                    modifier = Modifier
+                        .clickable {
+                            if (!currentSelection.contains(index)) {
+                                currentSelection.add(index)
+                            } else {
+                                currentSelection.remove(index)
+                            }
                         }
-                    }) {
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = item
+                        }
+                ) {
                     Checkbox(
                         checked = currentSelection.contains(index),
                         onCheckedChange = {
@@ -71,7 +78,8 @@ fun CheckBoxDialog(
                             } else {
                                 currentSelection.remove(index)
                             }
-                        })
+                        }
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(item, modifier = Modifier.weight(1f))
                 }
@@ -103,12 +111,18 @@ fun ComboBoxDialog(
             itemsIndexed(values) { index, item ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable {
-                        currentSelection = index
-                    }) {
+                    modifier = Modifier
+                        .clickable {
+                            currentSelection = index
+                        }
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = item
+                        }
+                ) {
                     RadioButton(
                         selected = index == currentSelection,
-                        onClick = { currentSelection = index })
+                        onClick = { currentSelection = index }
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(item, modifier = Modifier.weight(1f))
                 }
