@@ -1,8 +1,12 @@
-name: Android CI
+name: Release
 
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -27,7 +31,7 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          ./gradlew build \
+          ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PW }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
@@ -36,26 +40,11 @@ jobs:
       - name: Remove keystore file
         run: rm $GITHUB_WORKSPACE/signing-key.jks
 
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v3
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: APK(s) debug generated
-          path: ./app/build/outputs/apk/standard/debug/
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: APK(s) release generated
-          path: ./app/build/outputs/apk/standard/release/
-
-      - name: Upload Debug APK (Bundled)
-        uses: actions/upload-artifact@v3
-        with:
-          name: APK(s) debug generated (Bundled)
-          path: ./app/build/outputs/apk/bundled/debug/
-
-      - name: Upload Release APK (Bundled)
-        uses: actions/upload-artifact@v3
-        with:
-          name: APK(s) release generated (Bundled)
-          path: ./app/build/outputs/apk/bundled/release/
+          generate_release_notes: true
+          draft: true
+          files: |
+            ./app/build/outputs/apk/standard/release/app-standard-release.apk
+            ./app/build/outputs/apk/bundled/release/app-bundled-release.apk
