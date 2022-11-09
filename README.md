@@ -1,5 +1,6 @@
 <div align="center">
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg" /></a>
+  <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml/badge.svg" /></a>
   <a href="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main"><img src="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main" /></a>
 
   <br/>
