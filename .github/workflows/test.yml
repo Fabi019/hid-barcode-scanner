@@ -1,6 +1,14 @@
 name: Test
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'build.gradle'
 
 jobs:
   build:
