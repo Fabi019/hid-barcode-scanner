@@ -55,9 +55,13 @@ Since this app uses the ML-Kit there are two app version to choose from. The sta
 doesn't contain the scanner library directly. Because of this the size much smaller than in the
 bundled but requires the user to have the Play Store installed on their device.
 
-Latest
-APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/android/main/APK%28s%29%20release%20generated.zip)
+You can either download the latest stable version from
+the [Releases](https://github.com/Fabi019/hid-barcode-scanner/releases) tab or directly from
+the [CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml) using the links
+below.
 
-Latest Bundled
-APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/android/main/APK%28s%29%20release%20generated%20%28Bundled%29.zip)
+- Latest
+  APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
+- Latest Bundled
+  APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated%20%28Bundled%29.zip)
 
