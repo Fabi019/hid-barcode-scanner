@@ -6,6 +6,9 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
@@ -24,7 +27,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 
 @Composable
 fun Tooltip(
@@ -95,34 +98,32 @@ fun TooltipContent(
 
 fun Modifier.tooltip(
     text: String,
-    timeout: Long = 3000
+    timeout: Long = 3000,
 ) = composed {
-    val scope = rememberCoroutineScope()
-
     val showTooltip = remember { mutableStateOf(false) }
-    var longPressJob by remember { mutableStateOf<Job?>(null) }
 
     Tooltip(showTooltip, timeout) {
         Text(text)
     }
 
     pointerInput(Unit) {
-        val coroutineContext = currentCoroutineContext()
-        awaitPointerEventScope {
-            while (coroutineContext.isActive) {
-                val event = awaitPointerEvent(PointerEventPass.Initial)
-                when (event.type) {
-                    PointerEventType.Press -> {
-                        longPressJob = scope.launch {
-                            delay(1000)
-                            showTooltip.value = true
+        forEachGesture {
+            awaitPointerEventScope {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                val longPress = awaitLongPressOrCancellation(down.id)
+
+                // Check if not cancelled
+                if (longPress != null) {
+                    showTooltip.value = true
+
+                    // Wait for up event and consume it
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Release) {
+                            event.changes.forEach { it.consume() }
+                            break
                         }
                     }
-                    PointerEventType.Release -> {
-                        longPressJob?.cancel()
-                        showTooltip.value = false
-                    }
-                    else -> Unit
                 }
             }
         }
