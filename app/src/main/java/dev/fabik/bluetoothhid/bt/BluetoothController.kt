@@ -48,13 +48,7 @@ class BluetoothController(var context: Context) {
                 hidDeviceCallback
             )
 
-            (context as Activity).runOnUiThread {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.bt_proxy_connected),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            showToast(R.string.bt_proxy_connected)
         }
 
         override fun onServiceDisconnected(profile: Int) {
@@ -62,13 +56,7 @@ class BluetoothController(var context: Context) {
 
             hidDevice = null
 
-            (context as Activity).runOnUiThread {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.bt_proxy_disconnected),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+            showToast(R.string.bt_proxy_disconnected)
         }
     }
 
@@ -78,8 +66,8 @@ class BluetoothController(var context: Context) {
 
             if (state == BluetoothProfile.STATE_CONNECTED) {
                 hostDevice = device
-                hidDevice?.let { hid ->
-                    keyboardSender = KeyboardSender(keyTranslator, hid, device)
+                hidDevice?.let {
+                    keyboardSender = KeyboardSender(keyTranslator, it, device)
                 }
             } else {
                 hostDevice = null
@@ -136,8 +124,13 @@ class BluetoothController(var context: Context) {
 
     fun unregister() {
         disconnect()
+
+        hidDevice?.unregisterApp()
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         hidDevice = null
+
+        // Notify listeners that proxy is disconnected.
+        deviceListener.forEach { it.invoke(null, -1) }
     }
 
     fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter?.bondedDevices ?: emptySet()
@@ -152,6 +145,9 @@ class BluetoothController(var context: Context) {
     }
 
     fun connect(device: BluetoothDevice) {
+        // Cancel discovery because it otherwise slows down the connection.
+        bluetoothAdapter?.cancelDiscovery()
+
         hidDevice?.connect(device)
     }
 
@@ -161,6 +157,11 @@ class BluetoothController(var context: Context) {
         } ?: false
     }
 
+    private fun showToast(messageId: Int) = with(context as Activity) {
+        runOnUiThread {
+            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show()
+        }
+    }
 }
 
 fun BluetoothDevice.removeBond() {
