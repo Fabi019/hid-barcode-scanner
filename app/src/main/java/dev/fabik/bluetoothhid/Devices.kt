@@ -245,6 +245,8 @@ fun DeviceCard(
     val infoDialog = rememberDialogState()
     val confirmDialog = rememberDialogState()
 
+    val deviceName = device.name ?: stringResource(R.string.unknown)
+
     ElevatedCard(
         onClick,
         shape = MaterialTheme.shapes.small,
@@ -268,7 +270,7 @@ fun DeviceCard(
                     .padding(4.dp)
                     .weight(1f)
             ) {
-                Text(device.name ?: stringResource(R.string.unknown))
+                Text(deviceName)
                 Text(
                     device.address,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -281,7 +283,9 @@ fun DeviceCard(
                         onConnect = onClick,
                         onInfo = { infoDialog.open() },
                         onRemove = { confirmDialog.open() }
-                    )
+                    ) {
+                        Icon(Icons.Default.MoreVert, "More options for $deviceName")
+                    }
                 } else {
                     Icon(Icons.Default.PlayArrow, "Connect")
                 }
@@ -293,7 +297,7 @@ fun DeviceCard(
 
     ConfirmDialog(
         confirmDialog,
-        stringResource(R.string.unpair_device, device.name ?: stringResource(R.string.unknown)),
+        stringResource(R.string.unpair_device, deviceName),
         onDismiss = { confirmDialog.close() },
         onConfirm = {
             device.removeBond()
@@ -308,16 +312,16 @@ fun DeviceCard(
 fun DeviceDropdown(
     onConnect: () -> Unit = {},
     onInfo: () -> Unit = {},
-    onRemove: () -> Unit = {}
+    onRemove: () -> Unit = {},
+    icon: @Composable () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
     IconButton(
         onClick = { showMenu = true },
-        modifier = Modifier.tooltip(stringResource(R.string.more))
-    ) {
-        Icon(Icons.Default.MoreVert, "More")
-    }
+        modifier = Modifier.tooltip(stringResource(R.string.more)),
+        content = icon
+    )
 
     DropdownMenu(
         expanded = showMenu,

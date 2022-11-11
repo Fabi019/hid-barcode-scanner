@@ -27,7 +27,7 @@ fun Dropdown(
             onClick = { showMenu = !showMenu },
             modifier = Modifier.tooltip(stringResource(R.string.more))
         ) {
-            Icon(Icons.Default.MoreVert, "More")
+            Icon(Icons.Default.MoreVert, "More options")
         }
 
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {

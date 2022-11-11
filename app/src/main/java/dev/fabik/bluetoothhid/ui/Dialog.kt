@@ -10,8 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -56,28 +56,30 @@ fun CheckBoxDialog(
     }) {
         LazyColumn {
             itemsIndexed(valueStrings) { index, item ->
+                val selected = currentSelection.contains(index)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clickable {
-                            if (!currentSelection.contains(index)) {
+                            if (!selected) {
                                 currentSelection.add(index)
                             } else {
                                 currentSelection.remove(index)
                             }
-                        }
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = item
                         }
                 ) {
                     Checkbox(
-                        checked = currentSelection.contains(index),
+                        checked = selected,
                         onCheckedChange = {
-                            if (!currentSelection.contains(index)) {
+                            if (!selected) {
                                 currentSelection.add(index)
                             } else {
                                 currentSelection.remove(index)
                             }
+                        },
+                        modifier = Modifier.semantics {
+                            stateDescription =
+                                "$item is ${if (selected) "selected" else "not selected"}"
                         }
                     )
                     Spacer(Modifier.width(8.dp))
@@ -109,19 +111,21 @@ fun ComboBoxDialog(
     }) {
         LazyColumn {
             itemsIndexed(values) { index, item ->
+                val selected = currentSelection == index
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clickable {
                             currentSelection = index
                         }
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = item
-                        }
                 ) {
                     RadioButton(
-                        selected = index == currentSelection,
-                        onClick = { currentSelection = index }
+                        selected = selected,
+                        onClick = { currentSelection = index },
+                        modifier = Modifier.semantics {
+                            stateDescription =
+                                "$item is ${if (selected) "selected" else "not selected"}"
+                        }
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(item, modifier = Modifier.weight(1f))
