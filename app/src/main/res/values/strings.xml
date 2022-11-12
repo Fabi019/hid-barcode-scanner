@@ -88,11 +88,14 @@
     <string name="failed_to_download">Failed to download and install the ML-Kit Barcode module.</string>
     <string name="ensure_internet_and_play">Ensure that you have an active internet connection and that the Google Play Services are installed on your device.</string>
     <string name="download_bundled">Otherwise you can download the bundled APK version from the GitHub page which already contains the module.</string>
-    <string name="downloading_module">Downloading and installing the ML-Kit Barcode module.\nThis only has to be done once. Usually when installing the app as APK or clearing the Google Play Services data.</string>
+    <string name="downloading_module">Requesting download and installation of the ML-Kit Barcode module through Google Play.\n\nThis only has to be done once. Usually when installing the app as APK or clearing the Google Play Services data.</string>
     <string name="unpair_device">Unpair %s?</string>
     <string name="unpair_desc">Unpairing will remove the device from your paired devices list.</string>
     <string name="connect">Connect</string>
     <string name="unpair">Unpair</string>
+    <string name="error_code">Error: %s (%d)</string>
+    <string name="downloading">Downloading…</string>
+    <string name="installing">Installing…</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

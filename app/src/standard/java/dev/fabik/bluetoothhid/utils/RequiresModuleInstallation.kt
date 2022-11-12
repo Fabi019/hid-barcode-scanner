@@ -8,18 +8,18 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.common.api.OptionalModuleApi
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusCodes
 import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.*
-import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.common.sdkinternal.OptionalModuleUtils
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.rememberDialogState
@@ -32,13 +32,19 @@ fun RequiresModuleInstallation(content: @Composable () -> Unit) {
 
     val moduleInstallClient = remember { ModuleInstall.getClient(context) }
 
-    val optionalModuleApi = remember { BarcodeScanning.getClient() }
+    val optionalModuleApi =
+        remember { OptionalModuleApi { arrayOf(OptionalModuleUtils.FEATURE_BARCODE) } }
 
     val downloadingDialog = rememberDialogState()
     val errorDialog = rememberDialogState()
 
+    var installState by remember { mutableStateOf<Int?>(null) }
+    var errorCode by remember { mutableStateOf<Int?>(null) }
+
     val modulePresent by produceState<Boolean?>(null) {
         value = suspendCoroutine<Boolean> { cont ->
+            installState = null
+            errorCode = null
             Log.d("ModuleInstaller", "Checking if module is present")
             moduleInstallClient.areModulesAvailable(optionalModuleApi)
                 .addOnSuccessListener {
@@ -50,11 +56,14 @@ fun RequiresModuleInstallation(content: @Composable () -> Unit) {
                         val moduleInstallRequest = ModuleInstallRequest.newBuilder()
                             .addApi(optionalModuleApi)
                             .setListener { update ->
+                                installState = update.installState
+                                Log.d("ModuleInstaller", "Install state: ${update.installState}")
                                 if (update.installState == STATE_COMPLETED) {
                                     Log.d("ModuleInstaller", "Modules installation completed")
                                     cont.resume(true)
                                 } else if (update.installState == STATE_FAILED || update.installState == STATE_CANCELED) {
                                     Log.d("ModuleInstaller", "Modules installation failed")
+                                    errorCode = update.errorCode
                                     cont.resume(false)
                                 }
                             }
@@ -82,9 +91,37 @@ fun RequiresModuleInstallation(content: @Composable () -> Unit) {
         }
     }
 
+    ModuleDialogs(
+        downloadingDialog,
+        errorDialog,
+        installState,
+        errorCode
+    )
+
+    modulePresent?.let {
+        downloadingDialog.close()
+        if (it) {
+            content()
+        } else {
+            errorDialog.open()
+        }
+    }
+}
+
+@Composable
+fun ModuleDialogs(
+    downloadingDialog: DialogState,
+    errorDialog: DialogState,
+    installState: Int?,
+    errorCode: Int?,
+) {
     LoadingDialog(
         dialogState = downloadingDialog,
-        title = stringResource(R.string.loading),
+        title = when (installState) {
+            STATE_DOWNLOADING -> stringResource(R.string.downloading)
+            STATE_INSTALLING -> stringResource(R.string.installing)
+            else -> stringResource(R.string.loading)
+        },
         desc = stringResource(R.string.downloading_module),
     )
 
@@ -102,18 +139,18 @@ fun RequiresModuleInstallation(content: @Composable () -> Unit) {
         content = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.failed_to_download))
+                errorCode?.let { code ->
+                    Text(
+                        stringResource(
+                            R.string.error_code,
+                            ModuleInstallStatusCodes.getStatusCodeString(code),
+                            code
+                        )
+                    )
+                }
                 Text(stringResource(R.string.ensure_internet_and_play))
                 Text(stringResource(R.string.download_bundled))
             }
         }
     )
-
-    modulePresent?.let {
-        downloadingDialog.close()
-        if (it) {
-            content()
-        } else {
-            errorDialog.open()
-        }
-    }
 }
