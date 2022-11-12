@@ -50,7 +50,7 @@
     <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben.</string>
     <string name="send_delay_template">Verzögerung (ms): %.0f</string>
     <string name="request_permission">Berechtigung anfragen</string>
-    <string name="bluetooth_permission">Bluetooth Berechtigung wird benötigt um mit anderen Geräten kommunizieren zu können. Die App kann ohne diese nicht funktionieren.</string>
+    <string name="bluetooth_permission">Diese App benötigt Bluetooth-Berechtigungen, um mit anderen Geräten zu kommunizieren. Bitte erlauben Sie der App den Zugriff auf \'Nearby Devices\'.</string>
     <string name="camera_permission">"Kamera Berechtigung wird zum Anzeigen der Vorschau und zum Scannen der Codes benötigt. "</string>
     <string name="location_permission">Standort Berechtigung wird zum scannen nach neuen Geräten benötigt.</string>
     <string name="location_enable">Standort muss auf dem Gerät aktiviert sein.</string>

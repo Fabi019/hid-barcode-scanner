@@ -51,7 +51,7 @@
     <string name="send_delay_desc">Time between each char when sending a text.</string>
     <string name="send_delay_template">Delay (ms): %.0f</string>
     <string name="request_permission">Request Permission</string>
-    <string name="bluetooth_permission">Bluetooth permission is required for communicating with other devices. The app can\'t function without it.</string>
+    <string name="bluetooth_permission">This app requires Bluetooth permissions to communicate with other devices. Please allow the app access to \'Nearby Devices\'.</string>
     <string name="camera_permission">Camera permission is required for showing the preview and in order to scan codes with the camera.</string>
     <string name="location_permission">Location permission is required for scanning new devices.</string>
     <string name="location_enable">Location needs to be enabled on your system.</string>

@@ -6,7 +6,10 @@ import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,15 +49,20 @@ fun RequiresBluetoothPermission(
             Modifier
                 .padding(8.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stringResource(R.string.bluetooth_permission))
+            Icon(
+                imageVector = Icons.Default.BluetoothDisabled,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp)
+            )
 
-            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.bluetooth_permission))
 
             FilledTonalButton(onClick = {
                 bluetoothPermission.launchMultiplePermissionRequest()
-            }, Modifier.align(Alignment.CenterHorizontally)) {
+            }) {
                 Text(stringResource(R.string.request_again))
             }
         }
