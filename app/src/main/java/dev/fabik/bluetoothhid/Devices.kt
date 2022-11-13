@@ -34,6 +34,15 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Devices screen. Lists all paired devices and also allows to scan for new ones by
+ * swiping down from the top.
+ * When a device is selected it first tries to connect with it and after
+ * a successful connection has been established it navigates to the [Scanner] screen.
+ *
+ * @param navController Navigation controller to navigate to the [Scanner] and [Settings] screens.
+ * @param controller Bluetooth controller to get devices and connect to them.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Devices(
@@ -49,7 +58,7 @@ fun Devices(
                 }
             )
         }) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
+        Box(Modifier.padding(padding)) {
             DeviceContent(controller) {
                 navController.navigate(Routes.Main)
             }
@@ -57,6 +66,13 @@ fun Devices(
     }
 }
 
+/**
+ * Content of the [Devices] screen. Handles the swipe refresh and listens for connection changes.
+ *
+ * @param controller Bluetooth controller to get devices and connect to them.
+ * @param viewModel View model to store the view state.
+ * @param onSkip Callback function when the user presses the skip button.
+ */
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceContent(
@@ -126,6 +142,10 @@ fun DeviceContent(
     }
 }
 
+/**
+ * Handles the system broadcast events when new devices are found
+ * and when a discovery scan started or finished.
+ */
 @Composable
 fun DevicesViewModel.BroadcastListener() {
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
@@ -156,6 +176,12 @@ fun DevicesViewModel.BroadcastListener() {
     }
 }
 
+/**
+ * List of devices. Shows the paired devices and the found devices.
+ *
+ * @param onConnect Callback function when a device is selected.
+ * @param onSkip Callback function when the user presses the skip button.
+ */
 @SuppressLint("MissingPermission")
 @Composable
 fun DevicesViewModel.DeviceList(
@@ -235,6 +261,12 @@ fun DevicesViewModel.DeviceList(
 }
 
 
+/**
+ * Card for a device. Shows the name and the address of the device.
+ *
+ * @param device Bluetooth device to show.
+ * @param onClick Callback function when the card is clicked.
+ */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -308,6 +340,14 @@ fun DeviceCard(
     }
 }
 
+/**
+ * Dropdown menu for a device.
+ *
+ * @param onConnect Callback function when the connect entry is pressed.
+ * @param onInfo Callback function when the info entry is pressed.
+ * @param onRemove Callback function when the remove entry is pressed.
+ * @param icon Icon of the dropdown menu button.
+ */
 @Composable
 fun DeviceDropdown(
     onConnect: () -> Unit = {},
