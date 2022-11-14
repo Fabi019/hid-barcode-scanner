@@ -67,7 +67,8 @@ fun Devices(
 }
 
 /**
- * Content of the [Devices] screen. Handles the swipe refresh and listens for connection changes.
+ * Content of the [Devices] screen. Handles the swipe refresh and listens for
+ * connection changes.
  *
  * @param controller Bluetooth controller to get devices and connect to them.
  * @param viewModel View model to store the view state.
@@ -209,6 +210,7 @@ fun DevicesViewModel.DeviceList(
             }
         }
 
+        // Filter out unnamed devices depending on preference
         with(foundDevices.filter { showUnnamed || it.name != null }) {
             if (isEmpty()) {
                 item {
@@ -330,10 +332,9 @@ fun DeviceCard(
     ConfirmDialog(
         confirmDialog,
         stringResource(R.string.unpair_device, deviceName),
-        onDismiss = { confirmDialog.close() },
         onConfirm = {
             device.removeBond()
-            confirmDialog.close()
+            close()
         }
     ) {
         Text(stringResource(R.string.unpair_desc))
