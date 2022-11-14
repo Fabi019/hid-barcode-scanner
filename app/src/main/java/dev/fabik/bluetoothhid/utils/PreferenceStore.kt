@@ -16,7 +16,7 @@ val Context.dataStore by preferencesDataStore("settings")
 open class PreferenceStore {
     data class Preference<T>(
         val key: Preferences.Key<T>,
-        val default: T
+        val defaultValue: T
     )
 
     companion object {
@@ -58,9 +58,9 @@ suspend fun <T> Context.setPreference(pref: PreferenceStore.Preference<T>, value
 fun <T> Context.getPreference(pref: PreferenceStore.Preference<T>): Flow<T> = dataStore.data
     .catch { e ->
         Log.e("PreferenceStore", "Error reading preference", e)
-        emit(preferencesOf(pref.key to pref.default))
+        emit(preferencesOf(pref.key to pref.defaultValue))
     }.map {
-        it[pref.key] ?: pref.default
+        it[pref.key] ?: pref.defaultValue
     }
 
 @Composable
@@ -100,7 +100,7 @@ fun <T> rememberPreferenceNull(
 @Composable
 fun <T> rememberPreferenceDefault(
     pref: PreferenceStore.Preference<T>,
-    initial: T = pref.default
+    initial: T = pref.defaultValue
 ): MutableState<T> {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
