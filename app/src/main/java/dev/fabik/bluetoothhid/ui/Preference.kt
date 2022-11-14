@@ -109,7 +109,13 @@ fun ComboBoxPreference(
 ) {
     var selectedItem by rememberPreferenceNull(preference)
 
-    ComboBoxPreference(title, desc, selectedItem, values, icon) {
+    ComboBoxPreference(
+        title,
+        desc,
+        selectedItem,
+        values,
+        icon,
+        onReset = { selectedItem = preference.defaultValue }) {
         selectedItem = it
     }
 }
@@ -121,14 +127,14 @@ fun ComboBoxPreference(
     selectedItem: Int?,
     values: Array<String>,
     icon: ImageVector? = null,
+    onReset: () -> Unit,
     onSelect: (Int) -> Unit
 ) {
     val dialogState = rememberDialogState()
 
     selectedItem?.let { s ->
-        ComboBoxDialog(dialogState, title, s, values, onDismiss = { close() }) {
+        ComboBoxDialog(dialogState, title, s, values, onReset = onReset) {
             onSelect(it)
-            close()
         }
     }
 
@@ -149,7 +155,16 @@ fun SliderPreference(
 ) {
     var value by rememberPreferenceNull(preference)
 
-    SliderPreference(title, desc, valueFormat, value, steps, range, icon) {
+    SliderPreference(
+        title,
+        desc,
+        valueFormat,
+        value,
+        steps,
+        range,
+        icon,
+        onReset = { value = preference.defaultValue }
+    ) {
         value = it
     }
 }
@@ -163,6 +178,7 @@ fun SliderPreference(
     steps: Int = 0,
     range: ClosedFloatingPointRange<Float>,
     icon: ImageVector? = null,
+    onReset: () -> Unit,
     onSelect: (Float) -> Unit
 ) {
     val dialogState = rememberDialogState()
@@ -175,9 +191,9 @@ fun SliderPreference(
             value,
             range,
             steps,
-            onDismiss = { close() }) {
+            onReset = onReset
+        ) {
             onSelect(it)
-            close()
         }
     }
 
@@ -201,7 +217,8 @@ fun CheckBoxPreference(
         desc,
         selectedValues = value?.map { v -> v.toInt() }?.toSet(),
         valueStrings,
-        icon
+        icon,
+        onReset = { value = preference.defaultValue }
     ) {
         value = it.map { v -> v.toString() }.toSet()
     }
@@ -214,14 +231,14 @@ fun CheckBoxPreference(
     selectedValues: Set<Int>?,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
+    onReset: () -> Unit,
     onSelect: (Set<Int>) -> Unit
 ) {
     val dialogState = rememberDialogState()
 
     selectedValues?.let {
-        CheckBoxDialog(dialogState, title, it, valueStrings, onDismiss = { close() }) { v ->
+        CheckBoxDialog(dialogState, title, it, valueStrings, onReset = onReset) { v ->
             onSelect(v.toSet())
-            close()
         }
     }
 

@@ -94,6 +94,9 @@
     <string name="error_code">Fehler: %s (%d)</string>
     <string name="downloading">Herunterladen…</string>
     <string name="installing">Installiere…</string>
+    <string name="reset_default">Auf Standard zurücksetzen?</string>
+    <string name="reset_default_desc">Sind Sie sicher, dass Sie auf die Standardeinstellungen zurücksetzen wollen?</string>
+    <string name="ok">OK</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Hell</item>

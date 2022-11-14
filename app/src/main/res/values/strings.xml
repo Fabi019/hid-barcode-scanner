@@ -96,6 +96,9 @@
     <string name="error_code">Error: %s (%d)</string>
     <string name="downloading">Downloading…</string>
     <string name="installing">Installing…</string>
+    <string name="ok">OK</string>
+    <string name="reset_default">Reset to default?</string>
+    <string name="reset_default_desc">Are you sure you want to reset to default?</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

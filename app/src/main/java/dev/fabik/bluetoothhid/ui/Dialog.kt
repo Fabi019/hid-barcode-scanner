@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,19 +43,22 @@ fun CheckBoxDialog(
     title: String,
     selectedValues: Set<Int>,
     valueStrings: Array<String>,
-    onDismiss: DialogState.() -> Unit = {},
-    onConfirm: DialogState.(List<Int>) -> Unit
+    onReset: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onConfirm: (List<Int>) -> Unit
 ) {
-    var currentSelection = remember {
+    var currentSelection = remember(selectedValues) {
         selectedValues.toMutableStateList()
     }
 
-    ConfirmDialog(dialogState, title, onConfirm = {
+    ConfirmResetDialog(dialogState, title, onConfirm = {
+        close()
         onConfirm(currentSelection)
     }, onDismiss = {
+        close()
         currentSelection = selectedValues.toMutableStateList()
         onDismiss()
-    }) {
+    }, onReset = onReset) {
         LazyColumn {
             itemsIndexed(valueStrings) { index, item ->
                 val selected = currentSelection.contains(index)
@@ -96,19 +101,22 @@ fun ComboBoxDialog(
     title: String,
     selectedItem: Int,
     values: Array<String>,
-    onDismiss: DialogState.() -> Unit = {},
-    onConfirm: DialogState.(Int) -> Unit
+    onReset: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onConfirm: (Int) -> Unit
 ) {
-    var currentSelection by remember {
+    var currentSelection by remember(selectedItem) {
         mutableStateOf(selectedItem)
     }
 
-    ConfirmDialog(dialogState, title, onConfirm = {
+    ConfirmResetDialog(dialogState, title, onConfirm = {
+        close()
         onConfirm(currentSelection)
     }, onDismiss = {
+        close()
         currentSelection = selectedItem
         onDismiss()
-    }) {
+    }, onReset = onReset) {
         LazyColumn {
             itemsIndexed(values) { index, item ->
                 val selected = currentSelection == index
@@ -143,20 +151,22 @@ fun SliderDialog(
     value: Float,
     range: ClosedFloatingPointRange<Float>,
     steps: Int = 0,
-    onDismiss: DialogState.() -> Unit = {},
-    onValueChange: DialogState.(Float) -> Unit
+    onReset: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onValueChange: (Float) -> Unit
 ) {
-    var sliderPosition by remember {
+    var sliderPosition by remember(value) {
         mutableStateOf(value)
     }
 
-    ConfirmDialog(dialogState, title, onConfirm = {
+    ConfirmResetDialog(dialogState, title, onConfirm = {
+        close()
         onValueChange(sliderPosition)
     }, onDismiss = {
+        close()
         sliderPosition = value
         onDismiss()
-    }
-    ) {
+    }, onReset = onReset) {
         Column {
             Text(valueFormat.format(sliderPosition))
 
@@ -193,7 +203,7 @@ fun InfoDialog(
                 TextButton(
                     onClick = { onDismiss(dialogState) }
                 ) {
-                    Text("Ok")
+                    Text(stringResource(R.string.ok))
                 }
             },
         )
@@ -201,28 +211,81 @@ fun InfoDialog(
 }
 
 @Composable
-fun ConfirmDialog(
+fun ConfirmResetDialog(
     dialogState: DialogState,
     title: String,
+    onReset: () -> Unit,
     onDismiss: DialogState.() -> Unit = {},
     onConfirm: DialogState.() -> Unit,
     content: @Composable () -> Unit,
-) {
-    AnimatedVisibility(visible = dialogState.openState) {
+) = with(dialogState) {
+    val confirmReset = rememberDialogState()
+
+    AnimatedVisibility(visible = openState) {
         AlertDialog(
-            onDismissRequest = { onDismiss(dialogState) },
-            title = { Text(title) },
-            text = { content() },
+            onDismissRequest = { onDismiss() },
+            title = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                    Text(title)
+                    IconButton(
+                        onClick = { confirmReset.open() },
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(Icons.Filled.Restore, "Reset $title to default")
+                    }
+                }
+            },
+            text = content,
             confirmButton = {
                 TextButton(
-                    onClick = { onConfirm(dialogState) }
+                    onClick = { onConfirm() }
                 ) {
                     Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { onDismiss(dialogState) }
+                    onClick = { onDismiss() }
+                ) {
+                    Text(stringResource(R.string.dismiss))
+                }
+            },
+        )
+    }
+
+    ConfirmDialog(confirmReset, stringResource(R.string.reset_default),
+        onConfirm = {
+            onReset()
+            close()
+        }
+    ) {
+        Text(stringResource(R.string.reset_default_desc))
+    }
+}
+
+@Composable
+fun ConfirmDialog(
+    dialogState: DialogState,
+    title: String,
+    onDismiss: DialogState.() -> Unit = { close() },
+    onConfirm: DialogState.() -> Unit,
+    content: @Composable () -> Unit,
+) = with(dialogState) {
+    AnimatedVisibility(visible = openState) {
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = { Text(title) },
+            text = { content() },
+            confirmButton = {
+                TextButton(
+                    onClick = { onConfirm() }
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onDismiss() }
                 ) {
                     Text(stringResource(R.string.dismiss))
                 }
@@ -237,9 +300,9 @@ fun LoadingDialog(
     title: String,
     desc: String,
     onDismiss: DialogState.() -> Unit = {}
-) {
-    AnimatedVisibility(visible = dialogState.openState) {
-        Dialog(onDismissRequest = { onDismiss(dialogState) }) {
+) = with(dialogState) {
+    AnimatedVisibility(visible = openState) {
+        Dialog(onDismissRequest = { onDismiss() }) {
             Surface(shape = MaterialTheme.shapes.extraLarge) {
                 Column(
                     modifier = Modifier
