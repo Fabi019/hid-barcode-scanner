@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import dev.fabik.bluetoothhid.R
@@ -191,17 +189,17 @@ fun InfoDialog(
     onDismiss: DialogState.() -> Unit = {},
     icon: @Composable () -> Unit = {},
     content: @Composable () -> Unit
-) {
-    AnimatedVisibility(visible = dialogState.openState) {
+) = with(dialogState) {
+    if (openState) {
         AlertDialog(
-            onDismissRequest = { onDismiss(dialogState) },
+            onDismissRequest = { onDismiss() },
             icon = icon,
             title = { Text(title) },
             text = { content() },
             confirmButton = { },
             dismissButton = {
                 TextButton(
-                    onClick = { onDismiss(dialogState) }
+                    onClick = { onDismiss() }
                 ) {
                     Text(stringResource(R.string.ok))
                 }
@@ -221,7 +219,7 @@ fun ConfirmResetDialog(
 ) = with(dialogState) {
     val confirmReset = rememberDialogState()
 
-    AnimatedVisibility(visible = openState) {
+    if (openState) {
         AlertDialog(
             onDismissRequest = { onDismiss() },
             title = {
@@ -271,7 +269,7 @@ fun ConfirmDialog(
     onConfirm: DialogState.() -> Unit,
     content: @Composable () -> Unit,
 ) = with(dialogState) {
-    AnimatedVisibility(visible = openState) {
+    if (openState) {
         AlertDialog(
             onDismissRequest = { onDismiss() },
             title = { Text(title) },
@@ -301,9 +299,14 @@ fun LoadingDialog(
     desc: String,
     onDismiss: DialogState.() -> Unit = {}
 ) = with(dialogState) {
-    AnimatedVisibility(visible = openState) {
+    if (openState) {
         Dialog(onDismissRequest = { onDismiss() }) {
-            Surface(shape = MaterialTheme.shapes.extraLarge) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                tonalElevation = 6.0.dp
+            ) {
                 Column(
                     modifier = Modifier
                         .sizeIn(minWidth = 280.dp, maxWidth = 560.dp)
@@ -316,7 +319,7 @@ fun LoadingDialog(
                         Spacer(Modifier.width(16.dp))
                         Text(stringResource(R.string.please_wait))
                     }
-                    Text(desc, fontStyle = FontStyle.Italic)
+                    Text(desc, style = Typography.bodyLarge)
                 }
             }
         }
