@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BluetoothDisabled
+import androidx.compose.material.icons.outlined.NoPhotography
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -86,15 +87,21 @@ fun RequiresCameraPermission(
         Column(
             Modifier
                 .padding(8.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stringResource(R.string.camera_permission))
+            Icon(
+                imageVector = Icons.Outlined.NoPhotography,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp)
+            )
 
-            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.camera_permission))
 
             FilledTonalButton(onClick = {
                 cameraPermission.launchPermissionRequest()
-            }, Modifier.align(Alignment.CenterHorizontally)) {
+            }) {
                 Text(stringResource(R.string.request_permission))
             }
         }
