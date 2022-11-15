@@ -227,7 +227,10 @@ fun ConfirmResetDialog(
                     Text(title)
                     IconButton(
                         onClick = { confirmReset.open() },
-                        modifier = Modifier.align(Alignment.CenterEnd)
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(48.dp)
+                            .tooltip(stringResource(R.string.reset))
                     ) {
                         Icon(Icons.Filled.Restore, "Reset $title to default")
                     }

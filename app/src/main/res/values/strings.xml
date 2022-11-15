@@ -99,6 +99,7 @@
     <string name="ok">OK</string>
     <string name="reset_default">Reset to default?</string>
     <string name="reset_default_desc">Are you sure you want to reset to default?</string>
+    <string name="reset">Reset</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

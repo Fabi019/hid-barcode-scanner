@@ -141,4 +141,5 @@
         <item>English (US)</item>
         <item>Deutsch (DE)</item>
     </string-array>
+    <string name="reset">Zurücksetzen</string>
 </resources>
