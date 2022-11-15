@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import dev.fabik.bluetoothhid.ui.theme.Typography
 import kotlinx.coroutines.delay
 
 @Composable
@@ -103,7 +104,7 @@ fun Modifier.tooltip(
     val showTooltip = remember { mutableStateOf(false) }
 
     Tooltip(showTooltip, timeout) {
-        Text(text)
+        Text(text, style = Typography.bodyLarge)
     }
 
     pointerInput(Unit) {
