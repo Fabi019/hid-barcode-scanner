@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                         ComposableLifecycle { _, event ->
                             when (event) {
                                 Lifecycle.Event.ON_START -> {
-                                    if (!bluetoothController.bluetoothEnabled()) {
+                                    if (!bluetoothController.bluetoothEnabled) {
                                         startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                                     }
 
@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 Lifecycle.Event.ON_STOP -> bluetoothController.unregister()
-                                else -> {}
+                                else -> Unit
                             }
                         }
                     }

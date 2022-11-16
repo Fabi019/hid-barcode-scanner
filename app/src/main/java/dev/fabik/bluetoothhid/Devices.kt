@@ -85,10 +85,10 @@ fun DeviceContent(
     val scope = rememberCoroutineScope()
 
     DisposableEffect(controller) {
-        isScanning = controller.isScanning()
+        isScanning = controller.isScanning
 
         if (pairedDevices.isEmpty()) {
-            pairedDevices.addAll(controller.pairedDevices())
+            pairedDevices.addAll(controller.pairedDevices)
         }
 
         val listener = controller.registerListener { _, state ->
@@ -115,7 +115,7 @@ fun DeviceContent(
     fun refresh() = scope.launch {
         isRefreshing = true
         pairedDevices.clear()
-        pairedDevices.addAll(controller.pairedDevices())
+        pairedDevices.addAll(controller.pairedDevices)
         if (!isScanning) {
             controller.scanDevices()
         }

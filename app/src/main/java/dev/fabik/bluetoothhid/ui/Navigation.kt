@@ -48,7 +48,7 @@ fun NavGraph(
                 }
             }
 
-            Scanner(navController, controller.currentDevice(), disconnectOrBack) {
+            Scanner(navController, controller.currentDevice, disconnectOrBack) {
                 scope.launch {
                     controller.keyboardSender?.sendString(
                         it,

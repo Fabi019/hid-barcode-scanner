@@ -101,9 +101,17 @@ class BluetoothController(var context: Context) {
         }
     }
 
-    fun currentDevice(): BluetoothDevice? = hostDevice
+    val currentDevice: BluetoothDevice?
+        get() = hostDevice
 
-    fun bluetoothEnabled(): Boolean = bluetoothAdapter?.isEnabled ?: false
+    val bluetoothEnabled: Boolean
+        get() = bluetoothAdapter?.isEnabled ?: false
+
+    val pairedDevices: Set<BluetoothDevice>
+        get() = bluetoothAdapter?.bondedDevices ?: emptySet()
+
+    val isScanning: Boolean
+        get() = bluetoothAdapter?.isDiscovering ?: false
 
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)
@@ -132,10 +140,6 @@ class BluetoothController(var context: Context) {
         // Notify listeners that proxy is disconnected.
         deviceListener.forEach { it.invoke(null, -1) }
     }
-
-    fun pairedDevices(): Set<BluetoothDevice> = bluetoothAdapter?.bondedDevices ?: emptySet()
-
-    fun isScanning() = bluetoothAdapter?.isDiscovering ?: false
 
     fun scanDevices() {
         if (bluetoothAdapter?.isDiscovering == true) {
