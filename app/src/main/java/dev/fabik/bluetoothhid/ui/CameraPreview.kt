@@ -166,6 +166,11 @@ fun CameraViewModel.CameraPreview(
                 camera?.let {
                     focusOnTap(it.cameraControl, previewView)
                 }
+            }
+            .pointerInput(camera) {
+                camera?.let {
+                    zoomGesture(it.cameraInfo, it.cameraControl)
+                }
             },
         factory = {
             previewView.also {

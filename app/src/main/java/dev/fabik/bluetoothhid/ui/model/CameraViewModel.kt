@@ -2,9 +2,11 @@ package dev.fabik.bluetoothhid.ui.model
 
 import android.util.Size
 import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -121,6 +123,21 @@ class CameraViewModel : ViewModel() {
                     isFocusing = false
                 }, Executors.newSingleThreadExecutor())
         }
+    }
+
+    suspend fun PointerInputScope.zoomGesture(
+        cameraInfo: CameraInfo,
+        cameraControl: CameraControl
+    ) = detectTransformGestures(true) { _, _, zoom, _ ->
+        val currentZoom = cameraInfo.zoomState.value
+        val currentZoomRatio = currentZoom?.zoomRatio ?: 1f
+
+        val newZoomRatio = (currentZoomRatio * zoom).coerceIn(
+            currentZoom?.minZoomRatio ?: 1f,
+            currentZoom?.maxZoomRatio ?: 1f
+        )
+
+        cameraControl.setZoomRatio(newZoomRatio)
     }
 
 }
