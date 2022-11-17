@@ -1,14 +1,9 @@
 package dev.fabik.bluetoothhid.ui.model
 
 import android.util.Size
-import androidx.camera.core.Camera
+import androidx.camera.core.CameraControl
 import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +13,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 class CameraViewModel : ViewModel() {
@@ -116,28 +109,18 @@ class CameraViewModel : ViewModel() {
             focusTouchPoint = it
             isFocusing = true
 
-                scope.launch {
-                    focusCircleRadius.snapTo(100f)
-                    focusCircleRadius.animateTo(
-                        80f, spring(Spring.DampingRatioMediumBouncy)
-                    )
-                }
+            val factory = previewView.meteringPointFactory
 
-                val meteringPointFactory = SurfaceOrientedMeteringPointFactory(
-                    size.width.toFloat(),
-                    size.height.toFloat()
-                )
-
-                val meteringAction = FocusMeteringAction.Builder(
-                    meteringPointFactory.createPoint(it.x, it.y),
-                    FocusMeteringAction.FLAG_AF
-                ).disableAutoCancel().build()
+            val meteringAction = FocusMeteringAction.Builder(
+                factory.createPoint(it.x, it.y),
+                FocusMeteringAction.FLAG_AF
+            ).disableAutoCancel().build()
 
             cameraControl.startFocusAndMetering(meteringAction)
                 .addListener({
                     isFocusing = false
                 }, Executors.newSingleThreadExecutor())
         }
-        }
+    }
 
 }

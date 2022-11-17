@@ -111,7 +111,6 @@ fun CameraViewModel.CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     val frontCamera by rememberPreferenceDefault(PreferenceStore.FRONT_CAMERA)
     val hasFrontCamera = remember {
@@ -163,9 +162,9 @@ fun CameraViewModel.CameraPreview(
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(camera) {
+            .pointerInput(camera, previewView) {
                 camera?.let {
-                    focusOnTap(it, scope)
+                    focusOnTap(it.cameraControl, previewView)
                 }
             },
         factory = {
