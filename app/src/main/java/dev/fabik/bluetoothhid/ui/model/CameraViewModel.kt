@@ -33,9 +33,7 @@ class CameraViewModel : ViewModel() {
 
     var currentBarCode by mutableStateOf<Barcode?>(null)
     var focusTouchPoint by mutableStateOf<Offset?>(null)
-
-    val focusCircleAlpha = Animatable(0f)
-    val focusCircleRadius = Animatable(100f)
+    var isFocusing by mutableStateOf(false)
 
     private var lastSourceRes: Size? = null
 
@@ -110,14 +108,13 @@ class CameraViewModel : ViewModel() {
         return result
     }
 
-    suspend fun PointerInputScope.focusOnTap(camera: Camera, scope: CoroutineScope) =
-        detectTapGestures {
-            if (focusTouchPoint == null) {
-                focusTouchPoint = it
-
-                scope.launch {
-                    focusCircleAlpha.animateTo(1f, tween(100))
-                }
+    suspend fun PointerInputScope.focusOnTap(
+        cameraControl: CameraControl,
+        previewView: PreviewView
+    ) = detectTapGestures {
+        if (!isFocusing) {
+            focusTouchPoint = it
+            isFocusing = true
 
                 scope.launch {
                     focusCircleRadius.snapTo(100f)
@@ -136,14 +133,11 @@ class CameraViewModel : ViewModel() {
                     FocusMeteringAction.FLAG_AF
                 ).disableAutoCancel().build()
 
-                camera.cameraControl.startFocusAndMetering(meteringAction)
-                    .addListener({
-                        scope.launch {
-                            focusCircleAlpha.animateTo(0f, tween(100))
-                            focusTouchPoint = null
-                        }
-                    }, Executors.newSingleThreadExecutor())
-            }
+            cameraControl.startFocusAndMetering(meteringAction)
+                .addListener({
+                    isFocusing = false
+                }, Executors.newSingleThreadExecutor())
+        }
         }
 
 }

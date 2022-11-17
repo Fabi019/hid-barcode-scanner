@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
@@ -180,6 +181,28 @@ fun CameraViewModel.OverlayCanvas() {
     val overlayType by rememberPreferenceNull(PreferenceStore.OVERLAY_TYPE)
     val restrictArea by rememberPreferenceNull(PreferenceStore.RESTRICT_AREA)
 
+    val transition = updateTransition(targetState = isFocusing, label = "focusCircle")
+
+    val focusCircleAlpha by transition.animateFloat(
+        transitionSpec = {
+            if (true isTransitioningTo false) {
+                tween(durationMillis = 100)
+            } else {
+                tween(durationMillis = 50)
+            }
+        }, label = "focusCircleAlpha"
+    ) { state -> if (state) 1f else 0f }
+
+    val focusCircleScale by transition.animateFloat(
+        transitionSpec = {
+            if (true isTransitioningTo false) {
+                tween(100)
+            } else {
+                spring(Spring.DampingRatioMediumBouncy)
+            }
+        }, label = "focusCircleScale"
+    ) { state -> if (state) 1.0f else 1.5f }
+
     Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
         val y = this.size.height / 2
@@ -216,13 +239,15 @@ fun CameraViewModel.OverlayCanvas() {
         }
 
         focusTouchPoint?.let {
-            drawCircle(
-                color = Color.White,
-                radius = focusCircleRadius.value,
-                center = it,
-                style = Stroke(5f),
-                alpha = focusCircleAlpha.value
-            )
+            if (focusCircleAlpha != 0f) {
+                drawCircle(
+                    color = Color.White,
+                    radius = focusCircleScale * 100f,
+                    center = it,
+                    style = Stroke(5f),
+                    alpha = focusCircleAlpha
+                )
+            }
         }
     }
 }
