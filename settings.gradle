@@ -5,12 +5,13 @@ pluginManagement {
         mavenCentral()
     }
 }
-dependencyResolutionManagement {
+// Use old style dependency declaration since the new one is not yet supported by dependabot
+/*dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
-}
+}*/
 rootProject.name = "BluetoothHID"
 include ':app'
