@@ -23,6 +23,7 @@ import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.rememberDialogState
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -45,48 +46,53 @@ fun RequiresModuleInstallation(content: @Composable () -> Unit) {
         value = suspendCoroutine<Boolean> { cont ->
             installState = null
             errorCode = null
+
             Log.d("ModuleInstaller", "Checking if module is present")
+
             moduleInstallClient.areModulesAvailable(optionalModuleApi)
                 .addOnSuccessListener {
                     if (it.areModulesAvailable()) {
                         Log.d("ModuleInstaller", "Modules are available")
-                        cont.resume(true)
+                        cont.safeResume(true)
                     } else {
                         Log.d("ModuleInstaller", "Modules are not available")
                         val moduleInstallRequest = ModuleInstallRequest.newBuilder()
                             .addApi(optionalModuleApi)
                             .setListener { update ->
                                 installState = update.installState
-                                Log.d("ModuleInstaller", "Install state: ${update.installState}")
+
+                                Log.d("ModuleInstaller", "Install state: $installState")
+
                                 if (update.installState == STATE_COMPLETED) {
                                     Log.d("ModuleInstaller", "Modules installation completed")
-                                    cont.resume(true)
+                                    cont.safeResume(true)
                                 } else if (update.installState == STATE_FAILED || update.installState == STATE_CANCELED) {
                                     Log.d("ModuleInstaller", "Modules installation failed")
                                     errorCode = update.errorCode
-                                    cont.resume(false)
+                                    cont.safeResume(false)
                                 }
                             }
                             .build()
                         moduleInstallClient.installModules(moduleInstallRequest)
                             .addOnSuccessListener { response ->
                                 Log.d("ModuleInstaller", "Modules installer started")
+
                                 if (response.areModulesAlreadyInstalled()) {
                                     Log.d("ModuleInstaller", "Modules are already installed")
-                                    cont.resume(true)
+                                    cont.safeResume(true)
                                 } else {
                                     downloadingDialog.open()
                                 }
                             }
                             .addOnFailureListener { e ->
                                 Log.e("ModuleInstaller", "Failed to start module installer", e)
-                                cont.resume(false)
+                                cont.safeResume(false)
                             }
                     }
                 }
                 .addOnFailureListener {
                     Log.e("ModuleInstaller", "Failed to check module availability", it)
-                    cont.resume(false)
+                    cont.safeResume(false)
                 }
         }
     }
@@ -150,5 +156,13 @@ fun ModuleDialogs(
             Text(stringResource(R.string.ensure_internet_and_play))
             Text(stringResource(R.string.download_bundled))
         }
+    }
+}
+
+fun <T> Continuation<T>.safeResume(value: T) {
+    try {
+        resume(value)
+    } catch (e: IllegalStateException) {
+        Log.w("ModuleInstaller", "safeResume: Multiple calls to resume.", e)
     }
 }
