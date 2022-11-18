@@ -14,6 +14,9 @@ android {
         versionCode 32
         versionName "1.5.3"
 
+        def gitCommitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
+        buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\""
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
