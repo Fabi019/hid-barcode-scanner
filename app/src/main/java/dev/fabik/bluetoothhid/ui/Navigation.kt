@@ -61,6 +61,7 @@ fun NavGraph(
                     )
                 }
             }
+
             BackHandler(onBack = disconnectOrBack)
         }
 
@@ -79,9 +80,7 @@ fun NavGraph(
                         launchSingleTop = true
                     }
                 } else {
-                    navController.navigate(Routes.Devices) {
-                        launchSingleTop = true
-                    }
+                    navController.popBackStack(Routes.Main, inclusive = true)
                 }
             }
         }
