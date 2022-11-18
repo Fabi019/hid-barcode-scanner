@@ -130,27 +130,25 @@ fun ModuleDialogs(
         icon = {
             Icon(
                 imageVector = Icons.Filled.Error,
-                contentDescription = "Error",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.error
             )
         },
         title = stringResource(R.string.error),
-        onDismiss = { errorDialog.close() },
-        content = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.failed_to_download))
-                errorCode?.let { code ->
-                    Text(
-                        stringResource(
-                            R.string.error_code,
-                            ModuleInstallStatusCodes.getStatusCodeString(code),
-                            code
-                        )
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.failed_to_download))
+            errorCode?.let { code ->
+                Text(
+                    stringResource(
+                        R.string.error_code,
+                        ModuleInstallStatusCodes.getStatusCodeString(code),
+                        code
                     )
-                }
-                Text(stringResource(R.string.ensure_internet_and_play))
-                Text(stringResource(R.string.download_bundled))
+                )
             }
+            Text(stringResource(R.string.ensure_internet_and_play))
+            Text(stringResource(R.string.download_bundled))
         }
-    )
+    }
 }

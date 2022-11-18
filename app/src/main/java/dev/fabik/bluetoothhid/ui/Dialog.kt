@@ -186,7 +186,7 @@ fun SliderDialog(
 fun InfoDialog(
     dialogState: DialogState,
     title: String,
-    onDismiss: DialogState.() -> Unit = {},
+    onDismiss: DialogState.() -> Unit = { close() },
     icon: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) = with(dialogState) {

@@ -255,7 +255,7 @@ fun DeviceInfoDialog(
     dialogState: DialogState,
     device: BluetoothDevice
 ) {
-    InfoDialog(dialogState, stringResource(R.string.info), onDismiss = { close() }) {
+    InfoDialog(dialogState, stringResource(R.string.info)) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
