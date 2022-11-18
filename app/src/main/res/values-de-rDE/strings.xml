@@ -77,7 +77,7 @@
     <string name="copied_to_clipboard">In Zwischenablage kopiert!</string>
     <string name="devices">Geräte</string>
     <string name="keyboard_layout">Tastatur Layout</string>
-    <string name="keyboard_layout_desc">Stellt das verwentete Tastatus Layout ein.</string>
+    <string name="keyboard_layout_desc">Stellt das verwentete Tastatus Layout ein</string>
     <string name="disconnect">Trennen</string>
     <string name="more">Mehr</string>
     <string name="toggle_flash">Blitz an/aus</string>
@@ -91,12 +91,23 @@
     <string name="unpair_desc">Durch das Aufheben der Kopplung wird das Gerät aus der Liste der gekoppelten Geräte entfernt.</string>
     <string name="connect">Verbinden</string>
     <string name="unpair">Entkoppeln</string>
-    <string name="error_code">Fehler: %s (%d)</string>
+    <string name="error_code" formatted="false">Fehler: %s (%s)</string>
     <string name="downloading">Herunterladen…</string>
     <string name="installing">Installiere…</string>
     <string name="reset_default">Auf Standard zurücksetzen?</string>
     <string name="reset_default_desc">Sind Sie sicher, dass Sie auf die Standardeinstellungen zurücksetzen wollen?</string>
     <string name="ok">OK</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="back">Zurück</string>
+    <string name="source_code">Source Code</string>
+    <string name="source_code_desc">Den Source Code auf GitHub ansehen</string>
+    <string name="report_issue">Fehler melden</string>
+    <string name="report_issue_desc">Melde ein Probleme auf GitHub</string>
+    <string name="rate">Bewerten auf Google Play</string>
+    <string name="rate_desc">Wenn die App gefällt, bewerte sie bitte auf Google Play</string>
+    <string name="share">Teilen</string>
+    <string name="share_desc">Teile die App mit Freunden</string>
+    <string name="share_via">Teilen mit</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Hell</item>
@@ -141,5 +152,4 @@
         <item>English (US)</item>
         <item>Deutsch (DE)</item>
     </string-array>
-    <string name="reset">Zurücksetzen</string>
 </resources>

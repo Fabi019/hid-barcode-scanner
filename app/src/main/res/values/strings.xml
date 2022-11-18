@@ -15,7 +15,7 @@
     <string name="dynamic_theme">Dynamic Theme</string>
     <string name="dynamic_theme_desc">Use the dynamic theme on Android 12+.</string>
     <string name="front_camera">Front Camera</string>
-    <string name="front_camera_desc">Use the front camera instead of the back facing.\nOnly works if supported by the device.</string>
+    <string name="front_camera_desc">Use the front camera instead of the back facing. Only works if supported by the device.</string>
     <string name="restrict_area">Restrict Scan Area</string>
     <string name="restrict_area_desc">Displays a overlay on the camera screen.</string>
     <string name="overlay_type">Overlay type</string>
@@ -25,7 +25,7 @@
     <string name="scan_freq">Scan Frequency</string>
     <string name="scan_freq_desc">Interval in which the image is analyzed.</string>
     <string name="scan_res">Scan Resolution</string>
-    <string name="scan_res_desc">Resolution of the analysed image.\nHigher resolutions will take longer to analyze.</string>
+    <string name="scan_res_desc">Resolution of the analysed image. Higher resolutions will take longer to analyze.</string>
     <string name="auto_send">Auto Send</string>
     <string name="auto_send_desc">Automatically send any new detected codes.</string>
     <string name="extra_keys">Extra keys</string>
@@ -36,7 +36,7 @@
     <string name="raw_value_desc">Extracts the raw data value from the code.</string>
     <string name="about">About</string>
     <string name="repository" translatable="false">Repository</string>
-    <string name="build_version" translatable="false">Build-Version</string>
+    <string name="build_version" translatable="false">Version</string>
     <string name="confirm">Confirm</string>
     <string name="dismiss">Cancel</string>
     <string name="scanned_devices">Scanned devices</string>
@@ -70,7 +70,7 @@
     <string name="services">Services</string>
     <string name="uuids">UUIDs</string>
     <string name="code_types">Code Types</string>
-    <string name="code_types_desc">Only enable desired types to improve scanning speed.\nSelect none to enable all.</string>
+    <string name="code_types_desc">Only enable desired types to improve scanning speed. Select none to enable all.</string>
     <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
     <string name="bt_proxy_disconnected">BT-Proxy disconnected!</string>
     <string name="bt_proxy_connected">BT-Proxy connected!</string>
@@ -79,7 +79,7 @@
     <string name="devices">Devices</string>
     <string name="keyboard_layout">Keyboard Layout</string>
     <string name="keyboard_layout_desc">Set the keyboard layout</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
     <string name="disconnect">Disconnect</string>
     <string name="more">More</string>
     <string name="toggle_flash">Toggle flash</string>
@@ -93,13 +93,23 @@
     <string name="unpair_desc">Unpairing will remove the device from your paired devices list.</string>
     <string name="connect">Connect</string>
     <string name="unpair">Unpair</string>
-    <string name="error_code">Error: %s (%d)</string>
+    <string name="error_code" formatted="false">Error: %s (%s)</string>
     <string name="downloading">Downloading…</string>
     <string name="installing">Installing…</string>
     <string name="ok">OK</string>
     <string name="reset_default">Reset to default?</string>
     <string name="reset_default_desc">Are you sure you want to reset to default?</string>
     <string name="reset">Reset</string>
+    <string name="back">Back</string>
+    <string name="source_code">Source Code</string>
+    <string name="source_code_desc">View the source code on GitHub</string>
+    <string name="report_issue">Report issue</string>
+    <string name="report_issue_desc">Report an issue on GitHub</string>
+    <string name="rate">Rate on Google Play</string>
+    <string name="rate_desc">If you like this app, please rate it on Google Play</string>
+    <string name="share">Share</string>
+    <string name="share_desc">Share the app with your friends</string>
+    <string name="share_via">Share via</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
