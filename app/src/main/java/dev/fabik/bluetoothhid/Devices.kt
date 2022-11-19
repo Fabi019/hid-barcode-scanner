@@ -9,8 +9,12 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,9 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.*
@@ -31,8 +32,6 @@ import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Devices screen. Lists all paired devices and also allows to scan for new ones by
@@ -74,6 +73,7 @@ fun Devices(
  * @param viewModel View model to store the view state.
  * @param onSkip Callback function when the user presses the skip button.
  */
+@OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceContent(
@@ -112,34 +112,16 @@ fun DeviceContent(
 
     BroadcastListener()
 
-    fun refresh() = scope.launch {
-        isRefreshing = true
-        pairedDevices.clear()
-        pairedDevices.addAll(controller.pairedDevices)
-        if (!isScanning) {
-            controller.scanDevices()
-        }
-        delay(500)
-        isRefreshing = false
-    }
+    val pullRefreshState =
+        rememberPullRefreshState(isRefreshing, { refresh(controller) })
 
-    SwipeRefresh(
-        state = rememberSwipeRefreshState(isRefreshing),
-        onRefresh = ::refresh,
-        indicator = { state, trigger ->
-            SwipeRefreshIndicator(
-                state = state,
-                refreshTriggerDistance = trigger,
-                scale = true,
-                backgroundColor = MaterialTheme.colorScheme.primary,
-                shape = MaterialTheme.shapes.small,
-            )
-        }
-    ) {
+    Box(Modifier.pullRefresh(pullRefreshState)) {
         DeviceList(
             onConnect = controller::connect,
             onSkip = onSkip
         )
+
+        PullRefreshIndicator(isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
