@@ -82,7 +82,6 @@ fun DeviceContent(
     onSkip: () -> Unit
 ) = with(viewModel) {
     val dialogState = rememberDialogState()
-    val scope = rememberCoroutineScope()
 
     DisposableEffect(controller) {
         isScanning = controller.isScanning

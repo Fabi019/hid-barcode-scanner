@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
-import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
@@ -53,9 +52,8 @@ class MainActivity : ComponentActivity() {
                     RequiresBluetoothPermission {
                         val context = LocalContext.current
                         val scope = rememberCoroutineScope()
-                        val navHostController = rememberNavController()
 
-                        NavGraph(navHostController, bluetoothController)
+                        NavGraph(bluetoothController)
 
                         ComposableLifecycle { _, event ->
                             when (event) {
