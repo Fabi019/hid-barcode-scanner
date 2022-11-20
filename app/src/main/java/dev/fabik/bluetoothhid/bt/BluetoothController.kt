@@ -7,6 +7,9 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreference
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.Executors
 
 typealias Listener = (BluetoothDevice?, Int) -> Unit
@@ -166,6 +169,21 @@ class BluetoothController(var context: Context) {
             Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show()
         }
     }
+
+    suspend fun sendString(string: String) = with(context) {
+        val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
+        val extraKeys = getPreference(PreferenceStore.EXTRA_KEYS).first()
+        val layout = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
+
+        keyboardSender?.sendString(
+            string, sendDelay.toLong(), extraKeys,
+            when (layout) {
+                1 -> "de"
+                else -> "us"
+            }
+        )
+    }
+
 }
 
 fun BluetoothDevice.removeBond() {

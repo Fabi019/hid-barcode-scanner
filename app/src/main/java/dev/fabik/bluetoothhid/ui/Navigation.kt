@@ -20,9 +20,6 @@ import dev.fabik.bluetoothhid.Devices
 import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.Settings
 import dev.fabik.bluetoothhid.bt.BluetoothController
-import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.getPreference
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -38,7 +35,7 @@ val LocalNavigation = staticCompositionLocalOf<NavController> {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NavGraph(controller: BluetoothController) {
-    val context = LocalContext.current
+    val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
 
     val navController = rememberAnimatedNavController()
@@ -56,12 +53,16 @@ fun NavGraph(controller: BluetoothController) {
         ) {
             composable(Routes.Devices) {
                 Devices(controller)
+
+                // If the user presses the back button, close the app
                 BackHandler {
-                    (context as Activity).finishAfterTransition()
+                    activity.finishAfterTransition()
                 }
             }
 
             composable(Routes.Main) {
+                // First try to disconnect from the device.
+                // If it fails (e.g. not connected), then just navigate back to the devices screen.
                 val disconnectOrBack = {
                     if (!controller.disconnect()) {
                         navController.navigateUp()
@@ -70,15 +71,7 @@ fun NavGraph(controller: BluetoothController) {
 
                 Scanner(controller.currentDevice, disconnectOrBack) {
                     scope.launch {
-                        controller.keyboardSender?.sendString(
-                            it,
-                            context.getPreference(PreferenceStore.SEND_DELAY).first().toLong(),
-                            context.getPreference(PreferenceStore.EXTRA_KEYS).first(),
-                            when (context.getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()) {
-                                1 -> "de"
-                                else -> "us"
-                            }
-                        )
+                        controller.sendString(it)
                     }
                 }
 
@@ -93,7 +86,9 @@ fun NavGraph(controller: BluetoothController) {
 
     DisposableEffect(controller) {
         val listener = controller.registerListener { device, state ->
-            (context as Activity).runOnUiThread {
+            // Navigation calls need to be from a UI-Thread
+            activity.runOnUiThread {
+                // Check if connection to a device has been established, else go back to the device list
                 if (device != null && state == BluetoothProfile.STATE_CONNECTED) {
                     navController.navigate(Routes.Main) {
                         launchSingleTop = true
