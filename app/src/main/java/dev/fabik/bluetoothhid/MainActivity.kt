@@ -20,7 +20,6 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.*
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -63,11 +62,7 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     scope.launch {
-                                        val autoConnect =
-                                            context.getPreference(PreferenceStore.AUTO_CONNECT)
-                                                .first()
-
-                                        if (!bluetoothController.register(autoConnect)) {
+                                        if (!bluetoothController.register()) {
                                             Toast.makeText(
                                                 context,
                                                 getString(R.string.bt_proxy_error),

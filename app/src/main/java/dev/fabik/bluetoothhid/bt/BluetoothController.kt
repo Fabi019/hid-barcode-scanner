@@ -123,7 +123,10 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
-    fun register(autoConnect: Boolean): Boolean {
+    suspend fun register(): Boolean =
+        register(context.getPreference(PreferenceStore.AUTO_CONNECT).first())
+
+    private fun register(autoConnect: Boolean): Boolean {
         autoConnectEnabled = autoConnect
 
         return bluetoothAdapter?.getProfileProxy(
