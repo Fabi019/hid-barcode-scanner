@@ -32,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.utils.DeviceInfo
@@ -42,7 +41,6 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Scanner(
-    navController: NavController,
     currentDevice: BluetoothDevice?,
     onDisconnect: () -> Unit,
     sendText: (String) -> Unit
@@ -52,7 +50,7 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, onDisconnect, navController)
+            ScannerAppBar(camera, onDisconnect)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -177,8 +175,7 @@ private fun SendToDeviceFAB(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
     camera: Camera?,
-    onDisconnect: () -> Unit,
-    navController: NavController
+    onDisconnect: () -> Unit
 ) {
     TopAppBar(
         title = { Text(stringResource(R.string.scanner)) },
@@ -191,7 +188,7 @@ private fun ScannerAppBar(
             IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
                 Icon(Icons.Default.BluetoothDisabled, "Disconnect")
             }
-            Dropdown(navController)
+            Dropdown()
         }
     )
 }

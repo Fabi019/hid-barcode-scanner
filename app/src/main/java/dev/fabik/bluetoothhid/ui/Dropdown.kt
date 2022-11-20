@@ -9,14 +9,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.R
 
 @Composable
-fun Dropdown(
-    navController: NavController
-) {
+fun Dropdown() {
     val context = LocalContext.current
+    val navController = LocalNavigation.current
 
     var showMenu by remember {
         mutableStateOf(false)

@@ -8,12 +8,11 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -32,6 +31,10 @@ object Routes {
     const val Settings = "Settings"
 }
 
+val LocalNavigation = staticCompositionLocalOf<NavController> {
+    error("No Navigation provided")
+}
+
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NavGraph(controller: BluetoothController) {
@@ -42,48 +45,48 @@ fun NavGraph(controller: BluetoothController) {
 
     val slideDistance = LocalDensity.current.run { 30.dp.roundToPx() }
 
-    AnimatedNavHost(
-        navController,
-        startDestination = Routes.Devices,
-        enterTransition = { inAnimation(true, slideDistance) },
-        exitTransition = { outAnimation(true, slideDistance) },
-        popEnterTransition = { inAnimation(false, slideDistance) },
-        popExitTransition = { outAnimation(false, slideDistance) }
-    ) {
-        composable(Routes.Devices) {
-            Devices(navController, controller)
-            BackHandler {
-                (context as Activity).finishAfterTransition()
-            }
-        }
-
-        composable(Routes.Main) {
-            val disconnectOrBack = {
-                if (!controller.disconnect()) {
-                    navController.navigateUp()
+    CompositionLocalProvider(LocalNavigation provides navController) {
+        AnimatedNavHost(
+            navController,
+            startDestination = Routes.Devices,
+            enterTransition = { inAnimation(true, slideDistance) },
+            exitTransition = { outAnimation(true, slideDistance) },
+            popEnterTransition = { inAnimation(false, slideDistance) },
+            popExitTransition = { outAnimation(false, slideDistance) }
+        ) {
+            composable(Routes.Devices) {
+                Devices(controller)
+                BackHandler {
+                    (context as Activity).finishAfterTransition()
                 }
             }
 
-            Scanner(navController, controller.currentDevice, disconnectOrBack) {
-                scope.launch {
-                    controller.keyboardSender?.sendString(
-                        it,
-                        context.getPreference(PreferenceStore.SEND_DELAY).first().toLong(),
-                        context.getPreference(PreferenceStore.EXTRA_KEYS).first(),
-                        when (context.getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()) {
-                            1 -> "de"
-                            else -> "us"
-                        }
-                    )
+            composable(Routes.Main) {
+                val disconnectOrBack = {
+                    if (!controller.disconnect()) {
+                        navController.navigateUp()
+                    }
                 }
+
+                Scanner(controller.currentDevice, disconnectOrBack) {
+                    scope.launch {
+                        controller.keyboardSender?.sendString(
+                            it,
+                            context.getPreference(PreferenceStore.SEND_DELAY).first().toLong(),
+                            context.getPreference(PreferenceStore.EXTRA_KEYS).first(),
+                            when (context.getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()) {
+                                1 -> "de"
+                                else -> "us"
+                            }
+                        )
+                    }
+                }
+
+                BackHandler(onBack = disconnectOrBack)
             }
 
-            BackHandler(onBack = disconnectOrBack)
-        }
-
-        composable(Routes.Settings) {
-            Settings {
-                navController.navigateUp()
+            composable(Routes.Settings) {
+                Settings()
             }
         }
     }

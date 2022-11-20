@@ -18,14 +18,16 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Settings(onBack: () -> Unit) {
+fun Settings() {
+    val navController = LocalNavigation.current
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(
-                        onClick = onBack,
+                        onClick = { navController.navigateUp() },
                         modifier = Modifier.tooltip(stringResource(R.string.back))
                     ) {
                         Icon(Icons.Default.ArrowBack, "Back")

@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.*
@@ -39,28 +38,22 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
  * When a device is selected it first tries to connect with it and after
  * a successful connection has been established it navigates to the [Scanner] screen.
  *
- * @param navController Navigation controller to navigate to the [Scanner] and [Settings] screens.
  * @param controller Bluetooth controller to get devices and connect to them.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Devices(
-    navController: NavController,
-    controller: BluetoothController
-) {
+fun Devices(controller: BluetoothController) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
-                    Dropdown(navController)
+                    Dropdown()
                 }
             )
         }) { padding ->
         Box(Modifier.padding(padding)) {
-            DeviceContent(controller) {
-                navController.navigate(Routes.Main)
-            }
+            DeviceContent(controller)
         }
     }
 }
@@ -71,15 +64,13 @@ fun Devices(
  *
  * @param controller Bluetooth controller to get devices and connect to them.
  * @param viewModel View model to store the view state.
- * @param onSkip Callback function when the user presses the skip button.
  */
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceContent(
     controller: BluetoothController,
-    viewModel: DevicesViewModel = viewModel(),
-    onSkip: () -> Unit
+    viewModel: DevicesViewModel = viewModel()
 ) = with(viewModel) {
     val dialogState = rememberDialogState()
 
@@ -114,11 +105,12 @@ fun DeviceContent(
     val pullRefreshState =
         rememberPullRefreshState(isRefreshing, { refresh(controller) })
 
+    val navController = LocalNavigation.current
+
     Box(Modifier.pullRefresh(pullRefreshState)) {
-        DeviceList(
-            onConnect = controller::connect,
-            onSkip = onSkip
-        )
+        DeviceList(controller::connect) {
+            navController.navigate(Routes.Main)
+        }
 
         PullRefreshIndicator(isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
     }
