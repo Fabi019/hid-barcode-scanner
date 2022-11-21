@@ -37,7 +37,6 @@ val LocalNavigation = staticCompositionLocalOf<NavController> {
 fun NavGraph(controller: BluetoothController) {
     val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
-
     val navController = rememberAnimatedNavController()
 
     val slideDistance = LocalDensity.current.run { 30.dp.roundToPx() }
@@ -45,7 +44,7 @@ fun NavGraph(controller: BluetoothController) {
     CompositionLocalProvider(LocalNavigation provides navController) {
         AnimatedNavHost(
             navController,
-            startDestination = Routes.Devices,
+            startDestination = activity.intent.dataString ?: Routes.Devices,
             enterTransition = { inAnimation(true, slideDistance) },
             exitTransition = { outAnimation(true, slideDistance) },
             popEnterTransition = { inAnimation(false, slideDistance) },
@@ -80,6 +79,11 @@ fun NavGraph(controller: BluetoothController) {
 
             composable(Routes.Settings) {
                 Settings()
+
+                BackHandler {
+                    if (!navController.navigateUp())
+                        navController.navigate(Routes.Devices)
+                }
             }
         }
     }
@@ -94,7 +98,7 @@ fun NavGraph(controller: BluetoothController) {
                         launchSingleTop = true
                     }
                 } else {
-                    navController.popBackStack(Routes.Main, inclusive = true)
+                    navController.popBackStack(Routes.Devices, inclusive = false)
                 }
             }
         }

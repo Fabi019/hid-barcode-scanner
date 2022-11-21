@@ -27,7 +27,10 @@ fun Settings() {
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(
-                        onClick = { navController.navigateUp() },
+                        onClick = {
+                            if (!navController.navigateUp())
+                                navController.navigate(Routes.Devices)
+                        },
                         modifier = Modifier.tooltip(stringResource(R.string.back))
                     ) {
                         Icon(Icons.Default.ArrowBack, "Back")
