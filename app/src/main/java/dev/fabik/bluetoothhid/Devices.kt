@@ -112,7 +112,13 @@ fun DeviceContent(
             navController.navigate(Routes.Main)
         }
 
-        PullRefreshIndicator(isRefreshing, pullRefreshState, Modifier.align(Alignment.TopCenter))
+        PullRefreshIndicator(
+            isRefreshing,
+            pullRefreshState,
+            Modifier.align(Alignment.TopCenter),
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
