@@ -9,7 +9,7 @@
     <string name="auto_connect">Automatisch Verbinden</string>
     <string name="auto_connect_desc">Mit dem letzten Gerät beim Start verbinden</string>
     <string name="show_unnamed">Unbenannte Geräte</string>
-    <string name="show_unnamed_desc">Zeigt Bluetooth Geräte ohne Namen an</string>
+    <string name="show_unnamed_desc">Zeigt Geräte ohne Namen an</string>
     <string name="appearance">Darstellung</string>
     <string name="theme">Design</string>
     <string name="theme_desc">Änderert das App-Design</string>

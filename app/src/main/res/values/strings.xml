@@ -8,7 +8,7 @@
     <string name="auto_connect">Auto-connect</string>
     <string name="auto_connect_desc">Connects with the last device on start</string>
     <string name="show_unnamed">Unnamed devices</string>
-    <string name="show_unnamed_desc">Shows Bluetooth devices without name</string>
+    <string name="show_unnamed_desc">Shows devices without a name</string>
     <string name="appearance">Appearance</string>
     <string name="theme">Theme</string>
     <string name="theme_desc">Change the preferred UI Theme</string>
