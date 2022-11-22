@@ -98,7 +98,8 @@ fun NavGraph(controller: BluetoothController) {
                         launchSingleTop = true
                     }
                 } else {
-                    navController.popBackStack(Routes.Devices, inclusive = false)
+                    // Remove scanner from back stack
+                    navController.popBackStack(Routes.Main, inclusive = true)
                 }
             }
         }
