@@ -12,7 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -28,7 +28,7 @@ object Routes {
     const val Settings = "Settings"
 }
 
-val LocalNavigation = staticCompositionLocalOf<NavController> {
+val LocalNavigation = staticCompositionLocalOf<NavHostController> {
     error("No Navigation provided")
 }
 

@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             val theme by rememberPreferenceNull(PreferenceStore.THEME)
             val useDynTheme by rememberPreferenceDefault(PreferenceStore.DYNAMIC_THEME)

@@ -19,25 +19,11 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings() {
-    val navController = LocalNavigation.current
-
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings)) },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if (!navController.navigateUp())
-                                navController.navigate(Routes.Devices)
-                        },
-                        modifier = Modifier.tooltip(stringResource(R.string.back))
-                    ) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                }
-            )
-        }) { padding ->
+            SettingsTopBar()
+        }
+    ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             LazyColumn(
                 Modifier
@@ -83,6 +69,27 @@ fun Settings() {
             }
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SettingsTopBar() {
+    val navController = LocalNavigation.current
+
+    TopAppBar(
+        title = { Text(stringResource(R.string.settings)) },
+        navigationIcon = {
+            IconButton(
+                onClick = {
+                    if (!navController.navigateUp())
+                        navController.navigate(Routes.Devices)
+                },
+                modifier = Modifier.tooltip(stringResource(R.string.back))
+            ) {
+                Icon(Icons.Default.ArrowBack, "Back")
+            }
+        }
+    )
 }
 
 @Composable

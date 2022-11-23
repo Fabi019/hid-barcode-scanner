@@ -32,10 +32,9 @@ import kotlin.coroutines.suspendCoroutine
 
 @Composable
 fun CameraArea(
-    viewModel: CameraViewModel = viewModel(),
     onCameraReady: (Camera) -> Unit,
     onBarCodeReady: (String) -> Unit
-) = with(viewModel) {
+) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
 
     val cameraResolution by rememberPreferenceNull(PreferenceStore.SCAN_RESOLUTION)

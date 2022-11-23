@@ -63,15 +63,13 @@ fun Devices(controller: BluetoothController) {
  * connection changes.
  *
  * @param controller Bluetooth controller to get devices and connect to them.
- * @param viewModel View model to store the view state.
  */
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceContent(
-    controller: BluetoothController,
-    viewModel: DevicesViewModel = viewModel()
-) = with(viewModel) {
+    controller: BluetoothController
+) = with(viewModel<DevicesViewModel>()) {
     val dialogState = rememberDialogState()
 
     DisposableEffect(controller) {

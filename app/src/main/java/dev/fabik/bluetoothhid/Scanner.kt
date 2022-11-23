@@ -74,7 +74,9 @@ fun Scanner(
                 }
                 BarcodeValue(currentBarcode)
             }
-            DeviceInfoCard(currentDevice)
+            currentDevice?.let {
+                DeviceInfoCard(it)
+            }
         }
     }
 }
@@ -107,7 +109,7 @@ private fun CameraPreviewArea(
 
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
-    CameraArea(onCameraReady = onCameraReady) {
+    CameraArea(onCameraReady) {
         onBarcodeDetected(it, autoSend)
 
         if (playSound) {
@@ -220,30 +222,28 @@ fun ToggleFlashButton(camera: Camera) {
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
-    device?.let {
-        val dialogState = rememberDialogState()
+fun BoxScope.DeviceInfoCard(device: BluetoothDevice) {
+    val dialogState = rememberDialogState()
 
-        ElevatedCard(
-            onClick = {
-                dialogState.open()
-            },
-            Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
+    ElevatedCard(
+        onClick = {
+            dialogState.open()
+        },
+        Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
+        Row(
+            Modifier.padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                Modifier.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Info, "Info")
-                Text(stringResource(R.string.connected_with, it.name))
-            }
+            Icon(Icons.Default.Info, "Info")
+            Text(stringResource(R.string.connected_with, device.name))
         }
-
-        DeviceInfoDialog(dialogState, it)
     }
+
+    DeviceInfoDialog(dialogState, device)
 }
 
 @SuppressLint("MissingPermission")
