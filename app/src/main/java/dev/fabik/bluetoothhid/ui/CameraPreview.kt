@@ -232,11 +232,25 @@ fun CameraViewModel.OverlayCanvas() {
         }
 
         currentBarCode?.let {
-            it.cornerPoints?.forEach { p ->
+            val points =
+                it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
+
+            val path = Path().apply {
+                points?.forEach { (x, y) ->
+                    if (isEmpty)
+                        moveTo(x, y)
+                    lineTo(x, y)
+                }
+                close()
+            }
+
+            drawPath(path, color = Color.Blue, style = Stroke(5f))
+
+            points?.forEach { (x, y) ->
                 drawCircle(
                     color = Color.Red,
                     radius = 8f,
-                    center = Offset(p.x * scale - transX, p.y * scale - transY)
+                    center = Offset(x * scale - transX, y * scale - transY)
                 )
             }
         }
