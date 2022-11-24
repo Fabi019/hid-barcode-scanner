@@ -187,7 +187,7 @@ fun InfoDialog(
     dialogState: DialogState,
     title: String,
     onDismiss: DialogState.() -> Unit = { close() },
-    icon: @Composable () -> Unit = {},
+    icon: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) = with(dialogState) {
     if (openState) {
@@ -228,11 +228,11 @@ fun ConfirmResetDialog(
                     IconButton(
                         onClick = { confirmReset.open() },
                         modifier = Modifier
-                            .align(Alignment.CenterEnd)
                             .size(48.dp)
+                            .align(Alignment.CenterEnd)
                             .tooltip(stringResource(R.string.reset))
                     ) {
-                        Icon(Icons.Filled.Restore, "Reset $title to default")
+                        Icon(Icons.Filled.Restore, "Reset $title to default", Modifier.size(28.dp))
                     }
                 }
             },
