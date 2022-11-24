@@ -93,6 +93,9 @@ private fun SettingsTopBar() {
 }
 
 @Composable
+fun ColoredDivider() = Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+
+@Composable
 fun ConnectionSettings() {
     SwitchPreference(
         title = stringResource(R.string.auto_connect),
@@ -101,7 +104,7 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.show_unnamed),
@@ -110,7 +113,7 @@ fun ConnectionSettings() {
         preference = PreferenceStore.SHOW_UNNAMED
     )
 
-    Divider()
+    ColoredDivider()
 
     SliderPreference(
         title = stringResource(R.string.send_delay),
@@ -121,7 +124,7 @@ fun ConnectionSettings() {
         preference = PreferenceStore.SEND_DELAY
     )
 
-    Divider()
+    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.keyboard_layout),
@@ -142,7 +145,7 @@ fun AppearanceSettings() {
         preference = PreferenceStore.THEME
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.dynamic_theme),
@@ -162,7 +165,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.CODE_TYPES
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.front_camera),
@@ -171,7 +174,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.FRONT_CAMERA
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.restrict_area),
@@ -180,7 +183,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.RESTRICT_AREA
     )
 
-    Divider()
+    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.overlay_type),
@@ -190,7 +193,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.OVERLAY_TYPE
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.full_inside),
@@ -199,7 +202,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.FULL_INSIDE
     )
 
-    Divider()
+    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.scan_freq),
@@ -209,7 +212,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.SCAN_FREQUENCY
     )
 
-    Divider()
+    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.scan_res),
@@ -219,7 +222,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.SCAN_RESOLUTION
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.auto_send),
@@ -228,7 +231,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.AUTO_SEND
     )
 
-    Divider()
+    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.extra_keys),
@@ -238,7 +241,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.EXTRA_KEYS
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.play_sound),
@@ -247,7 +250,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.PLAY_SOUND
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.haptic_feedback),
@@ -256,7 +259,7 @@ fun ScannerSettings() {
         preference = PreferenceStore.VIBRATE
     )
 
-    Divider()
+    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.raw_value),
@@ -279,7 +282,7 @@ fun AboutSettings() {
         }
     )
 
-    Divider()
+    ColoredDivider()
 
     ButtonPreference(
         title = stringResource(R.string.report_issue),
@@ -290,7 +293,7 @@ fun AboutSettings() {
         }
     )
 
-    Divider()
+    ColoredDivider()
 
     ButtonPreference(
         title = stringResource(R.string.rate),
@@ -301,7 +304,7 @@ fun AboutSettings() {
         }
     )
 
-    Divider()
+    ColoredDivider()
 
     val context = LocalContext.current
 
@@ -321,14 +324,13 @@ fun AboutSettings() {
                             "https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid"
                         )
                         type = "text/plain"
-                    },
-                    shareVia
+                    }, shareVia
                 )
             )
         }
     )
 
-    Divider()
+    ColoredDivider()
 
     ButtonPreference(
         title = stringResource(R.string.build_version),
