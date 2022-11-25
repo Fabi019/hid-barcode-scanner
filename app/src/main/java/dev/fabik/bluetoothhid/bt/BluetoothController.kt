@@ -6,6 +6,9 @@ import android.bluetooth.*
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
@@ -30,7 +33,7 @@ class BluetoothController(var context: Context) {
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     private var hidDevice: BluetoothHidDevice? = null
-    private var hostDevice: BluetoothDevice? = null
+    private var hostDevice: BluetoothDevice? by mutableStateOf(null)
 
     private var autoConnectEnabled: Boolean = false
 
@@ -41,6 +44,7 @@ class BluetoothController(var context: Context) {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
 
+            hostDevice = null
             hidDevice = proxy as? BluetoothHidDevice
 
             hidDevice?.registerApp(
@@ -58,6 +62,7 @@ class BluetoothController(var context: Context) {
             Log.d(TAG, "onServiceDisconnected")
 
             hidDevice = null
+            hostDevice = null
 
             showToast(R.string.bt_proxy_disconnected)
         }
@@ -141,7 +146,9 @@ class BluetoothController(var context: Context) {
 
         hidDevice?.unregisterApp()
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
+
         hidDevice = null
+        hostDevice = null
 
         // Notify listeners that proxy is disconnected.
         deviceListener.forEach { it.invoke(null, -1) }

@@ -63,9 +63,9 @@ fun NavGraph(controller: BluetoothController) {
                 // First try to disconnect from the device.
                 // If it fails (e.g. not connected), then just navigate back to the devices screen.
                 val disconnectOrBack = {
-                    if (!controller.disconnect()) {
-                        navController.navigateUp()
-                    }
+                    controller.disconnect()
+                    navController.navigateUp()
+                    Unit
                 }
 
                 Scanner(controller.currentDevice, disconnectOrBack) {
@@ -99,7 +99,7 @@ fun NavGraph(controller: BluetoothController) {
                     }
                 } else {
                     // Remove scanner from back stack
-                    navController.popBackStack(Routes.Main, inclusive = true)
+                    // navController.popBackStack(Routes.Main, inclusive = true)
                 }
             }
         }

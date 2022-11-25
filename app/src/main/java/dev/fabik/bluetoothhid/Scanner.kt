@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -74,9 +75,7 @@ fun Scanner(
                 }
                 BarcodeValue(currentBarcode)
             }
-            currentDevice?.let {
-                DeviceInfoCard(it)
-            }
+            DeviceInfoCard(currentDevice)
         }
     }
 }
@@ -222,13 +221,11 @@ fun ToggleFlashButton(camera: Camera) {
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.DeviceInfoCard(device: BluetoothDevice) {
+fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
     val dialogState = rememberDialogState()
 
     ElevatedCard(
-        onClick = {
-            dialogState.open()
-        },
+        onClick = device?.let { { dialogState.open() } } ?: {},
         Modifier
             .padding(12.dp)
             .align(Alignment.TopCenter)
@@ -238,12 +235,19 @@ fun BoxScope.DeviceInfoCard(device: BluetoothDevice) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Info, "Info")
-            Text(stringResource(R.string.connected_with, device.name))
+            device?.let {
+                Icon(Icons.Default.Info, "Info")
+                Text(stringResource(R.string.connected_with, device.name))
+            } ?: run {
+                Icon(Icons.Rounded.Warning, "Warning")
+                Text("No device connected")
+            }
         }
     }
 
-    DeviceInfoDialog(dialogState, device)
+    device?.let {
+        DeviceInfoDialog(dialogState, it)
+    }
 }
 
 @SuppressLint("MissingPermission")
