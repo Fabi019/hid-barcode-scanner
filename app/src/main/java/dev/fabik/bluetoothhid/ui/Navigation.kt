@@ -60,30 +60,31 @@ fun NavGraph(controller: BluetoothController) {
             }
 
             composable(Routes.Main) {
-                // First try to disconnect from the device.
-                // If it fails (e.g. not connected), then just navigate back to the devices screen.
-                val disconnectOrBack = {
+                // Disconnect from device and navigate back to devices list
+                val onBack: () -> Unit = {
                     controller.disconnect()
                     navController.navigateUp()
-                    Unit
                 }
 
-                Scanner(controller.currentDevice, disconnectOrBack) {
+                Scanner(controller.currentDevice, onBack) {
                     scope.launch {
                         controller.sendString(it)
                     }
                 }
 
-                BackHandler(onBack = disconnectOrBack)
+                BackHandler(onBack = onBack)
             }
 
             composable(Routes.Settings) {
-                Settings()
-
-                BackHandler {
+                // If unable to navigate up normally, navigate back to devices list
+                val onBack = {
                     if (!navController.navigateUp())
                         navController.navigate(Routes.Devices)
                 }
+
+                Settings(onBack)
+
+                BackHandler(onBack = onBack)
             }
         }
     }
@@ -97,9 +98,6 @@ fun NavGraph(controller: BluetoothController) {
                     navController.navigate(Routes.Main) {
                         launchSingleTop = true
                     }
-                } else {
-                    // Remove scanner from back stack
-                    // navController.popBackStack(Routes.Main, inclusive = true)
                 }
             }
         }

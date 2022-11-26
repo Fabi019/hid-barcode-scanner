@@ -18,10 +18,10 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Settings() {
+fun Settings(onBackPressed: () -> Unit) {
     Scaffold(
         topBar = {
-            SettingsTopBar()
+            SettingsTopBar(onBackPressed)
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
@@ -73,18 +73,13 @@ fun Settings() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun SettingsTopBar() {
-    val navController = LocalNavigation.current
-
+private fun SettingsTopBar(onBackPressed: () -> Unit) {
     TopAppBar(
         title = { Text(stringResource(R.string.settings)) },
         navigationIcon = {
             IconButton(
-                onClick = {
-                    if (!navController.navigateUp())
-                        navController.navigate(Routes.Devices)
-                },
-                modifier = Modifier.tooltip(stringResource(R.string.back))
+                onClick = onBackPressed,
+                Modifier.tooltip(stringResource(R.string.back))
             ) {
                 Icon(Icons.Default.ArrowBack, "Back")
             }
