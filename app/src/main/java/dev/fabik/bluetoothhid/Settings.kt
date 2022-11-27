@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -24,49 +24,54 @@ fun Settings(onBackPressed: () -> Unit) {
             SettingsTopBar(onBackPressed)
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            LazyColumn(
-                Modifier
-                    .fillMaxSize()
-                    .padding(12.dp, 0.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {
-                    Text(
-                        stringResource(R.string.connection),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    ConnectionSettings()
-                }
+        Box(Modifier.padding(padding)) {
+            SettingsContent()
+        }
+    }
+}
 
-                item {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.appearance),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    AppearanceSettings()
-                }
+@Composable
+private fun SettingsContent() {
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .padding(12.dp, 0.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Text(
+                stringResource(R.string.connection),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            ConnectionSettings()
+        }
 
-                item {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.scanner),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    ScannerSettings()
-                }
+        item {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.appearance),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            AppearanceSettings()
+        }
 
-                item {
-                    Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.about), color = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(4.dp))
-                    AboutSettings()
-                }
-            }
+        item {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.scanner),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            ScannerSettings()
+        }
+
+        item {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.about), color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(4.dp))
+            AboutSettings()
         }
     }
 }
