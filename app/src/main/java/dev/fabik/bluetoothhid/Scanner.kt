@@ -39,6 +39,13 @@ import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
+/**
+ * Scanner screen with camera preview.
+ *
+ * @param currentDevice the device that is currently connected, can be null if no device is connected
+ * @param onDisconnect callback to disconnect from the current device
+ * @param sendText callback to send text to the current device
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Scanner(
@@ -80,6 +87,12 @@ fun Scanner(
     }
 }
 
+/**
+ * Area for the camera preview.
+ *
+ * @param onCameraReady callback to be called when the camera is ready
+ * @param onBarcodeDetected callback to be called when a barcode is detected
+ */
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (Camera) -> Unit,
@@ -123,6 +136,11 @@ private fun CameraPreviewArea(
     }
 }
 
+/**
+ * Text showing the current barcode value. If the value is null, a generic message is shown instead.
+ *
+ * @param currentBarcode the current barcode value
+ */
 @Composable
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
@@ -158,6 +176,13 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     }
 }
 
+/**
+ * Floating action button to send the current barcode to the connected device.
+ * If the currentBarcode is null, the button is hidden.
+ *
+ * @param currentBarcode the current barcode value
+ * @param onClick callback to send text to the current device
+ */
 @Composable
 private fun SendToDeviceFAB(
     currentBarcode: String?,
@@ -172,6 +197,12 @@ private fun SendToDeviceFAB(
     }
 }
 
+/**
+ * Scanner app bar with a toggle flash button and a disconnect button.
+ *
+ * @param camera the camera to toggle the flash on
+ * @param onDisconnect callback to disconnect from the current device
+ */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
@@ -194,6 +225,11 @@ private fun ScannerAppBar(
     )
 }
 
+/**
+ * Toggle flash button to toggle the flash on the camera.
+ *
+ * @param camera the camera to toggle the flash on
+ */
 @Composable
 fun ToggleFlashButton(camera: Camera) {
     val torchState by camera.cameraInfo.torchState.observeAsState()
@@ -218,6 +254,13 @@ fun ToggleFlashButton(camera: Camera) {
     }
 }
 
+/**
+ * Card showing the current device name and address. On click a dialog is shown with some
+ * information about the device.
+ * If the device is null, a generic message is shown instead.
+ *
+ * @param device the current device
+ */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -250,6 +293,9 @@ fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
     }
 }
 
+/**
+ * Dialog showing information about the current device.
+ */
 @SuppressLint("MissingPermission")
 @Composable
 fun DeviceInfoDialog(
