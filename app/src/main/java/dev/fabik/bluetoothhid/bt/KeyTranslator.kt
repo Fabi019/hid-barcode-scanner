@@ -35,7 +35,7 @@ class KeyTranslator(context: Context) {
 
     init {
         assetManager.list("keymaps")?.forEach {
-            keyMaps[it.removeSuffix(".cfg")] = loadKeymap("keymaps/$it")
+            keyMaps[it.removeSuffix(".layout")] = loadKeymap("keymaps/$it")
         }
 
         baseMap = keyMaps.remove("us") ?: run {
@@ -56,25 +56,16 @@ class KeyTranslator(context: Context) {
         }.getOrNull() ?: return keymap
 
         lines.forEach {
-            if (it.startsWith("#") || it.isBlank())
+            if (it.startsWith("##") || it.isBlank())
                 return@forEach
 
             runCatching {
-                val parts = it.split("\t")
-                val scanCode = parts[0].toInt(16).toByte()
+                val (key, code, modifier) = it.split(" ")
 
-                val keys = parts.subList(1, parts.size)
-
-                keys.forEachIndexed { index, key ->
-                    val char = key.first()
-                    when (index) {
-                        0 -> keymap[char] = Key(0, scanCode)
-                        1 -> keymap[char] = Key(LSHIFT, scanCode)
-                        2 -> keymap[char] = Key(RALT, scanCode)
-                    }
-                }
-            }.onFailure {
-                Log.e(TAG, "Failed to parse keymap line: $it", it)
+                keymap[key.first()] =
+                    Key(modifier.toByte(16), code.toByte(16))
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to parse keymap line: $it", e)
             }
         }
 
