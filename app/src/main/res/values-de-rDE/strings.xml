@@ -150,6 +150,7 @@
     <string-array name="keyboard_layout_values">
         <item>English (US)</item>
         <item>Deutsch (DE)</item>
+        <item>Französisch (FR)</item>
     </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
 </resources>

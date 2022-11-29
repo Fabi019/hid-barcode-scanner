@@ -189,6 +189,7 @@ class BluetoothController(var context: Context) {
             string, sendDelay.toLong(), extraKeys,
             when (layout) {
                 1 -> "de"
+                2 -> "fr"
                 else -> "us"
             }
         )

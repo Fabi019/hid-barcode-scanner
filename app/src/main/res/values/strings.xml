@@ -153,5 +153,6 @@
     <string-array name="keyboard_layout_values">
         <item>English (US)</item>
         <item>German (DE)</item>
+        <item>French (FR)</item>
     </string-array>
 </resources>
