@@ -190,6 +190,7 @@ class BluetoothController(var context: Context) {
             when (layout) {
                 1 -> "de"
                 2 -> "fr"
+                3 -> "en"
                 else -> "us"
             }
         )
