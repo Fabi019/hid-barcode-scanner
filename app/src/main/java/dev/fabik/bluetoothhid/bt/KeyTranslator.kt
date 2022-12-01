@@ -38,7 +38,7 @@ class KeyTranslator(context: Context) {
             keyMaps[it.removeSuffix(".layout")] = loadKeymap("keymaps/$it")
         }
 
-        baseMap = keyMaps.remove("us") ?: run {
+        baseMap = keyMaps.remove("base") ?: run {
             Log.e(TAG, "No base keymap found")
             emptyMap()
         }
