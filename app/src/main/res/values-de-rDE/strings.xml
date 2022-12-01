@@ -152,6 +152,7 @@
         <item>Deutsch (DE)</item>
         <item>Französisch (FR)</item>
         <item>Englisch (GB)</item>
+        <item>Spanisch (ES)</item>
     </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
 </resources>
