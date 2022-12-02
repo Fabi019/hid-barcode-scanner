@@ -11,8 +11,8 @@ android {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
         targetSdk 33
-        versionCode 33
-        versionName "1.5.4"
+        versionCode 34
+        versionName "1.5.5"
 
         def gitCommitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\""
