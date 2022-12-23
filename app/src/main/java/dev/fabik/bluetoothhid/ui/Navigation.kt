@@ -3,52 +3,36 @@ package dev.fabik.bluetoothhid.ui
 import android.app.Activity
 import android.bluetooth.BluetoothProfile
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.Devices
 import dev.fabik.bluetoothhid.Scanner
-import dev.fabik.bluetoothhid.Settings
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import kotlinx.coroutines.launch
 
 object Routes {
     const val Devices = "Devices"
     const val Main = "Main"
-    const val Settings = "Settings"
 }
 
 val LocalNavigation = staticCompositionLocalOf<NavHostController> {
     error("No Navigation provided")
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NavGraph(controller: BluetoothController) {
     val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
-    val navController = rememberAnimatedNavController()
-
-    val slideDistance = LocalDensity.current.run { 30.dp.roundToPx() }
+    val navController = rememberNavController()
 
     CompositionLocalProvider(LocalNavigation provides navController) {
-        AnimatedNavHost(
+        NavHost(
             navController,
-            startDestination = activity.intent.dataString ?: Routes.Devices,
-            enterTransition = { inAnimation(true, slideDistance) },
-            exitTransition = { outAnimation(true, slideDistance) },
-            popEnterTransition = { inAnimation(false, slideDistance) },
-            popExitTransition = { outAnimation(false, slideDistance) }
+            startDestination = Routes.Devices,
         ) {
             composable(Routes.Devices) {
                 Devices(controller)
@@ -74,18 +58,6 @@ fun NavGraph(controller: BluetoothController) {
 
                 BackHandler(onBack = onBack)
             }
-
-            composable(Routes.Settings) {
-                // If unable to navigate up normally, navigate back to devices list
-                val onBack = {
-                    if (!navController.navigateUp())
-                        navController.navigate(Routes.Devices)
-                }
-
-                Settings(onBack)
-
-                BackHandler(onBack = onBack)
-            }
         }
     }
 
@@ -107,18 +79,3 @@ fun NavGraph(controller: BluetoothController) {
         }
     }
 }
-
-// based on soup.compose.material.motion.animation.materialSharedAxisXIn
-fun inAnimation(forward: Boolean, slideDistance: Int): EnterTransition =
-    slideInHorizontally(
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
-        initialOffsetX = { if (forward) slideDistance else -slideDistance }
-    ) + fadeIn(tween(210, 90, LinearOutSlowInEasing))
-
-// based on soup.compose.material.motion.animation.materialSharedAxisXOut
-fun outAnimation(forward: Boolean, slideDistance: Int): ExitTransition =
-    slideOutHorizontally(
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
-        targetOffsetX = { if (forward) -slideDistance else slideDistance }
-    ) + fadeOut(tween(90, 0, FastOutLinearInEasing))
-
