@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,20 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val theme by rememberPreferenceNull(PreferenceStore.THEME)
-            val useDynTheme by rememberPreferenceDefault(PreferenceStore.DYNAMIC_THEME)
-
-            if (theme == null)
-                return@setContent
-
-            BluetoothHIDTheme(
-                darkTheme = when (theme) {
-                    1 -> false
-                    2 -> true
-                    else -> isSystemInDarkTheme()
-                },
-                dynamicColor = useDynTheme
-            ) {
+            BluetoothHIDTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

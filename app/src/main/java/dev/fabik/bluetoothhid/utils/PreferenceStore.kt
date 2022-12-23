@@ -8,8 +8,10 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 val Context.dataStore by preferencesDataStore("settings")
 
@@ -71,6 +73,36 @@ fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>, initial:
 @Composable
 fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>): State<T?> {
     return remember { getPreference(pref) }.collectAsState(null)
+}
+
+@Composable
+fun <T> Context.getPreferenceStateBlocking(pref: PreferenceStore.Preference<T>): State<T> {
+    val flow = remember { getPreference(pref) }
+    return flow.collectAsState(runBlocking { flow.first() })
+}
+
+@Composable
+fun <T> rememberPreference(
+    pref: PreferenceStore.Preference<T>,
+): MutableState<T> {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val state = context.getPreferenceStateBlocking(pref)
+
+    return remember {
+        object : MutableState<T> {
+            override var value: T
+                get() = state.value
+                set(value) {
+                    scope.launch {
+                        context.setPreference(pref, value)
+                    }
+                }
+
+            override fun component1(): T = value
+            override fun component2(): (T) -> Unit = { value = it }
+        }
+    }
 }
 
 @Composable

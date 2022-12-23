@@ -3,7 +3,6 @@ package dev.fabik.bluetoothhid
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,14 +21,7 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            BluetoothHIDTheme(
-                darkTheme = when (getPreferenceBlocking(PreferenceStore.THEME)) {
-                    1 -> false
-                    2 -> true
-                    else -> isSystemInDarkTheme()
-                },
-                dynamicColor = getPreferenceBlocking(PreferenceStore.DYNAMIC_THEME)
-            ) {
+            BluetoothHIDTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
