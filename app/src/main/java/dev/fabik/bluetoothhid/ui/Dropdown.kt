@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -10,11 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.SettingsActivity
 
 @Composable
 fun Dropdown() {
     val context = LocalContext.current
-    val navController = LocalNavigation.current
 
     var showMenu by remember {
         mutableStateOf(false)
@@ -33,7 +34,7 @@ fun Dropdown() {
                 text = { Text(stringResource(R.string.settings)) },
                 onClick = {
                     showMenu = false
-                    navController.navigate(Routes.Settings)
+                    context.startActivity(Intent(context, SettingsActivity::class.java))
                 }
             )
             DropdownMenuItem(

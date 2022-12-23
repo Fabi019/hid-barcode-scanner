@@ -16,22 +16,24 @@ import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Settings(onBackPressed: () -> Unit) {
-    Scaffold(
-        topBar = {
-            SettingsTopBar(onBackPressed)
+@OptIn(ExperimentalMaterial3Api::class)
+fun SettingsTopBar(onBackPressed: () -> Unit) {
+    TopAppBar(
+        title = { Text(stringResource(R.string.settings)) },
+        navigationIcon = {
+            IconButton(
+                onClick = onBackPressed,
+                Modifier.tooltip(stringResource(R.string.back))
+            ) {
+                Icon(Icons.Default.ArrowBack, "Back")
+            }
         }
-    ) { padding ->
-        Box(Modifier.padding(padding)) {
-            SettingsContent()
-        }
-    }
+    )
 }
 
 @Composable
-private fun SettingsContent() {
+fun SettingsContent() {
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -74,22 +76,6 @@ private fun SettingsContent() {
             AboutSettings()
         }
     }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun SettingsTopBar(onBackPressed: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.settings)) },
-        navigationIcon = {
-            IconButton(
-                onClick = onBackPressed,
-                Modifier.tooltip(stringResource(R.string.back))
-            ) {
-                Icon(Icons.Default.ArrowBack, "Back")
-            }
-        }
-    )
 }
 
 @Composable

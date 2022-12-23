@@ -8,7 +8,7 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="dev.fabik.bluetoothhid"
-            android:targetClass="dev.fabik.bluetoothhid.MainActivity"
+            android:targetClass="dev.fabik.bluetoothhid.SettingsActivity"
             android:data="Settings" />
     </shortcut>
 </shortcuts>
