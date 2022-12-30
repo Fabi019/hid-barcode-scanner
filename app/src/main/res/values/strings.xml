@@ -110,6 +110,7 @@
     <string name="share">Share</string>
     <string name="share_desc">Share the app with your friends</string>
     <string name="share_via">Share via</string>
+    <string name="refresh">Refresh</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -42,12 +42,25 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Devices(controller: BluetoothController) {
+fun Devices(controller: BluetoothController) = with(viewModel<DevicesViewModel>()) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
+                    IconButton(onClick = {
+                        if (!isScanning) {
+                            refresh(controller)
+                        } else {
+                            controller.cancelScan()
+                        }
+                    }, modifier = Modifier.tooltip(stringResource(R.string.refresh))) {
+                        if (isScanning) {
+                            Icon(Icons.Default.Close, "Cancel")
+                        } else {
+                            Icon(Icons.Default.Refresh, "Refresh")
+                        }
+                    }
                     Dropdown()
                 }
             )
@@ -67,9 +80,7 @@ fun Devices(controller: BluetoothController) {
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MissingPermission")
 @Composable
-fun DeviceContent(
-    controller: BluetoothController
-) = with(viewModel<DevicesViewModel>()) {
+fun DevicesViewModel.DeviceContent(controller: BluetoothController) {
     val dialogState = rememberDialogState()
 
     DisposableEffect(controller) {

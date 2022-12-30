@@ -155,4 +155,5 @@
         <item>Spanisch (ES)</item>
     </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
+    <string name="refresh">Aktualisieren</string>
 </resources>

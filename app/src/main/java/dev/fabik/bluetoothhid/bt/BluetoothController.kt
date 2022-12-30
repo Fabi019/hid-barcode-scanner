@@ -161,6 +161,10 @@ class BluetoothController(var context: Context) {
         bluetoothAdapter?.startDiscovery()
     }
 
+    fun cancelScan() {
+        bluetoothAdapter?.cancelDiscovery()
+    }
+
     fun connect(device: BluetoothDevice) {
         // Cancel discovery because it otherwise slows down the connection.
         bluetoothAdapter?.cancelDiscovery()
