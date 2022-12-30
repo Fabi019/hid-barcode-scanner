@@ -1,6 +1,8 @@
 package dev.fabik.bluetoothhid
 
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -257,16 +259,16 @@ fun ScannerSettings() {
 
 @Composable
 fun AboutSettings() {
+    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
 
     ButtonPreference(
         title = stringResource(R.string.source_code),
         desc = stringResource(R.string.source_code_desc),
         icon = Icons.Default.Code,
-        onClick = {
-            uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
-        }
-    )
+    ) {
+        uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
+    }
 
     ColoredDivider()
 
@@ -274,10 +276,9 @@ fun AboutSettings() {
         title = stringResource(R.string.report_issue),
         desc = stringResource(R.string.report_issue_desc),
         icon = Icons.Default.BugReport,
-        onClick = {
-            uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner/issues/new")
-        }
-    )
+    ) {
+        uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner/issues/new")
+    }
 
     ColoredDivider()
 
@@ -285,14 +286,11 @@ fun AboutSettings() {
         title = stringResource(R.string.rate),
         desc = stringResource(R.string.rate_desc),
         icon = Icons.Default.Star,
-        onClick = {
-            uriHandler.openUri("market://details?id=dev.fabik.bluetoothhid")
-        }
-    )
+    ) {
+        uriHandler.openUri("market://details?id=${context.packageName}")
+    }
 
     ColoredDivider()
-
-    val context = LocalContext.current
 
     val shareVia = stringResource(R.string.share_via)
 
@@ -300,21 +298,20 @@ fun AboutSettings() {
         title = stringResource(R.string.share),
         desc = stringResource(R.string.share_desc),
         icon = Icons.Default.Share,
-        onClick = {
-            context.startActivity(
-                Intent.createChooser(
-                    Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            "https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid"
-                        )
-                        type = "text/plain"
-                    }, shareVia
-                )
+    ) {
+        context.startActivity(
+            Intent.createChooser(
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        "https://play.google.com/store/apps/details?id=${context.packageName}"
+                    )
+                    type = "text/plain"
+                }, shareVia
             )
-        }
-    )
+        )
+    }
 
     ColoredDivider()
 
@@ -329,5 +326,12 @@ fun AboutSettings() {
             BuildConfig.FLAVOR
         ),
         icon = Icons.Default.Info
-    )
+    ) {
+        context.startActivity(
+            Intent().apply {
+                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+        )
+    }
 }
