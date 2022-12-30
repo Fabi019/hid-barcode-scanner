@@ -189,9 +189,9 @@ fun CameraViewModel.OverlayCanvas() {
     val focusCircleAlpha by transition.animateFloat(
         transitionSpec = {
             if (true isTransitioningTo false) {
-                tween(durationMillis = 100)
+                tween(100)
             } else {
-                tween(durationMillis = 50)
+                tween(50)
             }
         }, label = "focusCircleAlpha"
     ) { state -> if (state) 1f else 0f }
@@ -245,14 +245,6 @@ fun CameraViewModel.OverlayCanvas() {
             }
 
             drawPath(path, color = Color.Blue, style = Stroke(5f))
-
-            points?.forEach { (x, y) ->
-                drawCircle(
-                    color = Color.Red,
-                    radius = 8f,
-                    center = Offset(x * scale - transX, y * scale - transY)
-                )
-            }
         }
 
         focusTouchPoint?.let {
