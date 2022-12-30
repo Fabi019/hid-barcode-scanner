@@ -2,6 +2,7 @@ package dev.fabik.bluetoothhid
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -133,14 +134,16 @@ fun AppearanceSettings() {
         preference = PreferenceStore.THEME
     )
 
-    ColoredDivider()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        ColoredDivider()
 
-    SwitchPreference(
-        title = stringResource(R.string.dynamic_theme),
-        desc = stringResource(R.string.dynamic_theme_desc),
-        icon = Icons.Default.AutoAwesome,
-        preference = PreferenceStore.DYNAMIC_THEME
-    )
+        SwitchPreference(
+            title = stringResource(R.string.dynamic_theme),
+            desc = stringResource(R.string.dynamic_theme_desc),
+            icon = Icons.Default.AutoAwesome,
+            preference = PreferenceStore.DYNAMIC_THEME
+        )
+    }
 }
 
 @Composable
