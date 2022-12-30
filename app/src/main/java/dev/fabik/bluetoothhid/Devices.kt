@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,18 +50,22 @@ fun Devices(controller: BluetoothController) = with(viewModel<DevicesViewModel>(
             TopAppBar(
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
-                    IconButton(onClick = {
-                        if (!isScanning) {
-                            refresh(controller)
-                        } else {
-                            controller.cancelScan()
-                        }
-                    }, modifier = Modifier.tooltip(stringResource(R.string.refresh))) {
-                        if (isScanning) {
-                            Icon(Icons.Default.Close, "Cancel")
-                        } else {
-                            Icon(Icons.Default.Refresh, "Refresh")
-                        }
+                    IconButton(
+                        onClick = {
+                            if (!isScanning) {
+                                refresh(controller)
+                            } else {
+                                controller.cancelScan()
+                            }
+                        },
+                        modifier = Modifier.tooltip(
+                            if (isScanning) stringResource(R.string.cancel) else stringResource(R.string.refresh)
+                        )
+                    ) {
+                        Icon(
+                            if (isScanning) Icons.Default.Close else Icons.Default.Refresh,
+                            "Refresh"
+                        )
                     }
                     Dropdown()
                 }
@@ -85,6 +91,7 @@ fun DevicesViewModel.DeviceContent(controller: BluetoothController) {
 
     DisposableEffect(controller) {
         isScanning = controller.isScanning
+        isBluetoothEnabled = controller.bluetoothEnabled
 
         if (pairedDevices.isEmpty()) {
             pairedDevices.addAll(controller.pairedDevices)
@@ -137,30 +144,29 @@ fun DevicesViewModel.DeviceContent(controller: BluetoothController) {
  */
 @Composable
 fun DevicesViewModel.BroadcastListener() {
+    SystemBroadcastReceiver(BluetoothAdapter.ACTION_STATE_CHANGED) { intent ->
+        isBluetoothEnabled =
+            intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) == BluetoothAdapter.STATE_ON
+    }
+
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
-        Log.d("Discovery", "isDiscovering")
         isScanning = true
         foundDevices.clear()
     }
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-        Log.d("Discovery", "FinishedDiscovering")
         isScanning = false
     }
 
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            it?.getParcelableExtra(
-                BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java
-            )
+            it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
         } else {
             @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         }?.let { dev ->
             if (!foundDevices.contains(dev)) {
                 foundDevices.add(dev)
             }
-
-            Log.d("Discovery", "Found: $dev")
         }
     }
 }
@@ -185,10 +191,15 @@ fun DevicesViewModel.DeviceList(
             .padding(12.dp, 0.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        if (!isBluetoothEnabled) {
+            item {
+                BluetoothDisabledCard()
+            }
+        }
+
         item {
             Text(
-                stringResource(R.string.scanned_devices),
-                color = MaterialTheme.colorScheme.primary
+                stringResource(R.string.scanned_devices), color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -200,7 +211,7 @@ fun DevicesViewModel.DeviceList(
 
         // Filter out unnamed devices depending on preference
         with(foundDevices.filter { showUnnamed || it.name != null }) {
-            if (isEmpty()) {
+            if (isEmpty() || !isBluetoothEnabled) {
                 item {
                     RequireLocationPermission {
                         if (!isScanning) {
@@ -210,8 +221,12 @@ fun DevicesViewModel.DeviceList(
                 }
             } else {
                 items(this) { d ->
-                    DeviceCard(d) {
-                        onConnect(d)
+                    runCatching {
+                        DeviceCard(d) {
+                            onConnect(d)
+                        }
+                    }.onFailure {
+                        Log.e("DeviceList", "Failed to get device info", it)
                     }
                 }
             }
@@ -220,19 +235,22 @@ fun DevicesViewModel.DeviceList(
         item {
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.paired_devices),
-                color = MaterialTheme.colorScheme.primary
+                stringResource(R.string.paired_devices), color = MaterialTheme.colorScheme.primary
             )
         }
 
-        if (pairedDevices.isEmpty()) {
+        if (pairedDevices.isEmpty() || !isBluetoothEnabled) {
             item {
                 Text(stringResource(R.string.no_paired_devices))
             }
         } else {
             items(pairedDevices) {
-                DeviceCard(it) {
-                    onConnect(it)
+                runCatching {
+                    DeviceCard(it) {
+                        onConnect(it)
+                    }
+                }.onFailure {
+                    Log.e("DeviceList", "Failed to get device info", it)
                 }
             }
         }
@@ -240,8 +258,7 @@ fun DevicesViewModel.DeviceList(
         item {
             Box(Modifier.fillMaxWidth()) {
                 TextButton(
-                    onClick = onSkip,
-                    Modifier.align(Alignment.Center)
+                    onClick = onSkip, Modifier.align(Alignment.Center)
                 ) {
                     Text(stringResource(R.string.skip))
                 }
@@ -317,15 +334,47 @@ fun DeviceCard(
 
     DeviceInfoDialog(infoDialog, device)
 
-    ConfirmDialog(
-        confirmDialog,
-        stringResource(R.string.unpair_device, deviceName),
-        onConfirm = {
-            device.removeBond()
-            close()
-        }
-    ) {
+    ConfirmDialog(confirmDialog, stringResource(R.string.unpair_device, deviceName), onConfirm = {
+        device.removeBond()
+        close()
+    }) {
         Text(stringResource(R.string.unpair_desc))
+    }
+}
+
+/**
+ * Card that shows if Bluetooth is disabled. Includes a button to trigger a enable dialog.
+ */
+@SuppressLint("MissingPermission")
+@Composable
+fun BluetoothDisabledCard() {
+    val context = LocalContext.current
+
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Column(
+            Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(Icons.Default.BluetoothDisabled, null, Modifier.size(64.dp))
+
+            Text(stringResource(R.string.bluetooth_disabled), style = Typography.headlineMedium)
+            Spacer(Modifier.height(8.dp))
+
+            Text(stringResource(R.string.enable_bluetooth), style = Typography.bodyMedium)
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { context.startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)) },
+            ) {
+                Text(stringResource(R.string.enable_bluetooth_btn))
+            }
+        }
     }
 }
 

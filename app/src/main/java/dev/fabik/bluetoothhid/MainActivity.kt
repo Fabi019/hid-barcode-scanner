@@ -1,8 +1,6 @@
 package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -44,10 +42,6 @@ class MainActivity : ComponentActivity() {
                         ComposableLifecycle { _, event ->
                             when (event) {
                                 Lifecycle.Event.ON_START -> {
-                                    if (!bluetoothController.bluetoothEnabled) {
-                                        startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                                    }
-
                                     scope.launch {
                                         if (!bluetoothController.register()) {
                                             Toast.makeText(

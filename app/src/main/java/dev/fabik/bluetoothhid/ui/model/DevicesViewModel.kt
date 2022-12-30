@@ -18,6 +18,8 @@ class DevicesViewModel : ViewModel() {
     var isScanning by mutableStateOf(false)
     var isRefreshing by mutableStateOf(false)
 
+    var isBluetoothEnabled by mutableStateOf(false)
+
     fun refresh(controller: BluetoothController) {
         viewModelScope.launch {
             isRefreshing = true

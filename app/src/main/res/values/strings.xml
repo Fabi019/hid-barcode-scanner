@@ -111,6 +111,10 @@
     <string name="share_desc">Share the app with your friends</string>
     <string name="share_via">Share via</string>
     <string name="refresh">Refresh</string>
+    <string name="cancel">Cancel</string>
+    <string name="bluetooth_disabled">Bluetooth is disabled</string>
+    <string name="enable_bluetooth">Please enable Bluetooth in the system settings or by clicking the button below.</string>
+    <string name="enable_bluetooth_btn">Enable Bluetooth</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

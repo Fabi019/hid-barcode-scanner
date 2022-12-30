@@ -156,4 +156,8 @@
     </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
     <string name="refresh">Aktualisieren</string>
+    <string name="bluetooth_disabled">Bluetooth ist deaktiviert</string>
+    <string name="enable_bluetooth">Bitte aktivieren Sie Bluetooth in den Systemeinstellungen oder indem Sie auf die Schaltfläche unten klicken.</string>
+    <string name="enable_bluetooth_btn">Bluetooth aktivieren</string>
+    <string name="cancel">Abbrechen</string>
 </resources>
