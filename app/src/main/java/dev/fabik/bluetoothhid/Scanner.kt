@@ -283,7 +283,7 @@ fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
                 Text(stringResource(R.string.connected_with, device.name))
             } ?: run {
                 Icon(Icons.Rounded.Warning, "Warning")
-                Text("No device connected")
+                Text(stringResource(R.string.no_device))
             }
         }
     }

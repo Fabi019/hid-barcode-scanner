@@ -24,7 +24,7 @@
     <string name="full_inside">Komplett enthalten</string>
     <string name="full_inside_desc">Codes müssen komplett im Bereich enthalten sein</string>
     <string name="scan_freq">Scan Geschwindigkeit</string>
-    <string name="scan_freq_desc">Intervall in dem das Bild analysiert wird</string>
+    <string name="scan_freq_desc">Intervall in dem das Bild analysiert wird. Höhere Frequenzen führen zu einer größeren CPU Nutzung.</string>
     <string name="scan_res">Scan Auflösung</string>
     <string name="auto_send">Automatisch Senden</string>
     <string name="auto_send_desc">Senden von neuen Codes senden</string>
@@ -160,4 +160,6 @@
     <string name="enable_bluetooth">Bitte aktivieren Sie Bluetooth in den Systemeinstellungen oder indem Sie auf die Schaltfläche unten klicken.</string>
     <string name="enable_bluetooth_btn">Bluetooth aktivieren</string>
     <string name="cancel">Abbrechen</string>
+    <string name="no_device">Kein Gerät verbunden</string>
+    <string name="code_types_desc_short">Aktivieren Sie nur bestimmte Typen, um die Scangeschwindigkeit zu erhöhen</string>
 </resources>

@@ -23,13 +23,13 @@
     <string name="full_inside">Full inside</string>
     <string name="full_inside_desc">Codes need to be fully in the area</string>
     <string name="scan_freq">Scan frequency</string>
-    <string name="scan_freq_desc">Interval in which the image is analyzed</string>
+    <string name="scan_freq_desc">Interval in which the image is analyzed. Higher frequencies will lead to a higher CPU usage.</string>
     <string name="scan_res">Scan resolution</string>
     <string name="scan_res_desc">Resolution of the analyzed image. Higher resolutions take longer to analyze.</string>
     <string name="auto_send">Auto-send</string>
     <string name="auto_send_desc">Send any new detected codes</string>
     <string name="extra_keys">Extra keys</string>
-    <string name="extra_keys_desc">Specify which key should be appended</string>
+    <string name="extra_keys_desc">Specify which key should be appended to the end of each code</string>
     <string name="play_sound">Scan sound</string>
     <string name="play_sound_desc">Play sound when scanning a code</string>
     <string name="raw_value">Raw value</string>
@@ -71,6 +71,7 @@
     <string name="uuids">UUIDs</string>
     <string name="code_types">Code types</string>
     <string name="code_types_desc">Only enable desired types to improve scanning speed. Select none to enable all.</string>
+    <string name="code_types_desc_short">Enable only specific types to improve scanning speed</string>
     <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
     <string name="bt_proxy_disconnected">BT-Proxy disconnected!</string>
     <string name="bt_proxy_connected">BT-Proxy connected!</string>
@@ -115,6 +116,7 @@
     <string name="bluetooth_disabled">Bluetooth is disabled</string>
     <string name="enable_bluetooth">Please enable Bluetooth in the system settings or by clicking the button below.</string>
     <string name="enable_bluetooth_btn">Enable Bluetooth</string>
+    <string name="no_device">No device connected</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
