@@ -150,7 +150,8 @@ fun AppearanceSettings() {
 fun ScannerSettings() {
     CheckBoxPreference(
         title = stringResource(R.string.code_types),
-        desc = stringResource(R.string.code_types_desc),
+        desc = stringResource(R.string.code_types_desc_short),
+        descLong = stringResource(R.string.code_types_desc),
         valueStrings = stringArrayResource(R.array.code_types_values),
         icon = Icons.Default.QrCode2,
         preference = PreferenceStore.CODE_TYPES

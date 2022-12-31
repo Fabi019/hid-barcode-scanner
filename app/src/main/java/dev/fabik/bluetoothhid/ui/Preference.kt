@@ -109,12 +109,12 @@ fun ComboBoxPreference(
     val dialogState = rememberDialogState()
 
     selectedItem?.let { s ->
-        ComboBoxDialog(dialogState, title, s, values, onReset = onReset) {
+        ComboBoxDialog(dialogState, title, s, values, onReset = onReset, description = desc) {
             onSelect(it)
         }
     }
 
-    ButtonPreference(title, desc, icon) {
+    ButtonPreference(title, values[selectedItem ?: 0], icon) {
         dialogState.open()
     }
 }
@@ -167,13 +167,14 @@ fun SliderPreference(
             value,
             range,
             steps,
-            onReset = onReset
+            onReset = onReset,
+            description = desc
         ) {
             onSelect(it)
         }
     }
 
-    ButtonPreference(title, desc, icon) {
+    ButtonPreference(title, valueFormat.format(value), icon) {
         dialogState.open()
     }
 }
@@ -182,6 +183,7 @@ fun SliderPreference(
 fun CheckBoxPreference(
     title: String,
     desc: String,
+    descLong: String? = desc,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<Set<String>>
@@ -191,6 +193,7 @@ fun CheckBoxPreference(
     CheckBoxPreference(
         title,
         desc,
+        descLong,
         selectedValues = value?.map { v -> v.toInt() }?.toSet(),
         valueStrings,
         icon,
@@ -204,6 +207,7 @@ fun CheckBoxPreference(
 fun CheckBoxPreference(
     title: String,
     desc: String,
+    descLong: String? = desc,
     selectedValues: Set<Int>?,
     valueStrings: Array<String>,
     icon: ImageVector? = null,
@@ -213,7 +217,14 @@ fun CheckBoxPreference(
     val dialogState = rememberDialogState()
 
     selectedValues?.let {
-        CheckBoxDialog(dialogState, title, it, valueStrings, onReset = onReset) { v ->
+        CheckBoxDialog(
+            dialogState,
+            title,
+            it,
+            valueStrings,
+            onReset = onReset,
+            description = descLong
+        ) { v ->
             onSelect(v.toSet())
         }
     }

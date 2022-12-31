@@ -42,6 +42,7 @@ fun CheckBoxDialog(
     selectedValues: Set<Int>,
     valueStrings: Array<String>,
     onReset: () -> Unit,
+    description: String? = null,
     onDismiss: () -> Unit = {},
     onConfirm: (List<Int>) -> Unit
 ) {
@@ -58,6 +59,12 @@ fun CheckBoxDialog(
         onDismiss()
     }, onReset = onReset) {
         LazyColumn {
+            description?.let {
+                item {
+                    Text(it)
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
             itemsIndexed(valueStrings) { index, item ->
                 val selected = currentSelection.contains(index)
                 Row(
@@ -100,6 +107,7 @@ fun ComboBoxDialog(
     selectedItem: Int,
     values: Array<String>,
     onReset: () -> Unit,
+    description: String? = null,
     onDismiss: () -> Unit = {},
     onConfirm: (Int) -> Unit
 ) {
@@ -116,6 +124,12 @@ fun ComboBoxDialog(
         onDismiss()
     }, onReset = onReset) {
         LazyColumn {
+            description?.let {
+                item {
+                    Text(it)
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
             itemsIndexed(values) { index, item ->
                 val selected = currentSelection == index
                 Row(
@@ -150,6 +164,7 @@ fun SliderDialog(
     range: ClosedFloatingPointRange<Float>,
     steps: Int = 0,
     onReset: () -> Unit,
+    description: String? = null,
     onDismiss: () -> Unit = {},
     onValueChange: (Float) -> Unit
 ) {
@@ -166,6 +181,11 @@ fun SliderDialog(
         onDismiss()
     }, onReset = onReset) {
         Column {
+            description?.let {
+                Text(it)
+                Spacer(Modifier.height(16.dp))
+            }
+
             Text(valueFormat.format(sliderPosition))
 
             Slider(
