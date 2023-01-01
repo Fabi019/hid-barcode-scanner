@@ -11,10 +11,7 @@ import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuPositionProvider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -89,7 +86,8 @@ fun TooltipContent(
         modifier = Modifier
             .alpha(alpha)
             .padding(4.dp),
-        shape = MaterialTheme.shapes.extraSmall
+        shape = MaterialTheme.shapes.extraSmall,
+        elevation = CardDefaults.elevatedCardElevation(4.dp),
     ) {
         Box(modifier = Modifier.padding(8.dp)) {
             content()
