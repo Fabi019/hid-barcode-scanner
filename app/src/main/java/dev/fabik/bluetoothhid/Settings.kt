@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -18,22 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun SettingsTopBar(onBackPressed: () -> Unit) {
-    TopAppBar(
-        title = { Text(stringResource(R.string.settings)) },
-        navigationIcon = {
-            IconButton(
-                onClick = onBackPressed,
-                Modifier.tooltip(stringResource(R.string.back))
-            ) {
-                Icon(Icons.Default.ArrowBack, "Back")
-            }
-        }
-    )
-}
 
 @Composable
 fun SettingsContent() {
