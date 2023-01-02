@@ -141,6 +141,7 @@
         <item>None</item>
         <item>Return</item>
         <item>Tab</item>
+        <item>Space</item>
     </string-array>
     <string-array name="code_types_values">
         <item>CODE_128</item>

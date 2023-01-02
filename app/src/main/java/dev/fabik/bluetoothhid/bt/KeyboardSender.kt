@@ -26,8 +26,9 @@ open class KeyboardSender(
 
     suspend fun sendString(string: String, sendDelay: Long, appendKey: Int, locale: String) {
         when (appendKey) {
-            1 -> string + "\n"
-            2 -> string + "\t"
+            1 -> "$string\n"
+            2 -> "$string\t"
+            3 -> "$string "
             else -> string
         }.forEach {
             val (modifier, key) = keyboardTranslator.translate(it, locale)

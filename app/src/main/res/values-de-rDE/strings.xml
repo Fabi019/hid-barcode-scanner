@@ -131,6 +131,7 @@
         <item>Keine</item>
         <item>Enter</item>
         <item>Tab</item>
+        <item>Leerzeichen</item>
     </string-array>
     <string-array name="code_types_values">
         <item>CODE_128</item>
