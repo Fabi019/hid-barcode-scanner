@@ -291,7 +291,7 @@ fun DeviceCard(
     val infoDialog = rememberDialogState()
     val confirmDialog = rememberDialogState()
 
-    val deviceName = device.name ?: stringResource(R.string.unknown)
+    val deviceName = device.name ?: ""
 
     ElevatedCard(
         onClick,
