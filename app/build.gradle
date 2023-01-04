@@ -91,7 +91,7 @@ dependencies {
     testImplementation 'org.mockito.kotlin:mockito-kotlin:4.1.0'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
 
     debugImplementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
