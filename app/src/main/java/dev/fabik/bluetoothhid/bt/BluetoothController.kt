@@ -196,6 +196,7 @@ class BluetoothController(var context: Context) {
                 2 -> "fr"
                 3 -> "en"
                 4 -> "es"
+                5 -> "it"
                 else -> "us"
             }
         )
