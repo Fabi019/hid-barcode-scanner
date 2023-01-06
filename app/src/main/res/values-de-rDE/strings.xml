@@ -54,7 +54,7 @@
     <string name="location_enable">Standort muss auf dem Gerät aktiviert sein.</string>
     <string name="open_location_settings">Standort Einstellungen öffnen</string>
     <string name="connecting">Verbinde…</string>
-    <string name="connect_help">Falls keine Verbindung möglich sein sollte, muss das Gerät zunächst entfernt werden und dann erneut von der App aus verbunden werden.</string>
+    <string name="connect_help">Falls keine Verbindung möglich sein sollte, muss das Gerät zunächst auf beiden Seiten entfernt werden und dann erneut von der App aus verbunden werden.</string>
     <string name="haptic_feedback">Haptisches Feedback</string>
     <string name="haptic_feedback_desc">Vibriert wenn ein neuer Code gescannt wird</string>
     <string name="connected_with">Verbunden mit: %s</string>

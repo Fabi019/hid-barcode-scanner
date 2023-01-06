@@ -56,7 +56,7 @@
     <string name="location_enable">Location needs to be enabled on your device.</string>
     <string name="open_location_settings">Open Location Settings</string>
     <string name="connecting">Connecting…</string>
-    <string name="connect_help">If you are unable to connect, unpair the device first then try connecting to it again from within the app.</string>
+    <string name="connect_help">If you are unable to connect, unpair the device on both sides then try connecting to it again from within the app.</string>
     <string name="haptic_feedback">Haptic feedback</string>
     <string name="haptic_feedback_desc">Vibrates when scanning a new code</string>
     <string name="connected_with">Connected with: %s</string>
