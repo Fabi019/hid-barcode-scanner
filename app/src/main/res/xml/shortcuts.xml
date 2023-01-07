@@ -1,6 +1,6 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
-        android:shortcutId="compose"
+        android:shortcutId="settings"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:shortcutShortLabel="@string/settings"
@@ -8,7 +8,6 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="dev.fabik.bluetoothhid"
-            android:targetClass="dev.fabik.bluetoothhid.SettingsActivity"
-            android:data="Settings" />
+            android:targetClass="dev.fabik.bluetoothhid.SettingsActivity" />
     </shortcut>
 </shortcuts>
