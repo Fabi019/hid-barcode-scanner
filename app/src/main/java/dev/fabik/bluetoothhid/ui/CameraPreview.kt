@@ -183,6 +183,7 @@ fun CameraViewModel.CameraPreview(
 fun CameraViewModel.OverlayCanvas() {
     val overlayType by rememberPreferenceNull(PreferenceStore.OVERLAY_TYPE)
     val restrictArea by rememberPreferenceNull(PreferenceStore.RESTRICT_AREA)
+    val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
 
     val transition = updateTransition(targetState = isFocusing, label = "focusCircle")
 
@@ -232,31 +233,42 @@ fun CameraViewModel.OverlayCanvas() {
         }
 
         currentBarCode?.let {
+            // Map the bar code position to the canvas
             val points =
                 it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
 
-            val path = Path().apply {
-                points?.forEach { (x, y) ->
-                    if (isEmpty)
-                        moveTo(x, y)
-                    lineTo(x, y)
+            when (highlightType) {
+                1 -> {
+                    // Draw only the corner points
+                    points?.forEach { (x, y) ->
+                        drawCircle(color = Color.Red, radius = 10f, center = Offset(x, y))
+                    }
                 }
-                close()
-            }
+                else -> {
+                    // Draw a rectangle around the barcode
+                    val path = Path().apply {
+                        points?.forEach { (x, y) ->
+                            if (isEmpty)
+                                moveTo(x, y)
+                            lineTo(x, y)
+                        }
+                        close()
+                    }
 
-            drawPath(path, color = Color.Blue, style = Stroke(5f))
+                    drawPath(path, color = Color.Blue, style = Stroke(5f))
+                }
+            }
         }
 
+        // Draw the focus circle if currently focusing
         focusTouchPoint?.let {
-            if (focusCircleAlpha != 0f) {
-                drawCircle(
-                    color = Color.White,
-                    radius = focusCircleScale * 100f,
-                    center = it,
-                    style = Stroke(5f),
-                    alpha = focusCircleAlpha
-                )
-            }
+            drawCircle(
+                color = Color.White,
+                radius = focusCircleScale * 100f,
+                center = it,
+                style = Stroke(5f),
+                alpha = focusCircleAlpha
+            )
         }
     }
 }

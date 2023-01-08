@@ -173,6 +173,16 @@ fun ScannerSettings() {
 
     ColoredDivider()
 
+    ComboBoxPreference(
+        title = "Highlight type",
+        desc = "Select how scanned codes are highlighted",
+        icon = Icons.Default.Highlight,
+        values = arrayOf("Box", "Dots"),
+        preference = PreferenceStore.HIGHLIGHT_TYPE
+    )
+
+    ColoredDivider()
+
     SwitchPreference(
         title = stringResource(R.string.full_inside),
         desc = stringResource(R.string.full_inside_desc),

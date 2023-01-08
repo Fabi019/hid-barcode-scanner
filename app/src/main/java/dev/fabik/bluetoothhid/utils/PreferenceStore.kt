@@ -48,6 +48,7 @@ open class PreferenceStore {
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false
+        val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box
     }
 }
 
