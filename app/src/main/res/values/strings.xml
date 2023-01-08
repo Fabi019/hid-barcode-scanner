@@ -29,7 +29,7 @@
     <string name="auto_send">Auto-send</string>
     <string name="auto_send_desc">Send any new detected codes</string>
     <string name="extra_keys">Extra keys</string>
-    <string name="extra_keys_desc">Specify which key should be appended to the end of each code</string>
+    <string name="extra_keys_desc">Specify which key should be appended to the end of each text sent to the PC</string>
     <string name="play_sound">Scan sound</string>
     <string name="play_sound_desc">Play sound when scanning a code</string>
     <string name="raw_value">Raw value</string>
@@ -78,7 +78,7 @@
     <string name="copied_to_clipboard">Copied to clipboard!</string>
     <string name="devices">Devices</string>
     <string name="keyboard_layout">Keyboard layout</string>
-    <string name="keyboard_layout_desc">Set the keyboard layout</string>
+    <string name="keyboard_layout_desc">Set the keyboard layout. Change if you want to type special characters or don\'t use a QWERTY layout.</string>
     <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
     <string name="disconnect">Disconnect</string>
     <string name="more">More</string>
