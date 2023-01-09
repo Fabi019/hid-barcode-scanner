@@ -116,6 +116,8 @@
     <string name="enable_bluetooth">Please enable Bluetooth in the system settings or by clicking the button below.</string>
     <string name="enable_bluetooth_btn">Enable Bluetooth</string>
     <string name="no_device">No device connected</string>
+    <string name="highlight_type">Highlight type</string>
+    <string name="highlight_type_desc">Select how detected codes are highlighted</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -164,5 +166,9 @@
         <item>English (GB)</item>
         <item>Spanish (ES)</item>
         <item>Italian (IT)</item>
+    </string-array>
+    <string-array name="highlight_values">
+        <item>Box</item>
+        <item>Dots</item>
     </string-array>
 </resources>

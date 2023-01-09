@@ -155,6 +155,10 @@
         <item>Spanisch (ES)</item>
         <item>Italienisch (IT)</item>
     </string-array>
+    <string-array name="highlight_values">
+        <item>Box</item>
+        <item>Punkte</item>
+    </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
     <string name="refresh">Aktualisieren</string>
     <string name="bluetooth_disabled">Bluetooth ist deaktiviert</string>
@@ -163,4 +167,6 @@
     <string name="cancel">Abbrechen</string>
     <string name="no_device">Kein Gerät verbunden</string>
     <string name="code_types_desc_short">Aktivieren Sie nur bestimmte Typen, um die Scangeschwindigkeit zu erhöhen</string>
+    <string name="highlight_type">Hervorhebungs Typ</string>
+    <string name="highlight_type_desc">Wähle aus wie erkannte Codes hervorgehoben werden</string>
 </resources>
