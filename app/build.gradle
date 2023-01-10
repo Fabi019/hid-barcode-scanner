@@ -79,7 +79,7 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
     implementation "androidx.camera:camera-view:$camerax_version"
 
-    bundledImplementation 'com.google.mlkit:barcode-scanning:17.0.2'
+    bundledImplementation 'com.google.mlkit:barcode-scanning:17.0.3'
 
     standardImplementation "com.google.android.gms:play-services-mlkit-barcode-scanning:$play_version"
     standardImplementation "com.google.android.gms:play-services-base:$play_version"
