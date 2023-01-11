@@ -29,10 +29,18 @@ fun NavGraph(controller: BluetoothController) {
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
+    // Handles shortcut to scanner
+    val startDestination = remember {
+        when (activity.intent.dataString) {
+            "Scanner" -> Routes.Main
+            else -> Routes.Devices
+        }
+    }
+
     CompositionLocalProvider(LocalNavigation provides navController) {
         NavHost(
             navController,
-            startDestination = Routes.Devices,
+            startDestination,
         ) {
             composable(Routes.Devices) {
                 Devices(controller)
@@ -47,7 +55,10 @@ fun NavGraph(controller: BluetoothController) {
                 // Disconnect from device and navigate back to devices list
                 val onBack: () -> Unit = {
                     controller.disconnect()
-                    navController.navigateUp()
+                    if (!navController.navigateUp()) {
+                        navController.popBackStack()
+                        navController.navigate(Routes.Devices)
+                    }
                 }
 
                 Scanner(controller.currentDevice, onBack) {
