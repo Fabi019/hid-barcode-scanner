@@ -169,4 +169,6 @@
     <string name="code_types_desc_short">Aktivieren Sie nur bestimmte Typen, um die Scangeschwindigkeit zu erhöhen</string>
     <string name="highlight_type">Hervorhebungs Typ</string>
     <string name="highlight_type_desc">Wähle aus wie erkannte Codes hervorgehoben werden</string>
+    <string name="auto_focus">Autofokus</string>
+    <string name="auto_focus_desc">Deaktivieren, falls Sie nur manuell fokussieren möchten</string>
 </resources>

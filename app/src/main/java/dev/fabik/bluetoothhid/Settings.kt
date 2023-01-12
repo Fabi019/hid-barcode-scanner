@@ -164,8 +164,8 @@ fun ScannerSettings() {
     ColoredDivider()
 
     SwitchPreference(
-        title = "Auto-focus",
-        desc = "Disable if you only want to focus by tapping the screen",
+        title = stringResource(R.string.auto_focus),
+        desc = stringResource(R.string.auto_focus_desc),
         icon = Icons.Default.HdrAuto,
         preference = PreferenceStore.AUTO_FOCUS
     )

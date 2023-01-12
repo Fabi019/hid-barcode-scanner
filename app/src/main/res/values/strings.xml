@@ -118,6 +118,8 @@
     <string name="no_device">No device connected</string>
     <string name="highlight_type">Highlight type</string>
     <string name="highlight_type_desc">Select how detected codes are highlighted</string>
+    <string name="auto_focus">Auto-focus</string>
+    <string name="auto_focus_desc">Disable if you only want to focus by tapping the screen</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
