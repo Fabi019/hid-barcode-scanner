@@ -1,8 +1,12 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.content.pm.PackageManager
+import android.hardware.camera2.CaptureRequest
 import android.util.Log
+import android.util.Rational
 import android.view.ViewGroup
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -103,6 +107,7 @@ fun CameraArea(
 }
 
 @Composable
+@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 fun CameraViewModel.CameraPreview(
     onCameraReady: (Camera) -> Unit,
     previewView: PreviewView,
@@ -116,7 +121,11 @@ fun CameraViewModel.CameraPreview(
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
     }
 
-    val preview = remember { Preview.Builder().build() }
+    val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
+
+    val preview = remember {
+        Preview.Builder().build()
+    }
 
     val cameraProvider by produceState<ProcessCameraProvider?>(null) {
         value = suspendCoroutine { cont ->
@@ -135,16 +144,36 @@ fun CameraViewModel.CameraPreview(
                 else -> CameraSelector.DEFAULT_BACK_CAMERA
             }
 
+            val viewPort = ViewPort.Builder(
+                Rational(previewView.width, previewView.height),
+                previewView.display.rotation
+            ).build()
+
             runCatching {
                 val useCaseGroup = UseCaseGroup.Builder()
-                    .setViewPort(previewView.viewPort!!)
                     .addUseCase(preview)
                     .addUseCase(imageAnalysis())
+                    .setViewPort(viewPort)
                     .build()
 
                 it.unbindAll()
                 it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                    onCameraReady(it)
+                    if (!autoFocus) {
+                        // Set focus mode to macro to disable automatic focusing
+                        val camera2Control = Camera2CameraControl.from(it.cameraControl)
+                        val options = CaptureRequestOptions.Builder()
+                            .setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_MACRO
+                            )
+                            .build()
+                        camera2Control.setCaptureRequestOptions(options)
+                            .addListener({
+                                onCameraReady(it)
+                            }, ContextCompat.getMainExecutor(context))
+                    } else {
+                        onCameraReady(it)
+                    }
                 }
             }.onFailure {
                 Log.e("CameraPreview", "Use case binding failed", it)

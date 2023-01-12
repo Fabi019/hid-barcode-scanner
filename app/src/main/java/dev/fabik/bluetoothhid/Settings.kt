@@ -163,6 +163,15 @@ fun ScannerSettings() {
 
     ColoredDivider()
 
+    SwitchPreference(
+        title = "Auto-focus",
+        desc = "Disable if you only want to focus by tapping the screen",
+        icon = Icons.Default.HdrAuto,
+        preference = PreferenceStore.AUTO_FOCUS
+    )
+
+    ColoredDivider()
+
     ComboBoxPreference(
         title = stringResource(R.string.overlay_type),
         desc = stringResource(R.string.overlay_type_desc),
