@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.content.pm.PackageManager
+import android.graphics.Paint
 import android.hardware.camera2.CaptureRequest
 import android.util.Log
 import android.util.Rational
@@ -16,9 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
@@ -27,6 +26,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
@@ -41,9 +41,9 @@ fun CameraArea(
 ) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
 
-    val cameraResolution by rememberPreferenceNull(PreferenceStore.SCAN_RESOLUTION)
-    val useRawValue by rememberPreferenceDefault(PreferenceStore.RAW_VALUE)
-    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
+    val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
+    val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
+    val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -73,20 +73,24 @@ fun CameraArea(
         }
     }
 
+    val barcodeAnalyzer = remember(scanFrequency, scanFormats) {
+        BarCodeAnalyser(
+            scanDelay = scanFrequency,
+            formats = scanFormats,
+            onNothing = { updateDetectorFPS().also { currentBarCode = null } },
+            onAnalyze = { updateCameraFPS() }
+        ) { barcodes, source ->
+            updateDetectorFPS()
+            updateScale(source, previewView)
+
+            filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
+                onBarCodeReady(it)
+            }
+        }
+    }
+
     RequiresModuleInstallation {
         CameraPreview(onCameraReady, previewView) {
-            val barcodeAnalyser = BarCodeAnalyser(
-                scanDelay = scanFrequency,
-                formats = scanFormats,
-                onNothing = { currentBarCode = null }
-            ) { barcodes, source ->
-                updateScale(source, previewView)
-
-                filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
-                    onBarCodeReady(it)
-                }
-            }
-
             ImageAnalysis.Builder()
                 .setTargetResolution(
                     when (cameraResolution) {
@@ -98,7 +102,7 @@ fun CameraArea(
                 .setOutputImageRotationEnabled(true)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build().apply {
-                    setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyser)
+                    setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyzer)
                 }
         }
     }
@@ -116,7 +120,7 @@ fun CameraViewModel.CameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
-    val frontCamera by rememberPreferenceDefault(PreferenceStore.FRONT_CAMERA)
+    val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val hasFrontCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
     }
@@ -242,6 +246,7 @@ fun CameraViewModel.OverlayCanvas() {
         val length = (x * 1.5f).coerceAtMost(y * 1.5f)
         val radius = 30f
 
+
         if (restrictArea == true) {
             scanRect = when (overlayType) {
                 1 -> Rect(Offset(x - length / 2, y - length / 4), Size(length, length / 2))
@@ -299,5 +304,56 @@ fun CameraViewModel.OverlayCanvas() {
                 alpha = focusCircleAlpha
             )
         }
+
+        // Draw debug overlay
+        if (BuildConfig.DEBUG) {
+            drawDebugOverlay(drawContext.canvas.nativeCanvas)
+        }
     }
+}
+
+fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
+    // Draw the camera fps
+    canvas.drawText(
+        "FPS: $fpsCamera, Frame latency: $latencyCamera ms",
+        10f,
+        200f,
+        Paint().apply {
+            textSize = 50f
+            color = Color.White.toArgb()
+        }
+    )
+
+    // Draw the detector stats
+    canvas.drawText(
+        "Detector latency: $detectorLatency ms",
+        10f,
+        250f,
+        Paint().apply {
+            textSize = 50f
+            color = Color.White.toArgb()
+        }
+    )
+
+    // Draw the input image size
+    canvas.drawText(
+        "Image size: ${lastSourceRes?.width}x${lastSourceRes?.height}",
+        10f,
+        300f,
+        Paint().apply {
+            color = Color.White.toArgb()
+            textSize = 50f
+        }
+    )
+
+    // Draw the preview image size
+    canvas.drawText(
+        "Preview size: ${lastPreviewRes?.width}x${lastPreviewRes?.height}",
+        10f,
+        350f,
+        Paint().apply {
+            color = Color.White.toArgb()
+            textSize = 50f
+        }
+    )
 }

@@ -30,7 +30,8 @@ class CameraViewModel : ViewModel() {
     var focusTouchPoint by mutableStateOf<Offset?>(null)
     var isFocusing by mutableStateOf(false)
 
-    private var lastSourceRes: Size? = null
+    var lastSourceRes: Size? = null
+    var lastPreviewRes: Size? = null
 
     var scale = 1f
     var transX = 0f
@@ -59,6 +60,7 @@ class CameraViewModel : ViewModel() {
             }
 
             lastSourceRes = source
+            lastPreviewRes = Size(previewView.width, previewView.height)
         }
     }
 
@@ -138,6 +140,36 @@ class CameraViewModel : ViewModel() {
         )
 
         cameraControl.setZoomRatio(newZoomRatio)
+    }
+
+    private var lastTimestamp = 0L
+    var detectorLatency = 0L
+
+    fun updateDetectorFPS() {
+        val now = System.currentTimeMillis()
+        detectorLatency = now - lastTimestamp
+        lastTimestamp = now
+    }
+
+    private var lastCameraTimestamp = 0L
+    private var lastCameraLatencyTimestamp = 0L
+    private var fpsCountCamera = 0
+    var fpsCamera = 0
+    var latencyCamera = 0L
+
+    fun updateCameraFPS() {
+        val now = System.currentTimeMillis()
+
+        latencyCamera = now - lastCameraLatencyTimestamp
+        lastCameraLatencyTimestamp = now
+
+        if (now - lastCameraTimestamp > 1000) {
+            lastCameraTimestamp = now
+            fpsCamera = fpsCountCamera
+            fpsCountCamera = 0
+        } else {
+            fpsCountCamera++
+        }
     }
 
 }

@@ -16,6 +16,7 @@ class BarCodeAnalyser(
     private val scanDelay: Int,
     private val formats: IntArray,
     private val onNothing: () -> Unit,
+    private val onAnalyze: () -> Unit,
     private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
@@ -58,5 +59,6 @@ class BarCodeAnalyser(
         } else {
             image.close()
         }
+        onAnalyze()
     }
 }
