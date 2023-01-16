@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @SuppressLint("UnsafeOptInUsageError")
 class BarCodeAnalyser(
     private val scanDelay: Int,
-    private val formats: IntArray,
+    formats: IntArray,
     private val onNothing: () -> Unit,
     private val onAnalyze: () -> Unit,
     private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
@@ -27,15 +27,17 @@ class BarCodeAnalyser(
     private var lastAnalyzedTimeStamp = 0L
     private var isBusy = AtomicBoolean(false)
 
+    private var options = BarcodeScannerOptions.Builder()
+        .setBarcodeFormats(0, *formats)
+        .build()
+
+    private val barcodeScanner = BarcodeScanning.getClient(options)
+
     override fun analyze(image: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
         val deltaTime = currentTimestamp - lastAnalyzedTimeStamp
         if (deltaTime > scanDelay && isBusy.compareAndSet(false, true)) {
             image.image?.let { imageToAnalyze ->
-                val options = BarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(0, *formats)
-                    .build()
-                val barcodeScanner = BarcodeScanning.getClient(options)
                 val imageToProcess =
                     InputImage.fromMediaImage(imageToAnalyze, image.imageInfo.rotationDegrees)
 
