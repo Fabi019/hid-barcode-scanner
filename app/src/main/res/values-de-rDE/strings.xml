@@ -171,4 +171,6 @@
     <string name="highlight_type_desc">Wähle aus wie erkannte Codes hervorgehoben werden</string>
     <string name="auto_focus">Autofokus</string>
     <string name="auto_focus_desc">Deaktivieren, falls Sie nur manuell fokussieren möchten</string>
+    <string name="bt_hid_service">Bluetooth HID Service</string>
+    <string name="service_running">Service läuft gerade</string>
 </resources>

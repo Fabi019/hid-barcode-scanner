@@ -51,7 +51,7 @@ class BluetoothService : Service() {
 
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Bluetooth HID Service",
+            getString(R.string.bt_hid_service),
             NotificationManager.IMPORTANCE_LOW
         )
 
@@ -59,8 +59,8 @@ class BluetoothService : Service() {
         manager.createNotificationChannel(channel)
 
         val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Bluetooth HID Service")
-            .setContentText("Service is running")
+            .setContentTitle(getString(R.string.bt_hid_service))
+            .setContentText(getString(R.string.service_running))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setContentIntent(pendingIntent)
