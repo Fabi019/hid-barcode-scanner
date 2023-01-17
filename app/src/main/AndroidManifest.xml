@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
@@ -55,6 +57,9 @@
         android:theme="@style/Theme.BluetoothHID"
         android:localeConfig="@xml/locales_config"
         tools:targetApi="33">
+
+        <service android:name=".bt.BluetoothService" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

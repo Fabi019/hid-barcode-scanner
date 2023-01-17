@@ -69,8 +69,8 @@
     <string name="code_types">Code Typen</string>
     <string name="code_types_desc">Aktiviere nur benötigte Typen um die Scan-Geschwindigkeit zu verbessern. Wähle keinen um alle zu aktivieren.</string>
     <string name="bt_proxy_error">Fehler in BT-Proxy! Versuche die App neuzustarten…</string>
-    <string name="bt_proxy_disconnected">BT-Proxy entfernt!</string>
-    <string name="bt_proxy_connected">BT-Proxy verbunden!</string>
+    <string name="bt_service_disconnected">BT-Service entfernt!</string>
+    <string name="bt_service_connected">BT-Service verbunden!</string>
     <string name="please_wait">Bitte warten!</string>
     <string name="copied_to_clipboard">In Zwischenablage kopiert!</string>
     <string name="devices">Geräte</string>

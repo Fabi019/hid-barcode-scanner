@@ -72,8 +72,8 @@
     <string name="code_types_desc">Only enable desired types to improve scanning speed. Select none to enable all.</string>
     <string name="code_types_desc_short">Enable only specific types to improve scanning speed</string>
     <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
-    <string name="bt_proxy_disconnected">BT-Proxy disconnected!</string>
-    <string name="bt_proxy_connected">BT-Proxy connected!</string>
+    <string name="bt_service_disconnected">BT-Service disconnected!</string>
+    <string name="bt_service_connected">BT-Service connected!</string>
     <string name="please_wait">Please wait!</string>
     <string name="copied_to_clipboard">Copied to clipboard!</string>
     <string name="devices">Devices</string>

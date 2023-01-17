@@ -1,15 +1,12 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.flow.first
@@ -54,8 +51,6 @@ class BluetoothController(var context: Context) {
                 Executors.newCachedThreadPool(),
                 hidDeviceCallback
             )
-
-            showToast(R.string.bt_proxy_connected)
         }
 
         override fun onServiceDisconnected(profile: Int) {
@@ -63,8 +58,6 @@ class BluetoothController(var context: Context) {
 
             hidDevice = null
             hostDevice = null
-
-            showToast(R.string.bt_proxy_disconnected)
         }
     }
 
@@ -176,12 +169,6 @@ class BluetoothController(var context: Context) {
         return hostDevice?.let {
             hidDevice?.disconnect(it)
         } ?: false
-    }
-
-    private fun showToast(messageId: Int) = with(context as Activity) {
-        runOnUiThread {
-            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show()
-        }
     }
 
     suspend fun sendString(string: String) = with(context) {
