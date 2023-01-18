@@ -313,11 +313,13 @@ fun CameraViewModel.OverlayCanvas() {
 }
 
 fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
+    val y = canvas.height * 0.75f
+
     // Draw the camera fps
     canvas.drawText(
         "FPS: $fpsCamera, Frame latency: $latencyCamera ms",
         10f,
-        200f,
+        y,
         Paint().apply {
             textSize = 50f
             color = Color.White.toArgb()
@@ -328,7 +330,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
     canvas.drawText(
         "Detector latency: $detectorLatency ms",
         10f,
-        250f,
+        y + 50f,
         Paint().apply {
             textSize = 50f
             color = Color.White.toArgb()
@@ -339,7 +341,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
     canvas.drawText(
         "Image size: ${lastSourceRes?.width}x${lastSourceRes?.height}",
         10f,
-        300f,
+        y + 100f,
         Paint().apply {
             color = Color.White.toArgb()
             textSize = 50f
@@ -350,7 +352,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
     canvas.drawText(
         "Preview size: ${lastPreviewRes?.width}x${lastPreviewRes?.height}",
         10f,
-        350f,
+        y + 150f,
         Paint().apply {
             color = Color.White.toArgb()
             textSize = 50f
