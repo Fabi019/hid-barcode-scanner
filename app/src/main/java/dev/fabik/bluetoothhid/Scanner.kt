@@ -83,6 +83,9 @@ fun Scanner(
                 BarcodeValue(currentBarcode)
             }
             DeviceInfoCard(currentDevice)
+            camera?.let {
+                ZoomStateInfo(it)
+            }
         }
     }
 }
@@ -290,6 +293,25 @@ fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
 
     device?.let {
         DeviceInfoDialog(dialogState, it)
+    }
+}
+
+/**
+ * Displays the current zoom-factor as a text in the top-start corner.
+ * If the factor is equal to 1.0 the text is hidden.
+ */
+@Composable
+fun BoxScope.ZoomStateInfo(camera: Camera) {
+    val zoomState by camera.cameraInfo.zoomState.observeAsState()
+    zoomState?.let {
+        if (it.zoomRatio > 1.0f) {
+            Text(
+                "%.2fx".format(it.zoomRatio),
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp),
+            )
+        }
     }
 }
 
