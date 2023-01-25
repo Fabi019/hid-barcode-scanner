@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.BluetoothService
 import dev.fabik.bluetoothhid.ui.NavGraph
@@ -61,28 +63,35 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     RequiresBluetoothPermission {
-                        LaunchedEffect(Unit) {
-                            // Start and bind bluetooth service
-                            Intent(this@MainActivity, BluetoothService::class.java).let {
-                                startForegroundService(it)
-                                bindService(it, serviceConnection, BIND_AUTO_CREATE)
-                            }
-                        }
-
                         bluetoothController?.let {
                             NavGraph(it)
+                        }
+
+                        ComposableLifecycle(LocalLifecycleOwner.current) { _, event ->
+                            when (event) {
+                                Lifecycle.Event.ON_CREATE -> {
+                                    // Start and bind bluetooth service
+                                    Intent(this@MainActivity, BluetoothService::class.java).let {
+                                        startForegroundService(it)
+                                        bindService(it, serviceConnection, BIND_AUTO_CREATE)
+                                    }
+                                }
+                                Lifecycle.Event.ON_DESTROY -> {
+                                    // Unbind and stop bluetooth service
+                                    unbindService(serviceConnection)
+                                    stopService(
+                                        Intent(
+                                            this@MainActivity,
+                                            BluetoothService::class.java
+                                        )
+                                    )
+                                }
+                                else -> {}
+                            }
                         }
                     }
                 }
             }
         }
     }
-
-    override fun onDestroy() {
-        // Stop bluetooth service when activity is destroyed
-        stopService(Intent(this, BluetoothService::class.java))
-
-        super.onDestroy()
-    }
-
 }
