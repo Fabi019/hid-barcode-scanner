@@ -24,10 +24,7 @@ class SettingsActivity : ComponentActivity() {
 
         setContent {
             BluetoothHIDTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface(Modifier.fillMaxSize()) {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
                     Scaffold(
