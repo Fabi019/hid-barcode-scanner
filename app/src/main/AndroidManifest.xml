@@ -2,16 +2,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
+    <!--
+     Explicitly declare required features to prevent Google Play
+     from filtering out the app unnecessarily.
+     -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
     <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+    <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="true" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-permission
         android:name="android.permission.BLUETOOTH"
@@ -22,12 +36,9 @@
 
     <uses-permission
         android:name="android.permission.BLUETOOTH_SCAN"
-        android:minSdkVersion="31"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
-    <uses-permission
-        android:name="android.permission.BLUETOOTH_CONNECT"
-        android:minSdkVersion="31" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <uses-permission
         android:name="android.permission.ACCESS_COARSE_LOCATION"
@@ -36,12 +47,10 @@
         android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
 
-    <uses-permission android:name="android.permission.VIBRATE" />
-
+    <!-- Permissions declared with `tools:node="remove"` will get removed during build. -->
     <uses-permission
         android:name="android.permission.INTERNET"
         tools:node="remove" />
-
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
@@ -62,6 +71,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -82,14 +92,23 @@
             </intent-filter>
         </activity>
 
+        <!--
+         Placeholder gets replaced with 'barcode' when building a standard release.
+         For a bundled version the value is set to an empty string because the bundled
+         version doesn't need any additional dependencies.
+         -->
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="${dep}" />
 
+        <!--
+         Disable any Firebase analytics/performance collection. Even if this would be
+         enabled it would not be able transmit any data as the app doesn't have permission
+         to access the current network state or the internet.
+         -->
         <meta-data
             android:name="firebase_performance_collection_deactivated"
             android:value="true" />
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
