@@ -88,18 +88,19 @@ class CameraViewModel : ViewModel() {
             fullyInside
         }
 
-        filtered.firstOrNull().let {
+        currentBarCode = filtered.firstOrNull()
+
+        currentBarCode?.let {
             if (useRawValue) {
-                it?.rawValue
+                it.rawValue
             } else {
-                it?.displayValue
-            }?.let { value ->
+                it.displayValue
+            }.let { value ->
                 if (lastBarCodeValue != value) {
                     lastBarCodeValue = value
                     result = value
                 }
             }
-            currentBarCode = it
         }
 
         return result

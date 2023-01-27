@@ -1,8 +1,9 @@
 package dev.fabik.bluetoothhid.utils
 
-import android.annotation.SuppressLint
 import android.util.Log
 import android.util.Size
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -11,13 +12,12 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.atomic.AtomicBoolean
 
-@SuppressLint("UnsafeOptInUsageError")
+
 class BarCodeAnalyser(
     private val scanDelay: Int,
     formats: IntArray,
-    private val onNothing: () -> Unit,
     private val onAnalyze: () -> Unit,
-    private val onBarcodeDetected: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
+    private val onResult: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     companion object {
@@ -27,15 +27,18 @@ class BarCodeAnalyser(
     private var lastAnalyzedTimeStamp = 0L
     private var isBusy = AtomicBoolean(false)
 
-    private var options = BarcodeScannerOptions.Builder()
+    private val options = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(0, *formats)
         .build()
 
     private val barcodeScanner = BarcodeScanning.getClient(options)
 
+    @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
         val deltaTime = currentTimestamp - lastAnalyzedTimeStamp
+
+        // Check if the scan delay has passed and the analyzer is not currently processing an image
         if (deltaTime > scanDelay && isBusy.compareAndSet(false, true)) {
             image.image?.let { imageToAnalyze ->
                 val imageToProcess =
@@ -43,11 +46,7 @@ class BarCodeAnalyser(
 
                 barcodeScanner.process(imageToProcess)
                     .addOnSuccessListener { barcodes ->
-                        if (barcodes.isNotEmpty()) {
-                            onBarcodeDetected(barcodes, Size(image.width, image.height))
-                        } else {
-                            onNothing()
-                        }
+                        onResult(barcodes, Size(image.width, image.height))
                     }
                     .addOnFailureListener { exception ->
                         Log.d(TAG, "Something went wrong $exception")
@@ -61,6 +60,7 @@ class BarCodeAnalyser(
         } else {
             image.close()
         }
+
         onAnalyze()
     }
 }

@@ -77,7 +77,6 @@ fun CameraArea(
         BarCodeAnalyser(
             scanDelay = scanFrequency,
             formats = scanFormats,
-            onNothing = { updateDetectorFPS().also { currentBarCode = null } },
             onAnalyze = { updateCameraFPS() }
         ) { barcodes, source ->
             updateDetectorFPS()
