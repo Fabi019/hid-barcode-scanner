@@ -35,7 +35,7 @@ fun Dropdown() {
 
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
-                text = { Text("Refresh proxy") },
+                text = { Text(stringResource(R.string.refresh_proxy)) },
                 leadingIcon = { Icon(Icons.Default.Autorenew, null) },
                 onClick = {
                     showMenu = false

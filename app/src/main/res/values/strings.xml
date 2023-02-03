@@ -122,6 +122,7 @@
     <string name="auto_focus_desc">Disable if you only want to focus by tapping the screen</string>
     <string name="bt_hid_service">Bluetooth HID Service</string>
     <string name="service_running">Service is running</string>
+    <string name="refresh_proxy">Refresh proxy</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

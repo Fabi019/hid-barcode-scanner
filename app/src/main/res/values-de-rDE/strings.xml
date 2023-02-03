@@ -173,4 +173,5 @@
     <string name="auto_focus_desc">Deaktivieren, falls Sie nur manuell fokussieren möchten</string>
     <string name="bt_hid_service">Bluetooth HID Service</string>
     <string name="service_running">Service läuft gerade</string>
+    <string name="refresh_proxy">Proxy erneuern</string>
 </resources>
