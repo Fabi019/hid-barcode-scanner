@@ -127,6 +127,10 @@ class BluetoothController(var context: Context) {
     private fun register(autoConnect: Boolean): Boolean {
         autoConnectEnabled = autoConnect
 
+        if (hidDevice != null) {
+            unregister()
+        }
+
         return bluetoothAdapter?.getProfileProxy(
             context,
             serviceListener,
