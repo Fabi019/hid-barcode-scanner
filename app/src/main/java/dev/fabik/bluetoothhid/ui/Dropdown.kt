@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.SettingsActivity
+import dev.fabik.bluetoothhid.bt.BluetoothService
 
 @Composable
 fun Dropdown() {
@@ -32,6 +36,7 @@ fun Dropdown() {
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
                 text = { Text("Refresh proxy") },
+                leadingIcon = { Icon(Icons.Default.Autorenew, null) },
                 onClick = {
                     showMenu = false
                     context.startForegroundService(Intent(context, BluetoothService::class.java))
@@ -39,6 +44,7 @@ fun Dropdown() {
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.settings)) },
+                leadingIcon = { Icon(Icons.Default.Settings, null) },
                 onClick = {
                     showMenu = false
                     context.startActivity(Intent(context, SettingsActivity::class.java))
@@ -46,6 +52,7 @@ fun Dropdown() {
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.exit)) },
+                leadingIcon = { Icon(Icons.Default.Close, null) },
                 onClick = {
                     (context as Activity).finishAfterTransition()
                 }
