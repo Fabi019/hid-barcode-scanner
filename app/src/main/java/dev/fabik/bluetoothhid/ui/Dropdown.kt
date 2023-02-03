@@ -31,6 +31,13 @@ fun Dropdown() {
 
         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
             DropdownMenuItem(
+                text = { Text("Refresh proxy") },
+                onClick = {
+                    showMenu = false
+                    context.startForegroundService(Intent(context, BluetoothService::class.java))
+                }
+            )
+            DropdownMenuItem(
                 text = { Text(stringResource(R.string.settings)) },
                 onClick = {
                     showMenu = false
