@@ -1,6 +1,7 @@
 <div align="center">
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg" /></a>
   <a href="https://github.com/Fabi019/hid-barcode-scanner/releases"><img src="https://img.shields.io/github/v/release/Fabi019/hid-barcode-scanner?include_prereleases" /></a>
+  <a href="https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img src="https://playbadges.pavi2410.me/badge/downloads?id=dev.fabik.bluetoothhid" /></a>
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml/badge.svg" /></a>
   <a href="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main"><img src="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main" /></a>
 
@@ -52,6 +53,9 @@ pictures)*
 
 ### Download Latest APKs
 
+Because the version on the Play Store is usually one or two versions behind the latest release,
+you can also download the latest APKs directly here on GitHub.
+
 Since this app uses the ML-Kit there are two app version to choose from. The standard version
 doesn't contain the scanner library directly. Because of this the size much smaller than in the
 bundled but requires the user to have the Play Store installed on their device.
@@ -59,7 +63,10 @@ bundled but requires the user to have the Play Store installed on their device.
 You can either download the latest stable version from
 the [Releases](https://github.com/Fabi019/hid-barcode-scanner/releases) tab or directly from
 the [CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml) using the links
-below.
+below. Please note that the CI version might be unstable and that the builds are not signed (debug
+builds), thus requiring you to install them on your phone using *ADB*. The download links below
+are using *nightly.link* to provide the files because GitHub doesn't allow to download files from
+actions without being logged in.
 
 - Latest
   APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
