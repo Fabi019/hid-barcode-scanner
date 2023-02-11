@@ -1,7 +1,7 @@
 <div align="center">
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/android.yml/badge.svg" /></a>
   <a href="https://github.com/Fabi019/hid-barcode-scanner/releases"><img src="https://img.shields.io/github/v/release/Fabi019/hid-barcode-scanner?include_prereleases" /></a>
-  <a href="https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img src="https://playbadges.pavi2410.me/badge/downloads?id=dev.fabik.bluetoothhid" /></a>
+  <a href="https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img src="https://img.shields.io/endpoint?color=brightgreen&logo=google-play&logoColor=white&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Ddev.fabik.bluetoothhid%26l%3DDownloads%26m%3D%24totalinstalls"></a>
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml/badge.svg" /></a>
   <a href="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main"><img src="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main" /></a>
 
