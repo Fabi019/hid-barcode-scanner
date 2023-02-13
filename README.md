@@ -49,16 +49,15 @@ pictures)*
 
 <a href='https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/></a>
 
-*Google Play and the Google Play logo are trademarks of Google LLC.*
+> **Note**</br>
+> Because the version on the Play Store is usually one or two versions behind the latest release,
+> you can also download the latest APKs directly here on GitHub as explained in the next section
 
-### Download Latest APKs
+### Download as APK
 
-Because the version on the Play Store is usually one or two versions behind the latest release,
-you can also download the latest APKs directly here on GitHub.
-
-Since this app uses the ML-Kit there are two app version to choose from. The standard version
+Since this app uses the ML-Kit there are two app version to choose from. The *standard* version
 doesn't contain the scanner library directly. Because of this the size much smaller than in the
-bundled but requires the user to have the Play Store installed on their device.
+*bundled* but requires the user to have the Play Store installed on their device.
 
 You can either download the latest stable version from
 the [Releases](https://github.com/Fabi019/hid-barcode-scanner/releases) tab or directly from
@@ -68,10 +67,11 @@ builds), thus requiring you to install them on your phone using *ADB*. The downl
 are using *nightly.link* to provide the files because GitHub doesn't allow to download files from
 actions without being logged in.
 
+- Latest APKs (Release): [here](https://github.com/Fabi019/hid-barcode-scanner/releases/latest)
 - Latest
-  APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
+  APK (Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
 - Latest Bundled
-  APK: [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated%20%28Bundled%29.zip)
+  APK (Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated%20%28Bundled%29.zip)
 
 ## License
 
@@ -86,3 +86,5 @@ Copyright (C) 2023  Fabi019
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+
+*Google Play and the Google Play logo are trademarks of Google LLC.*
