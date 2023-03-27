@@ -14,6 +14,7 @@ class BluetoothService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "bt_hid_service"
+        const val ACTION_STOP = "stop"
     }
 
     private val binder = LocalBinder()
@@ -23,20 +24,24 @@ class BluetoothService : Service() {
         fun getController(): BluetoothController = controller
     }
 
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
+    override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onCreate() {
         controller = BluetoothController(this)
     }
 
     override fun onDestroy() {
-        controller.disconnect()
         controller.unregister()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            controller.unregister()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         CoroutineScope(Dispatchers.IO).launch {
             controller.register()
         }

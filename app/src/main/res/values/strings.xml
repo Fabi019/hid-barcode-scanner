@@ -71,6 +71,7 @@
     <string name="code_types">Code types</string>
     <string name="code_types_desc">Only enable desired types to improve scanning speed. Select none to enable all.</string>
     <string name="code_types_desc_short">Enable only specific types to improve scanning speed</string>
+    <string name="bt_proxy_registered">BT-Proxy registered!</string>
     <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
     <string name="bt_service_disconnected">BT-Service disconnected!</string>
     <string name="bt_service_connected">BT-Service connected!</string>
@@ -123,6 +124,8 @@
     <string name="bt_hid_service">Bluetooth HID Service</string>
     <string name="service_running">Service is running</string>
     <string name="refresh_proxy">Refresh proxy</string>
+    <string name="stop_proxy">Stop proxy</string>
+    <string name="proxy_waiting">Waiting for BT-Proxy to connect…</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

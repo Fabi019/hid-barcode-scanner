@@ -4,12 +4,19 @@ import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
 typealias Listener = (BluetoothDevice?, Int) -> Unit
@@ -29,8 +36,11 @@ class BluetoothController(var context: Context) {
 
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
+    @Volatile
     private var hidDevice: BluetoothHidDevice? = null
     private var hostDevice: BluetoothDevice? by mutableStateOf(null)
+
+    private var latch: CountDownLatch = CountDownLatch(0)
 
     private var autoConnectEnabled: Boolean = false
 
@@ -51,6 +61,14 @@ class BluetoothController(var context: Context) {
                 Executors.newCachedThreadPool(),
                 hidDeviceCallback
             )
+
+            Toast.makeText(
+                context,
+                context.getString(R.string.bt_service_connected),
+                Toast.LENGTH_SHORT
+            ).show()
+
+            latch.countDown()
         }
 
         override fun onServiceDisconnected(profile: Int) {
@@ -58,6 +76,12 @@ class BluetoothController(var context: Context) {
 
             hidDevice = null
             hostDevice = null
+
+            Toast.makeText(
+                context,
+                context.getString(R.string.bt_service_disconnected),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -166,7 +190,30 @@ class BluetoothController(var context: Context) {
         // Cancel discovery because it otherwise slows down the connection.
         bluetoothAdapter?.cancelDiscovery()
 
-        hidDevice?.connect(device)
+        hidDevice?.connect(device) ?: run {
+            // Initialize latch to wait for service to be connected.
+            latch = CountDownLatch(1)
+
+            // Try to register proxy.
+            if (!runBlocking { register() }) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_proxy_error),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.proxy_waiting),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    latch.await()
+                    hidDevice?.connect(device)
+                }
+            }
+        }
     }
 
     fun disconnect(): Boolean {

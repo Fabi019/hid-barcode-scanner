@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,31 +24,16 @@ import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 
 class MainActivity : ComponentActivity() {
 
-    private var bluetoothService: BluetoothService.LocalBinder? = null
     private var bluetoothController: BluetoothController? by mutableStateOf(null)
 
     private var serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = (service as BluetoothService.LocalBinder)
-            bluetoothService = binder
-            bluetoothController = binder.getController()
-
-            Toast.makeText(
-                this@MainActivity,
-                getText(R.string.bt_service_connected),
-                Toast.LENGTH_SHORT
-            ).show()
+            val binder = service as? BluetoothService.LocalBinder
+            bluetoothController = binder?.getController()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            bluetoothService = null
             bluetoothController = null
-
-            Toast.makeText(
-                this@MainActivity,
-                getText(R.string.bt_service_disconnected),
-                Toast.LENGTH_SHORT
-            ).show()
         }
     }
 
