@@ -28,7 +28,7 @@ fun SettingsContent() {
         Modifier
             .fillMaxSize()
             .padding(0.dp, 0.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             Text(
@@ -40,6 +40,7 @@ fun SettingsContent() {
             )
             Spacer(Modifier.height(4.dp))
             ConnectionSettings()
+            ColoredDivider()
         }
 
         item {
@@ -53,6 +54,7 @@ fun SettingsContent() {
             )
             Spacer(Modifier.height(4.dp))
             AppearanceSettings()
+            ColoredDivider()
         }
 
         item {
@@ -66,6 +68,7 @@ fun SettingsContent() {
             )
             Spacer(Modifier.height(4.dp))
             ScannerSettings()
+            ColoredDivider()
         }
 
         item {
@@ -95,16 +98,12 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.show_unnamed),
         desc = stringResource(R.string.show_unnamed_desc),
         icon = Icons.Default.DeviceUnknown,
         preference = PreferenceStore.SHOW_UNNAMED
     )
-
-    ColoredDivider()
 
     SliderPreference(
         title = stringResource(R.string.send_delay),
@@ -114,8 +113,6 @@ fun ConnectionSettings() {
         icon = Icons.Default.Timer,
         preference = PreferenceStore.SEND_DELAY
     )
-
-    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.keyboard_layout),
@@ -137,8 +134,6 @@ fun AppearanceSettings() {
     )
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        ColoredDivider()
-
         SwitchPreference(
             title = stringResource(R.string.dynamic_theme),
             desc = stringResource(R.string.dynamic_theme_desc),
@@ -159,16 +154,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.CODE_TYPES
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.front_camera),
         desc = stringResource(R.string.front_camera_desc),
         icon = Icons.Default.FlipCameraAndroid,
         preference = PreferenceStore.FRONT_CAMERA
     )
-
-    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.restrict_area),
@@ -177,16 +168,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.RESTRICT_AREA
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.auto_focus),
         desc = stringResource(R.string.auto_focus_desc),
         icon = Icons.Default.HdrAuto,
         preference = PreferenceStore.AUTO_FOCUS
     )
-
-    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.overlay_type),
@@ -196,8 +183,6 @@ fun ScannerSettings() {
         preference = PreferenceStore.OVERLAY_TYPE
     )
 
-    ColoredDivider()
-
     ComboBoxPreference(
         title = stringResource(R.string.highlight_type),
         desc = stringResource(R.string.highlight_type_desc),
@@ -206,16 +191,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.HIGHLIGHT_TYPE
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.full_inside),
         desc = stringResource(R.string.full_inside_desc),
         icon = Icons.Default.QrCodeScanner,
         preference = PreferenceStore.FULL_INSIDE
     )
-
-    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.scan_freq),
@@ -225,8 +206,6 @@ fun ScannerSettings() {
         preference = PreferenceStore.SCAN_FREQUENCY
     )
 
-    ColoredDivider()
-
     ComboBoxPreference(
         title = stringResource(R.string.scan_res),
         desc = stringResource(R.string.scan_res_desc),
@@ -235,16 +214,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.SCAN_RESOLUTION
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.auto_send),
         desc = stringResource(R.string.auto_send_desc),
         icon = Icons.Default.Send,
         preference = PreferenceStore.AUTO_SEND
     )
-
-    ColoredDivider()
 
     ComboBoxPreference(
         title = stringResource(R.string.extra_keys),
@@ -254,8 +229,6 @@ fun ScannerSettings() {
         preference = PreferenceStore.EXTRA_KEYS
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.play_sound),
         desc = stringResource(R.string.play_sound_desc),
@@ -263,16 +236,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.PLAY_SOUND
     )
 
-    ColoredDivider()
-
     SwitchPreference(
         title = stringResource(R.string.haptic_feedback),
         desc = stringResource(R.string.haptic_feedback_desc),
         icon = Icons.Default.Vibration,
         preference = PreferenceStore.VIBRATE
     )
-
-    ColoredDivider()
 
     SwitchPreference(
         title = stringResource(R.string.raw_value),
@@ -295,8 +264,6 @@ fun AboutSettings() {
         uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
     }
 
-    ColoredDivider()
-
     ButtonPreference(
         title = stringResource(R.string.report_issue),
         desc = stringResource(R.string.report_issue_desc),
@@ -305,8 +272,6 @@ fun AboutSettings() {
         uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner/issues/new")
     }
 
-    ColoredDivider()
-
     ButtonPreference(
         title = stringResource(R.string.rate),
         desc = stringResource(R.string.rate_desc),
@@ -314,8 +279,6 @@ fun AboutSettings() {
     ) {
         uriHandler.openUri("market://details?id=${context.packageName}")
     }
-
-    ColoredDivider()
 
     val shareVia = stringResource(R.string.share_via)
 
@@ -326,8 +289,7 @@ fun AboutSettings() {
     ) {
         context.startActivity(
             Intent.createChooser(
-                Intent().apply {
-                    action = Intent.ACTION_SEND
+                Intent(Intent.ACTION_SEND).apply {
                     putExtra(
                         Intent.EXTRA_TEXT,
                         "https://play.google.com/store/apps/details?id=${context.packageName}"
@@ -337,8 +299,6 @@ fun AboutSettings() {
             )
         )
     }
-
-    ColoredDivider()
 
     ButtonPreference(
         title = stringResource(R.string.build_version),
@@ -353,10 +313,10 @@ fun AboutSettings() {
         icon = Icons.Default.Info
     ) {
         context.startActivity(
-            Intent().apply {
-                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = Uri.fromParts("package", context.packageName, null)
-            }
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", context.packageName, null)
+            )
         )
     }
 }
