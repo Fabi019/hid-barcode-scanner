@@ -9,9 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -21,6 +19,10 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+
+val LocalController = staticCompositionLocalOf<BluetoothController> {
+    error("No BluetoothController provided")
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -45,7 +47,9 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     RequiresBluetoothPermission {
                         bluetoothController?.let {
-                            NavGraph(it)
+                            CompositionLocalProvider(LocalController provides it) {
+                                NavGraph()
+                            }
                         }
 
                         ComposableLifecycle(LocalLifecycleOwner.current) { _, event ->

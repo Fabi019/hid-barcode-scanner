@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
@@ -40,13 +39,12 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
  * swiping down from the top.
  * When a device is selected it first tries to connect with it and after
  * a successful connection has been established it navigates to the [Scanner] screen.
- *
- * @param controller Bluetooth controller to get devices and connect to them.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Devices(controller: BluetoothController) = with(viewModel<DevicesViewModel>()) {
+fun Devices() = with(viewModel<DevicesViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val controller = LocalController.current
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -77,7 +75,7 @@ fun Devices(controller: BluetoothController) = with(viewModel<DevicesViewModel>(
             )
         }) { padding ->
         Box(Modifier.padding(padding)) {
-            DeviceContent(controller)
+            DeviceContent()
         }
     }
 }
@@ -85,14 +83,13 @@ fun Devices(controller: BluetoothController) = with(viewModel<DevicesViewModel>(
 /**
  * Content of the [Devices] screen. Handles the swipe refresh and listens for
  * connection changes.
- *
- * @param controller Bluetooth controller to get devices and connect to them.
  */
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("MissingPermission")
 @Composable
-fun DevicesViewModel.DeviceContent(controller: BluetoothController) {
+fun DevicesViewModel.DeviceContent() {
     val dialogState = rememberDialogState()
+    val controller = LocalController.current
 
     DisposableEffect(controller) {
         isScanning = controller.isScanning

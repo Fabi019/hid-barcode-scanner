@@ -10,8 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.Devices
+import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.Scanner
-import dev.fabik.bluetoothhid.bt.BluetoothController
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -24,7 +24,8 @@ val LocalNavigation = staticCompositionLocalOf<NavHostController> {
 }
 
 @Composable
-fun NavGraph(controller: BluetoothController) {
+fun NavGraph() {
+    val controller = LocalController.current
     val activity = LocalContext.current as Activity
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
@@ -43,7 +44,7 @@ fun NavGraph(controller: BluetoothController) {
             startDestination,
         ) {
             composable(Routes.Devices) {
-                Devices(controller)
+                Devices()
 
                 // If the user presses the back button, close the app
                 BackHandler {
