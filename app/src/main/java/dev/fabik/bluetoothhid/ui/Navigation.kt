@@ -2,16 +2,20 @@ package dev.fabik.bluetoothhid.ui
 
 import android.app.Activity
 import android.bluetooth.BluetoothProfile
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.Devices
 import dev.fabik.bluetoothhid.LocalController
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -30,6 +34,9 @@ fun NavGraph() {
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
+    var canExit by remember { mutableStateOf(false) }
+    val exitString = stringResource(R.string.exit_confirm)
+
     // Handles shortcut to scanner
     val startDestination = remember {
         when (activity.intent.dataString) {
@@ -46,9 +53,18 @@ fun NavGraph() {
             composable(Routes.Devices) {
                 Devices()
 
-                // If the user presses the back button, close the app
+                // Confirm back presses to exit the app
                 BackHandler {
-                    activity.finishAfterTransition()
+                    if (canExit) {
+                        activity.finishAfterTransition()
+                    } else {
+                        canExit = true
+                        Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            delay(2000)
+                            canExit = false
+                        }
+                    }
                 }
             }
 

@@ -126,6 +126,7 @@
     <string name="refresh_proxy">Refresh proxy</string>
     <string name="stop_proxy">Stop proxy</string>
     <string name="proxy_waiting">Waiting for BT-Proxy to connect…</string>
+    <string name="exit_confirm">Press back again to exit</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
