@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -17,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -31,56 +31,25 @@ fun SettingsContent() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(
-                stringResource(R.string.connection),
-                Modifier.padding(start = 16.dp),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(4.dp))
+            SectionTitle(R.string.connection)
             ConnectionSettings()
             ColoredDivider()
         }
 
         item {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.appearance),
-                Modifier.padding(start = 16.dp),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(4.dp))
+            SectionTitle(R.string.appearance)
             AppearanceSettings()
             ColoredDivider()
         }
 
         item {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.scanner),
-                Modifier.padding(start = 16.dp),
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(4.dp))
+            SectionTitle(R.string.scanner)
             ScannerSettings()
             ColoredDivider()
         }
 
         item {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.about),
-                Modifier.padding(start = 16.dp),
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.height(4.dp))
+            SectionTitle(R.string.about)
             AboutSettings()
         }
     }
@@ -88,6 +57,18 @@ fun SettingsContent() {
 
 @Composable
 fun ColoredDivider() = Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+
+@Composable
+fun SectionTitle(@StringRes id: Int) {
+    Spacer(Modifier.height(8.dp))
+    Text(
+        stringResource(id),
+        Modifier.padding(start = 16.dp),
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.titleSmall
+    )
+    Spacer(Modifier.height(4.dp))
+}
 
 @Composable
 fun ConnectionSettings() {

@@ -201,7 +201,8 @@ fun DevicesViewModel.DeviceList(
             item {
                 Text(
                     stringResource(R.string.scanned_devices),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
                 )
             }
 
@@ -238,7 +239,8 @@ fun DevicesViewModel.DeviceList(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.paired_devices),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
                 )
             }
 
