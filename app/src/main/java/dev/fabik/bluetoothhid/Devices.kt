@@ -260,16 +260,6 @@ fun DevicesViewModel.DeviceList(
                 }
             }
         }
-
-        item {
-            Box(Modifier.fillMaxWidth()) {
-                TextButton(
-                    onClick = onSkip, Modifier.align(Alignment.Center)
-                ) {
-                    Text(stringResource(R.string.skip))
-                }
-            }
-        }
     }
 }
 
