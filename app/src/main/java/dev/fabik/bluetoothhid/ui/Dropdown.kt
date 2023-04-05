@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.SettingsActivity
@@ -33,7 +34,10 @@ fun Dropdown() {
             Icon(Icons.Default.MoreVert, "More options")
         }
 
-        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+        DropdownMenu(
+            expanded = showMenu,
+            modifier = Modifier.widthIn(min = 150.dp),
+            onDismissRequest = { showMenu = false }) {
             if (BuildConfig.DEBUG) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.refresh_proxy)) },
