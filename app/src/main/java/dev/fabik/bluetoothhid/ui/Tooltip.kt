@@ -6,9 +6,9 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -25,12 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import dev.fabik.bluetoothhid.ui.theme.Typography
-import kotlinx.coroutines.delay
 
 @Composable
 fun Tooltip(
     expanded: MutableState<Boolean>,
-    timeout: Long,
     content: @Composable () -> Unit
 ) {
     val expandedStates = remember { MutableTransitionState(false) }
@@ -40,13 +38,6 @@ fun Tooltip(
     }
 
     if (expandedStates.currentState || expandedStates.targetState) {
-        if (expandedStates.isIdle) {
-            LaunchedEffect(timeout, expanded) {
-                delay(timeout)
-                expanded.value = false
-            }
-        }
-
         val density = LocalDensity.current
 
         Popup(
@@ -72,9 +63,9 @@ fun TooltipContent(
     val alpha by transition.animateFloat(
         transitionSpec = {
             if (true isTransitioningTo false) {
-                tween(durationMillis = 300)
+                tween(durationMillis = 300, delayMillis = 800)
             } else {
-                tween(durationMillis = 500)
+                tween(durationMillis = 200)
             }
         },
         label = "Tooltip alpha"
@@ -95,33 +86,29 @@ fun TooltipContent(
     }
 }
 
-fun Modifier.tooltip(
-    text: String,
-    timeout: Long = 3000,
-) = composed {
+fun Modifier.tooltip(text: String) = composed {
     val showTooltip = remember { mutableStateOf(false) }
 
-    Tooltip(showTooltip, timeout) {
+    Tooltip(showTooltip) {
         Text(text, style = Typography.bodyLarge)
     }
 
     pointerInput(Unit) {
-        forEachGesture {
-            awaitPointerEventScope {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                val longPress = awaitLongPressOrCancellation(down.id)
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val longPress = awaitLongPressOrCancellation(down.id)
 
-                // Check if not cancelled
-                if (longPress != null) {
-                    showTooltip.value = true
+            // Check if not cancelled
+            if (longPress != null) {
+                showTooltip.value = true
 
-                    // Wait for up event and consume it
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.type == PointerEventType.Release) {
-                            event.changes.forEach { it.consume() }
-                            break
-                        }
+                // Wait for up event and consume it
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    if (event.type == PointerEventType.Release) {
+                        event.changes.forEach { it.consume() }
+                        showTooltip.value = false // Hide animation has 800ms delay
+                        break
                     }
                 }
             }
