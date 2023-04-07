@@ -221,7 +221,7 @@ fun InfoDialog(
                 TextButton(
                     onClick = { onDismiss() }
                 ) {
-                    Text(stringResource(R.string.ok))
+                    Text(stringResource(android.R.string.ok))
                 }
             },
         )
@@ -261,14 +261,14 @@ fun ConfirmResetDialog(
                 TextButton(
                     onClick = { onConfirm() }
                 ) {
-                    Text(stringResource(R.string.confirm))
+                    Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { onDismiss() }
                 ) {
-                    Text(stringResource(R.string.dismiss))
+                    Text(stringResource(android.R.string.cancel))
                 }
             },
         )
@@ -301,14 +301,14 @@ fun ConfirmDialog(
                 TextButton(
                     onClick = { onConfirm() }
                 ) {
-                    Text(stringResource(R.string.confirm))
+                    Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { onDismiss() }
                 ) {
-                    Text(stringResource(R.string.dismiss))
+                    Text(stringResource(android.R.string.cancel))
                 }
             },
         )
