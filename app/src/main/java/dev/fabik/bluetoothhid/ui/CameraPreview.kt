@@ -6,8 +6,7 @@ import android.hardware.camera2.CaptureRequest
 import android.util.Log
 import android.util.Rational
 import android.view.ViewGroup
-import androidx.camera.camera2.interop.Camera2CameraControl
-import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -35,6 +34,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 @Composable
+@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 fun CameraArea(
     onCameraReady: (Camera) -> Unit,
     onBarCodeReady: (String) -> Unit
@@ -44,6 +44,7 @@ fun CameraArea(
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
+    val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -100,6 +101,16 @@ fun CameraArea(
                 )
                 .setOutputImageRotationEnabled(true)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .apply {
+                    val ext = Camera2Interop.Extender(this)
+                    if (!autoFocus) {
+                        // Set the focus mode to auto in order to disable continuous focusing
+                        ext.setCaptureRequestOption(
+                            CaptureRequest.CONTROL_AF_MODE,
+                            CaptureRequest.CONTROL_AF_MODE_AUTO
+                        )
+                    }
+                }
                 .build().apply {
                     setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyzer)
                 }
@@ -110,7 +121,6 @@ fun CameraArea(
 }
 
 @Composable
-@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 fun CameraViewModel.CameraPreview(
     onCameraReady: (Camera) -> Unit,
     previewView: PreviewView,
@@ -123,8 +133,6 @@ fun CameraViewModel.CameraPreview(
     val hasFrontCamera = remember {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
     }
-
-    val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
 
     val preview = remember {
         Preview.Builder().build()
@@ -161,22 +169,7 @@ fun CameraViewModel.CameraPreview(
 
                 it.unbindAll()
                 it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                    if (!autoFocus) {
-                        // Set focus mode to macro to disable automatic focusing
-                        val camera2Control = Camera2CameraControl.from(it.cameraControl)
-                        val options = CaptureRequestOptions.Builder()
-                            .setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_MACRO
-                            )
-                            .build()
-                        camera2Control.setCaptureRequestOptions(options)
-                            .addListener({
-                                onCameraReady(it)
-                            }, ContextCompat.getMainExecutor(context))
-                    } else {
-                        onCameraReady(it)
-                    }
+                    onCameraReady(it)
                 }
             }.onFailure {
                 Log.e("CameraPreview", "Use case binding failed", it)
