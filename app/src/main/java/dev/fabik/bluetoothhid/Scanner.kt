@@ -283,7 +283,7 @@ fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
         ) {
             device?.let {
                 Icon(Icons.Default.Info, "Info")
-                Text(stringResource(R.string.connected_with, device.name))
+                Text(stringResource(R.string.connected_with, device.name ?: device.address))
             } ?: run {
                 Icon(Icons.Rounded.Warning, "Warning")
                 Text(stringResource(R.string.no_device))
@@ -328,7 +328,7 @@ fun DeviceInfoDialog(
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 Text(stringResource(R.string.name) + ":", fontWeight = FontWeight.Bold)
-                Text(device.name)
+                Text(device.name ?: "")
             }
 
             item {
