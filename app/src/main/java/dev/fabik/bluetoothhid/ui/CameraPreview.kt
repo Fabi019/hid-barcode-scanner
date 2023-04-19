@@ -288,13 +288,15 @@ fun CameraViewModel.OverlayCanvas() {
 
         // Draw the focus circle if currently focusing
         focusTouchPoint?.let {
-            drawCircle(
-                color = Color.White,
-                radius = focusCircleScale * 100f,
-                center = it,
-                style = Stroke(5f),
-                alpha = focusCircleAlpha
-            )
+            if (focusCircleAlpha > 0f && focusCircleScale > 0f) {
+                drawCircle(
+                    color = Color.White,
+                    radius = focusCircleScale * 100f,
+                    center = it,
+                    style = Stroke(5f),
+                    alpha = focusCircleAlpha
+                )
+            }
         }
 
         // Draw debug overlay
