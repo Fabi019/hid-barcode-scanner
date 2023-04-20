@@ -123,12 +123,8 @@ fun DevicesViewModel.DeviceContent() {
     val pullRefreshState =
         rememberPullRefreshState(isRefreshing, { refresh(controller) })
 
-    val navController = LocalNavigation.current
-
     Box(Modifier.pullRefresh(pullRefreshState)) {
-        DeviceList(controller::connect) {
-            navController.navigate(Routes.Main)
-        }
+        DeviceList(controller::connect)
 
         PullRefreshIndicator(
             isRefreshing,
@@ -177,13 +173,11 @@ fun DevicesViewModel.BroadcastListener() {
  * List of devices. Shows the paired devices and the found devices.
  *
  * @param onConnect Callback function when a device is selected.
- * @param onSkip Callback function when the user presses the skip button.
  */
 @SuppressLint("MissingPermission")
 @Composable
 fun DevicesViewModel.DeviceList(
-    onConnect: (BluetoothDevice) -> Unit,
-    onSkip: () -> Unit
+    onConnect: (BluetoothDevice) -> Unit
 ) {
     val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
 
