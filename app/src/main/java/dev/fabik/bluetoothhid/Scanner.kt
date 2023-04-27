@@ -120,6 +120,13 @@ private fun CameraPreviewArea(
         ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
     }
 
+    // Clean up tone generator after use
+    DisposableEffect(toneGenerator) {
+        onDispose {
+            toneGenerator.release()
+        }
+    }
+
     val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
 
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
@@ -131,7 +138,7 @@ private fun CameraPreviewArea(
             toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
 
-        if (vibrate) {
+        if (vibrate && vibrator.hasVibrator()) {
             vibrator.vibrate(
                 VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
             )
