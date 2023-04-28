@@ -10,7 +10,7 @@ buildscript {
         compose_ui_version = '1.4.2'
         compose_mat_version = '1.4.1'
         camerax_version = '1.3.0-alpha06'
-        accomp_version = '0.28.0'
+        accomp_version = '0.30.1'
         play_version = '18.2.0'
     }
 }
