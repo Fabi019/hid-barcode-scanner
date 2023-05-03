@@ -294,7 +294,7 @@ fun CameraViewModel.OverlayCanvas() {
                     radius = focusCircleScale * 100f,
                     center = it,
                     style = Stroke(5f),
-                    alpha = focusCircleAlpha
+                    alpha = focusCircleAlpha.coerceAtMost(1f) // should not be needed
                 )
             }
         }
