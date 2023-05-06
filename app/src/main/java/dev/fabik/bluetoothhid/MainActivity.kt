@@ -3,13 +3,19 @@ package dev.fabik.bluetoothhid
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.IBinder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -19,6 +25,8 @@ import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberPreference
 
 val LocalController = staticCompositionLocalOf<BluetoothController> {
     error("No BluetoothController provided")
@@ -45,6 +53,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             BluetoothHIDTheme {
                 Surface(Modifier.fillMaxSize()) {
+                    val allowScreenRotation by rememberPreference(PreferenceStore.ALLOW_SCREEN_ROTATION)
+
+                    LaunchedEffect(allowScreenRotation) {
+                        requestedOrientation = if (allowScreenRotation) {
+                            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                        } else {
+                            ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
+                        }
+                    }
+
                     RequiresBluetoothPermission {
                         bluetoothController?.let {
                             CompositionLocalProvider(LocalController provides it) {
@@ -61,6 +79,7 @@ class MainActivity : ComponentActivity() {
                                         bindService(it, serviceConnection, BIND_AUTO_CREATE)
                                     }
                                 }
+
                                 Lifecycle.Event.ON_DESTROY -> {
                                     // Unbind and stop bluetooth service
                                     unbindService(serviceConnection)
@@ -71,6 +90,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     )
                                 }
+
                                 else -> {}
                             }
                         }
