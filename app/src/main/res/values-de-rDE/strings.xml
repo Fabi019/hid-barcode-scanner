@@ -178,4 +178,6 @@
     <string name="stop_proxy">Proxy beenden</string>
     <string name="proxy_waiting">Warten bis der BT-Proxy verbunden ist…</string>
     <string name="exit_confirm">Zum Beenden erneut zurück drücken</string>
+    <string name="allow_screen_rotation">Bildschirmdrehung freischalten</string>
+    <string name="allow_screen_rotation_desc">Erlaubt die automatische Drehung des Bildschirms</string>
 </resources>

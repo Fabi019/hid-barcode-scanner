@@ -5,10 +5,39 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.CenterFocusWeak
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.CropFree
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.DeviceUnknown
+import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Hd
+import androidx.compose.material.icons.filled.HdrAuto
+import androidx.compose.material.icons.filled.Highlight
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShutterSpeed
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,7 +48,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import dev.fabik.bluetoothhid.ui.*
+import dev.fabik.bluetoothhid.ui.ButtonPreference
+import dev.fabik.bluetoothhid.ui.CheckBoxPreference
+import dev.fabik.bluetoothhid.ui.ComboBoxPreference
+import dev.fabik.bluetoothhid.ui.SliderPreference
+import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @Composable
@@ -106,6 +139,13 @@ fun ConnectionSettings() {
 
 @Composable
 fun AppearanceSettings() {
+    SwitchPreference(
+        title = stringResource(R.string.allow_screen_rotation),
+        desc = stringResource(R.string.allow_screen_rotation_desc),
+        icon = Icons.Default.ScreenRotation,
+        preference = PreferenceStore.ALLOW_SCREEN_ROTATION
+    )
+
     ComboBoxPreference(
         title = stringResource(R.string.theme),
         desc = stringResource(R.string.theme_desc),
