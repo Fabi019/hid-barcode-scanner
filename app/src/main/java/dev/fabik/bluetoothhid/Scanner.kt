@@ -58,7 +58,7 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, onDisconnect)
+            ScannerAppBar(camera, currentDevice, onDisconnect)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -82,7 +82,7 @@ fun Scanner(
                 }
                 BarcodeValue(currentBarcode)
             }
-            DeviceInfoCard(currentDevice)
+            //DeviceInfoCard(currentDevice)
             camera?.let {
                 ZoomStateInfo(it)
             }
@@ -213,14 +213,26 @@ private fun SendToDeviceFAB(
  * @param camera the camera to toggle the flash on
  * @param onDisconnect callback to disconnect from the current device
  */
+@SuppressLint("MissingPermission")
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
     camera: Camera?,
+    currentDevice: BluetoothDevice?,
     onDisconnect: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(stringResource(R.string.scanner)) },
+        title = {
+            Column {
+                Text(stringResource(R.string.scanner))
+                currentDevice?.let {
+                    Text(
+                        stringResource(R.string.connected_with, it.name ?: it.address),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
         actions = {
             camera?.let {
                 if (it.cameraInfo.hasFlashUnit()) {
