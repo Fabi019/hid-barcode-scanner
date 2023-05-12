@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeviceUnknown
+import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.HdrAuto
@@ -194,6 +195,13 @@ fun ScannerSettings() {
         desc = stringResource(R.string.auto_focus_desc),
         icon = Icons.Default.HdrAuto,
         preference = PreferenceStore.AUTO_FOCUS
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.fix_exposure),
+        desc = stringResource(R.string.fix_exposure_desc),
+        icon = Icons.Default.Exposure,
+        preference = PreferenceStore.FIX_EXPOSURE
     )
 
     ComboBoxPreference(

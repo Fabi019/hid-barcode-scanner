@@ -45,6 +45,7 @@ fun CameraArea(
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
     val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
+    val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -103,6 +104,16 @@ fun CameraArea(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .apply {
                     val ext = Camera2Interop.Extender(this)
+
+                    if (fixExposure) {
+                        // Sets a fixed exposure compensation and iso for the image
+                        ext.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
+                        ext.setCaptureRequestOption(
+                            CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                            -8
+                        )
+                    }
+
                     if (!autoFocus) {
                         // Set the focus mode to auto in order to disable continuous focusing
                         ext.setCaptureRequestOption(
@@ -235,18 +246,27 @@ fun CameraViewModel.OverlayCanvas() {
     Canvas(Modifier.fillMaxSize()) {
         val x = this.size.width / 2
         val y = this.size.height / 2
-        val length = (x * 1.5f).coerceAtMost(y * 1.5f)
-        val radius = 30f
-
+        val landscape = this.size.width > this.size.height
 
         if (restrictArea == true) {
             scanRect = when (overlayType) {
-                1 -> Rect(Offset(x - length / 2, y - length / 4), Size(length, length / 2))
-                else -> Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+                1 -> {
+                    val length = this.size.width * 0.8f
+                    val height = (length / 3).coerceAtMost(y * 0.7f)
+                    Rect(
+                        Offset(x - length / 2, y - height / 2),
+                        Size(length, height)
+                    )
+                }
+
+                else -> {
+                    val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
+                    Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+                }
             }
 
             val markerPath = Path().apply {
-                addRoundRect(RoundRect(scanRect, CornerRadius(radius)))
+                addRoundRect(RoundRect(scanRect, CornerRadius(30f)))
             }
 
             clipPath(markerPath, clipOp = ClipOp.Difference) {

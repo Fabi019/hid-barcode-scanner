@@ -52,6 +52,7 @@ open class PreferenceStore {
         val CODE_TYPES = stringSetPreferencesKey("code_types") defaultsTo setOf()
         val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
         val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
+        val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
         val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val RESTRICT_AREA = booleanPreferencesKey("restrict_area") defaultsTo true
         val FULL_INSIDE = booleanPreferencesKey("full_inside") defaultsTo true

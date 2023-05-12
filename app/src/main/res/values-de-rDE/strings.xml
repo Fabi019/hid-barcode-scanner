@@ -180,4 +180,6 @@
     <string name="exit_confirm">Zum Beenden erneut zurück drücken</string>
     <string name="allow_screen_rotation">Bildschirmdrehung freischalten</string>
     <string name="allow_screen_rotation_desc">Erlaubt die automatische Drehung des Bildschirms</string>
+    <string name="fix_exposure">Feste Auslösezeit</string>
+    <string name="fix_exposure_desc">Hilft dabei Bewegungsunschärfe im Bild zu reduzieren</string>
 </resources>
