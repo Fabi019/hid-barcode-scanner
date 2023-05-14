@@ -8,6 +8,8 @@ import android.util.Rational
 import android.view.ViewGroup
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.*
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.*
@@ -92,14 +94,21 @@ fun CameraArea(
 
     RequiresModuleInstallation {
         CameraPreview(onCameraReady, previewView) {
-            ImageAnalysis.Builder()
-                .setTargetResolution(
-                    when (cameraResolution) {
-                        2 -> CameraViewModel.FHD_1080P
-                        1 -> CameraViewModel.HD_720P
-                        else -> CameraViewModel.SD_480P
-                    }
+            val resolutionSelector = ResolutionSelector.Builder()
+                .setResolutionStrategy(
+                    ResolutionStrategy(
+                        when (cameraResolution) {
+                            2 -> CameraViewModel.FHD_1080P
+                            1 -> CameraViewModel.HD_720P
+                            else -> CameraViewModel.SD_480P
+                        },
+                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                    )
                 )
+                .build()
+
+            ImageAnalysis.Builder()
+                .setResolutionSelector(resolutionSelector)
                 .setOutputImageRotationEnabled(true)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .apply {
@@ -252,7 +261,7 @@ fun CameraViewModel.OverlayCanvas() {
             scanRect = when (overlayType) {
                 1 -> {
                     val length = this.size.width * 0.8f
-                    val height = (length / 3).coerceAtMost(y * 0.7f)
+                    val height = (length * 0.45f).coerceAtMost(y * 0.8f)
                     Rect(
                         Offset(x - length / 2, y - height / 2),
                         Size(length, height)
@@ -290,6 +299,7 @@ fun CameraViewModel.OverlayCanvas() {
                         drawCircle(color = Color.Red, radius = 10f, center = Offset(x, y))
                     }
                 }
+
                 else -> {
                     // Draw a rectangle around the barcode
                     val path = Path().apply {
@@ -327,7 +337,7 @@ fun CameraViewModel.OverlayCanvas() {
 }
 
 fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
-    val y = canvas.height * 0.75f
+    val y = canvas.height * 0.6f
 
     // Draw the camera fps
     canvas.drawText(

@@ -19,9 +19,9 @@ import java.util.concurrent.Executors
 
 class CameraViewModel : ViewModel() {
     companion object {
-        val SD_480P = Size(480, 640)
-        val HD_720P = Size(720, 960)
-        val FHD_1080P = Size(1080, 1440)
+        val SD_480P = Size(640, 480)
+        val HD_720P = Size(960, 720)
+        val FHD_1080P = Size(1440, 1080)
     }
 
     private var lastBarCodeValue: String? = null
