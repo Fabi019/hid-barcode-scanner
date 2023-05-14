@@ -66,13 +66,14 @@
         android:localeConfig="@xml/locales_config"
         tools:targetApi="33">
 
-        <service android:name=".bt.BluetoothService" />
+        <service
+            android:name=".bt.BluetoothService"
+            android:stopWithTask="true" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize">
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

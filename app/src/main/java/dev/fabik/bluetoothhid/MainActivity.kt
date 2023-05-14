@@ -81,14 +81,17 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 Lifecycle.Event.ON_DESTROY -> {
-                                    // Unbind and stop bluetooth service
-                                    unbindService(serviceConnection)
-                                    stopService(
-                                        Intent(
-                                            this@MainActivity,
-                                            BluetoothService::class.java
+                                    // Don't stop service if activity is being recreated due to a configuration change
+                                    if (!isChangingConfigurations) {
+                                        // Unbind and stop bluetooth service
+                                        unbindService(serviceConnection)
+                                        stopService(
+                                            Intent(
+                                                this@MainActivity,
+                                                BluetoothService::class.java
+                                            )
                                         )
-                                    )
+                                    }
                                 }
 
                                 else -> {}

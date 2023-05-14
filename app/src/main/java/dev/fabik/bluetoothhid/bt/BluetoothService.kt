@@ -1,6 +1,10 @@
 package dev.fabik.bluetoothhid.bt
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
@@ -9,11 +13,14 @@ import dev.fabik.bluetoothhid.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class BluetoothService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "bt_hid_service"
+
+        const val ACTION_REGISTER = "register"
         const val ACTION_STOP = "stop"
     }
 
@@ -28,6 +35,11 @@ class BluetoothService : Service() {
 
     override fun onCreate() {
         controller = BluetoothController(this)
+
+        // Register controller once when service is created
+        CoroutineScope(Dispatchers.IO).launch {
+            controller.register()
+        }
     }
 
     override fun onDestroy() {
@@ -35,15 +47,16 @@ class BluetoothService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
+        // Debug actions to stop service and register controller again
+        if (intent?.action == ACTION_REGISTER) {
+            runBlocking {
+                controller.register()
+            }
+        } else if (intent?.action == ACTION_STOP) {
             controller.unregister()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            controller.register()
         }
 
         val pendingIntent =
