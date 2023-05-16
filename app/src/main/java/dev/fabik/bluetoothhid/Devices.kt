@@ -45,6 +45,7 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 fun Devices() = with(viewModel<DevicesViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val controller = LocalController.current
+    val navigation = LocalNavigation.current
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -53,15 +54,19 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
                     IconButton(
+                        onClick = { navigation.navigate(Routes.Main) },
+                        modifier = Modifier.tooltip(stringResource(R.string.skip))
+                    ) {
+                        Icon(Icons.Default.East, "Skip")
+                    }
+                    IconButton(
                         onClick = {
-                            if (!isScanning) {
-                                refresh(controller)
-                            } else {
-                                controller.cancelScan()
-                            }
+                            if (!isScanning) refresh(controller)
+                            else controller.cancelScan()
                         },
                         modifier = Modifier.tooltip(
-                            if (isScanning) stringResource(R.string.cancel) else stringResource(R.string.refresh)
+                            if (isScanning) stringResource(R.string.cancel)
+                            else stringResource(R.string.refresh)
                         )
                     ) {
                         Icon(

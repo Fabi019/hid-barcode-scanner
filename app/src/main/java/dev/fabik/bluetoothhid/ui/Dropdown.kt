@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Settings
@@ -31,7 +30,6 @@ import dev.fabik.bluetoothhid.bt.BluetoothService
 @Composable
 fun Dropdown() {
     val context = LocalContext.current
-    val navigation = LocalNavigation.current
 
     var showMenu by remember {
         mutableStateOf(false)
@@ -76,16 +74,6 @@ fun Dropdown() {
                                 action = BluetoothService.ACTION_STOP
                             }
                         )
-                    }
-                )
-            }
-            if (navigation.currentBackStackEntry?.destination?.route != Routes.Main) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.skip)) },
-                    leadingIcon = { Icon(Icons.Default.ArrowForward, null) },
-                    onClick = {
-                        showMenu = false
-                        navigation.navigate(Routes.Main)
                     }
                 )
             }
