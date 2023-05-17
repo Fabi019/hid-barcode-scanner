@@ -1,10 +1,17 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.app.Activity
-import android.bluetooth.BluetoothProfile
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -89,21 +96,14 @@ fun NavGraph() {
         }
     }
 
-    DisposableEffect(controller) {
-        val listener = controller.registerListener { device, state ->
-            // Navigation calls need to be from a UI-Thread
-            activity.runOnUiThread {
-                // Check if connection to a device has been established, else go back to the device list
-                if (device != null && state == BluetoothProfile.STATE_CONNECTED) {
-                    navController.navigate(Routes.Main) {
-                        launchSingleTop = true
-                    }
-                }
+    // Listen for changes in the current device
+    LaunchedEffect(controller.currentDevice) {
+        // When connected to a device, navigate to the scanner
+        if (controller.currentDevice != null) {
+            // Single-top is used to avoid creating multiple instances of the scanner
+            navController.navigate(Routes.Main) {
+                launchSingleTop = true
             }
-        }
-
-        onDispose {
-            controller.unregisterListener(listener)
         }
     }
 }
