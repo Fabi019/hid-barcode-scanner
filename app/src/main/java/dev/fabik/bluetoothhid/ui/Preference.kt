@@ -1,8 +1,10 @@
 package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -14,7 +16,6 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ButtonPreference(
     title: String,
@@ -24,14 +25,14 @@ fun ButtonPreference(
     onClick: () -> Unit = {}
 ) {
     ListItem(
+        headlineContent = { Text(title) },
         modifier = Modifier
             .semantics { stateDescription = desc }
             .clickable(onClick = onClick),
+        supportingContent = { Text(desc) },
         leadingContent = icon?.let {
-            { Icon(icon, contentDescription = null) }
+            { Icon(icon, null) }
         },
-        headlineText = { Text(title) },
-        supportingText = { Text(desc) },
         trailingContent = extra
     )
 }
