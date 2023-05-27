@@ -28,6 +28,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +60,40 @@ class DialogState(initialOpen: Boolean = false) {
 @Composable
 fun rememberDialogState(initialOpen: Boolean = false) = remember {
     DialogState(initialOpen)
+}
+
+@Composable
+fun TextBoxDialog(
+    dialogState: DialogState,
+    title: String,
+    text: String,
+    description: String? = null,
+    onReset: () -> Unit,
+    onDismiss: () -> Unit = {},
+    onConfirm: (String) -> Unit
+) {
+    var currentText by remember(text) { mutableStateOf(text) }
+
+    ConfirmResetDialog(dialogState, title, onConfirm = {
+        close()
+        onConfirm(currentText)
+    }, onDismiss = {
+        close()
+        currentText = text
+        onDismiss()
+    }, onReset = onReset) {
+        Column {
+            description?.let {
+                Text(it)
+                Spacer(Modifier.height(16.dp))
+            }
+            TextField(
+                value = currentText,
+                onValueChange = { currentText = it },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }
 
 @Composable
