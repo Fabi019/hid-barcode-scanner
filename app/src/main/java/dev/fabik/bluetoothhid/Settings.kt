@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeviceUnknown
 import androidx.compose.material.icons.filled.Exposure
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.HdrAuto
@@ -54,6 +55,7 @@ import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
+import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @Composable
@@ -202,6 +204,13 @@ fun ScannerSettings() {
         desc = stringResource(R.string.fix_exposure_desc),
         icon = Icons.Default.Exposure,
         preference = PreferenceStore.FIX_EXPOSURE
+    )
+
+    TextBoxPreference(
+        title = "Filter regex",
+        desc = "Allows to filter codes by a regular expression",
+        icon = Icons.Default.FilterAlt,
+        preference = PreferenceStore.SCAN_REGEX
     )
 
     ComboBoxPreference(

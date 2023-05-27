@@ -67,25 +67,34 @@ class CameraViewModel : ViewModel() {
     fun filterBarCodes(
         barcodes: List<Barcode>,
         fullyInside: Boolean,
-        useRawValue: Boolean
+        useRawValue: Boolean,
+        regex: Regex?,
     ): String? {
         var result: String? = null
 
         val filtered = barcodes.filter {
+            // Filter out codes without value
+            it.rawValue != null && it.displayValue != null
+        }.filter {
+            // Filter if they are within the scan area
             it.cornerPoints?.map { p ->
                 Offset(p.x * scale - transX, p.y * scale - transY)
             }?.forEach { o ->
-                if (fullyInside) {
-                    if (!scanRect.contains(o)) {
-                        return@filter false
-                    }
-                } else {
-                    if (scanRect.contains(o)) {
-                        return@filter true
-                    }
+                if (fullyInside && !scanRect.contains(o)) {
+                    return@filter false
+                } else if (scanRect.contains(o)) {
+                    return@filter true
                 }
             }
             fullyInside
+        }.filter {
+            // Filter by regex
+            val value = if (useRawValue) {
+                it.rawValue
+            } else {
+                it.displayValue
+            }
+            regex?.matches(value!!) ?: true
         }
 
         currentBarCode = filtered.firstOrNull()
