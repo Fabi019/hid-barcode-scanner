@@ -15,6 +15,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -53,6 +54,7 @@ open class PreferenceStore {
         val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
         val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
         val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
+        val SCAN_REGEX = stringPreferencesKey("scan_regex") defaultsTo ""
         val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val RESTRICT_AREA = booleanPreferencesKey("restrict_area") defaultsTo true
         val FULL_INSIDE = booleanPreferencesKey("full_inside") defaultsTo true

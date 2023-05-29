@@ -234,3 +234,47 @@ fun CheckBoxPreference(
         dialogState.open()
     }
 }
+
+@Composable
+fun TextBoxPreference(
+    title: String,
+    desc: String,
+    descLong: String? = desc,
+    icon: ImageVector? = null,
+    preference: PreferenceStore.Preference<String>
+) {
+    var value by rememberPreferenceNull(preference)
+
+    TextBoxPreference(
+        title,
+        desc,
+        descLong,
+        value,
+        icon,
+        onReset = { value = preference.defaultValue }) {
+        value = it
+    }
+}
+
+@Composable
+fun TextBoxPreference(
+    title: String,
+    desc: String,
+    descLong: String? = desc,
+    value: String?,
+    icon: ImageVector? = null,
+    onReset: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val dialogState = rememberDialogState()
+
+    value?.let {
+        TextBoxDialog(dialogState, title, it, onReset = onReset, description = descLong) { v ->
+            onSelect(v)
+        }
+    }
+
+    ButtonPreference(title, if (value.isNullOrEmpty()) desc else value, icon) {
+        dialogState.open()
+    }
+}

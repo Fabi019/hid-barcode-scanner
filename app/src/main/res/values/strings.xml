@@ -131,6 +131,9 @@
     <string name="allow_screen_rotation_desc">Enables the screen to rotate when the device orientation changes</string>
     <string name="fix_exposure">Fix camera exposure</string>
     <string name="fix_exposure_desc">Helps to reduce motion blur in the image</string>
+    <string name="filter_regex">Filter regex</string>
+    <string name="filter_regex_desc">Allows to filter codes by a regular expression</string>
+    <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

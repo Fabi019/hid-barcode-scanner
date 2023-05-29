@@ -48,6 +48,14 @@ fun CameraArea(
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
     val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
+    val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
+
+    val regex = remember(scanRegex) {
+        if (scanRegex.isBlank())
+            null
+        else
+            scanRegex.toRegex()
+    }
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -86,7 +94,7 @@ fun CameraArea(
             updateDetectorFPS()
             updateScale(source, previewView)
 
-            filterBarCodes(barcodes, fullyInside, useRawValue)?.let {
+            filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
                 onBarCodeReady(it)
             }
         }
