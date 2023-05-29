@@ -207,8 +207,9 @@ fun ScannerSettings() {
     )
 
     TextBoxPreference(
-        title = "Filter regex",
-        desc = "Allows to filter codes by a regular expression",
+        title = stringResource(R.string.filter_regex),
+        desc = stringResource(R.string.filter_regex_desc),
+        descLong = stringResource(R.string.filter_desc_long),
         icon = Icons.Default.FilterAlt,
         preference = PreferenceStore.SCAN_REGEX
     )

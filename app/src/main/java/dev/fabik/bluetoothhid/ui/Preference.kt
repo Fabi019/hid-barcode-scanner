@@ -239,12 +239,19 @@ fun CheckBoxPreference(
 fun TextBoxPreference(
     title: String,
     desc: String,
+    descLong: String? = desc,
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<String>
 ) {
     var value by rememberPreferenceNull(preference)
 
-    TextBoxPreference(title, desc, value, icon, onReset = { value = preference.defaultValue }) {
+    TextBoxPreference(
+        title,
+        desc,
+        descLong,
+        value,
+        icon,
+        onReset = { value = preference.defaultValue }) {
         value = it
     }
 }
@@ -253,6 +260,7 @@ fun TextBoxPreference(
 fun TextBoxPreference(
     title: String,
     desc: String,
+    descLong: String? = desc,
     value: String?,
     icon: ImageVector? = null,
     onReset: () -> Unit,
@@ -261,7 +269,7 @@ fun TextBoxPreference(
     val dialogState = rememberDialogState()
 
     value?.let {
-        TextBoxDialog(dialogState, title, it, onReset = onReset, description = desc) { v ->
+        TextBoxDialog(dialogState, title, it, onReset = onReset, description = descLong) { v ->
             onSelect(v)
         }
     }
