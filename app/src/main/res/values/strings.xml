@@ -136,7 +136,7 @@
     <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything.</string>
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
-    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}</string>
+    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -3,6 +3,8 @@ package dev.fabik.bluetoothhid.bt
 import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
+import java.text.DateFormat
+import java.util.Calendar
 
 // Represents a key with its modifier and hid scan code
 typealias Key = Pair<Byte, Byte>
@@ -33,7 +35,8 @@ class KeyTranslator(context: Context) {
     private val baseMap: Keymap
     private val keyMaps: MutableMap<String, Keymap> = mutableMapOf()
 
-    private val templates = mutableMapOf<String, () -> List<Key>>()
+    private val staticTemplates = mutableMapOf<String, List<Key>>()
+    private val dynamicTemplates = mutableMapOf<String, (String) -> List<Key>>()
 
     init {
         assetManager.list("keymaps")?.forEach {
@@ -45,22 +48,39 @@ class KeyTranslator(context: Context) {
             emptyMap()
         }
 
-        templates["F1"] = { listOf(Key(0, 0x3A)) }
-        templates["F2"] = { listOf(Key(0, 0x3B)) }
-        templates["F3"] = { listOf(Key(0, 0x3C)) }
-        templates["F4"] = { listOf(Key(0, 0x3D)) }
-        templates["F5"] = { listOf(Key(0, 0x3E)) }
-        templates["F6"] = { listOf(Key(0, 0x3F)) }
-        templates["F7"] = { listOf(Key(0, 0x40)) }
-        templates["F8"] = { listOf(Key(0, 0x41)) }
-        templates["F9"] = { listOf(Key(0, 0x42)) }
-        templates["F10"] = { listOf(Key(0, 0x43)) }
-        templates["F11"] = { listOf(Key(0, 0x44)) }
-        templates["F12"] = { listOf(Key(0, 0x45)) }
-        templates["ENTER"] = { listOf(Key(0, 0x28)) }
-        templates["ESC"] = { listOf(Key(0, 0x29)) }
-        templates["BKSP"] = { listOf(Key(0, 0x2A)) }
-        templates["TAB"] = { listOf(Key(0, 0x2B)) }
+        staticTemplates["F1"] = listOf(Key(0, 0x3A))
+        staticTemplates["F2"] = listOf(Key(0, 0x3B))
+        staticTemplates["F3"] = listOf(Key(0, 0x3C))
+        staticTemplates["F4"] = listOf(Key(0, 0x3D))
+        staticTemplates["F5"] = listOf(Key(0, 0x3E))
+        staticTemplates["F6"] = listOf(Key(0, 0x3F))
+        staticTemplates["F7"] = listOf(Key(0, 0x40))
+        staticTemplates["F8"] = listOf(Key(0, 0x41))
+        staticTemplates["F9"] = listOf(Key(0, 0x42))
+        staticTemplates["F10"] = listOf(Key(0, 0x43))
+        staticTemplates["F11"] = listOf(Key(0, 0x44))
+        staticTemplates["F12"] = listOf(Key(0, 0x45))
+        staticTemplates["ENTER"] = listOf(Key(0, 0x28))
+        staticTemplates["ESC"] = listOf(Key(0, 0x29))
+        staticTemplates["BKSP"] = listOf(Key(0, 0x2A))
+        staticTemplates["TAB"] = listOf(Key(0, 0x2B))
+
+        val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
+        val timeFormat = DateFormat.getTimeInstance()
+
+        dynamicTemplates["DATE"] = { locale ->
+            translateString(
+                dateFormat.format(Calendar.getInstance().time),
+                locale,
+            )
+        }
+
+        dynamicTemplates["TIME"] = { locale ->
+            translateString(
+                timeFormat.format(Calendar.getInstance().time),
+                locale,
+            )
+        }
     }
 
     private fun loadKeymap(fileName: String): Keymap {
@@ -111,11 +131,12 @@ class KeyTranslator(context: Context) {
             if (template == "CODE") {
                 keys.addAll(translateString(string, locale))
             } else {
-                templates[template]?.let { t ->
-                    keys.addAll(t())
+                staticTemplates[template]?.let { t ->
+                    keys.addAll(t)
+                } ?: dynamicTemplates[template]?.let { t ->
+                    keys.addAll(t(locale))
                 } ?: Log.w(TAG, "Unknown template: $template")
             }
-
 
             startIdx = it.range.last + 1
         }
