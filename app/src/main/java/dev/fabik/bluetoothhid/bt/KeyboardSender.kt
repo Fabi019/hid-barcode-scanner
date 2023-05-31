@@ -24,20 +24,22 @@ open class KeyboardSender(
         }
     }
 
-    suspend fun sendString(string: String, sendDelay: Long, appendKey: Int, locale: String) {
+    suspend fun sendString(
+        string: String,
+        sendDelay: Long,
+        appendKey: Int,
+        locale: String,
+        template: String
+    ) {
         when (appendKey) {
-            1 -> "$string\n"
-            2 -> "$string\t"
-            3 -> "$string "
-            else -> string
-        }.forEach {
-            val (modifier, key) = keyboardTranslator.translate(it, locale)
-                ?: return@forEach
-
-            Log.d(TAG, "sendString: $it -> $modifier, $key")
-
+            1 -> keyboardTranslator.translateString("$string\n", locale)
+            2 -> keyboardTranslator.translateString("$string\t", locale)
+            3 -> keyboardTranslator.translateString("$string ", locale)
+            4 -> keyboardTranslator.translateStringWithTemplate(string, locale, template)
+            else -> keyboardTranslator.translateString(string, locale)
+        }.forEach { (modifier, key) ->
+            Log.d(TAG, "sendString: $modifier, $key")
             sendKey(key, modifier)
-
             delay(sendDelay)
         }
     }
