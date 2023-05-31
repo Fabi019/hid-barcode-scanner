@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.HdrAuto
 import androidx.compose.material.icons.filled.Highlight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -266,6 +267,14 @@ fun ScannerSettings() {
         icon = Icons.Default.AddCircle,
         values = stringArrayResource(R.array.extra_keys_values),
         preference = PreferenceStore.EXTRA_KEYS
+    )
+
+    TextBoxPreference(
+        title = stringResource(R.string.custom_template),
+        desc = stringResource(R.string.custom_templ_desc),
+        descLong = stringResource(R.string.custom_templ_desc_long),
+        icon = Icons.Default.LibraryAdd,
+        preference = PreferenceStore.TEMPLATE_TEXT
     )
 
     SwitchPreference(

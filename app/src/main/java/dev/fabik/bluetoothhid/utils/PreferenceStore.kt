@@ -61,6 +61,7 @@ open class PreferenceStore {
         val OVERLAY_TYPE = intPreferencesKey("overlay_type") defaultsTo 0 // Square
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val EXTRA_KEYS = intPreferencesKey("extra_keys") defaultsTo 0 // None
+        val TEMPLATE_TEXT = stringPreferencesKey("template_text") defaultsTo ""
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false

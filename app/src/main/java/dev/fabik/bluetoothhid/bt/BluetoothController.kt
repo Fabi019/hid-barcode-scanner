@@ -226,6 +226,7 @@ class BluetoothController(var context: Context) {
         val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
         val extraKeys = getPreference(PreferenceStore.EXTRA_KEYS).first()
         val layout = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
+        val template = getPreference(PreferenceStore.TEMPLATE_TEXT).first()
 
         keyboardSender?.sendString(
             string, sendDelay.toLong(), extraKeys,
@@ -236,7 +237,7 @@ class BluetoothController(var context: Context) {
                 4 -> "es"
                 5 -> "it"
                 else -> "us"
-            }
+            }, template
         )
     }
 

@@ -134,6 +134,9 @@
     <string name="filter_regex">Filter regex</string>
     <string name="filter_regex_desc">Allows to filter codes by a regular expression</string>
     <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything.</string>
+    <string name="custom_template">Custom template</string>
+    <string name="custom_templ_desc">Allows you to set a custom template</string>
+    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -159,6 +162,7 @@
         <item>Return</item>
         <item>Tab</item>
         <item>Space</item>
+        <item>Custom</item>
     </string-array>
     <string-array name="code_types_values">
         <item>CODE_128</item>
