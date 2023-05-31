@@ -131,6 +131,7 @@
         <item>Enter</item>
         <item>Tab</item>
         <item>Leerzeichen</item>
+        <item>Benutzerdefiniert</item>
     </string-array>
     <string-array name="code_types_values">
         <item>CODE_128</item>
@@ -185,4 +186,7 @@
     <string name="filter_regex">Filter regex</string>
     <string name="filter_regex_desc">Erlaubt es codes mit einem regulären Ausdruck zu filtern</string>
     <string name="filter_desc_long">Unterstützt normale regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen.</string>
+    <string name="custom_template">Eigenes Template</string>
+    <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
+    <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}</string>
 </resources>
