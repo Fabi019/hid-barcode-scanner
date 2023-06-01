@@ -39,6 +39,9 @@ import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
+val LocalSnackbar =
+    staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
+
 /**
  * Scanner screen with camera preview.
  *
@@ -46,7 +49,6 @@ import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
  * @param onDisconnect callback to disconnect from the current device
  * @param sendText callback to send text to the current device
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
@@ -55,6 +57,7 @@ fun Scanner(
 ) {
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
     var camera by remember { mutableStateOf<Camera?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -65,7 +68,8 @@ fun Scanner(
             currentDevice?.let {
                 SendToDeviceFAB(currentBarcode, sendText)
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(
             Modifier
@@ -74,10 +78,12 @@ fun Scanner(
             contentAlignment = Alignment.Center
         ) {
             RequiresCameraPermission {
-                CameraPreviewArea({ camera = it }) { value, send ->
-                    currentBarcode = value
-                    if (send) {
-                        sendText(value)
+                CompositionLocalProvider(LocalSnackbar provides snackbarHostState) {
+                    CameraPreviewArea({ camera = it }) { value, send ->
+                        currentBarcode = value
+                        if (send) {
+                            sendText(value)
+                        }
                     }
                 }
                 BarcodeValue(currentBarcode)
