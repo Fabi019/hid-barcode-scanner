@@ -64,6 +64,10 @@ class KeyTranslator(context: Context) {
         staticTemplates["ESC"] = listOf(Key(0, 0x29))
         staticTemplates["BKSP"] = listOf(Key(0, 0x2A))
         staticTemplates["TAB"] = listOf(Key(0, 0x2B))
+        staticTemplates["RIGHT"] = listOf(Key(0, 0x4F))
+        staticTemplates["LEFT"] = listOf(Key(0, 0x50))
+        staticTemplates["DOWN"] = listOf(Key(0, 0x51))
+        staticTemplates["UP"] = listOf(Key(0, 0x52))
 
         val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
         val timeFormat = DateFormat.getTimeInstance()

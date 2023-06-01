@@ -188,5 +188,5 @@
     <string name="filter_desc_long">Unterstützt normale regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen.</string>
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
-    <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}</string>
+    <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}</string>
 </resources>
