@@ -80,6 +80,12 @@ fun SettingsContent() {
         }
 
         item {
+            SectionTitle(R.string.camera)
+            CameraSettings()
+            ColoredDivider()
+        }
+
+        item {
             SectionTitle(R.string.scanner)
             ScannerSettings()
             ColoredDivider()
@@ -139,6 +145,29 @@ fun ConnectionSettings() {
         values = stringArrayResource(R.array.keyboard_layout_values),
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
+
+    ComboBoxPreference(
+        title = stringResource(R.string.extra_keys),
+        desc = stringResource(R.string.extra_keys_desc),
+        icon = Icons.Default.AddCircle,
+        values = stringArrayResource(R.array.extra_keys_values),
+        preference = PreferenceStore.EXTRA_KEYS
+    )
+
+    TextBoxPreference(
+        title = stringResource(R.string.custom_template),
+        desc = stringResource(R.string.custom_templ_desc),
+        descLong = stringResource(R.string.custom_templ_desc_long),
+        icon = Icons.Default.LibraryAdd,
+        preference = PreferenceStore.TEMPLATE_TEXT
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.auto_send),
+        desc = stringResource(R.string.auto_send_desc),
+        icon = Icons.Default.Send,
+        preference = PreferenceStore.AUTO_SEND
+    )
 }
 
 @Composable
@@ -169,28 +198,12 @@ fun AppearanceSettings() {
 }
 
 @Composable
-fun ScannerSettings() {
-    CheckBoxPreference(
-        title = stringResource(R.string.code_types),
-        desc = stringResource(R.string.code_types_desc_short),
-        descLong = stringResource(R.string.code_types_desc),
-        valueStrings = stringArrayResource(R.array.code_types_values),
-        icon = Icons.Default.QrCode2,
-        preference = PreferenceStore.CODE_TYPES
-    )
-
+fun CameraSettings() {
     SwitchPreference(
         title = stringResource(R.string.front_camera),
         desc = stringResource(R.string.front_camera_desc),
         icon = Icons.Default.FlipCameraAndroid,
         preference = PreferenceStore.FRONT_CAMERA
-    )
-
-    SwitchPreference(
-        title = stringResource(R.string.restrict_area),
-        desc = stringResource(R.string.restrict_area_desc),
-        icon = Icons.Default.CropFree,
-        preference = PreferenceStore.RESTRICT_AREA
     )
 
     SwitchPreference(
@@ -205,6 +218,25 @@ fun ScannerSettings() {
         desc = stringResource(R.string.fix_exposure_desc),
         icon = Icons.Default.Exposure,
         preference = PreferenceStore.FIX_EXPOSURE
+    )
+}
+
+@Composable
+fun ScannerSettings() {
+    CheckBoxPreference(
+        title = stringResource(R.string.code_types),
+        desc = stringResource(R.string.code_types_desc_short),
+        descLong = stringResource(R.string.code_types_desc),
+        valueStrings = stringArrayResource(R.array.code_types_values),
+        icon = Icons.Default.QrCode2,
+        preference = PreferenceStore.CODE_TYPES
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.restrict_area),
+        desc = stringResource(R.string.restrict_area_desc),
+        icon = Icons.Default.CropFree,
+        preference = PreferenceStore.RESTRICT_AREA
     )
 
     TextBoxPreference(
@@ -252,29 +284,6 @@ fun ScannerSettings() {
         icon = Icons.Default.Hd,
         values = stringArrayResource(R.array.scan_res_values),
         preference = PreferenceStore.SCAN_RESOLUTION
-    )
-
-    SwitchPreference(
-        title = stringResource(R.string.auto_send),
-        desc = stringResource(R.string.auto_send_desc),
-        icon = Icons.Default.Send,
-        preference = PreferenceStore.AUTO_SEND
-    )
-
-    ComboBoxPreference(
-        title = stringResource(R.string.extra_keys),
-        desc = stringResource(R.string.extra_keys_desc),
-        icon = Icons.Default.AddCircle,
-        values = stringArrayResource(R.array.extra_keys_values),
-        preference = PreferenceStore.EXTRA_KEYS
-    )
-
-    TextBoxPreference(
-        title = stringResource(R.string.custom_template),
-        desc = stringResource(R.string.custom_templ_desc),
-        descLong = stringResource(R.string.custom_templ_desc_long),
-        icon = Icons.Default.LibraryAdd,
-        preference = PreferenceStore.TEMPLATE_TEXT
     )
 
     SwitchPreference(

@@ -42,26 +42,28 @@ open class PreferenceStore {
         val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 1f
         val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout") defaultsTo 0
+        val EXTRA_KEYS = intPreferencesKey("extra_keys") defaultsTo 0 // None
+        val TEMPLATE_TEXT = stringPreferencesKey("template_text") defaultsTo ""
 
         // Appearance
         val ALLOW_SCREEN_ROTATION = booleanPreferencesKey("allow_screen_rotation") defaultsTo false
         val THEME = intPreferencesKey("theme") defaultsTo 0 // System
         val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme") defaultsTo false
 
+        // Camera
+        val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
+        val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
+        val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
+
         // Scanner
         val SCAN_FREQUENCY = intPreferencesKey("scan_freq") defaultsTo 2 // Normal
         val CODE_TYPES = stringSetPreferencesKey("code_types") defaultsTo setOf()
         val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
-        val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
-        val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
         val SCAN_REGEX = stringPreferencesKey("scan_regex") defaultsTo ""
-        val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val RESTRICT_AREA = booleanPreferencesKey("restrict_area") defaultsTo true
         val FULL_INSIDE = booleanPreferencesKey("full_inside") defaultsTo true
         val OVERLAY_TYPE = intPreferencesKey("overlay_type") defaultsTo 0 // Square
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
-        val EXTRA_KEYS = intPreferencesKey("extra_keys") defaultsTo 0 // None
-        val TEMPLATE_TEXT = stringPreferencesKey("template_text") defaultsTo ""
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false

@@ -137,6 +137,7 @@
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}</string>
+    <string name="camera">Camera</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
