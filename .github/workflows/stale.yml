@@ -15,7 +15,7 @@ jobs:
       - uses: actions/stale@v8
         with:
           exempt-issue-labels: 'work-in-progress,enhancement'
-          exempt-pr-labels: 'work-in-progress'
+          exempt-pr-labels: 'work-in-progress,dependencies'
           stale-issue-message: 'This issue is stale because it has been open 30 days with no activity. Remove stale label or comment or this will be closed in 5 days.'
           stale-pr-message: 'This PR is stale because it has been open 45 days with no activity.'
           close-issue-message: 'This issue was closed because it has been stalled for 7 days with no activity.'
