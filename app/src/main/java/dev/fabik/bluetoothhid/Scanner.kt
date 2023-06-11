@@ -18,12 +18,16 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material.ripple.RippleTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -79,7 +83,9 @@ fun Scanner(
         ) {
             RequiresCameraPermission {
                 CompositionLocalProvider(LocalSnackbar provides snackbarHostState) {
-                    CameraPreviewArea({ camera = it }) { value, send ->
+                    CameraPreviewArea(
+                        onCameraReady = { camera = it }
+                    ) { value, send ->
                         currentBarcode = value
                         if (send) {
                             sendText(value)
@@ -205,10 +211,41 @@ private fun SendToDeviceFAB(
     onClick: (String) -> Unit
 ) {
     currentBarcode?.let {
-        ExtendedFloatingActionButton(onClick = { onClick(it) }) {
-            Icon(Icons.Filled.Send, "Send")
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.send_to_device))
+        val controller = LocalController.current
+        val disabled = controller.isSending
+
+        val (containerColor, contentColor) = if (!disabled) {
+            MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f) to
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+        }
+
+        val noRippleTheme = remember {
+            object : RippleTheme {
+                @Composable
+                override fun defaultColor() = Color.Unspecified
+
+                @Composable
+                override fun rippleAlpha(): RippleAlpha = RippleAlpha(0.0f, 0.0f, 0.0f, 0.0f)
+            }
+        }
+
+        CompositionLocalProvider(
+            LocalRippleTheme provides
+                    if (!disabled) LocalRippleTheme.current else noRippleTheme
+        ) {
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(stringResource(R.string.send_to_device))
+                },
+                icon = {
+                    Icon(Icons.Filled.Send, "Send")
+                },
+                contentColor = contentColor,
+                containerColor = containerColor,
+                onClick = { if (!disabled) onClick(it) }
+            )
         }
     }
 }

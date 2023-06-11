@@ -47,6 +47,9 @@ class BluetoothController(var context: Context) {
     var keyboardSender: KeyboardSender? = null
         private set
 
+    var isSending: Boolean by mutableStateOf(false)
+        private set
+
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
@@ -223,6 +226,11 @@ class BluetoothController(var context: Context) {
     }
 
     suspend fun sendString(string: String) = with(context) {
+        if (isSending) {
+            return@with
+        }
+        isSending = true
+
         val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
         val extraKeys = getPreference(PreferenceStore.EXTRA_KEYS).first()
         val layout = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
@@ -239,6 +247,8 @@ class BluetoothController(var context: Context) {
                 else -> "us"
             }, template
         )
+
+        isSending = false
     }
 
 }
