@@ -206,11 +206,12 @@ fun CameraSettings() {
         preference = PreferenceStore.FRONT_CAMERA
     )
 
-    SwitchPreference(
-        title = stringResource(R.string.auto_focus),
-        desc = stringResource(R.string.auto_focus_desc),
+    ComboBoxPreference(
+        title = stringResource(R.string.focus_mode),
+        desc = stringResource(R.string.focus_mode_desc),
+        values = stringArrayResource(R.array.focus_mode_values),
         icon = Icons.Default.HdrAuto,
-        preference = PreferenceStore.AUTO_FOCUS
+        preference = PreferenceStore.FOCUS_MODE
     )
 
     SwitchPreference(

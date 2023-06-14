@@ -138,6 +138,8 @@
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}</string>
     <string name="camera">Camera</string>
+    <string name="focus_mode">Focus mode</string>
+    <string name="focus_mode_desc">Select your preferred focus behaviour. Some modes disable the abilitiy to focus manually by tapping the screen.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -191,5 +193,13 @@
     <string-array name="highlight_values">
         <item>Box</item>
         <item>Dots</item>
+    </string-array>
+    <string-array name="focus_mode_values">
+        <item>Auto</item>
+        <item>Manual</item>
+        <item>Macro</item>
+        <item>Continuous</item>
+        <item>EDOF</item>
+        <item>Fixed (Infinity)</item>
     </string-array>
 </resources>

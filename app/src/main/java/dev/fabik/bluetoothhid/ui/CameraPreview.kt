@@ -51,9 +51,9 @@ fun CameraArea(
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
-    val autoFocus by rememberPreference(PreferenceStore.AUTO_FOCUS)
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
+    val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
     val regex = remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -145,12 +145,50 @@ fun CameraArea(
                         )
                     }
 
-                    if (!autoFocus) {
-                        // Set the focus mode to auto in order to disable continuous focusing
-                        ext.setCaptureRequestOption(
-                            CaptureRequest.CONTROL_AF_MODE,
-                            CaptureRequest.CONTROL_AF_MODE_AUTO
-                        )
+                    when (focusMode) {
+                        // Manual mode
+                        1 -> {
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_AUTO
+                            )
+                        }
+
+                        // Macro mode
+                        2 -> {
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_MACRO
+                            )
+                        }
+
+                        // Continuous mode
+                        3 -> {
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                            )
+                        }
+
+                        // EDOF mode
+                        4 -> {
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_EDOF
+                            )
+                        }
+
+                        // Infinity
+                        5 -> {
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_OFF
+                            )
+                            ext.setCaptureRequestOption(
+                                CaptureRequest.LENS_FOCUS_DISTANCE,
+                                0.0f
+                            )
+                        }
                     }
                 }
                 .build().apply {

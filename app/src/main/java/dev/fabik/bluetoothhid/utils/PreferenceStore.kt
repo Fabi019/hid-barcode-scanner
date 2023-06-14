@@ -54,6 +54,7 @@ open class PreferenceStore {
         val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
         val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
+        val FOCUS_MODE = intPreferencesKey("focus_mode") defaultsTo 0 // Auto
 
         // Scanner
         val SCAN_FREQUENCY = intPreferencesKey("scan_freq") defaultsTo 2 // Normal

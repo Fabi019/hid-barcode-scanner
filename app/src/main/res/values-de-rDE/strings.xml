@@ -190,4 +190,14 @@
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}</string>
     <string name="camera">Kamera</string>
+    <string name="focus_mode">Fokus Modus</string>
+    <string name="focus_mode_desc">Wählen des bevorzugtes Fokusverhaltens. In einigen Modi ist die manuelle Fokussierung durch Tippen nicht möglich.</string>
+    <string-array name="focus_mode_values">
+        <item>Auto</item>
+        <item>Manuell</item>
+        <item>Macro</item>
+        <item>Kontinuierlich</item>
+        <item>EDOF</item>
+        <item>Fest (Unendlich)</item>
+    </string-array>
 </resources>
