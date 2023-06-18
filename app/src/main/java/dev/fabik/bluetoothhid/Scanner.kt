@@ -282,9 +282,9 @@ private fun ScannerAppBar(
                     ToggleFlashButton(it)
                 }
             }
-            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
-                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
-            }
+//            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
+//                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
+//            }
             Dropdown()
         }
     )
