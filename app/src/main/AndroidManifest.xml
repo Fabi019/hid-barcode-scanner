@@ -93,6 +93,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="false" />
+
         <!--
          Placeholder gets replaced with 'barcode' when building a standard release.
          For a bundled version the value is set to an empty string because the bundled

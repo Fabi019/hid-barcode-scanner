@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -264,6 +265,8 @@ private fun ScannerAppBar(
     currentDevice: BluetoothDevice?,
     onDisconnect: () -> Unit
 ) {
+    val context = LocalContext.current
+
     TopAppBar(
         title = {
             Column {
@@ -281,6 +284,11 @@ private fun ScannerAppBar(
                 if (it.cameraInfo.hasFlashUnit()) {
                     ToggleFlashButton(it)
                 }
+            }
+            IconButton(onClick = {
+                context.startActivity(Intent(context, HistoryActivity::class.java))
+            }, Modifier.tooltip("History")) {
+                Icon(Icons.Default.History, "History")
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
 //                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
