@@ -108,6 +108,8 @@ class CameraViewModel : ViewModel() {
                 if (lastBarCodeValue != value) {
                     lastBarCodeValue = value
                     result = value
+                    // Add barcode to history
+                    HistoryViewModel.addHistoryItem(it)
                 }
             }
         }
