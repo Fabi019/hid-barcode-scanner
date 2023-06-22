@@ -3,7 +3,6 @@ package dev.fabik.bluetoothhid
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -66,7 +65,7 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, currentDevice, onDisconnect)
+            ScannerAppBar(camera, currentDevice)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -262,10 +261,9 @@ private fun SendToDeviceFAB(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
     camera: Camera?,
-    currentDevice: BluetoothDevice?,
-    onDisconnect: () -> Unit
+    currentDevice: BluetoothDevice?
 ) {
-    val context = LocalContext.current
+    val navigation = LocalNavigation.current
 
     TopAppBar(
         title = {
@@ -286,7 +284,7 @@ private fun ScannerAppBar(
                 }
             }
             IconButton(onClick = {
-                context.startActivity(Intent(context, HistoryActivity::class.java))
+                navigation.navigate(Routes.History)
             }, Modifier.tooltip("History")) {
                 Icon(Icons.Default.History, "History")
             }

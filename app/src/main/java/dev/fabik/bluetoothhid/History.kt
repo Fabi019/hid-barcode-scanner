@@ -1,9 +1,7 @@
 package dev.fabik.bluetoothhid
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,7 +28,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextFieldDefaults.indicatorLine
@@ -61,10 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.clearHistory
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.historyEntries
 import dev.fabik.bluetoothhid.ui.rememberDialogState
-import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
 import java.time.Instant
 import java.time.ZoneId
@@ -72,42 +66,29 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-class HistoryActivity : ComponentActivity() {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun History(onBack: () -> Unit) = with(viewModel<HistoryViewModel>()) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-            BluetoothHIDTheme {
-                Surface(Modifier.fillMaxSize()) {
-                    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-                    val viewModel = viewModel<HistoryViewModel>()
-
-                    Scaffold(
-                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                        topBar = {
-                            viewModel.HistoryTopBar(scrollBehavior) {
-                                finishAfterTransition()
-                            }
-                        }
-                    ) { padding ->
-                        Box(Modifier.padding(padding)) {
-                            viewModel.HistoryContent()
-                        }
-                    }
-                }
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            HistoryTopBar(scrollBehavior) {
+                onBack()
             }
         }
+    ) { padding ->
+        Box(Modifier.padding(padding)) {
+            HistoryContent()
+        }
     }
-
 }
 
 @Composable
 fun HistoryViewModel.HistoryContent() {
-    val filteredHistory = remember(historyEntries, searchQuery) {
-        historyEntries.filter {
-            val (barcode, _) = it
+    val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
+        HistoryViewModel.historyEntries.filter { (barcode, _) ->
             barcode.displayValue?.contains(searchQuery, ignoreCase = true) ?: false
         }
     }
@@ -133,6 +114,9 @@ fun HistoryViewModel.HistoryContent() {
                 supportingContent = {
                     Text(parseBarcodeType(barcode.format))
                 },
+                modifier = Modifier.clickable {
+
+                }
             )
             Divider()
         }
@@ -208,7 +192,7 @@ private fun HistoryViewModel.HistoryTopBar(
         dialogState = clearHistoryDialog,
         title = "Clear history",
         onConfirm = {
-            clearHistory()
+            HistoryViewModel.clearHistory()
             close()
         }
     ) {
