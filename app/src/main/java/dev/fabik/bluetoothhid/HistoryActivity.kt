@@ -59,9 +59,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.clearHistory
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.historyEntries
+import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
 import java.time.Instant
@@ -82,12 +84,14 @@ class HistoryActivity : ComponentActivity() {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                     val viewModel = viewModel<HistoryViewModel>()
 
-                    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                    Scaffold(
+                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                         topBar = {
                             viewModel.HistoryTopBar(scrollBehavior) {
                                 finishAfterTransition()
                             }
-                        }) { padding ->
+                        }
+                    ) { padding ->
                         Box(Modifier.padding(padding)) {
                             viewModel.HistoryContent()
                         }
@@ -141,6 +145,8 @@ private fun HistoryViewModel.HistoryTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     onExit: () -> Unit
 ) {
+    val clearHistoryDialog = rememberDialogState()
+
     // Close search on back button
     BackHandler(enabled = isSearching) {
         isSearching = false
@@ -189,14 +195,25 @@ private fun HistoryViewModel.HistoryTopBar(
             }
             IconButton(
                 onClick = {
-                    clearHistory()
+                    clearHistoryDialog.open()
                 }, Modifier.tooltip("Clear history")
             ) {
-                Icon(Icons.Default.Delete, "Back")
+                Icon(Icons.Default.Delete, "Clear history")
             }
         },
         scrollBehavior = scrollBehavior
     )
+
+    ConfirmDialog(
+        dialogState = clearHistoryDialog,
+        title = "Clear history",
+        onConfirm = {
+            clearHistory()
+            close()
+        }
+    ) {
+        Text("Are you sure you want to clear the history?")
+    }
 }
 
 // adapted from: https://stackoverflow.com/a/73665177/21418508
