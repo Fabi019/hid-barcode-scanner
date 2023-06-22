@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fabik.bluetoothhid.Devices
+import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 object Routes {
     const val Devices = "Devices"
     const val Main = "Main"
+    const val History = "History"
 }
 
 val LocalNavigation = staticCompositionLocalOf<NavHostController> {
@@ -90,6 +92,16 @@ fun NavGraph() {
                         controller.sendString(it)
                     }
                 }
+
+                BackHandler(onBack = onBack)
+            }
+
+            composable(Routes.History) {
+                val onBack: () -> Unit = {
+                    navController.navigateUp()
+                }
+
+                History(onBack)
 
                 BackHandler(onBack = onBack)
             }
