@@ -101,7 +101,11 @@ fun NavGraph() {
                     navController.navigateUp()
                 }
 
-                History(onBack)
+                History(onBack) {
+                    scope.launch {
+                        controller.sendString(it)
+                    }
+                }
 
                 BackHandler(onBack = onBack)
             }

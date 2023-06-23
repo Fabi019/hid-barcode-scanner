@@ -68,7 +68,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun History(onBack: () -> Unit) = with(viewModel<HistoryViewModel>()) {
+fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
@@ -80,13 +80,13 @@ fun History(onBack: () -> Unit) = with(viewModel<HistoryViewModel>()) {
         }
     ) { padding ->
         Box(Modifier.padding(padding)) {
-            HistoryContent()
+            HistoryContent(onClick)
         }
     }
 }
 
 @Composable
-fun HistoryViewModel.HistoryContent() {
+fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
         HistoryViewModel.historyEntries.filter { (barcode, _) ->
             barcode.displayValue?.contains(searchQuery, ignoreCase = true) ?: false
@@ -109,13 +109,13 @@ fun HistoryViewModel.HistoryContent() {
                     Text(timeString)
                 },
                 headlineContent = {
-                    Text(barcode.displayValue ?: barcode.rawValue ?: "")
+                    Text(barcode.rawValue ?: "")
                 },
                 supportingContent = {
                     Text(parseBarcodeType(barcode.format))
                 },
                 modifier = Modifier.clickable {
-
+                    barcode.rawValue?.let(onClick)
                 }
             )
             Divider()
