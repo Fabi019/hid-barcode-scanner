@@ -14,12 +14,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,12 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TextFieldDefaults.indicatorLine
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -150,7 +147,8 @@ private fun HistoryViewModel.HistoryTopBar(
             } else {
                 Text("History")
             }
-        }, navigationIcon = {
+        },
+        navigationIcon = {
             IconButton(
                 onClick = {
                     if (isSearching) {
@@ -163,7 +161,8 @@ private fun HistoryViewModel.HistoryTopBar(
             ) {
                 Icon(Icons.Default.ArrowBack, "Back")
             }
-        }, actions = {
+        },
+        actions = {
             IconButton(
                 onClick = {
                     if (isSearching) searchQuery = ""
@@ -172,7 +171,7 @@ private fun HistoryViewModel.HistoryTopBar(
                 Modifier.tooltip("Search")
             ) {
                 Icon(
-                    if (isSearching) Icons.Default.Backspace
+                    if (isSearching) Icons.Outlined.Close
                     else Icons.Default.Search,
                     "Search"
                 )
@@ -217,14 +216,18 @@ fun AppBarTextField(
     val colors = TextFieldDefaults.colors(
         focusedContainerColor = Color.Unspecified,
         unfocusedContainerColor = Color.Unspecified,
-        disabledContainerColor = Color.Unspecified
+        disabledContainerColor = Color.Unspecified,
+        // Hides the indicator line below the text field
+        focusedIndicatorColor = Color.Unspecified,
+        unfocusedIndicatorColor = Color.Unspecified,
     )
 
     // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse {
         MaterialTheme.colorScheme.onSurface
     }
-    val mergedTextStyle = textStyle.merge(TextStyle(color = textColor, lineHeight = 50.sp))
+    val mergedTextStyle =
+        textStyle.merge(TextStyle(color = textColor, lineHeight = 50.sp, fontSize = 16.sp))
 
     // request focus when this composable is first initialized
     val focusRequester = FocusRequester()
@@ -238,47 +241,37 @@ fun AppBarTextField(
     }
     textFieldValue = textFieldValue.copy(text = value) // make sure to keep the value updated
 
-    CompositionLocalProvider(
-        LocalTextSelectionColors provides LocalTextSelectionColors.current
-    ) {
-        BasicTextField(
-            value = textFieldValue,
-            onValueChange = {
-                textFieldValue = it
-                // remove newlines to avoid strange layout issues, and also because singleLine=true
-                onValueChange(it.text.replace("\n", ""))
-            },
-            modifier = modifier
-                .fillMaxWidth()
-                .heightIn(32.dp)
-                .indicatorLine(
-                    enabled = true,
-                    isError = false,
-                    interactionSource = interactionSource,
-                    colors = colors
-                )
-                .focusRequester(focusRequester),
-            textStyle = mergedTextStyle,
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
-            interactionSource = interactionSource,
-            singleLine = true,
-            decorationBox = { innerTextField ->
-                // places text field with placeholder and appropriate bottom padding
-                TextFieldDefaults.DecorationBox(
-                    value = value,
-                    visualTransformation = VisualTransformation.None,
-                    innerTextField = innerTextField,
-                    placeholder = { Text(text = hint) },
-                    singleLine = true,
-                    enabled = true,
-                    isError = false,
-                    interactionSource = interactionSource,
-                    colors = colors,
-                    contentPadding = PaddingValues(bottom = 4.dp)
-                )
-            }
-        )
-    }
+    BasicTextField(
+        value = textFieldValue,
+        onValueChange = {
+            textFieldValue = it
+            // remove newlines to avoid strange layout issues, and also because singleLine=true
+            onValueChange(it.text.replace("\n", ""))
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(32.dp)
+            .focusRequester(focusRequester),
+        textStyle = mergedTextStyle,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        interactionSource = interactionSource,
+        singleLine = true,
+        decorationBox = { innerTextField ->
+            // places text field with placeholder and appropriate bottom padding
+            TextFieldDefaults.DecorationBox(
+                value = value,
+                visualTransformation = VisualTransformation.None,
+                innerTextField = innerTextField,
+                placeholder = { Text(text = hint) },
+                singleLine = true,
+                enabled = true,
+                isError = false,
+                interactionSource = interactionSource,
+                colors = colors,
+                contentPadding = PaddingValues(bottom = 4.dp)
+            )
+        }
+    )
 }
