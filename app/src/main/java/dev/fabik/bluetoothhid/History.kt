@@ -86,7 +86,7 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
         HistoryViewModel.historyEntries.filter { (barcode, _) ->
-            barcode.displayValue?.contains(searchQuery, ignoreCase = true) ?: false
+            barcode.rawValue?.contains(searchQuery, ignoreCase = true) ?: false
         }
     }
 
@@ -142,10 +142,10 @@ private fun HistoryViewModel.HistoryTopBar(
                     onValueChange = {
                         searchQuery = it
                     },
-                    hint = "Search by value"
+                    hint = stringResource(R.string.search_by_value)
                 )
             } else {
-                Text("History")
+                Text(stringResource(R.string.history))
             }
         },
         navigationIcon = {
@@ -168,7 +168,7 @@ private fun HistoryViewModel.HistoryTopBar(
                     if (isSearching) searchQuery = ""
                     else isSearching = true
                 },
-                Modifier.tooltip("Search")
+                Modifier.tooltip(stringResource(R.string.search))
             ) {
                 Icon(
                     if (isSearching) Icons.Outlined.Close
@@ -179,7 +179,7 @@ private fun HistoryViewModel.HistoryTopBar(
             IconButton(
                 onClick = {
                     clearHistoryDialog.open()
-                }, Modifier.tooltip("Clear history")
+                }, Modifier.tooltip(stringResource(R.string.clear_history))
             ) {
                 Icon(Icons.Default.Delete, "Clear history")
             }
@@ -189,13 +189,13 @@ private fun HistoryViewModel.HistoryTopBar(
 
     ConfirmDialog(
         dialogState = clearHistoryDialog,
-        title = "Clear history",
+        title = stringResource(R.string.clear_history),
         onConfirm = {
             HistoryViewModel.clearHistory()
             close()
         }
     ) {
-        Text("Are you sure you want to clear the history?")
+        Text(stringResource(R.string.clear_history_desc))
     }
 }
 
