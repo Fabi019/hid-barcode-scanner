@@ -140,6 +140,11 @@
     <string name="camera">Camera</string>
     <string name="focus_mode">Focus mode</string>
     <string name="focus_mode_desc">Select your preferred focus behaviour. Some modes disable the abilitiy to focus manually by tapping the screen.</string>
+    <string name="search_by_value">Search by value</string>
+    <string name="history">History</string>
+    <string name="search">Search</string>
+    <string name="clear_history">Clear history</string>
+    <string name="clear_history_desc">Are you sure you want to clear the history?</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

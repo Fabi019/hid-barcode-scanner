@@ -200,4 +200,9 @@
         <item>EDOF</item>
         <item>Fest (Unendlich)</item>
     </string-array>
+    <string name="search_by_value">Suchen nach Wert</string>
+    <string name="history">Verlauf</string>
+    <string name="search">Suchen</string>
+    <string name="clear_history">Verlauf löschen</string>
+    <string name="clear_history_desc">Bist du sicher, dass du den Verlauf löschen willst?</string>
 </resources>
