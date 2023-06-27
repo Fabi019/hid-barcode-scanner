@@ -6,11 +6,11 @@ import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import java.util.concurrent.atomic.AtomicBoolean
 
 
 class BarCodeAnalyser(
@@ -25,7 +25,6 @@ class BarCodeAnalyser(
     }
 
     private var lastAnalyzedTimeStamp = 0L
-    private var isBusy = AtomicBoolean(false)
 
     private val options = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(0, *formats)
@@ -35,30 +34,33 @@ class BarCodeAnalyser(
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
-        val currentTimestamp = System.currentTimeMillis()
-        val deltaTime = currentTimestamp - lastAnalyzedTimeStamp
+        val currentTime = System.currentTimeMillis()
+        val deltaTime = currentTime - lastAnalyzedTimeStamp
 
-        // Check if the scan delay has passed and the analyzer is not currently processing an image
-        if (deltaTime > scanDelay && isBusy.compareAndSet(false, true)) {
-            image.image?.let { imageToAnalyze ->
-                val imageToProcess =
-                    InputImage.fromMediaImage(imageToAnalyze, image.imageInfo.rotationDegrees)
-
-                barcodeScanner.process(imageToProcess)
-                    .addOnSuccessListener { barcodes ->
-                        onResult(barcodes, Size(image.width, image.height))
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.d(TAG, "Something went wrong $exception")
-                    }
-                    .addOnCompleteListener {
-                        image.close()
-                        isBusy.set(false)
-                    }
-            }
-            lastAnalyzedTimeStamp = currentTimestamp
-        } else {
+        // Close image directly if wait time has not passed
+        if (deltaTime < scanDelay) {
+            Log.d(TAG, "Skipping image")
             image.close()
+        } else {
+            Log.d(TAG, "Processing image")
+            val imageToProcess =
+                InputImage.fromMediaImage(image.image!!, image.imageInfo.rotationDegrees)
+
+            val task = barcodeScanner.process(imageToProcess)
+                .addOnSuccessListener { barcodes ->
+                    onResult(barcodes, Size(image.width, image.height))
+                }
+                .addOnFailureListener { exception ->
+                    Log.d(TAG, "Something went wrong $exception")
+                }
+                .addOnCompleteListener {
+                    lastAnalyzedTimeStamp = currentTime
+                    image.close()
+                    Log.d(TAG, "Image processed")
+                }
+
+            // Wait for task to complete
+            Tasks.await(task)
         }
 
         onAnalyze()
