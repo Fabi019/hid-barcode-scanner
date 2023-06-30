@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
+import dev.fabik.bluetoothhid.BuildConfig
 import java.util.concurrent.Executors
 
 class CameraViewModel : ViewModel() {
@@ -154,10 +155,18 @@ class CameraViewModel : ViewModel() {
         cameraControl.setZoomRatio(newZoomRatio)
     }
 
+    /*
+     * Debug methods for testing FPS and latency of the detector and camera
+     */
+
     private var lastTimestamp = 0L
-    var detectorLatency = 0L
+    var detectorLatency by mutableStateOf(0L)
 
     fun updateDetectorFPS() {
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+
         val now = System.currentTimeMillis()
         detectorLatency = now - lastTimestamp
         lastTimestamp = now
@@ -166,10 +175,14 @@ class CameraViewModel : ViewModel() {
     private var lastCameraTimestamp = 0L
     private var lastCameraLatencyTimestamp = 0L
     private var fpsCountCamera = 0
-    var fpsCamera = 0
-    var latencyCamera = 0L
+    var fpsCamera by mutableStateOf(0)
+    var latencyCamera by mutableStateOf(0L)
 
     fun updateCameraFPS() {
+        if (!BuildConfig.DEBUG) {
+            return
+        }
+
         val now = System.currentTimeMillis()
 
         latencyCamera = now - lastCameraLatencyTimestamp

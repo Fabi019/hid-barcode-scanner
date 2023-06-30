@@ -145,6 +145,8 @@
     <string name="search">Search</string>
     <string name="clear_history">Clear history</string>
     <string name="clear_history_desc">Are you sure you want to clear the history?</string>
+    <string name="preview_mode_desc">Can reduce power and latency</string>
+    <string name="preview_performance_mode">Preview performance mode</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

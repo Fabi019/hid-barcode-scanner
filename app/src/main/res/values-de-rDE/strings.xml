@@ -205,4 +205,6 @@
     <string name="search">Suchen</string>
     <string name="clear_history">Verlauf löschen</string>
     <string name="clear_history_desc">Bist du sicher, dass du den Verlauf löschen willst?</string>
+    <string name="preview_mode_desc">Kann Strom und Verzögerungen verringern</string>
+    <string name="preview_performance_mode">Leistunsmodus für Vorschau</string>
 </resources>

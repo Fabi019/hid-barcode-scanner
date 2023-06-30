@@ -54,6 +54,7 @@ fun CameraArea(
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
     val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
+    val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
 
     val regex = remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -95,7 +96,9 @@ fun CameraArea(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
-            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            implementationMode =
+                if (previewMode) PreviewView.ImplementationMode.PERFORMANCE
+                else PreviewView.ImplementationMode.COMPATIBLE
         }
     }
 

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Code
@@ -219,6 +220,13 @@ fun CameraSettings() {
         desc = stringResource(R.string.fix_exposure_desc),
         icon = Icons.Default.Exposure,
         preference = PreferenceStore.FIX_EXPOSURE
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.preview_performance_mode),
+        desc = stringResource(R.string.preview_mode_desc),
+        icon = Icons.Default.Bolt,
+        preference = PreferenceStore.PREVIEW_PERFORMANCE_MODE
     )
 }
 
