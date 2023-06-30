@@ -54,14 +54,14 @@ open class PreferenceStore {
         val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
         val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
-        val FOCUS_MODE = intPreferencesKey("focus_mode") defaultsTo 0 // AutoE
+        val FOCUS_MODE = intPreferencesKey("focus_mode") defaultsTo 0 // Auto
         val PREVIEW_PERFORMANCE_MODE =
             booleanPreferencesKey("preview_performance_mode") defaultsTo false
+        val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
 
         // Scanner
         val SCAN_FREQUENCY = intPreferencesKey("scan_freq") defaultsTo 2 // Normal
         val CODE_TYPES = stringSetPreferencesKey("code_types") defaultsTo setOf()
-        val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
         val SCAN_REGEX = stringPreferencesKey("scan_regex") defaultsTo ""
         val RESTRICT_AREA = booleanPreferencesKey("restrict_area") defaultsTo true
         val FULL_INSIDE = booleanPreferencesKey("full_inside") defaultsTo true

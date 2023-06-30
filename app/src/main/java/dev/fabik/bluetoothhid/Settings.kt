@@ -228,6 +228,14 @@ fun CameraSettings() {
         icon = Icons.Default.Bolt,
         preference = PreferenceStore.PREVIEW_PERFORMANCE_MODE
     )
+
+    ComboBoxPreference(
+        title = stringResource(R.string.scan_res),
+        desc = stringResource(R.string.scan_res_desc),
+        icon = Icons.Default.Hd,
+        values = stringArrayResource(R.array.scan_res_values),
+        preference = PreferenceStore.SCAN_RESOLUTION
+    )
 }
 
 @Composable
@@ -285,14 +293,6 @@ fun ScannerSettings() {
         icon = Icons.Default.ShutterSpeed,
         values = stringArrayResource(R.array.scan_freq_values),
         preference = PreferenceStore.SCAN_FREQUENCY
-    )
-
-    ComboBoxPreference(
-        title = stringResource(R.string.scan_res),
-        desc = stringResource(R.string.scan_res_desc),
-        icon = Icons.Default.Hd,
-        values = stringArrayResource(R.array.scan_res_values),
-        preference = PreferenceStore.SCAN_RESOLUTION
     )
 
     SwitchPreference(
