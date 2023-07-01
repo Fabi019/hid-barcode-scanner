@@ -29,9 +29,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build APKs with Gradle
         run: |
           ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PW }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEYSTORE_PW }}
+
+      - name: Build AABs with Gradle
+        run: |
+          ./gradlew bundleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PW }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
@@ -48,3 +56,5 @@ jobs:
           files: |
             ./app/build/outputs/apk/standard/release/app-standard-release.apk
             ./app/build/outputs/apk/bundled/release/app-bundled-release.apk
+            ./app/build/outputs/bundle/bundledRelease/app-bundled-release.aab
+            ./app/build/outputs/bundle/standardRelease/app-standard-release.aab
