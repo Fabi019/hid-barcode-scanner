@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -91,7 +91,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        itemsIndexed(filteredHistory) { index, item ->
+        items(filteredHistory) { item ->
             val (barcode, time) = item
             ListItem(
                 overlineContent = {

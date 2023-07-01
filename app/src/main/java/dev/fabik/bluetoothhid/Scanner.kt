@@ -56,7 +56,6 @@ val LocalSnackbar =
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
-    onDisconnect: () -> Unit,
     sendText: (String) -> Unit
 ) {
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }

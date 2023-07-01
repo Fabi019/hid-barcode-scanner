@@ -78,25 +78,24 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                // Disconnect from device and navigate back to devices list
-                val onBack: () -> Unit = {
+                Scanner(controller.currentDevice) {
+                    scope.launch {
+                        controller.sendString(it)
+                    }
+                }
+
+                BackHandler {
+                    // Disconnect from device and navigate back to devices list
                     controller.disconnect()
                     if (!navController.navigateUp()) {
                         navController.popBackStack()
                         navController.navigate(Routes.Devices)
                     }
                 }
-
-                Scanner(controller.currentDevice, onBack) {
-                    scope.launch {
-                        controller.sendString(it)
-                    }
-                }
-
-                BackHandler(onBack = onBack)
             }
 
             composable(Routes.History) {
+                // Go back either by pressing the back button or the back arrow
                 val onBack: () -> Unit = {
                     navController.navigateUp()
                 }
