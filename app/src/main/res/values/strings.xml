@@ -147,6 +147,8 @@
     <string name="clear_history_desc">Are you sure you want to clear the history?</string>
     <string name="preview_mode_desc">Can reduce power and latency</string>
     <string name="preview_performance_mode">Preview performance mode</string>
+    <string name="full_screen_scanner">Full screen scanner</string>
+    <string name="full_screen_scanner_desc">Scanner will be shown in full screen</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

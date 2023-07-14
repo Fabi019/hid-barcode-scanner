@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.DeviceUnknown
 import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.HdrAuto
 import androidx.compose.material.icons.filled.Highlight
@@ -178,6 +179,13 @@ fun AppearanceSettings() {
         desc = stringResource(R.string.allow_screen_rotation_desc),
         icon = Icons.Default.ScreenRotation,
         preference = PreferenceStore.ALLOW_SCREEN_ROTATION
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.full_screen_scanner),
+        desc = stringResource(R.string.full_screen_scanner_desc),
+        icon = Icons.Default.Fullscreen,
+        preference = PreferenceStore.SCANNER_FULL_SCREEN
     )
 
     ComboBoxPreference(

@@ -41,6 +41,7 @@ import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
 val LocalSnackbar =
@@ -62,9 +63,11 @@ fun Scanner(
     var camera by remember { mutableStateOf<Camera?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val fullScreen by rememberPreference(PreferenceStore.SCANNER_FULL_SCREEN)
+
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, currentDevice)
+            ScannerAppBar(camera, currentDevice, fullScreen)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -76,7 +79,7 @@ fun Scanner(
     ) { padding ->
         Box(
             Modifier
-                .padding(padding)
+                .padding(if (fullScreen) PaddingValues(0.dp) else padding)
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
@@ -260,7 +263,8 @@ private fun SendToDeviceFAB(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
     camera: Camera?,
-    currentDevice: BluetoothDevice?
+    currentDevice: BluetoothDevice?,
+    transparent: Boolean,
 ) {
     val navigation = LocalNavigation.current
 
@@ -291,7 +295,14 @@ private fun ScannerAppBar(
 //                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
 //            }
             Dropdown()
-        }
+        },
+        colors = if (transparent) {
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent
+            )
+        } else {
+            TopAppBarDefaults.topAppBarColors()
+        },
     )
 }
 

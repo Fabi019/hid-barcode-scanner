@@ -207,4 +207,6 @@
     <string name="clear_history_desc">Bist du sicher, dass du den Verlauf löschen willst?</string>
     <string name="preview_mode_desc">Kann Strom und Verzögerungen verringern</string>
     <string name="preview_performance_mode">Leistunsmodus für Vorschau</string>
+    <string name="full_screen_scanner_desc">Scanner wird im Vollbild angezeigt</string>
+    <string name="full_screen_scanner">Scanner im Vollbild</string>
 </resources>

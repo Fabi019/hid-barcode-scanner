@@ -47,6 +47,7 @@ open class PreferenceStore {
 
         // Appearance
         val ALLOW_SCREEN_ROTATION = booleanPreferencesKey("allow_screen_rotation") defaultsTo false
+        val SCANNER_FULL_SCREEN = booleanPreferencesKey("scanner_full_screen") defaultsTo false
         val THEME = intPreferencesKey("theme") defaultsTo 0 // System
         val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme") defaultsTo false
 
