@@ -15,8 +15,8 @@ import com.google.mlkit.vision.common.InputImage
 
 class BarCodeAnalyser(
     private val scanDelay: Int,
-    formats: IntArray,
     private val onAnalyze: () -> Unit,
+    private val scannerOptions: BarcodeScannerOptions,
     private val onResult: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
@@ -25,12 +25,7 @@ class BarCodeAnalyser(
     }
 
     private var lastAnalyzedTimeStamp = 0L
-
-    private val options = BarcodeScannerOptions.Builder()
-        .setBarcodeFormats(0, *formats)
-        .build()
-
-    private val barcodeScanner = BarcodeScanning.getClient(options)
+    private val barcodeScanner = BarcodeScanning.getClient(scannerOptions)
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {

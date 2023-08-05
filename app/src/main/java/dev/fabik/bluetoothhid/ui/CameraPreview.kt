@@ -2,7 +2,6 @@ package dev.fabik.bluetoothhid.ui
 
 import android.content.pm.PackageManager
 import android.graphics.Paint
-import android.hardware.camera2.CaptureRequest
 import android.util.Log
 import android.util.Rational
 import android.view.ViewGroup
@@ -28,6 +27,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.LocalSnackbar
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
@@ -102,23 +103,42 @@ fun CameraArea(
         }
     }
 
-    val barcodeAnalyzer = remember(scanFrequency, scanFormats) {
-        BarCodeAnalyser(
-            scanDelay = scanFrequency,
-            formats = scanFormats,
-            onAnalyze = { updateCameraFPS() }
-        ) { barcodes, source ->
-            updateDetectorFPS()
-            updateScale(source, previewView)
-
-            filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
-                onBarCodeReady(it)
-            }
-        }
-    }
-
     RequiresModuleInstallation {
-        CameraPreview(onCameraReady, previewView) {
+        CameraPreview(
+            { camera, analyzer ->
+                val zoomCallback = { zoom: Float ->
+                    camera.cameraControl.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
+                    true
+                }
+
+                val options = BarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(0, *scanFormats)
+                    .enableAllPotentialBarcodes()
+                    .setZoomSuggestionOptions(
+                        ZoomSuggestionOptions.Builder(zoomCallback)
+                            .setMaxSupportedZoomRatio(camera.cameraInfo.zoomState.value!!.maxZoomRatio)
+                            .build()
+                    )
+                    .build()
+
+                BarCodeAnalyser(
+                    scanDelay = scanFrequency,
+                    scannerOptions = options,
+                    onAnalyze = { updateCameraFPS() }
+                ) { barcodes, source ->
+                    updateDetectorFPS()
+                    updateScale(source, previewView)
+
+                    filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
+                        onBarCodeReady(it)
+                    }
+                }.also {
+                    analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), it)
+                }
+
+                onCameraReady(camera)
+            }, previewView
+        ) {
             val resolutionSelector = ResolutionSelector.Builder()
                 .setResolutionStrategy(
                     ResolutionStrategy(
@@ -137,66 +157,10 @@ fun CameraArea(
                 .setOutputImageRotationEnabled(true)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .apply {
-                    val ext = Camera2Interop.Extender(this)
-
-                    if (fixExposure) {
-                        // Sets a fixed exposure compensation and iso for the image
-                        ext.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
-                        ext.setCaptureRequestOption(
-                            CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
-                            -8
-                        )
-                    }
-
-                    when (focusMode) {
-                        // Manual mode
-                        1 -> {
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_AUTO
-                            )
-                        }
-
-                        // Macro mode
-                        2 -> {
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_MACRO
-                            )
-                        }
-
-                        // Continuous mode
-                        3 -> {
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                            )
-                        }
-
-                        // EDOF mode
-                        4 -> {
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_EDOF
-                            )
-                        }
-
-                        // Infinity
-                        5 -> {
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.CONTROL_AF_MODE,
-                                CaptureRequest.CONTROL_AF_MODE_OFF
-                            )
-                            ext.setCaptureRequestOption(
-                                CaptureRequest.LENS_FOCUS_DISTANCE,
-                                0.0f
-                            )
-                        }
-                    }
+                    val extender = Camera2Interop.Extender(this)
+                    setupFocusMode(fixExposure, focusMode, extender)
                 }
-                .build().apply {
-                    setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyzer)
-                }
+                .build()
         }
     }
 
@@ -205,7 +169,7 @@ fun CameraArea(
 
 @Composable
 fun CameraViewModel.CameraPreview(
-    onCameraReady: (Camera) -> Unit,
+    onCameraReady: (Camera, ImageAnalysis) -> Unit,
     previewView: PreviewView,
     imageAnalysis: () -> ImageAnalysis,
 ) {
@@ -244,15 +208,17 @@ fun CameraViewModel.CameraPreview(
             ).build()
 
             runCatching {
+                val analyzer = imageAnalysis()
+
                 val useCaseGroup = UseCaseGroup.Builder()
                     .addUseCase(preview)
-                    .addUseCase(imageAnalysis())
+                    .addUseCase(analyzer)
                     .setViewPort(viewPort)
                     .build()
 
                 it.unbindAll()
                 it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                    onCameraReady(it)
+                    onCameraReady(it, analyzer)
                 }
             }.onFailure {
                 Log.e("CameraPreview", "Use case binding failed", it)
@@ -350,33 +316,32 @@ fun CameraViewModel.OverlayCanvas() {
             scanRect = Rect(Offset(0f, 0f), size)
         }
 
+        possibleBarcodes.forEach {
+            val points =
+                it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
+
+            // Draw only the corner points
+            points?.forEach { (x, y) ->
+                drawCircle(color = Color.Red, radius = 5f, center = Offset(x, y))
+            }
+        }
+
         currentBarCode?.let {
             // Map the bar code position to the canvas
             val points =
                 it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
 
-            when (highlightType) {
-                1 -> {
-                    // Draw only the corner points
-                    points?.forEach { (x, y) ->
-                        drawCircle(color = Color.Red, radius = 10f, center = Offset(x, y))
-                    }
+            // Draw a rectangle around the barcode
+            val path = Path().apply {
+                points?.forEach { (x, y) ->
+                    if (isEmpty)
+                        moveTo(x, y)
+                    lineTo(x, y)
                 }
-
-                else -> {
-                    // Draw a rectangle around the barcode
-                    val path = Path().apply {
-                        points?.forEach { (x, y) ->
-                            if (isEmpty)
-                                moveTo(x, y)
-                            lineTo(x, y)
-                        }
-                        close()
-                    }
-
-                    drawPath(path, color = Color.Blue, style = Stroke(5f))
-                }
+                close()
             }
+
+            drawPath(path, color = Color.Blue, style = Stroke(5f))
         }
 
         // Draw the focus circle if currently focusing

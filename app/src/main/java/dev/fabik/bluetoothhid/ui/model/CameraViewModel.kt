@@ -1,15 +1,21 @@
 package dev.fabik.bluetoothhid.ui.model
 
+import android.hardware.camera2.CaptureRequest
 import android.util.Size
+import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -30,6 +36,7 @@ class CameraViewModel : ViewModel() {
     var currentBarCode by mutableStateOf<Barcode?>(null)
     var focusTouchPoint by mutableStateOf<Offset?>(null)
     var isFocusing by mutableStateOf(false)
+    var possibleBarcodes = mutableStateListOf<Barcode>()
 
     var lastSourceRes: Size? = null
     var lastPreviewRes: Size? = null
@@ -65,6 +72,69 @@ class CameraViewModel : ViewModel() {
         }
     }
 
+    @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
+    fun setupFocusMode(
+        fixExposure: Boolean,
+        focusMode: Int,
+        ext: Camera2Interop.Extender<ImageAnalysis>
+    ) {
+
+        if (fixExposure) {
+            // Sets a fixed exposure compensation and iso for the image
+            ext.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
+            ext.setCaptureRequestOption(
+                CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                -8
+            )
+        }
+
+        when (focusMode) {
+            // Manual mode
+            1 -> {
+                ext.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_AUTO
+                )
+            }
+
+            // Macro mode
+            2 -> {
+                ext.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_MACRO
+                )
+            }
+
+            // Continuous mode
+            3 -> {
+                ext.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                )
+            }
+
+            // EDOF mode
+            4 -> {
+                ext.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_EDOF
+                )
+            }
+
+            // Infinity
+            5 -> {
+                ext.setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_OFF
+                )
+                ext.setCaptureRequestOption(
+                    CaptureRequest.LENS_FOCUS_DISTANCE,
+                    0.0f
+                )
+            }
+        }
+    }
+
     fun filterBarCodes(
         barcodes: List<Barcode>,
         fullyInside: Boolean,
@@ -75,7 +145,7 @@ class CameraViewModel : ViewModel() {
 
         val filtered = barcodes.filter {
             // Filter out codes without value
-            it.rawValue != null && it.displayValue != null
+            it.rawBytes != null && !it.rawValue.isNullOrEmpty() && !it.displayValue.isNullOrEmpty()
         }.filter {
             // Filter if they are within the scan area
             it.cornerPoints?.map { p ->
@@ -97,6 +167,10 @@ class CameraViewModel : ViewModel() {
             }
             regex?.matches(value!!) ?: true
         }
+
+        possibleBarcodes = barcodes.filter {
+            it.rawBytes == null || it.rawValue.isNullOrEmpty() || it.displayValue.isNullOrEmpty()
+        }.toMutableStateList()
 
         currentBarCode = filtered.firstOrNull()
 
