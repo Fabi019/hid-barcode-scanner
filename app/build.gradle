@@ -3,19 +3,22 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+final def gitHash = providers.exec {
+    commandLine('git', 'rev-parse', '--short=7', 'HEAD')
+}.standardOutput.asText.get().trim()
+
 android {
     namespace 'dev.fabik.bluetoothhid'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
-        targetSdk 33
+        targetSdk 34
         versionCode 41
         versionName "1.7.1"
 
-        def gitCommitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
-        buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\""
+        buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitHash}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
