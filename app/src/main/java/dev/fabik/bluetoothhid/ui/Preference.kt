@@ -240,6 +240,7 @@ fun TextBoxPreference(
     title: String,
     desc: String,
     descLong: String? = desc,
+    validator: (String) -> Boolean = { true },
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<String>
 ) {
@@ -250,6 +251,7 @@ fun TextBoxPreference(
         desc,
         descLong,
         value,
+        validator,
         icon,
         onReset = { value = preference.defaultValue }) {
         value = it
@@ -262,6 +264,7 @@ fun TextBoxPreference(
     desc: String,
     descLong: String? = desc,
     value: String?,
+    validator: (String) -> Boolean = { true },
     icon: ImageVector? = null,
     onReset: () -> Unit,
     onSelect: (String) -> Unit
@@ -269,7 +272,14 @@ fun TextBoxPreference(
     val dialogState = rememberDialogState()
 
     value?.let {
-        TextBoxDialog(dialogState, title, it, onReset = onReset, description = descLong) { v ->
+        TextBoxDialog(
+            dialogState,
+            title,
+            it,
+            validator = validator,
+            onReset = onReset,
+            description = descLong
+        ) { v ->
             onSelect(v)
         }
     }

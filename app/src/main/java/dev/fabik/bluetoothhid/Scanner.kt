@@ -44,9 +44,6 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
-val LocalSnackbar =
-    staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
-
 /**
  * Scanner screen with camera preview.
  *
@@ -84,14 +81,12 @@ fun Scanner(
             contentAlignment = Alignment.Center
         ) {
             RequiresCameraPermission {
-                CompositionLocalProvider(LocalSnackbar provides snackbarHostState) {
-                    CameraPreviewArea(
-                        onCameraReady = { camera = it }
-                    ) { value, send ->
-                        currentBarcode = value
-                        if (send) {
-                            sendText(value)
-                        }
+                CameraPreviewArea(
+                    onCameraReady = { camera = it }
+                ) { value, send ->
+                    currentBarcode = value
+                    if (send) {
+                        sendText(value)
                     }
                 }
                 BarcodeValue(currentBarcode)

@@ -268,6 +268,7 @@ fun ScannerSettings() {
         title = stringResource(R.string.filter_regex),
         desc = stringResource(R.string.filter_regex_desc),
         descLong = stringResource(R.string.filter_desc_long),
+        validator = { it.isBlank() || runCatching { it.toRegex() }.isSuccess },
         icon = Icons.Default.FilterAlt,
         preference = PreferenceStore.SCAN_REGEX
     )
