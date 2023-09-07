@@ -11,6 +11,7 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import java.util.concurrent.ExecutionException
 
 
 class BarCodeAnalyser(
@@ -46,7 +47,7 @@ class BarCodeAnalyser(
                     onResult(barcodes, Size(image.width, image.height))
                 }
                 .addOnFailureListener { exception ->
-                    Log.d(TAG, "Something went wrong $exception")
+                    Log.e(TAG, "Error processing image", exception)
                 }
                 .addOnCompleteListener {
                     lastAnalyzedTimeStamp = currentTime
@@ -54,8 +55,12 @@ class BarCodeAnalyser(
                     Log.d(TAG, "Image processed")
                 }
 
-            // Wait for task to complete
-            Tasks.await(task)
+            try {
+                // Wait for task to complete
+                Tasks.await(task)
+            } catch (e: ExecutionException) {
+                Log.e(TAG, "Error waiting for task", e.cause)
+            }
         }
 
         onAnalyze()

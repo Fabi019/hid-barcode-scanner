@@ -67,6 +67,7 @@ fun TextBoxDialog(
     dialogState: DialogState,
     title: String,
     text: String,
+    validator: (String) -> Boolean,
     description: String? = null,
     onReset: () -> Unit,
     onDismiss: () -> Unit = {},
@@ -74,14 +75,18 @@ fun TextBoxDialog(
 ) {
     var currentText by remember(text) { mutableStateOf(text) }
 
-    ConfirmResetDialog(dialogState, title, onConfirm = {
-        close()
-        onConfirm(currentText)
-    }, onDismiss = {
-        close()
-        currentText = text
-        onDismiss()
-    }, onReset = onReset) {
+    ConfirmResetDialog(
+        dialogState, title, enabled = validator(currentText),
+        onConfirm = {
+            close()
+            onConfirm(currentText)
+        },
+        onDismiss = {
+            close()
+            currentText = text
+            onDismiss()
+        }, onReset = onReset
+    ) {
         Column {
             description?.let {
                 Text(it)
@@ -89,6 +94,7 @@ fun TextBoxDialog(
             }
             TextField(
                 value = currentText,
+                isError = !validator(currentText),
                 onValueChange = { currentText = it },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -293,6 +299,7 @@ fun InfoDialog(
 fun ConfirmResetDialog(
     dialogState: DialogState,
     title: String,
+    enabled: Boolean = true,
     onReset: () -> Unit,
     onDismiss: DialogState.() -> Unit = {},
     onConfirm: DialogState.() -> Unit,
@@ -320,6 +327,7 @@ fun ConfirmResetDialog(
             text = content,
             confirmButton = {
                 TextButton(
+                    enabled = enabled,
                     onClick = { onConfirm() }
                 ) {
                     Text(stringResource(android.R.string.ok))

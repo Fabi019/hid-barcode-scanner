@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.Camera
 import androidx.camera.core.TorchState
@@ -44,14 +45,10 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 
-val LocalSnackbar =
-    staticCompositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
-
 /**
  * Scanner screen with camera preview.
  *
  * @param currentDevice the device that is currently connected, can be null if no device is connected
- * @param onDisconnect callback to disconnect from the current device
  * @param sendText callback to send text to the current device
  */
 @Composable
@@ -84,14 +81,12 @@ fun Scanner(
             contentAlignment = Alignment.Center
         ) {
             RequiresCameraPermission {
-                CompositionLocalProvider(LocalSnackbar provides snackbarHostState) {
-                    CameraPreviewArea(
-                        onCameraReady = { camera = it }
-                    ) { value, send ->
-                        currentBarcode = value
-                        if (send) {
-                            sendText(value)
-                        }
+                CameraPreviewArea(
+                    onCameraReady = { camera = it }
+                ) { value, send ->
+                    currentBarcode = value
+                    if (send) {
+                        sendText(value)
                     }
                 }
                 BarcodeValue(currentBarcode)
@@ -131,25 +126,29 @@ private fun CameraPreviewArea(
     val playSound by rememberPreferenceDefault(PreferenceStore.PLAY_SOUND)
 
     val toneGenerator = remember {
-        ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
+        runCatching {
+            ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
+        }.onFailure {
+            Log.e("Scanner", "Error initializing tone generator", it)
+            Toast.makeText(context, "Error initializing tone generator", Toast.LENGTH_SHORT).show()
+        }.getOrNull()
     }
 
     // Clean up tone generator after use
     DisposableEffect(toneGenerator) {
         onDispose {
-            toneGenerator.release()
+            toneGenerator?.release()
         }
     }
 
     val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
-
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
     CameraArea(onCameraReady) {
         onBarcodeDetected(it, autoSend)
 
         if (playSound) {
-            toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 75)
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
 
         if (vibrate && vibrator.hasVibrator()) {

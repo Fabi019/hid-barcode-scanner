@@ -14,7 +14,6 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
@@ -30,11 +29,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.BuildConfig
-import dev.fabik.bluetoothhid.LocalSnackbar
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.*
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -46,8 +43,6 @@ fun CameraArea(
     onBarCodeReady: (String) -> Unit
 ) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
-    val snackbar = LocalSnackbar.current
-    val scope = rememberCoroutineScope()
 
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
@@ -62,14 +57,6 @@ fun CameraArea(
             return@remember null
         runCatching {
             scanRegex.toRegex()
-        }.onFailure {
-            scope.launch {
-                snackbar.showSnackbar(
-                    "${it.message}",
-                    withDismissAction = true,
-                    duration = SnackbarDuration.Long
-                )
-            }
         }.getOrNull()
     }
 
