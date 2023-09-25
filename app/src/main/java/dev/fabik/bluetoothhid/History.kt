@@ -106,7 +106,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     Text(timeString)
                 },
                 headlineContent = {
-                    Text(barcode.rawValue ?: "")
+                    Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
                 },
                 supportingContent = {
                     Text(parseBarcodeType(barcode.format))
