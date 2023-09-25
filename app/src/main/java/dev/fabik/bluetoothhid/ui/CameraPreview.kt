@@ -51,6 +51,7 @@ fun CameraArea(
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
     val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
+    val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
 
     val regex = remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -93,7 +94,8 @@ fun CameraArea(
     RequiresModuleInstallation {
         CameraPreview(
             { camera, analyzer ->
-                val zoomCallback = { zoom: Float ->
+                val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
+                    if (!autoZoom) return@cb false
                     camera.cameraControl.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
                     true
                 }
@@ -242,9 +244,10 @@ fun CameraViewModel.CameraPreview(
 
 @Composable
 fun CameraViewModel.OverlayCanvas() {
-    val overlayType by rememberPreferenceNull(PreferenceStore.OVERLAY_TYPE)
-    val restrictArea by rememberPreferenceNull(PreferenceStore.RESTRICT_AREA)
-    val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
+    val overlayType by rememberPreference(PreferenceStore.OVERLAY_TYPE)
+    val restrictArea by rememberPreference(PreferenceStore.RESTRICT_AREA)
+    val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
+    // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
 
     val transition = updateTransition(targetState = isFocusing, label = "focusCircle")
 
@@ -273,8 +276,10 @@ fun CameraViewModel.OverlayCanvas() {
         val y = this.size.height / 2
         val landscape = this.size.width > this.size.height
 
-        if (restrictArea == true) {
+        // Draws the scanner area
+        if (restrictArea) {
             scanRect = when (overlayType) {
+                // Rectangle optimized for barcodes
                 1 -> {
                     val length = this.size.width * 0.8f
                     val height = (length * 0.45f).coerceAtMost(y * 0.8f)
@@ -284,6 +289,7 @@ fun CameraViewModel.OverlayCanvas() {
                     )
                 }
 
+                // Square for scanning qr codes
                 else -> {
                     val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
                     Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
@@ -303,16 +309,20 @@ fun CameraViewModel.OverlayCanvas() {
             scanRect = Rect(Offset(0f, 0f), size)
         }
 
-        possibleBarcodes.forEach {
-            val points =
-                it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
+        // Draw the possible barcodes (with dots)
+        if (showPossible) {
+            possibleBarcodes.forEach {
+                val points =
+                    it.cornerPoints?.map { p -> p.x * scale - transX to p.y * scale - transY }
 
-            // Draw only the corner points
-            points?.forEach { (x, y) ->
-                drawCircle(color = Color.Red, radius = 5f, center = Offset(x, y))
+                // Draw only the corner points
+                points?.forEach { (x, y) ->
+                    drawCircle(color = Color.Red, radius = 5f, center = Offset(x, y))
+                }
             }
         }
 
+        // Highlights the current barcode on screen (with a rectangle)
         currentBarCode?.let {
             // Map the bar code position to the canvas
             val points =

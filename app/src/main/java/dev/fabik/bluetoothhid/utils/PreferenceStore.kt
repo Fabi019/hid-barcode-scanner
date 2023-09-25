@@ -52,13 +52,14 @@ open class PreferenceStore {
         val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme") defaultsTo false
 
         // Camera
-        val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true
+        // val AUTO_FOCUS = booleanPreferencesKey("auto_focus") defaultsTo true // Removed
         val FRONT_CAMERA = booleanPreferencesKey("front_camera") defaultsTo false
         val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
         val FOCUS_MODE = intPreferencesKey("focus_mode") defaultsTo 0 // Auto
         val PREVIEW_PERFORMANCE_MODE =
             booleanPreferencesKey("preview_performance_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
+        val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false
 
         // Scanner
         val SCAN_FREQUENCY = intPreferencesKey("scan_freq") defaultsTo 2 // Normal
@@ -71,7 +72,8 @@ open class PreferenceStore {
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false
-        val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box
+        val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
+        // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
     }
 }
 

@@ -149,6 +149,10 @@
     <string name="preview_performance_mode">Preview performance mode</string>
     <string name="full_screen_scanner">Full screen scanner</string>
     <string name="full_screen_scanner_desc">Scanner will be shown in full screen</string>
+    <string name="auto_zoom">Auto-zoom</string>
+    <string name="zooms_in_on_codes_to_far_away">Zooms in on codes that are to far away</string>
+    <string name="show_possible">Show possible</string>
+    <string name="highlights_possible_codes">Highlights possible codes with dots</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
