@@ -172,6 +172,7 @@
         <item>SD (480P)</item>
         <item>HD (720P)</item>
         <item>FHD (1080P)</item>
+        <item>UHD (2160P)</item>
     </string-array>
     <string-array name="extra_keys_values">
         <item>None</item>

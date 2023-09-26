@@ -29,6 +29,7 @@ class CameraViewModel : ViewModel() {
         val SD_480P = Size(640, 480)
         val HD_720P = Size(960, 720)
         val FHD_1080P = Size(1440, 1080)
+        val UHD_2160P = Size(2160, 1440)
     }
 
     private var lastBarCodeValue: String? = null
