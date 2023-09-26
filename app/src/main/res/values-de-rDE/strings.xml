@@ -209,4 +209,8 @@
     <string name="preview_performance_mode">Leistunsmodus für Vorschau</string>
     <string name="full_screen_scanner_desc">Scanner wird im Vollbild angezeigt</string>
     <string name="full_screen_scanner">Scanner im Vollbild</string>
+    <string name="auto_zoom">Auto-Zoom</string>
+    <string name="zooms_in_on_codes_to_far_away">Vergrößert zu weit entfernte Codes</string>
+    <string name="show_possible">Zeige mögliche</string>
+    <string name="highlights_possible_codes">Hebt mögliche Codes mit Punkten hervor</string>
 </resources>

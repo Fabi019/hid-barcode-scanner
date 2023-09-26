@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -244,6 +245,13 @@ fun CameraSettings() {
         values = stringArrayResource(R.array.scan_res_values),
         preference = PreferenceStore.SCAN_RESOLUTION
     )
+
+    SwitchPreference(
+        title = stringResource(R.string.auto_zoom),
+        desc = stringResource(R.string.zooms_in_on_codes_to_far_away),
+        icon = Icons.Default.ZoomIn,
+        preference = PreferenceStore.AUTO_ZOOM
+    )
 }
 
 @Composable
@@ -281,12 +289,19 @@ fun ScannerSettings() {
         preference = PreferenceStore.OVERLAY_TYPE
     )
 
-    ComboBoxPreference(
+    /*ComboBoxPreference(
         title = stringResource(R.string.highlight_type),
         desc = stringResource(R.string.highlight_type_desc),
         icon = Icons.Default.Highlight,
         values = stringArrayResource(R.array.highlight_values),
         preference = PreferenceStore.HIGHLIGHT_TYPE
+    )*/
+
+    SwitchPreference(
+        title = stringResource(R.string.show_possible),
+        desc = stringResource(R.string.highlights_possible_codes),
+        icon = Icons.Default.Highlight,
+        preference = PreferenceStore.SHOW_POSSIBLE
     )
 
     SwitchPreference(
