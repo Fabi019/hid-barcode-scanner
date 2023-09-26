@@ -58,7 +58,7 @@ open class PreferenceStore {
         val FOCUS_MODE = intPreferencesKey("focus_mode") defaultsTo 0 // Auto
         val PREVIEW_PERFORMANCE_MODE =
             booleanPreferencesKey("preview_performance_mode") defaultsTo false
-        val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 0 // SD
+        val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 1 // HD
         val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false
 
         // Scanner
