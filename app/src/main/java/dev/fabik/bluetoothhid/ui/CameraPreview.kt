@@ -78,7 +78,7 @@ fun CameraArea(
         }
     }.collectAsState(intArrayOf(0))
 
-    val previewView = remember {
+    val previewView = remember(previewMode) {
         PreviewView(context).apply {
             scaleType = PreviewView.ScaleType.FILL_CENTER
             layoutParams = ViewGroup.LayoutParams(
@@ -91,66 +91,75 @@ fun CameraArea(
         }
     }
 
-    RequiresModuleInstallation {
-        CameraPreview(
-            { camera, analyzer ->
-                val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
-                    if (!autoZoom) return@cb false
-                    camera.cameraControl.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
-                    true
-                }
+    // Sets up the Barcode scanner
+    val cameraReadyCB: (Camera, ImageAnalysis) -> Unit = remember(scanFormats) {
+        { camera, analyzer ->
+            // Callback for the auto-zoom feature
+            val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
+                if (!autoZoom) return@cb false
+                // Reduce the zoom ratio by 20% to avoid the camera being too close
+                camera.cameraControl.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
+                true
+            }
 
-                val options = BarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(0, *scanFormats)
-                    .enableAllPotentialBarcodes()
-                    .setZoomSuggestionOptions(
-                        ZoomSuggestionOptions.Builder(zoomCallback)
-                            .setMaxSupportedZoomRatio(camera.cameraInfo.zoomState.value!!.maxZoomRatio)
-                            .build()
-                    )
-                    .build()
-
-                BarCodeAnalyser(
-                    scanDelay = scanFrequency,
-                    scannerOptions = options,
-                    onAnalyze = { updateCameraFPS() }
-                ) { barcodes, source ->
-                    updateDetectorFPS()
-                    updateScale(source, previewView)
-
-                    filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
-                        onBarCodeReady(it)
-                    }
-                }.also {
-                    analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), it)
-                }
-
-                onCameraReady(camera)
-            }, previewView
-        ) {
-            val resolutionSelector = ResolutionSelector.Builder()
-                .setResolutionStrategy(
-                    ResolutionStrategy(
-                        when (cameraResolution) {
-                            2 -> CameraViewModel.FHD_1080P
-                            1 -> CameraViewModel.HD_720P
-                            else -> CameraViewModel.SD_480P
-                        },
-                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
-                    )
+            val options = BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(0, *scanFormats)
+                .enableAllPotentialBarcodes()
+                .setZoomSuggestionOptions(
+                    ZoomSuggestionOptions.Builder(zoomCallback)
+                        .setMaxSupportedZoomRatio(camera.cameraInfo.zoomState.value!!.maxZoomRatio)
+                        .build()
                 )
                 .build()
 
-            ImageAnalysis.Builder()
-                .setResolutionSelector(resolutionSelector)
-                .setOutputImageRotationEnabled(true)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .apply {
-                    val extender = Camera2Interop.Extender(this)
-                    setupFocusMode(fixExposure, focusMode, extender)
+            BarCodeAnalyser(
+                scanDelay = scanFrequency,
+                scannerOptions = options,
+                onAnalyze = { updateCameraFPS() }
+            ) { barcodes, source ->
+                updateDetectorFPS()
+                updateScale(source, previewView)
+
+                filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
+                    onBarCodeReady(it)
                 }
-                .build()
+            }.also {
+                analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), it)
+            }
+
+            onCameraReady(camera)
         }
+    }
+
+    // Setup the camera analysis
+    val analysis = remember(cameraResolution, fixExposure, focusMode, scanFormats) {
+        val resolutionSelector = ResolutionSelector.Builder()
+            .setResolutionStrategy(
+                ResolutionStrategy(
+                    when (cameraResolution) {
+                        3 -> CameraViewModel.UHD_2160P
+                        2 -> CameraViewModel.FHD_1080P
+                        1 -> CameraViewModel.HD_720P
+                        else -> CameraViewModel.SD_480P
+                    },
+                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                )
+            )
+            .build()
+
+        ImageAnalysis.Builder()
+            .setResolutionSelector(resolutionSelector)
+            .setOutputImageRotationEnabled(true)
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .apply {
+                val extender = Camera2Interop.Extender(this)
+                setupFocusMode(fixExposure, focusMode, extender)
+            }
+            .build()
+    }
+
+    RequiresModuleInstallation {
+        CameraPreview(cameraReadyCB, previewView, analysis)
     }
 
     OverlayCanvas()
@@ -160,7 +169,7 @@ fun CameraArea(
 fun CameraViewModel.CameraPreview(
     onCameraReady: (Camera, ImageAnalysis) -> Unit,
     previewView: PreviewView,
-    imageAnalysis: () -> ImageAnalysis,
+    imageAnalysis: ImageAnalysis,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -184,7 +193,7 @@ fun CameraViewModel.CameraPreview(
         }
     }
 
-    val camera = remember(cameraProvider, imageAnalysis) {
+    val camera = remember(cameraProvider, imageAnalysis, frontCamera) {
         cameraProvider?.let {
             val cameraSelector = when {
                 frontCamera && hasFrontCamera -> CameraSelector.DEFAULT_FRONT_CAMERA
@@ -197,17 +206,15 @@ fun CameraViewModel.CameraPreview(
             ).build()
 
             runCatching {
-                val analyzer = imageAnalysis()
-
                 val useCaseGroup = UseCaseGroup.Builder()
                     .addUseCase(preview)
-                    .addUseCase(analyzer)
+                    .addUseCase(imageAnalysis)
                     .setViewPort(viewPort)
                     .build()
 
                 it.unbindAll()
                 it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                    onCameraReady(it, analyzer)
+                    onCameraReady(it, imageAnalysis)
                 }
             }.onFailure {
                 Log.e("CameraPreview", "Use case binding failed", it)
