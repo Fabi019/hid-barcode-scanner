@@ -6,7 +6,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import dev.fabik.bluetoothhid.MainActivity
 import dev.fabik.bluetoothhid.R
@@ -85,7 +87,11 @@ class BluetoothService : Service() {
             .build()
         notification.flags = Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
 
-        startForeground(1, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        } else {
+            startForeground(1, notification)
+        }
 
         return START_STICKY
     }
