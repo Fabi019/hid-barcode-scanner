@@ -377,17 +377,22 @@ fun AboutSettings() {
         desc = stringResource(R.string.share_desc),
         icon = Icons.Default.Share,
     ) {
-        context.startActivity(
-            Intent.createChooser(
-                Intent(Intent.ACTION_SEND).apply {
-                    putExtra(
-                        Intent.EXTRA_TEXT,
-                        "https://play.google.com/store/apps/details?id=${context.packageName}"
-                    )
-                    type = "text/plain"
-                }, shareVia
+        runCatching {
+            context.startActivity(
+                Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).apply {
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            "https://play.google.com/store/apps/details?id=${context.packageName}"
+                        )
+                        type = "text/plain"
+                    }, shareVia
+                )
             )
-        )
+        }.onFailure {
+            // Open page in browser instead
+            uriHandler.openUri("https://play.google.com/store/apps/details?id=${context.packageName}")
+        }
     }
 
     ButtonPreference(

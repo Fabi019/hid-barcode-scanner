@@ -202,7 +202,7 @@ fun CameraViewModel.CameraPreview(
 
             val viewPort = ViewPort.Builder(
                 Rational(previewView.width, previewView.height),
-                previewView.display.rotation
+                previewView.display?.rotation ?: preview.targetRotation
             ).build()
 
             runCatching {
