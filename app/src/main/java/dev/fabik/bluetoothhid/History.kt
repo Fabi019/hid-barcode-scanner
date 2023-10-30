@@ -1,7 +1,9 @@
 package dev.fabik.bluetoothhid
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,7 +47,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -82,6 +87,7 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
@@ -89,6 +95,10 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
             barcode.rawValue?.contains(searchQuery, ignoreCase = true) ?: false
         }
     }
+
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val clipboardString = stringResource(R.string.copied_to_clipboard)
 
     LazyColumn(Modifier.fillMaxSize()) {
         items(filteredHistory) { item ->
@@ -111,9 +121,22 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                 supportingContent = {
                     Text(parseBarcodeType(barcode.format))
                 },
-                modifier = Modifier.clickable {
-                    barcode.rawValue?.let(onClick)
-                }
+                modifier = Modifier.combinedClickable(
+                    onClick = {
+                        barcode.rawValue?.let(onClick)
+                    },
+                    onLongClick = {
+                        // Copy barcode to clipboard
+                        barcode.rawValue?.let {
+                            clipboardManager.setText(AnnotatedString(it))
+                            Toast.makeText(
+                                context,
+                                clipboardString,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                )
             )
             Divider()
         }
