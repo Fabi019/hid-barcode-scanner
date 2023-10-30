@@ -45,7 +45,7 @@
     <string name="request_again">Erneut anfragen</string>
     <string name="exit">Beenden</string>
     <string name="send_delay">Sendeverzögerung</string>
-    <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben</string>
+    <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben oder Zahl</string>
     <string name="send_delay_template">Verzögerung (ms): %.0f</string>
     <string name="request_permission">Berechtigung anfragen</string>
     <string name="bluetooth_permission">Diese App benötigt Bluetooth-Berechtigungen, um mit anderen Geräten zu kommunizieren. Bitte erlauben Sie der App den Zugriff auf \'Nearby Devices\'.</string>
@@ -207,7 +207,7 @@
     <string name="clear_history">Verlauf löschen</string>
     <string name="clear_history_desc">Bist du sicher, dass du den Verlauf löschen willst?</string>
     <string name="preview_mode_desc">Kann Strom und Verzögerungen verringern</string>
-    <string name="preview_performance_mode">Leistunsmodus für Vorschau</string>
+    <string name="preview_performance_mode">Leistungsmodus für Vorschau</string>
     <string name="full_screen_scanner_desc">Scanner wird im Vollbild angezeigt</string>
     <string name="full_screen_scanner">Scanner im Vollbild</string>
     <string name="auto_zoom">Auto-Zoom</string>
