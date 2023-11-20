@@ -21,6 +21,13 @@ object Descriptor {
         0x95.toByte(), 0x08.toByte(),                         //     Report Count (8)
         0x81.toByte(), 0x02.toByte(),                         //     Input (Data, Variable, Absolute)
 
+        0x05.toByte(), 0x08.toByte(),						  //      Usage Page (LEDs)
+        0x19.toByte(), 0x01.toByte(),						  //      Usage Minimum (Num Lock)
+        0x29.toByte(), 0x08.toByte(),						  //      Usage Maximum (Kana + 3 custom)
+        0x95.toByte(), 0x08.toByte(),						  //      Report Count (8)
+        0x75.toByte(), 0x01.toByte(),						  //      Report Size (1)
+        0x91.toByte(), 0x02.toByte(),						  //      Output (Data, Variable, Absolute)
+
         0x95.toByte(), 0x01.toByte(),                         //     Report Count (1)
         0x75.toByte(), 0x08.toByte(),                         //     Report Size (8)
         0x81.toByte(), 0x01.toByte(),                         //     Input (Constant) reserved byte(1)
