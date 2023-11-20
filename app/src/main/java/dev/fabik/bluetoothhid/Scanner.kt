@@ -38,8 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.*
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
+import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
@@ -91,7 +93,7 @@ fun Scanner(
                 }
                 BarcodeValue(currentBarcode)
             }
-            //DeviceInfoCard(currentDevice)
+            CapsLockWarning()
             camera?.let {
                 ZoomStateInfo(it)
             }
@@ -255,7 +257,8 @@ private fun SendToDeviceFAB(
  * Scanner app bar with a toggle flash button and a disconnect button.
  *
  * @param camera the camera to toggle the flash on
- * @param onDisconnect callback to disconnect from the current device
+ * @param currentDevice the device that is currently connected, can be null if no device is connected
+ * @param transparent whether the app bar should be transparent or not
  */
 @SuppressLint("MissingPermission")
 @Composable
@@ -335,47 +338,44 @@ fun ToggleFlashButton(camera: Camera) {
 }
 
 /**
- * Card showing the current device name and address. On click a dialog is shown with some
- * information about the device.
- * If the device is null, a generic message is shown instead.
- *
- * @param device the current device
+ * Component that warns the user if the caps lock key is activated.
+ * Clicking on the card will send a caps lock key press to the
+ * connected device and disables it.
  */
-@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.DeviceInfoCard(device: BluetoothDevice?) {
-    val dialogState = rememberDialogState()
+fun BoxScope.CapsLockWarning() {
+    val controller = LocalController.current
 
-    ElevatedCard(
-        onClick = device?.let { { dialogState.open() } } ?: {},
-        Modifier
-            .padding(12.dp)
-            .align(Alignment.TopCenter)
-    ) {
-        Row(
-            Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+    if (controller.isCapsLockOn) {
+        ElevatedCard(
+            onClick = {
+                controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+            },
+            Modifier
+                .padding(12.dp)
+                .align(Alignment.TopCenter)
         ) {
-            device?.let {
-                Icon(Icons.Default.Info, "Info")
-                Text(stringResource(R.string.connected_with, device.name ?: device.address))
-            } ?: run {
+            Row(
+                Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(Icons.Rounded.Warning, "Warning")
-                Text(stringResource(R.string.no_device))
+                Column {
+                    Text(stringResource(R.string.caps_lock_activated))
+                    Text(stringResource(R.string.click_to_turn_off), style = Typography.bodySmall)
+                }
             }
         }
-    }
-
-    device?.let {
-        DeviceInfoDialog(dialogState, it)
     }
 }
 
 /**
  * Displays the current zoom-factor as a text in the top-start corner.
  * If the factor is equal to 1.0 the text is hidden.
+ *
+ * @param camera the camera to get the zoom-factor from
  */
 @Composable
 fun BoxScope.ZoomStateInfo(camera: Camera) {
@@ -394,6 +394,9 @@ fun BoxScope.ZoomStateInfo(camera: Camera) {
 
 /**
  * Dialog showing information about the current device.
+ *
+ * @param dialogState state whether the dialog is open or not
+ * @param device the device to show information about
  */
 @SuppressLint("MissingPermission")
 @Composable

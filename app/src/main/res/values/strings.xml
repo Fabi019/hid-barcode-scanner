@@ -153,6 +153,8 @@
     <string name="zooms_in_on_codes_to_far_away">Zooms in on codes that are to far away</string>
     <string name="show_possible">Show possible</string>
     <string name="highlights_possible_codes">Highlights possible codes with dots</string>
+    <string name="caps_lock_activated">Caps Lock is activated</string>
+    <string name="click_to_turn_off">Click here to turn it off</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
