@@ -50,6 +50,9 @@ class BluetoothController(var context: Context) {
     var isSending: Boolean by mutableStateOf(false)
         private set
 
+    var isCapsLockOn: Boolean by mutableStateOf(false)
+        private set
+
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
@@ -127,6 +130,19 @@ class BluetoothController(var context: Context) {
                 }
             }
         }
+
+        override fun onInterruptData(device: BluetoothDevice?, reportId: Byte, data: ByteArray?) {
+            super.onInterruptData(device, reportId, data)
+
+            data?.get(0)?.toInt()?.let {
+                isCapsLockOn = it and 0x02 != 0
+                // isNumLockOn = it and 0x01 != 0
+                // isScrollLockOn = it and 0x04 != 0
+            }
+
+            Log.d(TAG, "onInterruptData: $device, $reportId, ${data?.contentToString()}")
+        }
+
     }
 
     val currentDevice: BluetoothDevice?

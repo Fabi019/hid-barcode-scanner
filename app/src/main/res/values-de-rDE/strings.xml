@@ -214,4 +214,6 @@
     <string name="zooms_in_on_codes_to_far_away">Vergrößert zu weit entfernte Codes</string>
     <string name="show_possible">Zeige mögliche</string>
     <string name="highlights_possible_codes">Hebt mögliche Codes mit Punkten hervor</string>
+    <string name="caps_lock_activated">Caps Lock ist aktiviert</string>
+    <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
 </resources>

@@ -28,6 +28,8 @@ class KeyTranslator(context: Context) {
         private val SPACE = ' ' to Key(0, 0x2C)
         private val TAB = '\t' to Key(0, 0x2B)
         private val RETURN = '\n' to Key(0, 0x28)
+
+        val CAPS_LOCK_KEY = Key(0, 0x39)
     }
 
     private val assetManager: AssetManager = context.assets

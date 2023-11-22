@@ -37,12 +37,14 @@ open class KeyboardSender(
             3 -> keyboardTranslator.translateString("$string ", locale)
             4 -> keyboardTranslator.translateStringWithTemplate(string, locale, template)
             else -> keyboardTranslator.translateString(string, locale)
-        }.forEach { (modifier, key) ->
-            Log.d(TAG, "sendString: $modifier, $key")
-            sendKey(key, modifier)
+        }.forEach { key ->
+            Log.d(TAG, "sendString: $key")
+            sendKey(key)
             delay(sendDelay)
         }
     }
+
+    fun sendKey(key: Key) = sendKey(key.second, key.first)
 
     private fun sendKey(key: Byte, modifier: Byte = 0, releaseKey: Boolean = true) {
         report[0] = modifier
