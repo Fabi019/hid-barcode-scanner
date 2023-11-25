@@ -270,9 +270,5 @@ class BluetoothController(var context: Context) {
 }
 
 fun BluetoothDevice.removeBond() {
-    try {
-        javaClass.getMethod("removeBond").invoke(this)
-    } catch (e: Exception) {
-        Log.e("BluetoothDevice", "Removing bond with $address has failed.", e)
-    }
+    javaClass.getMethod("removeBond").invoke(this)
 }

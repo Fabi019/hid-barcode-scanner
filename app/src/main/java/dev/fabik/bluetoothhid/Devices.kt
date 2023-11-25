@@ -272,7 +272,7 @@ fun DevicesViewModel.DeviceList(
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceCard(
+fun DevicesViewModel.DeviceCard(
     device: BluetoothDevice,
     onClick: () -> Unit
 ) {
@@ -330,7 +330,12 @@ fun DeviceCard(
     DeviceInfoDialog(infoDialog, device)
 
     ConfirmDialog(confirmDialog, stringResource(R.string.unpair_device, deviceName), onConfirm = {
-        device.removeBond()
+        runCatching {
+            device.removeBond()
+            pairedDevices.remove(device)
+        }.onFailure {
+            Log.e("BluetoothDevice", "Removing bond with $device has failed.", it)
+        }
         close()
     }) {
         Text(stringResource(R.string.unpair_desc))
