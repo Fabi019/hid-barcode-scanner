@@ -12,7 +12,7 @@ buildscript {
         camerax_version = '1.4.0-alpha02'
         accomp_version = '0.32.0'
         play_version = '18.3.0'
-        agp_version = '8.1.2'
+        agp_version = '8.2.0'
     }
 }
 
