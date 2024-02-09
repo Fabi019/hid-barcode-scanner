@@ -7,7 +7,7 @@ buildscript {
     }
 
     ext {
-        compose_ui_version = '1.5.4'
+        compose_ui_version = '1.6.1'
         compose_mat_version = '1.5.4'
         camerax_version = '1.4.0-alpha03'
         accomp_version = '0.32.0'
