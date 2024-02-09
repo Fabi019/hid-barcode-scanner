@@ -10,7 +10,6 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -88,7 +87,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
  * Content of the [Devices] screen. Handles the swipe refresh and listens for
  * connection changes.
  */
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MissingPermission")
 @Composable
 fun DevicesViewModel.DeviceContent() {
