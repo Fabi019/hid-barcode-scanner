@@ -5,6 +5,7 @@ import android.content.res.AssetManager
 import android.util.Log
 import java.text.DateFormat
 import java.util.Calendar
+import kotlin.experimental.or
 
 // Represents a key with its modifier and hid scan code
 typealias Key = Pair<Byte, Byte>
@@ -16,10 +17,10 @@ class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
 
-//        private const val LCTRL: Byte = 0x01
-//        private const val LSHIFT: Byte = 0x02
-//        private const val LALT: Byte = 0x04
-//        private const val LMETA: Byte = 0x08
+        private const val LCTRL: Byte = 0x01
+        private const val LSHIFT: Byte = 0x02
+        private const val LALT: Byte = 0x04
+        private const val LMETA: Byte = 0x08
 //        private const val RCTRL: Byte = 0x10
 //        private const val RSHIFT: Byte = 0x20
 //        private const val RALT: Byte = 0x40
@@ -37,7 +38,7 @@ class KeyTranslator(context: Context) {
     private val baseMap: Keymap
     private val keyMaps: MutableMap<String, Keymap> = mutableMapOf()
 
-    private val staticTemplates = mutableMapOf<String, List<Key>>()
+    private val staticTemplates = mutableMapOf<String, Key>()
     private val dynamicTemplates = mutableMapOf<String, (String) -> List<Key>>()
 
     init {
@@ -50,26 +51,26 @@ class KeyTranslator(context: Context) {
             emptyMap()
         }
 
-        staticTemplates["F1"] = listOf(Key(0, 0x3A))
-        staticTemplates["F2"] = listOf(Key(0, 0x3B))
-        staticTemplates["F3"] = listOf(Key(0, 0x3C))
-        staticTemplates["F4"] = listOf(Key(0, 0x3D))
-        staticTemplates["F5"] = listOf(Key(0, 0x3E))
-        staticTemplates["F6"] = listOf(Key(0, 0x3F))
-        staticTemplates["F7"] = listOf(Key(0, 0x40))
-        staticTemplates["F8"] = listOf(Key(0, 0x41))
-        staticTemplates["F9"] = listOf(Key(0, 0x42))
-        staticTemplates["F10"] = listOf(Key(0, 0x43))
-        staticTemplates["F11"] = listOf(Key(0, 0x44))
-        staticTemplates["F12"] = listOf(Key(0, 0x45))
-        staticTemplates["ENTER"] = listOf(Key(0, 0x28))
-        staticTemplates["ESC"] = listOf(Key(0, 0x29))
-        staticTemplates["BKSP"] = listOf(Key(0, 0x2A))
-        staticTemplates["TAB"] = listOf(Key(0, 0x2B))
-        staticTemplates["RIGHT"] = listOf(Key(0, 0x4F))
-        staticTemplates["LEFT"] = listOf(Key(0, 0x50))
-        staticTemplates["DOWN"] = listOf(Key(0, 0x51))
-        staticTemplates["UP"] = listOf(Key(0, 0x52))
+        staticTemplates["F1"] = Key(0, 0x3A)
+        staticTemplates["F2"] = Key(0, 0x3B)
+        staticTemplates["F3"] = Key(0, 0x3C)
+        staticTemplates["F4"] = Key(0, 0x3D)
+        staticTemplates["F5"] = Key(0, 0x3E)
+        staticTemplates["F6"] = Key(0, 0x3F)
+        staticTemplates["F7"] = Key(0, 0x40)
+        staticTemplates["F8"] = Key(0, 0x41)
+        staticTemplates["F9"] = Key(0, 0x42)
+        staticTemplates["F10"] = Key(0, 0x43)
+        staticTemplates["F11"] = Key(0, 0x44)
+        staticTemplates["F12"] = Key(0, 0x45)
+        staticTemplates["ENTER"] = Key(0, 0x28)
+        staticTemplates["ESC"] = Key(0, 0x29)
+        staticTemplates["BKSP"] = Key(0, 0x2A)
+        staticTemplates["TAB"] = Key(0, 0x2B)
+        staticTemplates["RIGHT"] = Key(0, 0x4F)
+        staticTemplates["LEFT"] = Key(0, 0x50)
+        staticTemplates["DOWN"] = Key(0, 0x51)
+        staticTemplates["UP"] = Key(0, 0x52)
 
         val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
         val timeFormat = DateFormat.getTimeInstance()
@@ -124,7 +125,7 @@ class KeyTranslator(context: Context) {
         templateString: String
     ): List<Key> {
         val keys = mutableListOf<Key>()
-        val templateRegex = Regex("\\{([A-Z0-9]+)\\}")
+        val templateRegex = Regex("\\{([+^#@]*\\w+)\\}")
 
         var startIdx = 0
         templateRegex.findAll(templateString).forEach {
@@ -137,11 +138,32 @@ class KeyTranslator(context: Context) {
             if (template == "CODE") {
                 keys.addAll(translateString(string, locale))
             } else {
-                staticTemplates[template]?.let { t ->
-                    keys.addAll(t)
-                } ?: dynamicTemplates[template]?.let { t ->
-                    keys.addAll(t(locale))
-                } ?: Log.w(TAG, "Unknown template: $template")
+                var modifiers = 0.toByte()
+                var temp = template
+                var wasModifier = true
+
+                do {
+                    when (temp.firstOrNull()) {
+                        '+' -> modifiers = modifiers or LCTRL
+                        '^' -> modifiers = modifiers or LSHIFT
+                        '#' -> modifiers = modifiers or LALT
+                        '@' -> modifiers = modifiers or LMETA
+                        else -> wasModifier = false
+                    }
+                    if (wasModifier) {
+                        temp = temp.substring(1)
+                    }
+                } while (wasModifier)
+
+                if (temp.isNotEmpty()) {
+                    staticTemplates[temp]?.let { t ->
+                        keys.add(t.first or modifiers to t.second)
+                    } ?: dynamicTemplates[temp]?.let { t ->
+                        keys.addAll(t(locale))
+                    } ?: translateString(temp, locale).forEach { t ->
+                        keys.add(Key(t.first or modifiers, t.second))
+                    }
+                }
             }
 
             startIdx = it.range.last + 1
