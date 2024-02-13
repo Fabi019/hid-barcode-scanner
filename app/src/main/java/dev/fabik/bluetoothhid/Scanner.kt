@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.ripple.LocalRippleTheme
@@ -46,6 +47,7 @@ import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import kotlinx.coroutines.launch
 
 /**
  * Scanner screen with camera preview.
@@ -243,7 +245,7 @@ private fun SendToDeviceFAB(
                     Text(stringResource(R.string.send_to_device))
                 },
                 icon = {
-                    Icon(Icons.Filled.Send, "Send")
+                    Icon(Icons.AutoMirrored.Filled.Send, "Send")
                 },
                 contentColor = contentColor,
                 containerColor = containerColor,
@@ -342,15 +344,17 @@ fun ToggleFlashButton(camera: Camera) {
  * Clicking on the card will send a caps lock key press to the
  * connected device and disables it.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
+    val scope = rememberCoroutineScope()
 
     if (controller.isCapsLockOn) {
         ElevatedCard(
             onClick = {
-                controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+                scope.launch {
+                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+                }
             },
             Modifier
                 .padding(12.dp)

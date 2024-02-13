@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException
 class BarCodeAnalyser(
     private val scanDelay: Int,
     private val onAnalyze: () -> Unit,
-    private val scannerOptions: BarcodeScannerOptions,
+    scannerOptions: BarcodeScannerOptions,
     private val onResult: (barcodes: List<Barcode>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
 

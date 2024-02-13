@@ -16,7 +16,7 @@ class DevicesViewModel : ViewModel() {
     var pairedDevices = mutableStateListOf<BluetoothDevice>()
 
     var isScanning by mutableStateOf(false)
-    var isRefreshing by mutableStateOf(false)
+    private var isRefreshing by mutableStateOf(false)
 
     var isBluetoothEnabled by mutableStateOf(false)
 

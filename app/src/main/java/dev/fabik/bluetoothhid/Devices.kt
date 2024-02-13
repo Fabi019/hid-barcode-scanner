@@ -270,7 +270,6 @@ fun DevicesViewModel.DeviceList(
  * @param onClick Callback function when the card is clicked.
  */
 @SuppressLint("MissingPermission")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DevicesViewModel.DeviceCard(
     device: BluetoothDevice,

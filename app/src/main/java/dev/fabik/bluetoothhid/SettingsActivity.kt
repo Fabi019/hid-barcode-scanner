@@ -7,14 +7,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
-import dev.fabik.bluetoothhid.utils.*
 
 class SettingsActivity : ComponentActivity() {
 
@@ -37,7 +43,7 @@ class SettingsActivity : ComponentActivity() {
                                         onClick = { finishAfterTransition() },
                                         Modifier.tooltip(stringResource(R.string.back))
                                     ) {
-                                        Icon(Icons.Default.ArrowBack, "Back")
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                                     }
                                 },
                                 scrollBehavior = scrollBehavior

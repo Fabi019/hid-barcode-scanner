@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.AutoFixHigh
@@ -36,15 +38,13 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -102,7 +102,8 @@ fun SettingsContent() {
 }
 
 @Composable
-fun ColoredDivider() = Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+fun ColoredDivider() =
+    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
 
 @Composable
 fun SectionTitle(@StringRes id: Int) {
@@ -168,7 +169,7 @@ fun ConnectionSettings() {
     SwitchPreference(
         title = stringResource(R.string.auto_send),
         desc = stringResource(R.string.auto_send_desc),
-        icon = Icons.Default.Send,
+        icon = Icons.AutoMirrored.Filled.Send,
         preference = PreferenceStore.AUTO_SEND
     )
 }
@@ -322,7 +323,7 @@ fun ScannerSettings() {
     SwitchPreference(
         title = stringResource(R.string.play_sound),
         desc = stringResource(R.string.play_sound_desc),
-        icon = Icons.Default.VolumeUp,
+        icon = Icons.AutoMirrored.Filled.VolumeUp,
         preference = PreferenceStore.PLAY_SOUND
     )
 

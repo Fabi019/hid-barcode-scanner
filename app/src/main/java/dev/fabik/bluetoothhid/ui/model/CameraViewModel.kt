@@ -12,6 +12,8 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -235,7 +237,7 @@ class CameraViewModel : ViewModel() {
      */
 
     private var lastTimestamp = 0L
-    var detectorLatency by mutableStateOf(0L)
+    var detectorLatency by mutableLongStateOf(0L)
 
     fun updateDetectorFPS() {
         if (!BuildConfig.DEBUG) {
@@ -250,8 +252,8 @@ class CameraViewModel : ViewModel() {
     private var lastCameraTimestamp = 0L
     private var lastCameraLatencyTimestamp = 0L
     private var fpsCountCamera = 0
-    var fpsCamera by mutableStateOf(0)
-    var latencyCamera by mutableStateOf(0L)
+    var fpsCamera by mutableIntStateOf(0)
+    var latencyCamera by mutableLongStateOf(0L)
 
     fun updateCameraFPS() {
         if (!BuildConfig.DEBUG) {

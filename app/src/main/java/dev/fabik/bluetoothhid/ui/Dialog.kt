@@ -31,6 +31,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -179,7 +181,7 @@ fun ComboBoxDialog(
     onConfirm: (Int) -> Unit
 ) {
     var currentSelection by remember(selectedItem) {
-        mutableStateOf(selectedItem)
+        mutableIntStateOf(selectedItem)
     }
 
     ConfirmResetDialog(dialogState, title, onConfirm = {
@@ -236,7 +238,7 @@ fun SliderDialog(
     onValueChange: (Float) -> Unit
 ) {
     var sliderPosition by remember(value) {
-        mutableStateOf(value)
+        mutableFloatStateOf(value)
     }
 
     ConfirmResetDialog(dialogState, title, onConfirm = {
