@@ -44,9 +44,9 @@ open class KeyboardSender(
         }
     }
 
-    fun sendKey(key: Key) = sendKey(key.second, key.first)
+    suspend fun sendKey(key: Key) = sendKey(key.second, key.first)
 
-    private fun sendKey(key: Byte, modifier: Byte = 0, releaseKey: Boolean = true) {
+    private suspend fun sendKey(key: Byte, modifier: Byte = 0, releaseKey: Boolean = true) {
         report[0] = modifier
         report[2] = key
 
@@ -54,6 +54,7 @@ open class KeyboardSender(
 
         if (releaseKey) {
             report.fill(0)
+            delay(1)
             sendReport(report)
         }
     }
