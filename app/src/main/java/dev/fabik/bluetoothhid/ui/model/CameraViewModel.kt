@@ -2,12 +2,11 @@ package dev.fabik.bluetoothhid.ui.model
 
 import android.hardware.camera2.CaptureRequest
 import android.util.Size
-import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -51,7 +50,7 @@ class CameraViewModel : ViewModel() {
 
     fun updateScale(source: Size, previewView: PreviewView) {
         if (lastSourceRes != source) {
-            val vw = previewView.width.toFloat()
+            /* val vw = previewView.width.toFloat()
             val vh = previewView.height.toFloat()
 
             val sw = source.width.toFloat()
@@ -60,7 +59,7 @@ class CameraViewModel : ViewModel() {
             val viewAspectRatio = vw / vh
             val sourceAspectRatio = sw / sh
 
-            if (sourceAspectRatio > viewAspectRatio) {
+           if (sourceAspectRatio > viewAspectRatio) {
                 scale = vh / sh
                 transX = (sw * scale - vw) / 2
                 transY = 0f
@@ -68,7 +67,7 @@ class CameraViewModel : ViewModel() {
                 scale = vw / sw
                 transX = 0f
                 transY = (sh * scale - vh) / 2
-            }
+            }*/
 
             lastSourceRes = source
             lastPreviewRes = Size(previewView.width, previewView.height)
@@ -79,22 +78,23 @@ class CameraViewModel : ViewModel() {
     fun setupFocusMode(
         fixExposure: Boolean,
         focusMode: Int,
-        ext: Camera2Interop.Extender<ImageAnalysis>
-    ) {
+    ): CaptureRequestOptions {
+        val builder = CaptureRequestOptions.Builder()
 
         if (fixExposure) {
             // Sets a fixed exposure compensation and iso for the image
-            ext.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
-            ext.setCaptureRequestOption(
+            builder.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
+            builder.setCaptureRequestOption(
                 CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
                 -8
             )
+            //builder.setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)
         }
 
         when (focusMode) {
             // Manual mode
             1 -> {
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_AUTO
                 )
@@ -102,7 +102,7 @@ class CameraViewModel : ViewModel() {
 
             // Macro mode
             2 -> {
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_MACRO
                 )
@@ -110,15 +110,15 @@ class CameraViewModel : ViewModel() {
 
             // Continuous mode
             3 -> {
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                 )
             }
 
             // EDOF mode
             4 -> {
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_EDOF
                 )
@@ -126,16 +126,18 @@ class CameraViewModel : ViewModel() {
 
             // Infinity
             5 -> {
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_OFF
                 )
-                ext.setCaptureRequestOption(
+                builder.setCaptureRequestOption(
                     CaptureRequest.LENS_FOCUS_DISTANCE,
                     0.0f
                 )
             }
         }
+
+        return builder.build()
     }
 
     fun filterBarCodes(
