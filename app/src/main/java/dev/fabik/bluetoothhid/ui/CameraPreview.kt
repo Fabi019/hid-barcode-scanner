@@ -1,7 +1,9 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.annotation.SuppressLint
 import android.graphics.Paint
 import android.util.Log
+import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.Camera2CameraControl
@@ -63,7 +65,6 @@ import java.util.concurrent.Executors
 
 
 @Composable
-@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 fun CameraArea(
     onCameraReady: (Camera) -> Unit,
     onBarCodeReady: (String) -> Unit
@@ -126,6 +127,7 @@ fun CameraArea(
                 true
             }
 
+            // Scanner options
             val options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(0, *scanFormats)
                 .enableAllPotentialBarcodes()
@@ -136,7 +138,8 @@ fun CameraArea(
                 )
                 .build()
 
-            BarCodeAnalyser(
+            // Setup the camera analysis
+            val analyzer = BarCodeAnalyser(
                 scanDelay = scanFrequency,
                 scannerOptions = options,
                 onAnalyze = { updateCameraFPS() }
@@ -147,29 +150,10 @@ fun CameraArea(
                 filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
                     onBarCodeReady(it)
                 }
-            }.apply {
-                camera.imageAnalysisResolutionSelector = ResolutionSelector.Builder()
-                    .setResolutionStrategy(
-                        ResolutionStrategy(
-                            when (cameraResolution) {
-                                3 -> CameraViewModel.UHD_2160P
-                                2 -> CameraViewModel.FHD_1080P
-                                1 -> CameraViewModel.HD_720P
-                                else -> CameraViewModel.SD_480P
-                            },
-                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
-                        )
-                    )
-                    .build()
-                camera.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
-                camera.setImageAnalysisAnalyzer(Executors.newSingleThreadExecutor(), this)
             }
-        }
-    }
 
-    // Setup the camera analysis
-    /*    val analysis = remember(cameraResolution, fixExposure, focusMode, scanFormats) {
-            val resolutionSelector = ResolutionSelector.Builder()
+            // Set the image analysis use case
+            camera.imageAnalysisResolutionSelector = ResolutionSelector.Builder()
                 .setResolutionStrategy(
                     ResolutionStrategy(
                         when (cameraResolution) {
@@ -182,17 +166,10 @@ fun CameraArea(
                     )
                 )
                 .build()
-
-            ImageAnalysis.Builder()
-                .setResolutionSelector(resolutionSelector)
-                .setOutputImageRotationEnabled(true)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .apply {
-                    val extender = Camera2Interop.Extender(this)
-                    setupFocusMode(fixExposure, focusMode, extender)
-                }
-                .build()
-        }*/
+            camera.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+            camera.setImageAnalysisAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
+        }
+    }
 
     RequiresModuleInstallation {
         CameraPreview(previewView, cameraReadyCB)
@@ -201,6 +178,7 @@ fun CameraArea(
     OverlayCanvas()
 }
 
+@SuppressLint("ClickableViewAccessibility")
 @OptIn(ExperimentalCamera2Interop::class)
 @Composable
 fun CameraViewModel.CameraPreview(
@@ -222,14 +200,28 @@ fun CameraViewModel.CameraPreview(
             Lifecycle.Event.ON_RESUME -> {
                 cameraController.bindToLifecycle(lifecycleOwner)
 
+                cameraController.tapToFocusState.observe(lifecycleOwner) {
+                    isFocusing = when (it) {
+                        CameraController.TAP_TO_FOCUS_STARTED -> true
+                        else -> false
+                    }
+
+                    Log.d("CameraPreview", "Focusing: $isFocusing ($it)")
+                }
+
                 cameraController.initializationFuture.addListener({
                     initialized = true
 
-                    // Enable the image analysis use case
+                    // Enable only the image analysis use case
                     cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
 
                     // Attach PreviewView after we know the camera is available.
                     previewView.controller = cameraController
+                    previewView.setOnTouchListener { _, event ->
+                        if (event.action == MotionEvent.ACTION_DOWN)
+                            focusTouchPoint = Offset(event.x, event.y)
+                        false
+                    }
 
                     // Camera is ready
                     onCameraReady(cameraController)
@@ -239,36 +231,13 @@ fun CameraViewModel.CameraPreview(
             Lifecycle.Event.ON_PAUSE -> {
                 cameraController.clearImageAnalysisAnalyzer()
                 cameraController.unbind()
+                cameraController.tapToFocusState.removeObservers(lifecycleOwner)
                 initialized = false
             }
 
             else -> Unit
         }
     }
-
-    /*    DisposableEffect(lifecycleOwner.lifecycle.currentState) {
-            cameraController.bindToLifecycle(lifecycleOwner)
-
-            cameraController.initializationFuture.addListener({
-                initialized = true
-
-                // Enable the image analysis use case
-                cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
-
-                // Attach PreviewView after we know the camera is available.
-                previewView.controller = cameraController
-
-                // Camera is ready
-                onCameraReady(cameraController)
-            }, ContextCompat.getMainExecutor(context))
-
-            onDispose {
-                cameraController.clearImageAnalysisAnalyzer()
-                cameraController.unbind()
-                initialized = false
-                Log.d("CameraPreview", "Camera unbound")
-            }
-        }*/
 
     LaunchedEffect(initialized, frontCamera) {
         if (initialized) {
@@ -283,73 +252,12 @@ fun CameraViewModel.CameraPreview(
         if (initialized) {
             Camera2CameraControl.from(cameraController.cameraControl!!)
                 .setCaptureRequestOptions(setupFocusMode(fixExposure, focusMode))
-                .addListener({
-                    Log.d("CameraPreview", "Focus mode set to $focusMode")
-                }, ContextCompat.getMainExecutor(context))
         }
     }
 
-    /*    val preview = remember {
-            Preview.Builder().build()
-        }*/
-
-    /*    val cameraProvider by produceState<ProcessCameraProvider?>(null) {
-            value = suspendCoroutine { cont ->
-                ProcessCameraProvider.getInstance(context).apply {
-                    addListener({
-                        cont.resume(get())
-                    }, ContextCompat.getMainExecutor(context))
-                }
-            }
-        }*/
-
-    /*    val camera = remember(cameraProvider, imageAnalysis, frontCamera) {
-            cameraProvider?.let {
-                val cameraSelector = when {
-                    frontCamera && hasFrontCamera -> CameraSelector.DEFAULT_FRONT_CAMERA
-                    else -> CameraSelector.DEFAULT_BACK_CAMERA
-                }
-
-                val viewPort = ViewPort.Builder(
-                    Rational(previewView.width, previewView.height),
-                    previewView.display?.rotation ?: preview.targetRotation
-                ).build()
-
-                runCatching {
-                    val useCaseGroup = UseCaseGroup.Builder()
-                        .addUseCase(preview)
-                        .addUseCase(imageAnalysis)
-                        .setViewPort(viewPort)
-                        .build()
-
-                    it.unbindAll()
-                    it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                        onCameraReady(it, imageAnalysis)
-                    }
-                }.onFailure {
-                    Log.e("CameraPreview", "Use case binding failed", it)
-                }.getOrNull()
-            }
-        }*/
-
     AndroidView(
-        modifier = Modifier
-            .fillMaxSize()
-        /*.pointerInput(camera, previewView) {
-            camera?.let {
-                focusOnTap(it.cameraControl, previewView)
-            }
-        }
-        .pointerInput(camera) {
-            camera?.let {
-                zoomGesture(it.cameraInfo, it.cameraControl)
-            }
-        },*/,
-        factory = {
-            previewView/*.also {
-                preview.setSurfaceProvider(it.surfaceProvider)
-            }*/
-        }
+        modifier = Modifier.fillMaxSize(),
+        factory = { previewView }
     )
 }
 
