@@ -5,9 +5,6 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewGroup
-import androidx.annotation.OptIn
-import androidx.camera.camera2.interop.Camera2CameraControl
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -179,7 +176,6 @@ fun CameraArea(
 }
 
 @SuppressLint("ClickableViewAccessibility")
-@OptIn(ExperimentalCamera2Interop::class)
 @Composable
 fun CameraViewModel.CameraPreview(
     previewView: PreviewView,
@@ -250,8 +246,7 @@ fun CameraViewModel.CameraPreview(
 
     LaunchedEffect(initialized, focusMode, fixExposure) {
         if (initialized) {
-            Camera2CameraControl.from(cameraController.cameraControl!!)
-                .setCaptureRequestOptions(setupFocusMode(fixExposure, focusMode))
+            setupFocusMode(cameraController.cameraControl!!, fixExposure, focusMode)
         }
     }
 
