@@ -7,6 +7,7 @@ import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.view.PreviewView
+import androidx.collection.CircularArray
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -68,20 +69,22 @@ class CameraViewModel : ViewModel() {
                     //setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)
                 }
 
-                setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE, when (focusMode) {
-                        1 -> CaptureRequest.CONTROL_AF_MODE_AUTO // Manual mode
-                        2 -> CaptureRequest.CONTROL_AF_MODE_MACRO // Macro mode
-                        3 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE // Continuous mode
-                        4 -> CaptureRequest.CONTROL_AF_MODE_EDOF // EDOF mode
-                        5 -> CaptureRequest.CONTROL_AF_MODE_OFF // Infinity
-                        else -> it.captureRequestOptions.getCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE)
-                            ?: CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                    }
-                )
+                if (focusMode > 0) {
+                    setCaptureRequestOption(
+                        CaptureRequest.CONTROL_AF_MODE, when (focusMode) {
+                            1 -> CaptureRequest.CONTROL_AF_MODE_AUTO // Manual mode
+                            2 -> CaptureRequest.CONTROL_AF_MODE_MACRO // Macro mode
+                            3 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO // Continuous mode
+                            4 -> CaptureRequest.CONTROL_AF_MODE_EDOF // EDOF mode
+                            5 -> CaptureRequest.CONTROL_AF_MODE_OFF // Infinity
+                            else -> it.captureRequestOptions.getCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE)
+                                ?: CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                        }
+                    )
 
-                if (focusMode == 5) {
-                    setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f)
+                    if (focusMode == 5) {
+                        setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f)
+                    }
                 }
             }.let { builder ->
                 it.addCaptureRequestOptions(builder.build())
@@ -152,6 +155,8 @@ class CameraViewModel : ViewModel() {
 
     private var lastTimestamp = 0L
     var detectorLatency by mutableLongStateOf(0L)
+    var detectorLatencies by mutableStateOf(CircularArray<Float>(100))
+    var cameraLatencies by mutableStateOf(CircularArray<Float>(100))
 
     fun updateDetectorFPS() {
         if (!BuildConfig.DEBUG) {
@@ -161,6 +166,11 @@ class CameraViewModel : ViewModel() {
         val now = System.currentTimeMillis()
         detectorLatency = now - lastTimestamp
         lastTimestamp = now
+
+        detectorLatencies.addLast(detectorLatency.toFloat())
+        if (detectorLatencies.size() >= 100) {
+            detectorLatencies.popFirst()
+        }
     }
 
     private var lastCameraTimestamp = 0L
@@ -178,6 +188,11 @@ class CameraViewModel : ViewModel() {
 
         latencyCamera = now - lastCameraLatencyTimestamp
         lastCameraLatencyTimestamp = now
+
+        cameraLatencies.addLast(latencyCamera.toFloat())
+        if (cameraLatencies.size() >= 100) {
+            cameraLatencies.popFirst()
+        }
 
         if (now - lastCameraTimestamp > 1000) {
             lastCameraTimestamp = now

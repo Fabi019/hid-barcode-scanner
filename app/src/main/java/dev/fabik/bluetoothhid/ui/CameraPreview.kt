@@ -57,6 +57,7 @@ import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.flow.map
+import java.lang.Integer.min
 import java.util.concurrent.Executors
 
 
@@ -392,7 +393,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
 
     // Draw the detector stats
     canvas.drawText(
-        "Detector latency: $detectorLatency ms",
+        "Detector latency: $detectorLatency ms (Delta: ${detectorLatency - latencyCamera} ms)",
         10f,
         y + 50f,
         Paint().apply {
@@ -422,4 +423,28 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
             textSize = 50f
         }
     )
+
+    // Draw the histogram
+    val width = canvas.width.toFloat()
+    val increment = width / detectorLatencies.size()
+    for (i in 0 until min(detectorLatencies.size(), cameraLatencies.size())) {
+        val x = i * increment
+        canvas.drawRect(
+            x, canvas.height.toFloat(),
+            x + increment / 2, canvas.height.toFloat() - detectorLatencies[i],
+            Paint().apply {
+                color = Color.Green.toArgb()
+                alpha = 100
+            }
+        )
+
+        canvas.drawRect(
+            x + increment / 2, canvas.height.toFloat(),
+            x + increment, canvas.height.toFloat() - cameraLatencies[i],
+            Paint().apply {
+                color = Color.Red.toArgb()
+                alpha = 100
+            }
+        )
+    }
 }

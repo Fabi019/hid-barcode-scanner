@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid.utils
 
-import android.annotation.SuppressLint
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.util.Log
@@ -9,9 +8,8 @@ import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.impl.utils.TransformUtils.getRectToRect
-import androidx.camera.core.impl.utils.TransformUtils.rotateRect
 import androidx.camera.view.CameraController
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -32,7 +30,6 @@ class BarCodeAnalyser(
     private val barcodeScanner = BarcodeScanning.getClient(scannerOptions)
     private var sensorTransform: Matrix? = null
 
-    @SuppressLint("RestrictedApi")
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val currentTime = System.currentTimeMillis()
@@ -44,8 +41,6 @@ class BarCodeAnalyser(
             imageProxy.close()
         } else {
             Log.d(TAG, "Processing image")
-            //val imageToProcess =
-            //    InputImage.fromMediaImage(image.image!!, image.imageInfo.rotationDegrees)
 
             val analysisToTarget = Matrix()
             val sensorToTarget = sensorTransform ?: run {
@@ -58,44 +53,56 @@ class BarCodeAnalyser(
                 Matrix(imageProxy.imageInfo.sensorToBufferTransformMatrix)
 
             val sourceRect = RectF(
-                0f, 0f, imageProxy.width.toFloat(),
+                0f, 0f,
+                imageProxy.width.toFloat(),
                 imageProxy.height.toFloat()
             )
-            val bufferRect = rotateRect(
-                sourceRect,
-                imageProxy.imageInfo.rotationDegrees
-            )
-            val analysisToMlKitRotation = getRectToRect(
-                sourceRect, bufferRect,
-                imageProxy.imageInfo.rotationDegrees
-            )
+
+            val bufferRect = RectF(sourceRect)
+            val rotation = (imageProxy.imageInfo.rotationDegrees % 360 + 360) % 360
+            if (rotation == 90 || rotation == 270) {
+                bufferRect.set(
+                    0f, 0f,
+                    bufferRect.bottom - bufferRect.top,
+                    bufferRect.right - bufferRect.left
+                )
+            }
+
+            val normalizedRect = RectF(-1f, -1f, 1f, 1f)
+
+            // Map source to normalized space.
+            val analysisToMlKitRotation = Matrix().apply {
+                setRectToRect(sourceRect, normalizedRect, Matrix.ScaleToFit.FILL)
+                postRotate(rotation.toFloat())
+            }
+
+            // Restore the normalized space to target's coordinates.
+            val normalizedToBuffer = Matrix().apply {
+                setRectToRect(normalizedRect, bufferRect, Matrix.ScaleToFit.FILL)
+            }
+
+            analysisToMlKitRotation.postConcat(normalizedToBuffer)
 
             sensorToAnalysis.postConcat(analysisToMlKitRotation)
             sensorToAnalysis.invert(analysisToTarget)
             analysisToTarget.postConcat(sensorToTarget)
 
-            val task = barcodeScanner.process(
-                imageProxy.image!!,
-                imageProxy.imageInfo.rotationDegrees,
-                analysisToTarget
-            )
-                .addOnSuccessListener { barcodes ->
-                    onResult(barcodes, Size(imageProxy.width, imageProxy.height))
-                }
-                .addOnFailureListener { exception ->
-                    Log.e(TAG, "Error processing image", exception)
-                }
-                .addOnCompleteListener {
-                    lastAnalyzedTimeStamp = currentTime
-                    imageProxy.close()
-                    Log.d(TAG, "Image processed")
-                }
-
             runCatching {
-                // Wait for task to complete
-                //Tasks.await(task)
+                val task = barcodeScanner.process(imageProxy.image!!, rotation, analysisToTarget)
+                    .addOnSuccessListener { barcodes ->
+                        onResult(barcodes, Size(imageProxy.width, imageProxy.height))
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e(TAG, "Error processing image", exception)
+                    }
+                    .addOnCompleteListener {
+                        lastAnalyzedTimeStamp = currentTime
+                        imageProxy.close()
+                        Log.d(TAG, "Image processed")
+                    }
+                Tasks.await(task)
             }.onFailure { e ->
-                Log.e(TAG, "Error waiting for task", e)
+                Log.e(TAG, "Error processing image", e)
             }
         }
 
