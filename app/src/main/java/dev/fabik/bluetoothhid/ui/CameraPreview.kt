@@ -5,7 +5,6 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewGroup
-import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -63,7 +62,7 @@ import java.util.concurrent.Executors
 
 @Composable
 fun CameraArea(
-    onCameraReady: (Camera) -> Unit,
+    onCameraReady: (CameraController) -> Unit,
     onBarCodeReady: (String) -> Unit
 ) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
@@ -165,6 +164,8 @@ fun CameraArea(
                 .build()
             camera.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
             camera.setImageAnalysisAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
+
+            onCameraReady(camera)
         }
     }
 
