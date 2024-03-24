@@ -1,45 +1,69 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.content.pm.PackageManager
+import android.annotation.SuppressLint
 import android.graphics.Paint
 import android.util.Log
-import android.util.Rational
+import android.view.MotionEvent
 import android.view.ViewGroup
-import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
-import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.CameraController
+import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.NativeCanvas
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
-import dev.fabik.bluetoothhid.utils.*
+import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
+import dev.fabik.bluetoothhid.utils.getPreference
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.flow.map
+import java.lang.Integer.min
 import java.util.concurrent.Executors
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+
 
 @Composable
-@androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
 fun CameraArea(
-    onCameraReady: (Camera) -> Unit,
+    onCameraReady: (CameraController) -> Unit,
     onBarCodeReady: (String) -> Unit
 ) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
@@ -47,9 +71,7 @@ fun CameraArea(
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
-    val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
-    val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
 
@@ -92,27 +114,29 @@ fun CameraArea(
     }
 
     // Sets up the Barcode scanner
-    val cameraReadyCB: (Camera, ImageAnalysis) -> Unit = remember(scanFormats) {
-        { camera, analyzer ->
+    val cameraReadyCB: (CameraController) -> Unit = remember(scanFormats) {
+        { camera ->
             // Callback for the auto-zoom feature
             val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
                 if (!autoZoom) return@cb false
                 // Reduce the zoom ratio by 20% to avoid the camera being too close
-                camera.cameraControl.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
+                camera.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
                 true
             }
 
+            // Scanner options
             val options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(0, *scanFormats)
                 .enableAllPotentialBarcodes()
                 .setZoomSuggestionOptions(
                     ZoomSuggestionOptions.Builder(zoomCallback)
-                        .setMaxSupportedZoomRatio(camera.cameraInfo.zoomState.value!!.maxZoomRatio)
+                        .setMaxSupportedZoomRatio(camera.zoomState.value!!.maxZoomRatio)
                         .build()
                 )
                 .build()
 
-            BarCodeAnalyser(
+            // Setup the camera analysis
+            val analyzer = BarCodeAnalyser(
                 scanDelay = scanFrequency,
                 scannerOptions = options,
                 onAnalyze = { updateCameraFPS() }
@@ -123,129 +147,114 @@ fun CameraArea(
                 filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
                     onBarCodeReady(it)
                 }
-            }.also {
-                analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), it)
             }
+
+            // Set the image analysis use case
+            camera.imageAnalysisResolutionSelector = ResolutionSelector.Builder()
+                .setResolutionStrategy(
+                    ResolutionStrategy(
+                        when (cameraResolution) {
+                            3 -> CameraViewModel.UHD_2160P
+                            2 -> CameraViewModel.FHD_1080P
+                            1 -> CameraViewModel.HD_720P
+                            else -> CameraViewModel.SD_480P
+                        },
+                        ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                    )
+                )
+                .build()
+            camera.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+            camera.setImageAnalysisAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
 
             onCameraReady(camera)
         }
     }
 
-    // Setup the camera analysis
-    val analysis = remember(cameraResolution, fixExposure, focusMode, scanFormats) {
-        val resolutionSelector = ResolutionSelector.Builder()
-            .setResolutionStrategy(
-                ResolutionStrategy(
-                    when (cameraResolution) {
-                        3 -> CameraViewModel.UHD_2160P
-                        2 -> CameraViewModel.FHD_1080P
-                        1 -> CameraViewModel.HD_720P
-                        else -> CameraViewModel.SD_480P
-                    },
-                    ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
-                )
-            )
-            .build()
-
-        ImageAnalysis.Builder()
-            .setResolutionSelector(resolutionSelector)
-            .setOutputImageRotationEnabled(true)
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .apply {
-                val extender = Camera2Interop.Extender(this)
-                setupFocusMode(fixExposure, focusMode, extender)
-            }
-            .build()
-    }
-
     RequiresModuleInstallation {
-        CameraPreview(cameraReadyCB, previewView, analysis)
+        CameraPreview(previewView, cameraReadyCB)
     }
 
     OverlayCanvas()
 }
 
+@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun CameraViewModel.CameraPreview(
-    onCameraReady: (Camera, ImageAnalysis) -> Unit,
     previewView: PreviewView,
-    imageAnalysis: ImageAnalysis,
+    onCameraReady: (CameraController) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
 
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
-    val hasFrontCamera = remember {
-        context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
-    }
+    val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
+    val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
-    val preview = remember {
-        Preview.Builder().build()
-    }
+    val cameraController = remember { LifecycleCameraController(context) }
+    var initialized by remember { mutableStateOf(false) }
 
-    val cameraProvider by produceState<ProcessCameraProvider?>(null) {
-        value = suspendCoroutine { cont ->
-            ProcessCameraProvider.getInstance(context).apply {
-                addListener({
-                    cont.resume(get())
+    ComposableLifecycle(lifecycleOwner) { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_RESUME -> {
+                cameraController.bindToLifecycle(lifecycleOwner)
+
+                cameraController.tapToFocusState.observe(lifecycleOwner) {
+                    isFocusing = when (it) {
+                        CameraController.TAP_TO_FOCUS_STARTED -> true
+                        else -> false
+                    }
+
+                    Log.d("CameraPreview", "Focusing: $isFocusing ($it)")
+                }
+
+                cameraController.initializationFuture.addListener({
+                    initialized = true
+
+                    // Enable only the image analysis use case
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+
+                    // Attach PreviewView after we know the camera is available.
+                    previewView.controller = cameraController
+                    previewView.setOnTouchListener { _, event ->
+                        if (event.action == MotionEvent.ACTION_DOWN)
+                            focusTouchPoint = Offset(event.x, event.y)
+                        false
+                    }
+
+                    // Camera is ready
+                    onCameraReady(cameraController)
                 }, ContextCompat.getMainExecutor(context))
             }
-        }
-    }
 
-    val camera = remember(cameraProvider, imageAnalysis, frontCamera) {
-        cameraProvider?.let {
-            val cameraSelector = when {
-                frontCamera && hasFrontCamera -> CameraSelector.DEFAULT_FRONT_CAMERA
-                else -> CameraSelector.DEFAULT_BACK_CAMERA
+            Lifecycle.Event.ON_PAUSE -> {
+                cameraController.clearImageAnalysisAnalyzer()
+                cameraController.unbind()
+                cameraController.tapToFocusState.removeObservers(lifecycleOwner)
+                initialized = false
             }
 
-            val viewPort = ViewPort.Builder(
-                Rational(previewView.width, previewView.height),
-                previewView.display?.rotation ?: preview.targetRotation
-            ).build()
-
-            runCatching {
-                val useCaseGroup = UseCaseGroup.Builder()
-                    .addUseCase(preview)
-                    .addUseCase(imageAnalysis)
-                    .setViewPort(viewPort)
-                    .build()
-
-                it.unbindAll()
-                it.bindToLifecycle(lifecycleOwner, cameraSelector, useCaseGroup).also {
-                    onCameraReady(it, imageAnalysis)
-                }
-            }.onFailure {
-                Log.e("CameraPreview", "Use case binding failed", it)
-            }.getOrNull()
+            else -> Unit
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            cameraProvider?.unbindAll()
+    LaunchedEffect(initialized, frontCamera) {
+        if (initialized) {
+            cameraController.cameraSelector = when {
+                frontCamera && cameraController.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA) -> CameraSelector.DEFAULT_FRONT_CAMERA
+                else -> CameraSelector.DEFAULT_BACK_CAMERA
+            }
+        }
+    }
+
+    LaunchedEffect(initialized, focusMode, fixExposure) {
+        if (initialized) {
+            setupFocusMode(cameraController.cameraControl!!, fixExposure, focusMode)
         }
     }
 
     AndroidView(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(camera, previewView) {
-                camera?.let {
-                    focusOnTap(it.cameraControl, previewView)
-                }
-            }
-            .pointerInput(camera) {
-                camera?.let {
-                    zoomGesture(it.cameraInfo, it.cameraControl)
-                }
-            },
-        factory = {
-            previewView.also {
-                preview.setSurfaceProvider(it.surfaceProvider)
-            }
-        }
+        modifier = Modifier.fillMaxSize(),
+        factory = { previewView }
     )
 }
 
@@ -384,7 +393,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
 
     // Draw the detector stats
     canvas.drawText(
-        "Detector latency: $detectorLatency ms",
+        "Detector latency: $detectorLatency ms (Delta: ${detectorLatency - latencyCamera} ms)",
         10f,
         y + 50f,
         Paint().apply {
@@ -414,4 +423,28 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
             textSize = 50f
         }
     )
+
+    // Draw the histogram
+    val width = canvas.width.toFloat()
+    val increment = width / detectorLatencies.size()
+    for (i in 0 until min(detectorLatencies.size(), cameraLatencies.size())) {
+        val x = i * increment
+        canvas.drawRect(
+            x, canvas.height.toFloat(),
+            x + increment / 2, canvas.height.toFloat() - detectorLatencies[i],
+            Paint().apply {
+                color = Color.Green.toArgb()
+                alpha = 100
+            }
+        )
+
+        canvas.drawRect(
+            x + increment / 2, canvas.height.toFloat(),
+            x + increment, canvas.height.toFloat() - cameraLatencies[i],
+            Paint().apply {
+                color = Color.Red.toArgb()
+                alpha = 100
+            }
+        )
+    }
 }

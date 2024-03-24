@@ -2,15 +2,12 @@ package dev.fabik.bluetoothhid.ui.model
 
 import android.hardware.camera2.CaptureRequest
 import android.util.Size
-import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
-import androidx.camera.core.CameraInfo
-import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.collection.CircularArray
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -20,11 +17,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.BuildConfig
-import java.util.concurrent.Executors
 
 class CameraViewModel : ViewModel() {
     companion object {
@@ -51,25 +46,6 @@ class CameraViewModel : ViewModel() {
 
     fun updateScale(source: Size, previewView: PreviewView) {
         if (lastSourceRes != source) {
-            val vw = previewView.width.toFloat()
-            val vh = previewView.height.toFloat()
-
-            val sw = source.width.toFloat()
-            val sh = source.height.toFloat()
-
-            val viewAspectRatio = vw / vh
-            val sourceAspectRatio = sw / sh
-
-            if (sourceAspectRatio > viewAspectRatio) {
-                scale = vh / sh
-                transX = (sw * scale - vw) / 2
-                transY = 0f
-            } else {
-                scale = vw / sw
-                transX = 0f
-                transY = (sh * scale - vh) / 2
-            }
-
             lastSourceRes = source
             lastPreviewRes = Size(previewView.width, previewView.height)
         }
@@ -77,63 +53,41 @@ class CameraViewModel : ViewModel() {
 
     @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
     fun setupFocusMode(
+        control: CameraControl,
         fixExposure: Boolean,
         focusMode: Int,
-        ext: Camera2Interop.Extender<ImageAnalysis>
     ) {
+        Camera2CameraControl.from(control).let {
+            CaptureRequestOptions.Builder().apply {
+                if (fixExposure) {
+                    // Sets a fixed exposure compensation and iso for the image
+                    setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
+                    setCaptureRequestOption(
+                        CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
+                        -8
+                    )
+                    //setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)
+                }
 
-        if (fixExposure) {
-            // Sets a fixed exposure compensation and iso for the image
-            ext.setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
-            ext.setCaptureRequestOption(
-                CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION,
-                -8
-            )
-        }
+                if (focusMode > 0) {
+                    setCaptureRequestOption(
+                        CaptureRequest.CONTROL_AF_MODE, when (focusMode) {
+                            1 -> CaptureRequest.CONTROL_AF_MODE_AUTO // Manual mode
+                            2 -> CaptureRequest.CONTROL_AF_MODE_MACRO // Macro mode
+                            3 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO // Continuous mode
+                            4 -> CaptureRequest.CONTROL_AF_MODE_EDOF // EDOF mode
+                            5 -> CaptureRequest.CONTROL_AF_MODE_OFF // Infinity
+                            else -> it.captureRequestOptions.getCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE)
+                                ?: CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                        }
+                    )
 
-        when (focusMode) {
-            // Manual mode
-            1 -> {
-                ext.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_AUTO
-                )
-            }
-
-            // Macro mode
-            2 -> {
-                ext.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_MACRO
-                )
-            }
-
-            // Continuous mode
-            3 -> {
-                ext.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
-                )
-            }
-
-            // EDOF mode
-            4 -> {
-                ext.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_EDOF
-                )
-            }
-
-            // Infinity
-            5 -> {
-                ext.setCaptureRequestOption(
-                    CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF
-                )
-                ext.setCaptureRequestOption(
-                    CaptureRequest.LENS_FOCUS_DISTANCE,
-                    0.0f
-                )
+                    if (focusMode == 5) {
+                        setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f)
+                    }
+                }
+            }.let { builder ->
+                it.addCaptureRequestOptions(builder.build())
             }
         }
     }
@@ -195,49 +149,14 @@ class CameraViewModel : ViewModel() {
         return result
     }
 
-    suspend fun PointerInputScope.focusOnTap(
-        cameraControl: CameraControl,
-        previewView: PreviewView
-    ) = detectTapGestures {
-        if (!isFocusing) {
-            focusTouchPoint = it
-            isFocusing = true
-
-            val factory = previewView.meteringPointFactory
-
-            val meteringAction = FocusMeteringAction.Builder(
-                factory.createPoint(it.x, it.y),
-                FocusMeteringAction.FLAG_AF
-            ).disableAutoCancel().build()
-
-            cameraControl.startFocusAndMetering(meteringAction)
-                .addListener({
-                    isFocusing = false
-                }, Executors.newSingleThreadExecutor())
-        }
-    }
-
-    suspend fun PointerInputScope.zoomGesture(
-        cameraInfo: CameraInfo,
-        cameraControl: CameraControl
-    ) = detectTransformGestures(true) { _, _, zoom, _ ->
-        val currentZoom = cameraInfo.zoomState.value
-        val currentZoomRatio = currentZoom?.zoomRatio ?: 1f
-
-        val newZoomRatio = (currentZoomRatio * zoom).coerceIn(
-            currentZoom?.minZoomRatio ?: 1f,
-            currentZoom?.maxZoomRatio ?: 1f
-        )
-
-        cameraControl.setZoomRatio(newZoomRatio)
-    }
-
     /*
      * Debug methods for testing FPS and latency of the detector and camera
      */
 
     private var lastTimestamp = 0L
     var detectorLatency by mutableLongStateOf(0L)
+    var detectorLatencies by mutableStateOf(CircularArray<Float>(100))
+    var cameraLatencies by mutableStateOf(CircularArray<Float>(100))
 
     fun updateDetectorFPS() {
         if (!BuildConfig.DEBUG) {
@@ -247,6 +166,11 @@ class CameraViewModel : ViewModel() {
         val now = System.currentTimeMillis()
         detectorLatency = now - lastTimestamp
         lastTimestamp = now
+
+        detectorLatencies.addLast(detectorLatency.toFloat())
+        if (detectorLatencies.size() >= 100) {
+            detectorLatencies.popFirst()
+        }
     }
 
     private var lastCameraTimestamp = 0L
@@ -264,6 +188,11 @@ class CameraViewModel : ViewModel() {
 
         latencyCamera = now - lastCameraLatencyTimestamp
         lastCameraLatencyTimestamp = now
+
+        cameraLatencies.addLast(latencyCamera.toFloat())
+        if (cameraLatencies.size() >= 100) {
+            cameraLatencies.popFirst()
+        }
 
         if (now - lastCameraTimestamp > 1000) {
             lastCameraTimestamp = now
