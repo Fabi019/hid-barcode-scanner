@@ -186,7 +186,7 @@
     <string name="fix_exposure_desc">Hilft dabei Bewegungsunschärfe im Bild zu reduzieren</string>
     <string name="filter_regex">Filter regex</string>
     <string name="filter_regex_desc">Erlaubt es codes mit einem regulären Ausdruck zu filtern</string>
-    <string name="filter_desc_long">Unterstützt normale regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen.</string>
+    <string name="filter_desc_long">Unterstützt normale regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen. Falls der regex eine Capture-Gruppe "(…)" enthält, wird der Wert der ersten Gruppe verwendet.</string>
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">
