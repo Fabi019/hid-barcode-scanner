@@ -39,6 +39,7 @@ class CameraViewModel : ViewModel() {
     var lastSourceRes: Size? = null
     var lastPreviewRes: Size? = null
 
+    // TODO: remove - no longer used for transformation
     var scale = 1f
     var transX = 0f
     var transY = 0f
@@ -136,7 +137,18 @@ class CameraViewModel : ViewModel() {
                 it.rawValue
             } else {
                 it.displayValue
-            }.let { value ->
+            }?.let { v ->
+                var value = v
+
+                regex?.let { re ->
+                    // extract first capture group if it exists
+                    re.find(value)?.let { match ->
+                        match.groupValues.getOrNull(1)?.let { group ->
+                            value = group
+                        }
+                    }
+                }
+
                 if (lastBarCodeValue != value) {
                     lastBarCodeValue = value
                     result = value

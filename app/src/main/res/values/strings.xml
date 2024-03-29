@@ -133,7 +133,7 @@
     <string name="fix_exposure_desc">Helps to reduce motion blur in the image</string>
     <string name="filter_regex">Filter regex</string>
     <string name="filter_regex_desc">Allows to filter codes by a regular expression</string>
-    <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything.</string>
+    <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything. If the regex contains a capture group "(…)", the value of the group will be used.</string>
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">
