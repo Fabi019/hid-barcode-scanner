@@ -13,6 +13,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -131,8 +132,15 @@ fun Scanner(
                         sendText(value)
                     }
                 }
-                BarcodeValue(currentBarcode)
             }
+        }
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            BarcodeValue(currentBarcode)
             CapsLockWarning()
             camera?.let {
                 ZoomStateInfo(it)
