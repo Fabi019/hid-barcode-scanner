@@ -13,6 +13,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -131,8 +132,15 @@ fun Scanner(
                         sendText(value)
                     }
                 }
-                BarcodeValue(currentBarcode)
             }
+        }
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            BarcodeValue(currentBarcode)
             CapsLockWarning()
             camera?.let {
                 ZoomStateInfo(it)
@@ -387,16 +395,17 @@ fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
-    if (controller.isCapsLockOn) {
+    AnimatedVisibility(
+        controller.isCapsLockOn, Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
         ElevatedCard(
             onClick = {
                 scope.launch {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
-            },
-            Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
+            }
         ) {
             Row(
                 Modifier.padding(8.dp),
