@@ -395,16 +395,17 @@ fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
-    if (controller.isCapsLockOn) {
+    AnimatedVisibility(
+        controller.isCapsLockOn, Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
         ElevatedCard(
             onClick = {
                 scope.launch {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
-            },
-            Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
+            }
         ) {
             Row(
                 Modifier.padding(8.dp),
