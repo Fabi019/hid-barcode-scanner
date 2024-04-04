@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -75,13 +76,13 @@ fun CameraArea(
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
 
-    val regex = remember(scanRegex) {
+    val regex by rememberUpdatedState(remember(scanRegex) {
         if (scanRegex.isBlank())
             return@remember null
         runCatching {
             scanRegex.toRegex()
         }.getOrNull()
-    }
+    })
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
