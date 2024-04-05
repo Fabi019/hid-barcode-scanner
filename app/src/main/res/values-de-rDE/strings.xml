@@ -156,6 +156,7 @@
         <item>Englisch (GB)</item>
         <item>Spanisch (ES)</item>
         <item>Italienisch (IT)</item>
+        <item>Türkisch Q (TR)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>

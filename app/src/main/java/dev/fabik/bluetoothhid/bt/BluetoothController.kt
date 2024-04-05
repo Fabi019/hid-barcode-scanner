@@ -1,7 +1,11 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHidDevice
+import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
@@ -260,6 +264,7 @@ class BluetoothController(var context: Context) {
                 3 -> "en"
                 4 -> "es"
                 5 -> "it"
+                6 -> "tr"
                 else -> "us"
             }, template
         )
