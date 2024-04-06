@@ -225,4 +225,6 @@
     <string name="highlights_possible_codes">Hebt mögliche Codes mit Punkten hervor</string>
     <string name="caps_lock_activated">Caps Lock ist aktiviert</string>
     <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
+    <string name="keep_screen_on">Bildschirm immer an</string>
+    <string name="keep_screen_on_desc">Verhindert, dass der Bildschirm während dem Scannen ausgeht</string>
 </resources>
