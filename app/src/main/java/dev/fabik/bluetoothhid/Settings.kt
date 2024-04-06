@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShutterSpeed
@@ -176,6 +177,13 @@ fun ConnectionSettings() {
 
 @Composable
 fun AppearanceSettings() {
+    SwitchPreference(
+        title = stringResource(R.string.keep_screen_on),
+        desc = stringResource(R.string.keep_screen_on_desc),
+        icon = Icons.Default.ScreenLockPortrait,
+        preference = PreferenceStore.KEEP_SCREEN_ON
+    )
+
     SwitchPreference(
         title = stringResource(R.string.allow_screen_rotation),
         desc = stringResource(R.string.allow_screen_rotation_desc),

@@ -63,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
@@ -145,6 +146,7 @@ fun Scanner(
             camera?.let {
                 ZoomStateInfo(it)
             }
+            KeepScreenOn()
         }
     }
 }
@@ -513,6 +515,19 @@ fun DeviceInfoDialog(
 //                    Text(it.toString())
 //                }
 //            }
+        }
+    }
+}
+
+@Composable
+fun KeepScreenOn() {
+    val keepScreenOn by rememberPreference(PreferenceStore.KEEP_SCREEN_ON)
+    val currentView = LocalView.current
+
+    DisposableEffect(keepScreenOn) {
+        currentView.keepScreenOn = keepScreenOn
+        onDispose {
+            currentView.keepScreenOn = false
         }
     }
 }

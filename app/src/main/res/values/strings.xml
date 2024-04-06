@@ -163,6 +163,8 @@
     <string name="highlights_possible_codes">Highlights possible codes with dots</string>
     <string name="caps_lock_activated">Caps Lock is activated</string>
     <string name="click_to_turn_off">Click here to turn it off</string>
+    <string name="keep_screen_on">Keep screen on</string>
+    <string name="keep_screen_on_desc">Prevents screen from turning off while scanning</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
