@@ -2,6 +2,7 @@ package dev.fabik.bluetoothhid.bt
 
 import android.content.Context
 import android.content.res.AssetManager
+import android.util.Base64
 import android.util.Log
 import java.text.DateFormat
 import java.util.Calendar
@@ -135,8 +136,13 @@ class KeyTranslator(context: Context) {
 
             // Adds the template
             val template = it.groupValues[1]
-            if (template == "CODE") {
-                keys.addAll(translateString(string, locale))
+            if (template.startsWith("CODE")) {
+                val text = when (template) {
+                    "CODE_HEX" -> string.toByteArray().joinToString("") { b -> "%02x".format(b) }
+                    "CODE_B64" -> Base64.encodeToString(string.toByteArray(), Base64.NO_WRAP)
+                    else -> string
+                }
+                keys.addAll(translateString(text, locale))
             } else {
                 var modifiers = 0.toByte()
                 var temp = template
@@ -180,10 +186,12 @@ class KeyTranslator(context: Context) {
     fun translateString(string: String, locale: String): List<Key> {
         val keys = mutableListOf<Key>()
 
+        Log.d(TAG, "Translating: '$string' with locale '$locale'")
+
         string.forEach {
             translate(it, locale)?.let { key ->
                 keys.add(key)
-            } ?: Log.w(TAG, "Unknown char: $it")
+            } ?: Log.w(TAG, "Unknown char: $it (${it.code})")
         }
 
         return keys
