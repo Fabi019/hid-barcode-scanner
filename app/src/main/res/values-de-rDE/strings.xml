@@ -227,4 +227,6 @@
     <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
     <string name="keep_screen_on">Bildschirm immer an</string>
     <string name="keep_screen_on_desc">Verhindert, dass der Bildschirm während dem Scannen ausgeht</string>
+    <string name="camera_error">Kamera Fehler!</string>
+    <string name="camera_error_desc">Fehler beim Initialisieren der Kamera. Bitte starten Sie die App oder das Gerät neu. Wenn dieses Problem weiterhin auftritt, melden Sie dies bitte auf Github.</string>
 </resources>

@@ -165,6 +165,8 @@
     <string name="click_to_turn_off">Click here to turn it off</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="keep_screen_on_desc">Prevents screen from turning off while scanning</string>
+    <string name="camera_error">Camera error!</string>
+    <string name="camera_error_desc">Error initializing camera. Please restart the app or your device. If this keeps happening, please create a new issue on Github.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
