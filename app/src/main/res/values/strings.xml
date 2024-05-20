@@ -147,7 +147,7 @@
     </string>
     <string name="camera">Camera</string>
     <string name="focus_mode">Focus mode</string>
-    <string name="focus_mode_desc">Select your preferred focus behaviour. Some modes disable the abilitiy to focus manually by tapping the screen.</string>
+    <string name="focus_mode_desc">Select your preferred focus behaviour. Some modes disable the ability to focus manually by tapping the screen.</string>
     <string name="search_by_value">Search by value</string>
     <string name="history">History</string>
     <string name="search">Search</string>
@@ -165,6 +165,8 @@
     <string name="click_to_turn_off">Click here to turn it off</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="keep_screen_on_desc">Prevents screen from turning off while scanning</string>
+    <string name="private_mode">Privacy mode</string>
+    <string name="private_mode_desc">Hides the scan value by default</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

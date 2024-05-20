@@ -75,6 +75,7 @@ open class PreferenceStore {
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false
         val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
         // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
+        val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
     }
 }
 

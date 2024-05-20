@@ -227,4 +227,6 @@
     <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
     <string name="keep_screen_on">Bildschirm immer an</string>
     <string name="keep_screen_on_desc">Verhindert, dass der Bildschirm während dem Scannen ausgeht</string>
+    <string name="private_mode">Datenschutzmodus</string>
+    <string name="private_mode_desc">Versteckt den gescannten Wert standardmäßig</string>
 </resources>

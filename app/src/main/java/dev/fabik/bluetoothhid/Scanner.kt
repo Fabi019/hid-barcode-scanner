@@ -220,6 +220,7 @@ private fun CameraPreviewArea(
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val privateMode by rememberPreference(PreferenceStore.PRIVATE_MODE)
 
     Column(
         Modifier
@@ -230,16 +231,28 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val copiedString = stringResource(R.string.copied_to_clipboard)
+        var hideText by remember(privateMode, currentBarcode) {
+            mutableStateOf(privateMode)
+        }
 
         currentBarcode?.let {
-            val text = AnnotatedString(it, SpanStyle(Neutral95), ParagraphStyle(TextAlign.Center))
+            val text = AnnotatedString(
+                if (hideText) "*".repeat(it.length) else it,
+                SpanStyle(Neutral95),
+                ParagraphStyle(TextAlign.Center)
+            )
+
             ClickableText(
                 text,
                 maxLines = 6,
                 overflow = TextOverflow.Ellipsis
             ) {
-                clipboardManager.setText(text)
-                Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                if (privateMode) {
+                    hideText = !hideText
+                } else {
+                    clipboardManager.setText(text)
+                    Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                }
             }
         } ?: run {
             Text(
