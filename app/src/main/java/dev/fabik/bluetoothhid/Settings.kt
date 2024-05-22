@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
@@ -347,6 +348,13 @@ fun ScannerSettings() {
         desc = stringResource(R.string.raw_value_desc),
         icon = Icons.Default.Description,
         preference = PreferenceStore.RAW_VALUE
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.private_mode),
+        desc = stringResource(R.string.private_mode_desc),
+        icon = Icons.Default.Shield,
+        preference = PreferenceStore.PRIVATE_MODE,
     )
 }
 
