@@ -37,8 +37,10 @@ import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.ScreenLockPortrait
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
@@ -176,6 +178,13 @@ fun ConnectionSettings() {
 
 @Composable
 fun AppearanceSettings() {
+    SwitchPreference(
+        title = stringResource(R.string.keep_screen_on),
+        desc = stringResource(R.string.keep_screen_on_desc),
+        icon = Icons.Default.ScreenLockPortrait,
+        preference = PreferenceStore.KEEP_SCREEN_ON
+    )
+
     SwitchPreference(
         title = stringResource(R.string.allow_screen_rotation),
         desc = stringResource(R.string.allow_screen_rotation_desc),
@@ -339,6 +348,13 @@ fun ScannerSettings() {
         desc = stringResource(R.string.raw_value_desc),
         icon = Icons.Default.Description,
         preference = PreferenceStore.RAW_VALUE
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.private_mode),
+        desc = stringResource(R.string.private_mode_desc),
+        icon = Icons.Default.Shield,
+        preference = PreferenceStore.PRIVATE_MODE,
     )
 }
 

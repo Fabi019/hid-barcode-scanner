@@ -13,6 +13,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -62,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
@@ -131,12 +133,20 @@ fun Scanner(
                         sendText(value)
                     }
                 }
-                BarcodeValue(currentBarcode)
             }
+        }
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            BarcodeValue(currentBarcode)
             CapsLockWarning()
             camera?.let {
                 ZoomStateInfo(it)
             }
+            KeepScreenOn()
         }
     }
 }
@@ -210,6 +220,7 @@ private fun CameraPreviewArea(
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val privateMode by rememberPreference(PreferenceStore.PRIVATE_MODE)
 
     Column(
         Modifier
@@ -220,16 +231,28 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val copiedString = stringResource(R.string.copied_to_clipboard)
+        var hideText by remember(privateMode, currentBarcode) {
+            mutableStateOf(privateMode)
+        }
 
         currentBarcode?.let {
-            val text = AnnotatedString(it, SpanStyle(Neutral95), ParagraphStyle(TextAlign.Center))
+            val text = AnnotatedString(
+                if (hideText) "*".repeat(it.length) else it,
+                SpanStyle(Neutral95),
+                ParagraphStyle(TextAlign.Center)
+            )
+
             ClickableText(
                 text,
                 maxLines = 6,
                 overflow = TextOverflow.Ellipsis
             ) {
-                clipboardManager.setText(text)
-                Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                if (privateMode) {
+                    hideText = !hideText
+                } else {
+                    clipboardManager.setText(text)
+                    Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                }
             }
         } ?: run {
             Text(
@@ -387,16 +410,17 @@ fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
-    if (controller.isCapsLockOn) {
+    AnimatedVisibility(
+        controller.isCapsLockOn, Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
         ElevatedCard(
             onClick = {
                 scope.launch {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
-            },
-            Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
+            }
         ) {
             Row(
                 Modifier.padding(8.dp),
@@ -504,6 +528,19 @@ fun DeviceInfoDialog(
 //                    Text(it.toString())
 //                }
 //            }
+        }
+    }
+}
+
+@Composable
+fun KeepScreenOn() {
+    val keepScreenOn by rememberPreference(PreferenceStore.KEEP_SCREEN_ON)
+    val currentView = LocalView.current
+
+    DisposableEffect(keepScreenOn) {
+        currentView.keepScreenOn = keepScreenOn
+        onDispose {
+            currentView.keepScreenOn = false
         }
     }
 }

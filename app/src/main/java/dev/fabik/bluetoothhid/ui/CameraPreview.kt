@@ -19,12 +19,18 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -42,6 +48,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -49,6 +56,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.BuildConfig
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
@@ -75,13 +83,13 @@ fun CameraArea(
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
 
-    val regex = remember(scanRegex) {
+    val regex by rememberUpdatedState(remember(scanRegex) {
         if (scanRegex.isBlank())
             return@remember null
         runCatching {
             scanRegex.toRegex()
         }.getOrNull()
-    }
+    })
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -193,10 +201,17 @@ fun CameraViewModel.CameraPreview(
     val cameraController = remember { LifecycleCameraController(context) }
     var initialized by remember { mutableStateOf(false) }
 
+    val errorDialog = rememberDialogState()
+
     ComposableLifecycle(lifecycleOwner) { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> {
-                cameraController.bindToLifecycle(lifecycleOwner)
+                runCatching {
+                    cameraController.bindToLifecycle(lifecycleOwner)
+                }.onFailure {
+                    errorDialog.open()
+                    return@ComposableLifecycle
+                }
 
                 cameraController.tapToFocusState.observe(lifecycleOwner) {
                     isFocusing = when (it) {
@@ -208,8 +223,6 @@ fun CameraViewModel.CameraPreview(
                 }
 
                 cameraController.initializationFuture.addListener({
-                    initialized = true
-
                     // Enable only the image analysis use case
                     cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
 
@@ -223,14 +236,16 @@ fun CameraViewModel.CameraPreview(
 
                     // Camera is ready
                     onCameraReady(cameraController)
+
+                    initialized = true
                 }, ContextCompat.getMainExecutor(context))
             }
 
             Lifecycle.Event.ON_PAUSE -> {
+                initialized = false
                 cameraController.clearImageAnalysisAnalyzer()
                 cameraController.unbind()
                 cameraController.tapToFocusState.removeObservers(lifecycleOwner)
-                initialized = false
             }
 
             else -> Unit
@@ -248,7 +263,9 @@ fun CameraViewModel.CameraPreview(
 
     LaunchedEffect(initialized, focusMode, fixExposure) {
         if (initialized) {
-            setupFocusMode(cameraController.cameraControl!!, fixExposure, focusMode)
+            cameraController.cameraControl?.let {
+                setupFocusMode(it, fixExposure, focusMode)
+            }
         }
     }
 
@@ -256,6 +273,18 @@ fun CameraViewModel.CameraPreview(
         modifier = Modifier.fillMaxSize(),
         factory = { previewView }
     )
+
+    InfoDialog(
+        dialogState = errorDialog, title = stringResource(R.string.camera_error),
+        icon = {
+            Icon(
+                Icons.Filled.Error, null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    ) {
+        Text(stringResource(R.string.camera_error_desc))
+    }
 }
 
 @Composable

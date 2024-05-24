@@ -46,6 +46,7 @@ open class PreferenceStore {
         val TEMPLATE_TEXT = stringPreferencesKey("template_text") defaultsTo ""
 
         // Appearance
+        val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on") defaultsTo false
         val ALLOW_SCREEN_ROTATION = booleanPreferencesKey("allow_screen_rotation") defaultsTo false
         val SCANNER_FULL_SCREEN = booleanPreferencesKey("scanner_full_screen") defaultsTo false
         val THEME = intPreferencesKey("theme") defaultsTo 0 // System
@@ -74,6 +75,7 @@ open class PreferenceStore {
         val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false
         val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
         // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
+        val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
     }
 }
 
