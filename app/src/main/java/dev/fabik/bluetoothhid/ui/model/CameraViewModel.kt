@@ -7,7 +7,6 @@ import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.view.PreviewView
-import androidx.collection.CircularArray
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -165,10 +164,45 @@ class CameraViewModel : ViewModel() {
      * Debug methods for testing FPS and latency of the detector and camera
      */
 
+    class BoundedList(val maxSize: Int) : Iterable<Float> {
+        var internalArray = FloatArray(maxSize) { Float.NaN }
+            private set
+        private var head = 0
+        private var tail = 0
+
+        fun addLast(element: Float) {
+            if ((tail + 1) % maxSize == head) {
+                // Full list, overwrite oldest element
+                internalArray[head] = element
+                head = (head + 1) % maxSize
+            } else {
+                internalArray[tail] = element
+                tail = (tail + 1) % maxSize
+            }
+        }
+
+        override fun iterator() = object : Iterator<Float> {
+            private var current = head
+            private var count = 0 // Keeps track of iterated elements
+
+            override fun hasNext() = count < maxSize && !internalArray[current].isNaN()
+            override fun next(): Float {
+                val element = internalArray[current]
+                current = (current + 1) % maxSize
+                count++
+                return element
+            }
+        }
+    }
+
     private var lastTimestamp = 0L
     var detectorLatency by mutableLongStateOf(0L)
-    var detectorLatencies by mutableStateOf(CircularArray<Float>(100))
-    var cameraLatencies by mutableStateOf(CircularArray<Float>(100))
+
+    var detectorLatencies by mutableStateOf(BoundedList(100))
+    var cameraLatencies by mutableStateOf(BoundedList(100))
+
+    val detectorPoints = FloatArray(detectorLatencies.maxSize * 4)
+    val cameraPoints = FloatArray(cameraLatencies.maxSize * 4)
 
     fun updateDetectorFPS() {
         if (!BuildConfig.DEBUG) {
@@ -180,9 +214,9 @@ class CameraViewModel : ViewModel() {
         lastTimestamp = now
 
         detectorLatencies.addLast(detectorLatency.toFloat())
-        if (detectorLatencies.size() >= 100) {
-            detectorLatencies.popFirst()
-        }
+        //if (detectorLatencies.size() >= 100) {
+        //    detectorLatencies.popFirst()
+        //}
     }
 
     private var lastCameraTimestamp = 0L
@@ -202,9 +236,9 @@ class CameraViewModel : ViewModel() {
         lastCameraLatencyTimestamp = now
 
         cameraLatencies.addLast(latencyCamera.toFloat())
-        if (cameraLatencies.size() >= 100) {
-            cameraLatencies.popFirst()
-        }
+        //if (cameraLatencies.size() >= 100) {
+        //    cameraLatencies.popFirst()
+        //}
 
         if (now - lastCameraTimestamp > 1000) {
             lastCameraTimestamp = now

@@ -65,7 +65,6 @@ import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.flow.map
-import java.lang.Integer.min
 import java.util.concurrent.Executors
 
 
@@ -401,13 +400,14 @@ fun CameraViewModel.OverlayCanvas() {
 
         // Draw debug overlay
         if (BuildConfig.DEBUG) {
-            drawDebugOverlay(drawContext.canvas.nativeCanvas)
+            drawDebugOverlay(drawContext.canvas.nativeCanvas, this.size)
         }
     }
 }
 
-fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
-    val y = canvas.height * 0.6f
+fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
+    // Using canvas.width/height returns fullscreen instead of the real size
+    val y = size.height * 0.6f
 
     // Draw the camera fps
     canvas.drawText(
@@ -454,26 +454,41 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas) {
     )
 
     // Draw the histogram
-    val width = canvas.width.toFloat()
-    val increment = width / detectorLatencies.size()
-    for (i in 0 until min(detectorLatencies.size(), cameraLatencies.size())) {
-        val x = i * increment
-        canvas.drawRect(
-            x, canvas.height.toFloat(),
-            x + increment / 2, canvas.height.toFloat() - detectorLatencies[i],
-            Paint().apply {
-                color = Color.Green.toArgb()
-                alpha = 100
-            }
-        )
+    val width = size.width
 
-        canvas.drawRect(
-            x + increment / 2, canvas.height.toFloat(),
-            x + increment, canvas.height.toFloat() - cameraLatencies[i],
-            Paint().apply {
-                color = Color.Red.toArgb()
-                alpha = 100
-            }
-        )
+    var i = 0
+    var increment = width / detectorLatencies.maxSize
+    detectorLatencies.windowed(2) { pair ->
+        val x = i * increment
+        val idx = i * 4
+        detectorPoints[idx] = x
+        detectorPoints[idx + 1] = size.height - pair[0]
+        detectorPoints[idx + 2] = x + increment
+        detectorPoints[idx + 3] = size.height - pair[1]
+        i++
     }
+
+    canvas.drawLines(detectorPoints, 0, i * 4, Paint().apply {
+        strokeWidth = 5f
+        color = Color.Green.toArgb()
+        alpha = 100
+    })
+
+    i = 0
+    increment = width / cameraLatencies.maxSize
+    cameraLatencies.windowed(2) { pair ->
+        val x = i * increment
+        val idx = i * 4
+        cameraPoints[idx] = x + increment / 2
+        cameraPoints[idx + 1] = size.height - pair[0]
+        cameraPoints[idx + 2] = x + increment + increment / 2
+        cameraPoints[idx + 3] = size.height - pair[1]
+        i++
+    }
+
+    canvas.drawLines(cameraPoints, 0, i * 4, Paint().apply {
+        strokeWidth = 5f
+        color = Color.Red.toArgb()
+        alpha = 100
+    })
 }
