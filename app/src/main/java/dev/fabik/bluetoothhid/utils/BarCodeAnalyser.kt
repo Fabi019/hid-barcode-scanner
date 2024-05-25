@@ -8,8 +8,6 @@ import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.view.CameraController
-import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -88,7 +86,7 @@ class BarCodeAnalyser(
             analysisToTarget.postConcat(sensorToTarget)
 
             runCatching {
-                val task = barcodeScanner.process(imageProxy.image!!, rotation, analysisToTarget)
+                barcodeScanner.process(imageProxy.image!!, rotation, analysisToTarget)
                     .addOnSuccessListener { barcodes ->
                         onResult(barcodes, Size(imageProxy.width, imageProxy.height))
                     }
@@ -100,9 +98,9 @@ class BarCodeAnalyser(
                         imageProxy.close()
                         Log.d(TAG, "Image processed")
                     }
-                Tasks.await(task)
             }.onFailure { e ->
                 Log.e(TAG, "Error processing image", e)
+                imageProxy.close()
             }
         }
 
@@ -110,7 +108,7 @@ class BarCodeAnalyser(
     }
 
     override fun getTargetCoordinateSystem(): Int {
-        return CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED
+        return ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED
     }
 
     override fun updateTransform(matrix: Matrix?) {
