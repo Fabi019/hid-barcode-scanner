@@ -47,11 +47,11 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
@@ -127,7 +127,10 @@ fun CameraArea(
             val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
                 if (!autoZoom) return@cb false
                 // Reduce the zoom ratio by 20% to avoid the camera being too close
-                camera.setZoomRatio((zoom * 0.8f).coerceAtLeast(1f))
+                camera.setZoomRatio(
+                    (zoom * 0.8f).coerceAtLeast(1f)
+                        .coerceAtMost(camera.zoomState.value?.maxZoomRatio ?: 1.0f)
+                )
                 true
             }
 
@@ -137,7 +140,7 @@ fun CameraArea(
                 .enableAllPotentialBarcodes()
                 .setZoomSuggestionOptions(
                     ZoomSuggestionOptions.Builder(zoomCallback)
-                        .setMaxSupportedZoomRatio(camera.zoomState.value!!.maxZoomRatio)
+                        .setMaxSupportedZoomRatio(camera.zoomState.value?.maxZoomRatio ?: 1.0f)
                         .build()
                 )
                 .build()
@@ -242,9 +245,9 @@ fun CameraViewModel.CameraPreview(
 
             Lifecycle.Event.ON_PAUSE -> {
                 initialized = false
+                cameraController.tapToFocusState.removeObservers(lifecycleOwner)
                 cameraController.clearImageAnalysisAnalyzer()
                 cameraController.unbind()
-                cameraController.tapToFocusState.removeObservers(lifecycleOwner)
             }
 
             else -> Unit
