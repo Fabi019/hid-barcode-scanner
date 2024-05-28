@@ -457,41 +457,37 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
     )
 
     // Draw the histogram
-    val width = size.width
+    fun drawHistogram(values: Iterable<Float>, increment: Float, paint: Paint) {
+        val path = android.graphics.Path()
 
-    var i = 0
-    var increment = width / detectorLatencies.maxSize
-    detectorLatencies.windowed(2) { pair ->
-        val x = i * increment
-        val idx = i * 4
-        detectorPoints[idx] = x
-        detectorPoints[idx + 1] = size.height - pair[0]
-        detectorPoints[idx + 2] = x + increment
-        detectorPoints[idx + 3] = size.height - pair[1]
-        i++
+        values.forEachIndexed { index, value ->
+            if (index == 0) {
+                path.moveTo(0f, size.height - value.coerceAtMost(size.height))
+            } else {
+                path.lineTo(index * increment, size.height - value.coerceAtMost(size.height))
+            }
+        }
+
+        canvas.drawPath(path, paint.apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 5f
+            alpha = 100
+        })
     }
 
-    canvas.drawLines(detectorPoints, 0, i * 4, Paint().apply {
-        strokeWidth = 5f
-        color = Color.Green.toArgb()
-        alpha = 100
-    })
+    drawHistogram(
+        detectorLatencies,
+        size.width / (detectorLatencies.maxSize - 1),
+        Paint().apply {
+            color = Color.Green.toArgb()
+        }
+    )
 
-    i = 0
-    increment = width / cameraLatencies.maxSize
-    cameraLatencies.windowed(2) { pair ->
-        val x = i * increment
-        val idx = i * 4
-        cameraPoints[idx] = x + increment / 2
-        cameraPoints[idx + 1] = size.height - pair[0]
-        cameraPoints[idx + 2] = x + increment + increment / 2
-        cameraPoints[idx + 3] = size.height - pair[1]
-        i++
-    }
-
-    canvas.drawLines(cameraPoints, 0, i * 4, Paint().apply {
-        strokeWidth = 5f
-        color = Color.Red.toArgb()
-        alpha = 100
-    })
+    drawHistogram(
+        cameraLatencies,
+        size.width / (cameraLatencies.maxSize - 1),
+        Paint().apply {
+            color = Color.Red.toArgb()
+        }
+    )
 }
