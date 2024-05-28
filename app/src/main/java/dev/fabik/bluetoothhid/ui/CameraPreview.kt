@@ -457,18 +457,15 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
     )
 
     // Draw the histogram
-
     fun drawHistogram(values: Iterable<Float>, increment: Float, paint: Paint) {
-        val iterator = values.iterator().withIndex()
-        val last = iterator.hasNext()
-        if (!last) return
-
         val path = android.graphics.Path()
-        val first = iterator.next()
-        path.moveTo(first.index.toFloat(), size.height - first.value.coerceAtMost(size.height))
 
-        iterator.forEach { (index, value) ->
-            path.lineTo(index * increment, size.height - value.coerceAtMost(size.height))
+        values.forEachIndexed { index, value ->
+            if (index == 0) {
+                path.moveTo(0f, size.height - value.coerceAtMost(size.height))
+            } else {
+                path.lineTo(index * increment, size.height - value.coerceAtMost(size.height))
+            }
         }
 
         canvas.drawPath(path, paint.apply {
