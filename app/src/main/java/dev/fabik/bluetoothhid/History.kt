@@ -1,11 +1,14 @@
 package dev.fabik.bluetoothhid
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,15 +16,21 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +38,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -36,10 +46,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -49,8 +61,8 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -60,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.exportHistory
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import java.time.Instant
@@ -78,6 +91,51 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
         topBar = {
             HistoryTopBar(scrollBehavior) {
                 onBack()
+            }
+        },
+        floatingActionButton = {
+            Column(
+                horizontalAlignment = Alignment.End,
+            ) {
+                AnimatedVisibility(
+                    visible = isSelecting,
+                ) {
+                    Column(
+                        Modifier.padding(bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SmallFloatingActionButton(onClick = {
+                            HistoryViewModel.selectAll()
+                        }) {
+                            Icon(Icons.Default.SelectAll, "Select all")
+                        }
+                        SmallFloatingActionButton(onClick = {
+                            HistoryViewModel.clearSelection()
+                        }) {
+                            Icon(Icons.Default.Clear, "Clear selection")
+                        }
+                        SmallFloatingActionButton(onClick = {
+                            HistoryViewModel.deleteSelected()
+                        }) {
+                            Icon(Icons.Default.Delete, "Delete")
+                        }
+                    }
+                }
+                ExtendedFloatingActionButton(
+                    text = {
+                        Text(
+                            if (isSelecting) pluralStringResource(
+                                R.plurals.export_items,
+                                selectionSize, selectionSize
+                            ) else stringResource(R.string.export),
+                            modifier = Modifier.animateContentSize(),
+                        )
+                    },
+                    icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
+                    onClick = {
+                        exportHistory(HistoryViewModel.ExportType.TEXT)
+                    }
+                )
             }
         }
     ) { padding ->
@@ -103,7 +161,18 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     LazyColumn(Modifier.fillMaxSize()) {
         items(filteredHistory) { item ->
             val (barcode, time) = item
+            val isSelected by remember { derivedStateOf { HistoryViewModel.isItemSelected(barcode) } }
             ListItem(
+                leadingContent = {
+                    if (isSelecting) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = {
+                                HistoryViewModel.setItemSelected(barcode, it)
+                            }
+                        )
+                    }
+                },
                 overlineContent = {
                     val timeString = remember {
                         val format = DateTimeFormatter
@@ -121,22 +190,25 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                 supportingContent = {
                     Text(parseBarcodeType(barcode.format))
                 },
-                modifier = Modifier.combinedClickable(
-                    onClick = {
-                        barcode.rawValue?.let(onClick)
-                    },
-                    onLongClick = {
-                        // Copy barcode to clipboard
-                        barcode.rawValue?.let {
-                            clipboardManager.setText(AnnotatedString(it))
-                            Toast.makeText(
-                                context,
-                                clipboardString,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                modifier = Modifier
+                    .combinedClickable(
+                        onLongClick = {
+                            HistoryViewModel.setItemSelected(barcode, true)
+                        },
+                        onClick = {
+                            barcode.rawValue?.let {
+                                onClick(it)
+                            }
                         }
-                    }
-                )
+                    )
+                    .then(if (isSelecting) {
+                        Modifier.toggleable(
+                            value = isSelected,
+                            onValueChange = {
+                                HistoryViewModel.setItemSelected(barcode, it)
+                            }
+                        )
+                    } else Modifier)
             )
             HorizontalDivider()
         }

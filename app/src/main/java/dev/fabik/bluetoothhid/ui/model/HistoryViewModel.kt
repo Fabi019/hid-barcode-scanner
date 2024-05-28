@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.ui.model
 
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,11 +9,14 @@ import com.google.mlkit.vision.barcode.common.Barcode
 
 class HistoryViewModel : ViewModel() {
 
+    val selectionSize by derivedStateOf { selectedHistory.size }
+    val isSelecting by derivedStateOf { selectedHistory.isNotEmpty() }
     var isSearching by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
 
     companion object {
         var historyEntries by mutableStateOf<List<Pair<Barcode, Long>>>(emptyList())
+        private var selectedHistory: Set<Int> by mutableStateOf(emptySet())
 
         fun addHistoryItem(barcode: Barcode) {
             val currentTime = System.currentTimeMillis()
@@ -21,6 +25,37 @@ class HistoryViewModel : ViewModel() {
 
         fun clearHistory() {
             historyEntries = emptyList()
+        }
+
+        fun isItemSelected(item: Barcode): Boolean {
+            return selectedHistory.contains(item.hashCode())
+        }
+
+        fun setItemSelected(item: Barcode, selected: Boolean) {
+            selectedHistory = if (selected) {
+                selectedHistory + item.hashCode()
+            } else {
+                selectedHistory - item.hashCode()
+            }
+        }
+
+        fun clearSelection() {
+            selectedHistory = emptySet()
+        }
+
+        fun selectAll() {
+            selectedHistory = historyEntries.indices.toSet()
+        }
+
+        fun deleteSelected() {
+            historyEntries = historyEntries.filterIndexed { index, _ ->
+                !selectedHistory.contains(index)
+            }
+            clearSelection()
+        }
+
+        fun exportHistory(exportType: ExportType) {
+            // TODO: Add export logic based on exportType
         }
     }
 
@@ -41,4 +76,9 @@ class HistoryViewModel : ViewModel() {
         else -> "UNKNOWN"
     }
 
+    enum class ExportType {
+        TEXT,
+        CSV,
+        JSON,
+    }
 }
