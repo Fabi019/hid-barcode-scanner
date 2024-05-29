@@ -1,33 +1,34 @@
 package dev.fabik.bluetoothhid
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -37,9 +38,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -48,10 +50,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -63,16 +65,19 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
+import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.exportHistory
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import java.time.Instant
@@ -85,6 +90,25 @@ import java.util.Locale
 @Composable
 fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val context = LocalContext.current
+    val exportString = stringResource(R.string.export)
+    val exportDialogState = rememberDialogState()
+
+    ExportDialog(dialogState = exportDialogState, onDismiss = {
+        exportDialogState.close()
+    }) {
+        val data = exportHistory(it)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = when (it) {
+                HistoryViewModel.ExportType.CSV -> "text/csv"
+                HistoryViewModel.ExportType.JSON -> "application/json"
+                HistoryViewModel.ExportType.LINES -> "text/plain"
+            }
+            putExtra(Intent.EXTRA_TEXT, data)
+        }
+        val shareIntent = Intent.createChooser(intent, exportString)
+        startActivity(context, shareIntent, null)
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -94,49 +118,21 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
             }
         },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-            ) {
-                AnimatedVisibility(
-                    visible = isSelecting,
-                ) {
-                    Column(
-                        Modifier.padding(bottom = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SmallFloatingActionButton(onClick = {
-                            HistoryViewModel.selectAll()
-                        }) {
-                            Icon(Icons.Default.SelectAll, "Select all")
-                        }
-                        SmallFloatingActionButton(onClick = {
-                            HistoryViewModel.clearSelection()
-                        }) {
-                            Icon(Icons.Default.Clear, "Clear selection")
-                        }
-                        SmallFloatingActionButton(onClick = {
-                            HistoryViewModel.deleteSelected()
-                        }) {
-                            Icon(Icons.Default.Delete, "Delete")
-                        }
-                    }
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(
+                        if (isSelecting) pluralStringResource(
+                            R.plurals.export_items,
+                            selectionSize, selectionSize
+                        ) else stringResource(R.string.export),
+                        modifier = Modifier.animateContentSize(),
+                    )
+                },
+                icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
+                onClick = {
+                    exportDialogState.open()
                 }
-                ExtendedFloatingActionButton(
-                    text = {
-                        Text(
-                            if (isSelecting) pluralStringResource(
-                                R.plurals.export_items,
-                                selectionSize, selectionSize
-                            ) else stringResource(R.string.export),
-                            modifier = Modifier.animateContentSize(),
-                        )
-                    },
-                    icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
-                    onClick = {
-                        exportHistory(HistoryViewModel.ExportType.TEXT)
-                    }
-                )
-            }
+            )
         }
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -161,14 +157,14 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     LazyColumn(Modifier.fillMaxSize()) {
         items(filteredHistory) { item ->
             val (barcode, time) = item
-            val isSelected by remember { derivedStateOf { HistoryViewModel.isItemSelected(barcode) } }
+            val isSelected by remember { derivedStateOf { isItemSelected(barcode) } }
             ListItem(
                 leadingContent = {
                     if (isSelecting) {
                         Checkbox(
                             checked = isSelected,
                             onCheckedChange = {
-                                HistoryViewModel.setItemSelected(barcode, it)
+                                setItemSelected(barcode, it)
                             }
                         )
                     }
@@ -193,7 +189,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                 modifier = Modifier
                     .combinedClickable(
                         onLongClick = {
-                            HistoryViewModel.setItemSelected(barcode, true)
+                            setItemSelected(barcode, true)
                         },
                         onClick = {
                             barcode.rawValue?.let {
@@ -205,7 +201,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                         Modifier.toggleable(
                             value = isSelected,
                             onValueChange = {
-                                HistoryViewModel.setItemSelected(barcode, it)
+                                setItemSelected(barcode, it)
                             }
                         )
                     } else Modifier)
@@ -369,4 +365,73 @@ fun AppBarTextField(
             )
         }
     )
+}
+
+@Composable
+fun ExportDialog(
+    dialogState: DialogState,
+    onDismiss: () -> Unit = {},
+    onExport: (HistoryViewModel.ExportType) -> Unit
+) = with(dialogState) {
+    var currentSelection by remember {
+        mutableIntStateOf(0)
+    }
+
+    if (openState) {
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = {
+                Text(stringResource(R.string.export))
+            },
+            text = {
+                LazyColumn {
+                    item {
+                        Text("Choose the format in which you would like to export your data:")
+                        Spacer(Modifier.height(16.dp))
+                    }
+                    itemsIndexed(HistoryViewModel.ExportType.values()) { index, item ->
+                        val selected = currentSelection == index
+                        val label = stringResource(item.label)
+                        val description = stringResource(item.description)
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                currentSelection = index
+                            },
+                            headlineContent = {
+                                Text(label)
+                            }, supportingContent = {
+                                Text(description)
+                            },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selected,
+                                    onClick = { currentSelection = index },
+                                    modifier = Modifier.semantics {
+                                        stateDescription =
+                                            "$label is ${if (selected) "selected" else "not selected"}"
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onExport(HistoryViewModel.ExportType.values()[currentSelection])
+                    }
+                ) {
+                    Text(stringResource(R.string.export))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { onDismiss() }
+                ) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
 }

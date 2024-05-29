@@ -1,13 +1,17 @@
 package dev.fabik.bluetoothhid.ui.model
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
+import dev.fabik.bluetoothhid.R
 
 class HistoryViewModel : ViewModel() {
+    private var selectedHistory: Set<Int> by mutableStateOf(emptySet())
 
     val selectionSize by derivedStateOf { selectedHistory.size }
     val isSelecting by derivedStateOf { selectedHistory.isNotEmpty() }
@@ -16,7 +20,6 @@ class HistoryViewModel : ViewModel() {
 
     companion object {
         var historyEntries by mutableStateOf<List<Pair<Barcode, Long>>>(emptyList())
-        private var selectedHistory: Set<Int> by mutableStateOf(emptySet())
 
         fun addHistoryItem(barcode: Barcode) {
             val currentTime = System.currentTimeMillis()
@@ -26,36 +29,55 @@ class HistoryViewModel : ViewModel() {
         fun clearHistory() {
             historyEntries = emptyList()
         }
+    }
 
-        fun isItemSelected(item: Barcode): Boolean {
-            return selectedHistory.contains(item.hashCode())
+    fun isItemSelected(item: Barcode): Boolean {
+        return selectedHistory.contains(item.hashCode())
+    }
+
+    fun setItemSelected(item: Barcode, selected: Boolean) {
+        selectedHistory = if (selected) {
+            selectedHistory + item.hashCode()
+        } else {
+            selectedHistory - item.hashCode()
         }
+    }
 
-        fun setItemSelected(item: Barcode, selected: Boolean) {
-            selectedHistory = if (selected) {
-                selectedHistory + item.hashCode()
-            } else {
-                selectedHistory - item.hashCode()
+    fun exportHistory(exportType: ExportType): String {
+        val dataToExport = if (isSearching) {
+            historyEntries.filter {
+                it.first.rawValue.toString().contains(searchQuery, ignoreCase = true)
             }
+        } else {
+            historyEntries
         }
-
-        fun clearSelection() {
-            selectedHistory = emptySet()
-        }
-
-        fun selectAll() {
-            selectedHistory = historyEntries.indices.toSet()
-        }
-
-        fun deleteSelected() {
-            historyEntries = historyEntries.filterIndexed { index, _ ->
-                !selectedHistory.contains(index)
+        return when (exportType) {
+            ExportType.LINES -> {
+                dataToExport.map {
+                    it.first.rawValue.toString()
+                }.fastJoinToString(System.lineSeparator())
             }
-            clearSelection()
-        }
 
-        fun exportHistory(exportType: ExportType) {
-            // TODO: Add export logic based on exportType
+            ExportType.CSV -> {
+                val header = "text,timestamp,type"
+                val rows = dataToExport.map {
+                    val text = it.first.rawValue.toString()
+                    val timestamp = it.second
+                    val type = parseBarcodeType(it.first.format)
+                    "\"$text\",$timestamp,$type"
+                }
+                header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
+            }
+
+            ExportType.JSON -> {
+                val entries = dataToExport.map {
+                    val text = it.first.rawValue.toString()
+                    val timestamp = it.second
+                    val type = parseBarcodeType(it.first.format)
+                    """"{"text":"$text","timestamp":$timestamp,"type":"$type"}""""
+                }
+                "{\"entries\":[" + entries.fastJoinToString(System.lineSeparator()) + "]}"
+            }
         }
     }
 
@@ -76,9 +98,9 @@ class HistoryViewModel : ViewModel() {
         else -> "UNKNOWN"
     }
 
-    enum class ExportType {
-        TEXT,
-        CSV,
-        JSON,
+    enum class ExportType(@StringRes val label: Int, @StringRes val description: Int) {
+        CSV(R.string.export_csv, R.string.export_fields),
+        JSON(R.string.export_json, R.string.export_fields),
+        LINES(R.string.export_lines, R.string.export_lines_description),
     }
 }
