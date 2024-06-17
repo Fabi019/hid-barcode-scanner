@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.BuildConfig
+import dev.fabik.bluetoothhid.utils.JsEngineService
 
 class CameraViewModel : ViewModel() {
     companion object {
@@ -158,6 +159,19 @@ class CameraViewModel : ViewModel() {
         }
 
         return result
+    }
+
+    suspend fun mapWithJs(
+        jsEngineService: JsEngineService.LocalBinder?,
+        barcode: Barcode,
+        value: String,
+        js: String
+    ): String {
+        return jsEngineService?.evaluateTemplate(
+            js,
+            value,
+            HistoryViewModel.parseBarcodeType(barcode.format)
+        ) ?: value
     }
 
     /*

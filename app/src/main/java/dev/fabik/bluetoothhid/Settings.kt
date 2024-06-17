@@ -59,9 +59,11 @@ import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
+import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
+import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 
 @Composable
@@ -356,6 +358,18 @@ fun ScannerSettings() {
         icon = Icons.Default.Shield,
         preference = PreferenceStore.PRIVATE_MODE,
     )
+
+
+    val jsDialog = rememberDialogState()
+
+    ButtonPreference(
+        title = "Custom JS",
+        desc = "Allows you to modify the scanned value using JavaScript"
+    ) {
+        jsDialog.open()
+    }
+
+    JavaScriptEditorDialog(jsDialog)
 }
 
 @Composable

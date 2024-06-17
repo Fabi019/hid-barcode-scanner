@@ -1,15 +1,23 @@
 package dev.fabik.bluetoothhid.bt
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import dev.fabik.bluetoothhid.MainActivity
 import dev.fabik.bluetoothhid.R
 import kotlinx.coroutines.CoroutineScope
@@ -96,4 +104,35 @@ class BluetoothService : Service() {
         return START_STICKY
     }
 
+}
+
+@Composable
+fun rememberBluetoothControllerService(context: Context): BluetoothService.LocalBinder? {
+    val serviceBinder = remember { mutableStateOf<BluetoothService.LocalBinder?>(null) }
+
+    DisposableEffect(Unit) {
+        val serviceConnection =
+            object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                    serviceBinder.value = service as BluetoothService.LocalBinder?
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    serviceBinder.value = null
+                }
+            }
+
+        // Start and bind bluetooth service
+        Intent(context, BluetoothService::class.java).let {
+            context.startForegroundService(it)
+            context.bindService(it, serviceConnection, Activity.BIND_AUTO_CREATE)
+        }
+
+        onDispose {
+            context.unbindService(serviceConnection)
+            serviceBinder.value = null
+        }
+    }
+
+    return serviceBinder.value
 }

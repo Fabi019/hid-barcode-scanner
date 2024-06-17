@@ -72,6 +72,10 @@
             android:foregroundServiceType="connectedDevice"
             android:stopWithTask="true" />
 
+        <service
+            android:name=".utils.JsEngineService"
+            android:stopWithTask="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
