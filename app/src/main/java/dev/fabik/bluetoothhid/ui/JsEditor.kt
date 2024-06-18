@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
@@ -31,7 +33,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,42 +44,54 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
     val jsEngine = rememberJsEngineService(context)
     val scope = rememberCoroutineScope()
 
-    var outputText by remember { mutableStateOf("") }
+    var codePreference by rememberPreference(PreferenceStore.JS_CODE)
+
+    var outputText by remember { mutableStateOf("Press run to evaluate") }
+    var codeText by remember { mutableStateOf(codePreference) }
 
     ConfirmDialog(dialogState = jsDialog, title = "Custom JS", onDismiss = {
         close()
         outputText = ""
     }, onConfirm = {
-
+        close()
+        codePreference = codeText
+        outputText = ""
     }) {
-        JavaScriptEditor(onRunClicked = { code, value, type ->
-            scope.launch {
-                outputText = ""
-                jsEngine?.evaluateTemplate(code, value, type) { message ->
-                    outputText += message + "\n"
-                } ?: ""
-            }
-        }, outputText = outputText)
+        JavaScriptEditor(
+            initialCode = codePreference,
+            onRunClicked = { code, value, type ->
+                scope.launch {
+                    outputText = ""
+                    jsEngine?.evaluateTemplate(code, value, type) { message ->
+                        outputText += message + "\n"
+                    } ?: ""
+                }
+            },
+            onEdit = { codeText = it },
+            outputText = outputText,
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JavaScriptEditor(
+    initialCode: String,
     onRunClicked: (String, String, String) -> Unit,
+    onEdit: (String) -> Unit,
     outputText: String
 ) {
-    var codeText by remember { mutableStateOf(TextFieldValue("")) }
+    var codeText by remember { mutableStateOf(TextFieldValue(initialCode)) }
     var valueText by remember { mutableStateOf(TextFieldValue("")) }
     var typeText by remember { mutableStateOf("") }
 
     val output by rememberUpdatedState(newValue = outputText)
 
-    Column {
+    Column(Modifier.verticalScroll(rememberScrollState())) {
         Text(
-            "This allows you to enter JavaScript to modify the returned value of the code. " +
-                    "There are two constants defined ('format' and 'code') that can be used." +
-                    "The last statement is the resulting string (no need to write return)."
+            "Allows you to enter any JavaScript to modify the returned value of the code. " +
+                    "Two constants are defined ('format' and 'code'). " +
+                    "Last statement is used as result (no return required)."
         )
 
         Text(
@@ -87,7 +103,7 @@ fun JavaScriptEditor(
         // JavaScript code editor
         TextField(
             value = codeText,
-            onValueChange = { codeText = it },
+            onValueChange = { codeText = it; onEdit(it.text) },
             textStyle = TextStyle(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,7 +124,7 @@ fun JavaScriptEditor(
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(end = 8.dp),
-                placeholder = { Text("Value") }
+                placeholder = { Text("Code") }
             )
 
             val options = stringArrayResource(R.array.code_types_values).toList()
@@ -162,8 +178,8 @@ fun JavaScriptEditor(
         // Output text
         Card(
             Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth()) {
+                .fillMaxWidth()
+        ) {
             Text(output)
         }
     }
@@ -174,7 +190,9 @@ fun JavaScriptEditor(
 fun PreviewJavaScriptEditor() {
     Surface {
         JavaScriptEditor(
+            initialCode = "<code>",
             onRunClicked = { _, _, _ -> },
+            onEdit = {},
             outputText = "Output will appear here"
         )
     }

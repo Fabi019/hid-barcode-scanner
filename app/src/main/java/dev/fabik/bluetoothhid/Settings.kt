@@ -176,6 +176,17 @@ fun ConnectionSettings() {
         icon = Icons.AutoMirrored.Filled.Send,
         preference = PreferenceStore.AUTO_SEND
     )
+
+    val jsDialog = rememberDialogState()
+
+    ButtonPreference(
+        title = "Custom JavaScript",
+        desc = "Allows you to modify the scanned value using JavaScript"
+    ) {
+        jsDialog.open()
+    }
+
+    JavaScriptEditorDialog(jsDialog)
 }
 
 @Composable
@@ -358,18 +369,6 @@ fun ScannerSettings() {
         icon = Icons.Default.Shield,
         preference = PreferenceStore.PRIVATE_MODE,
     )
-
-
-    val jsDialog = rememberDialogState()
-
-    ButtonPreference(
-        title = "Custom JS",
-        desc = "Allows you to modify the scanned value using JavaScript"
-    ) {
-        jsDialog.open()
-    }
-
-    JavaScriptEditorDialog(jsDialog)
 }
 
 @Composable

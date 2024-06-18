@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.javascriptengine.JavaScriptSandbox
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -72,9 +73,10 @@ class JsEngineService : Service() {
         jsSandbox?.createIsolate()?.let {
             if (jsSandbox?.isFeatureSupported(JavaScriptSandbox.JS_FEATURE_CONSOLE_MESSAGING) == true) {
                 it.setConsoleCallback(Executors.newSingleThreadExecutor()) { message ->
-                    Log.d(TAG, message.toString())
                     onOutput?.invoke(message.toString())
                 }
+            } else {
+                onOutput?.invoke("(Console logging is not supported on this system)")
             }
 
             it.addOnTerminatedCallback(Executors.newSingleThreadExecutor()) { info ->
@@ -88,19 +90,20 @@ class JsEngineService : Service() {
             val future = it.evaluateJavaScriptAsync(code)
 
             result = suspendCoroutine {
-                future.addListener({
+                Executors.newSingleThreadExecutor().submit {
                     runCatching {
-                        it.resume(future.get())
+                        it.resume(future.get(1, TimeUnit.SECONDS))
                     }.onFailure { err ->
                         Log.e(TAG, "Failed to evaluate code", err)
                         it.resume(err.cause?.message ?: err.message ?: err.toString())
                     }
-                }, Executors.newSingleThreadExecutor())
+                }
             }
 
             onOutput?.invoke("--- Execution finished (${System.currentTimeMillis() - start}ms) ---")
             onOutput?.invoke(result)
 
+            it.clearConsoleCallback()
             it.close()
         }
 
