@@ -48,13 +48,18 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
@@ -65,6 +70,7 @@ import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 @Composable
 fun SettingsContent() {
@@ -178,10 +184,21 @@ fun ConnectionSettings() {
     )
 
     val jsDialog = rememberDialogState()
+    var jsEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_JS)
 
     ButtonPreference(
         title = "Custom JavaScript",
-        desc = "Allows you to modify the scanned value using JavaScript"
+        desc = "Modify the scanned value using JS",
+        icon = Icons.Default.Code,
+        extra = {
+            jsEnabled?.let { c ->
+                Switch(c, onCheckedChange = {
+                    jsEnabled = it
+                }, modifier = Modifier.semantics(mergeDescendants = true) {
+                    stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
+                })
+            }
+        }
     ) {
         jsDialog.open()
     }

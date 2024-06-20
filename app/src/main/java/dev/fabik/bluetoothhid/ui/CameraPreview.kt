@@ -85,6 +85,8 @@ fun CameraArea(
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
+    val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
+    val jsCode by rememberPreference(PreferenceStore.JS_CODE)
 
     val regex by rememberUpdatedState(remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -162,7 +164,12 @@ fun CameraArea(
 
                 filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
                     scope.launch {
-                        onBarCodeReady(mapWithJs(jsEngineService, currentBarCode!!, it, "code"))
+                        val value = if (jsEnabled) {
+                            mapWithJs(jsEngineService, currentBarCode!!, it, jsCode)
+                        } else {
+                            it
+                        }
+                        onBarCodeReady(value)
                     }
                 }
             }

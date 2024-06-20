@@ -89,7 +89,7 @@ fun JavaScriptEditor(
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         Text(
-            "Allows you to enter any JavaScript to modify the returned value of the code. " +
+            "Allows you to enter any JavaScript to modify the value of the code. " +
                     "Two constants are defined ('format' and 'code'). " +
                     "Last statement is used as result (no return required)."
         )
