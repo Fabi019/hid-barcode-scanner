@@ -14,6 +14,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.javascriptengine.JavaScriptSandbox
+import androidx.lifecycle.Lifecycle
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -134,6 +135,7 @@ class JsEngineService : Service() {
 @Composable
 fun rememberJsEngineService(context: Context): JsEngineService.LocalBinder? {
     val serviceBinder = remember { mutableStateOf<JsEngineService.LocalBinder?>(null) }
+    val intent = remember { Intent(context, JsEngineService::class.java) }
 
     DisposableEffect(Unit) {
         val serviceConnection = object : ServiceConnection {
@@ -146,13 +148,19 @@ fun rememberJsEngineService(context: Context): JsEngineService.LocalBinder? {
             }
         }
 
-        Intent(context, JsEngineService::class.java).also {
-            context.startService(it)
-            context.bindService(it, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
+        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 
         onDispose {
             context.unbindService(serviceConnection)
+            serviceBinder.value = null
+        }
+    }
+
+    ComposableLifecycle { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> context.startService(intent)
+            Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
+            else -> {}
         }
     }
 

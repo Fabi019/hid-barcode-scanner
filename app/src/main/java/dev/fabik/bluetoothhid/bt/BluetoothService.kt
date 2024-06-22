@@ -18,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
 import dev.fabik.bluetoothhid.MainActivity
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -109,6 +111,7 @@ class BluetoothService : Service() {
 @Composable
 fun rememberBluetoothControllerService(context: Context): BluetoothService.LocalBinder? {
     val serviceBinder = remember { mutableStateOf<BluetoothService.LocalBinder?>(null) }
+    val intent = remember { Intent(context, BluetoothService::class.java) }
 
     DisposableEffect(Unit) {
         val serviceConnection =
@@ -122,15 +125,19 @@ fun rememberBluetoothControllerService(context: Context): BluetoothService.Local
                 }
             }
 
-        // Start and bind bluetooth service
-        Intent(context, BluetoothService::class.java).let {
-            context.startForegroundService(it)
-            context.bindService(it, serviceConnection, Activity.BIND_AUTO_CREATE)
-        }
+        context.bindService(intent, serviceConnection, Activity.BIND_AUTO_CREATE)
 
         onDispose {
             context.unbindService(serviceConnection)
             serviceBinder.value = null
+        }
+    }
+
+    ComposableLifecycle { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> context.startForegroundService(intent)
+            Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
+            else -> {}
         }
     }
 
