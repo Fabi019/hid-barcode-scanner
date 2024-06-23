@@ -158,7 +158,7 @@ fun rememberJsEngineService(context: Context): JsEngineService.LocalBinder? {
 
     ComposableLifecycle { _, event ->
         when (event) {
-            Lifecycle.Event.ON_CREATE -> context.startService(intent)
+            Lifecycle.Event.ON_START -> context.startService(intent)
             Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
             else -> {}
         }

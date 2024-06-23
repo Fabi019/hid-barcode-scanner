@@ -169,6 +169,16 @@
     <string name="private_mode_desc">Hides the scan value by default</string>
     <string name="camera_error">Camera error!</string>
     <string name="camera_error_desc">Error initializing camera. Please restart the app or your device. If this keeps happening, please create a new issue on Github.</string>
+    <string name="press_run_to_evaluate">Press run to evaluate</string>
+    <string name="custom_javascript">Custom JavaScript</string>
+    <string name="custom_js_desc">Modify the scanned value using JS</string>
+    <string name="editor_desc">Allows you to enter any JavaScript to modify the value of the code. Two constants are defined (\'format\' and \'code\'). Last statement is used as result (no return required).</string>
+    <string name="editor">Editor</string>
+    <string name="debug">Debug</string>
+    <string name="code">Code</string>
+    <string name="format">Format</string>
+    <string name="output">Output</string>
+    <string name="run">Run</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
