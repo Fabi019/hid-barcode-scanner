@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,17 +47,23 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
 
     var codePreference by rememberPreference(PreferenceStore.JS_CODE)
 
-    var outputText by remember { mutableStateOf("Press run to evaluate") }
+    val outString = stringResource(R.string.press_run_to_evaluate)
+    var outputText by remember { mutableStateOf(outString) }
+
     var codeText by remember { mutableStateOf(codePreference) }
 
-    ConfirmDialog(dialogState = jsDialog, title = "Custom JS", onDismiss = {
-        close()
-        outputText = ""
-    }, onConfirm = {
-        close()
-        codePreference = codeText
-        outputText = ""
-    }) {
+    ConfirmDialog(
+        dialogState = jsDialog,
+        title = stringResource(R.string.custom_javascript),
+        onDismiss = {
+            close()
+            outputText = ""
+        }, onConfirm = {
+            close()
+            codePreference = codeText
+            outputText = ""
+        }
+    ) {
         JavaScriptEditor(
             initialCode = codePreference,
             onRunClicked = { code, value, type ->
@@ -64,7 +71,7 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
                     outputText = ""
                     jsEngine?.evaluateTemplate(code, value, type) { message ->
                         outputText += message + "\n"
-                    } ?: ""
+                    } ?: "Engine not initialized or unsupported!"
                 }
             },
             onEdit = { codeText = it },
@@ -88,14 +95,10 @@ fun JavaScriptEditor(
     val output by rememberUpdatedState(newValue = outputText)
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
-        Text(
-            "Allows you to enter any JavaScript to modify the value of the code. " +
-                    "Two constants are defined ('format' and 'code'). " +
-                    "Last statement is used as result (no return required)."
-        )
+        Text(stringResource(R.string.editor_desc))
 
         Text(
-            "Editor",
+            stringResource(R.string.editor),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 8.dp)
         )
@@ -111,7 +114,7 @@ fun JavaScriptEditor(
                 .padding(bottom = 16.dp)
         )
 
-        Text("Debug", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.debug), style = MaterialTheme.typography.titleMedium)
 
         // Input fields
         Row(
@@ -124,7 +127,7 @@ fun JavaScriptEditor(
                 modifier = Modifier
                     .weight(0.5f)
                     .padding(end = 8.dp),
-                placeholder = { Text("Code") }
+                placeholder = { Text(stringResource(R.string.code)) }
             )
 
             val options = stringArrayResource(R.array.code_types_values).toList()
@@ -138,7 +141,7 @@ fun JavaScriptEditor(
                 TextField(
                     value = typeText,
                     onValueChange = { typeText = it },
-                    label = { Text("Format") },
+                    label = { Text(stringResource(R.string.format)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = exp)
                     },
@@ -170,16 +173,13 @@ fun JavaScriptEditor(
                 .align(Alignment.End)
                 .padding(top = 8.dp)
         ) {
-            Text("Run")
+            Text(stringResource(R.string.run))
         }
 
-        Text("Output", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.output), style = MaterialTheme.typography.titleMedium)
 
         // Output text
-        Card(
-            Modifier
-                .fillMaxWidth()
-        ) {
+        Card(Modifier.fillMaxWidth()) {
             Text(output)
         }
     }

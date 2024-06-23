@@ -35,6 +35,8 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -60,9 +62,13 @@ class DialogState(initialOpen: Boolean = false) {
 }
 
 @Composable
-fun rememberDialogState(initialOpen: Boolean = false) = remember {
-    DialogState(initialOpen)
-}
+fun rememberDialogState(initialOpen: Boolean = false) =
+    rememberSaveable(saver = Saver(
+        save = { it.openState },
+        restore = { DialogState(it) }
+    )) {
+        DialogState(initialOpen)
+    }
 
 @Composable
 fun TextBoxDialog(

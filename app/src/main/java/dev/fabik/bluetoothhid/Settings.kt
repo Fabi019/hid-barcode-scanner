@@ -187,8 +187,8 @@ fun ConnectionSettings() {
     var jsEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_JS)
 
     ButtonPreference(
-        title = "Custom JavaScript",
-        desc = "Modify the scanned value using JS",
+        title = stringResource(R.string.custom_javascript),
+        desc = stringResource(R.string.custom_js_desc),
         icon = Icons.Default.Code,
         extra = {
             jsEnabled?.let { c ->
@@ -198,10 +198,9 @@ fun ConnectionSettings() {
                     stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
                 })
             }
-        }
-    ) {
-        jsDialog.open()
-    }
+        },
+        onClick = jsDialog::open
+    )
 
     JavaScriptEditorDialog(jsDialog)
 }
