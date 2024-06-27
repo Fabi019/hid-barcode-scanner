@@ -1,10 +1,15 @@
 package dev.fabik.bluetoothhid.ui.model
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DataObject
+import androidx.compose.material.icons.filled.TableRows
+import androidx.compose.material.icons.filled.TableView
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -98,9 +103,13 @@ class HistoryViewModel : ViewModel() {
         else -> "UNKNOWN"
     }
 
-    enum class ExportType(@StringRes val label: Int, @StringRes val description: Int) {
-        CSV(R.string.export_csv, R.string.export_fields),
-        JSON(R.string.export_json, R.string.export_fields),
-        LINES(R.string.export_lines, R.string.export_lines_description),
+    enum class ExportType(
+        @StringRes val label: Int,
+        @StringRes val description: Int,
+        val icon: ImageVector
+    ) {
+        CSV(R.string.export_csv, R.string.export_fields, Icons.Default.TableView),
+        JSON(R.string.export_json, R.string.export_fields, Icons.Default.DataObject),
+        LINES(R.string.export_lines, R.string.export_lines_description, Icons.Default.TableRows)
     }
 }

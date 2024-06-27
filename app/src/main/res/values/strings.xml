@@ -170,6 +170,12 @@
     <string name="camera_error">Camera error!</string>
     <string name="camera_error_desc">Error initializing camera. Please restart the app or your device. If this keeps happening, please create a new issue on Github.</string>
     <string name="export">Export</string>
+    <string name="export_csv">CSV data</string>
+    <string name="export_json">JSON data</string>
+    <string name="export_lines">Lines</string>
+    <string name="export_fields" translatable="false">text, timestamp, type</string>
+    <string name="export_lines_description">text with line breaks</string>
+    <string name="export_as">Export as</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
