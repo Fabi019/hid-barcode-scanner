@@ -4,8 +4,8 @@ package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
@@ -67,7 +67,7 @@ fun TooltipContent(
     expandedStates: MutableTransitionState<Boolean>,
     content: @Composable () -> Unit
 ) {
-    val transition = updateTransition(expandedStates, "Tooltip")
+    val transition = rememberTransition(expandedStates, "Tooltip")
 
     val alpha by transition.animateFloat(
         transitionSpec = {
