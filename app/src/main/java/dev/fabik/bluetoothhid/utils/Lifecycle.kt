@@ -2,10 +2,10 @@ package dev.fabik.bluetoothhid.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 // adapted from: https://medium.com/@mahdizareeii/handling-app-lifecycle-events-in-jetpack-compose-d3b7f526514b
 @Composable
