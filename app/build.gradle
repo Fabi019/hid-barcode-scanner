@@ -15,8 +15,8 @@ android {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
         targetSdk 34
-        versionCode 45
-        versionName "1.8.0"
+        versionCode 46
+        versionName "1.8.1"
 
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitHash}\""
 
@@ -67,12 +67,12 @@ android {
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.2'
     implementation 'androidx.activity:activity-compose:1.9.0'
 
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_mat_version"
-    implementation 'androidx.compose.runtime:runtime-livedata:1.6.7'
+    implementation 'androidx.compose.runtime:runtime-livedata:1.6.8'
     implementation 'androidx.compose.material3:material3:1.2.1'
 
     implementation 'androidx.navigation:navigation-compose:2.7.7'
@@ -86,7 +86,7 @@ dependencies {
     bundledImplementation 'com.google.mlkit:barcode-scanning:17.2.0'
 
     standardImplementation "com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0"
-    standardImplementation "com.google.android.gms:play-services-base:18.4.0"
+    standardImplementation "com.google.android.gms:play-services-base:18.5.0"
 
     implementation "com.google.accompanist:accompanist-permissions:$accomp_version"
 
@@ -94,11 +94,11 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:5.11.0'
     testImplementation 'org.mockito.kotlin:mockito-kotlin:4.1.0'
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
 
-    debugImplementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
+    implementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
 }
