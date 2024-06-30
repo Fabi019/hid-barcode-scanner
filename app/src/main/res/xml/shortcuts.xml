@@ -12,6 +12,18 @@
             android:data="Scanner" />
     </shortcut>
     <shortcut
+        android:shortcutId="history"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:shortcutShortLabel="@string/history"
+        android:shortcutLongLabel="@string/history">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="dev.fabik.bluetoothhid"
+            android:targetClass="dev.fabik.bluetoothhid.MainActivity"
+            android:data="History" />
+    </shortcut>
+    <shortcut
         android:shortcutId="settings"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_preferences"
