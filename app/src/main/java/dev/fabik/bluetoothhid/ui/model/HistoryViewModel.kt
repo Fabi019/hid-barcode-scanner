@@ -24,7 +24,7 @@ class HistoryViewModel : ViewModel() {
     var searchQuery by mutableStateOf("")
 
     companion object {
-        var historyEntries by mutableStateOf<List<Pair<Barcode, Long>>>(emptyList())
+        var historyEntries: List<Pair<Barcode, Long>> by mutableStateOf(emptyList())
 
         fun addHistoryItem(barcode: Barcode) {
             val currentTime = System.currentTimeMillis()
@@ -34,6 +34,17 @@ class HistoryViewModel : ViewModel() {
         fun clearHistory() {
             historyEntries = emptyList()
         }
+    }
+
+    fun deleteSelectedItems() {
+        historyEntries = historyEntries.filter {
+            !selectedHistory.contains(it.first.hashCode())
+        }
+        clearSelection()
+    }
+
+    fun clearSelection() {
+        selectedHistory = emptySet()
     }
 
     fun isItemSelected(item: Barcode): Boolean {

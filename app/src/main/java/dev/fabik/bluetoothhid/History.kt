@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -138,43 +137,49 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
         }
     }
 
+    BackHandler(enabled = isSelecting) {
+        clearSelection()
+    }
+
     LazyColumn(Modifier.fillMaxSize()) {
-        items(filteredHistory) { item ->
-            val (barcode, time) = item
-            val isSelected by remember { derivedStateOf { isItemSelected(barcode) } }
-            ListItem(leadingContent = {
-                if (isSelecting) {
-                    Checkbox(checked = isSelected, onCheckedChange = {
-                        setItemSelected(barcode, it)
-                    })
-                }
-            }, overlineContent = {
-                val timeString = remember {
-                    val format = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-                        .withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault())
-                    val instant = Instant.ofEpochMilli(time)
-                    format.format(instant)
-                }
-                Text(timeString)
-            }, headlineContent = {
-                Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
-            }, supportingContent = {
-                Text(parseBarcodeType(barcode.format))
-            }, modifier = Modifier
-                .combinedClickable(onLongClick = {
-                    setItemSelected(barcode, true)
-                }, onClick = {
-                    barcode.rawValue?.let {
-                        onClick(it)
+        items(filteredHistory) { (barcode, time) ->
+            val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
+            ListItem(
+                overlineContent = {
+                    val timeString = remember {
+                        val format = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+                            .withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault())
+                        val instant = Instant.ofEpochMilli(time)
+                        format.format(instant)
                     }
-                })
-                .then(
-                    if (isSelecting) {
-                        Modifier.toggleable(value = isSelected, onValueChange = {
-                            setItemSelected(barcode, it)
-                        })
-                    } else Modifier
-                )
+                    Text(timeString)
+                },
+                headlineContent = {
+                    Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
+                },
+                supportingContent = {
+                    Text(parseBarcodeType(barcode.format))
+                },
+                tonalElevation = if (isSelected) {
+                    8.0.dp
+                } else {
+                    0.0.dp
+                },
+                modifier = Modifier
+                    .combinedClickable(onLongClick = {
+                        setItemSelected(barcode, true)
+                    }, onClick = {
+                        barcode.rawValue?.let {
+                            onClick(it)
+                        }
+                    })
+                    .then(
+                        if (isSelecting) {
+                            Modifier.toggleable(value = isSelected, onValueChange = {
+                                setItemSelected(barcode, it)
+                            })
+                        } else Modifier
+                    )
             )
             HorizontalDivider()
         }
@@ -194,58 +199,73 @@ private fun HistoryViewModel.HistoryTopBar(
         searchQuery = ""
     }
 
-    TopAppBar(title = {
-        if (isSearching) {
-            AppBarTextField(
-                value = searchQuery, onValueChange = {
-                    searchQuery = it
-                }, hint = stringResource(R.string.search_by_value)
-            )
-        } else {
-            Text(stringResource(R.string.history))
-        }
-    }, navigationIcon = {
-        IconButton(
-            onClick = {
-                if (isSearching) {
-                    isSearching = false
-                    searchQuery = ""
-                } else {
-                    onExit()
-                }
-            }, Modifier.tooltip(stringResource(R.string.back))
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-        }
-    }, actions = {
-        IconButton(
-            onClick = {
-                if (isSearching) searchQuery = ""
-                else isSearching = true
-            }, Modifier.tooltip(stringResource(R.string.search))
-        ) {
-            Icon(
-                if (isSearching) Icons.Outlined.Close
-                else Icons.Default.Search, "Search"
-            )
-        }
-        IconButton(
-            onClick = {
-                clearHistoryDialog.open()
-            }, Modifier.tooltip(stringResource(R.string.clear_history))
-        ) {
-            Icon(Icons.Default.Delete, "Clear history")
-        }
-    }, scrollBehavior = scrollBehavior
+    TopAppBar(
+        title = {
+            if (isSearching) {
+                AppBarTextField(
+                    value = searchQuery, onValueChange = {
+                        searchQuery = it
+                    }, hint = stringResource(R.string.search_by_value)
+                )
+            } else {
+                Text(stringResource(R.string.history))
+            }
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = {
+                    if (isSearching) {
+                        isSearching = false
+                        searchQuery = ""
+                    } else {
+                        onExit()
+                    }
+                }, Modifier.tooltip(stringResource(R.string.back))
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+            }
+        },
+        actions = {
+            IconButton(
+                onClick = {
+                    if (isSearching) searchQuery = ""
+                    else isSearching = true
+                }, Modifier.tooltip(stringResource(R.string.search))
+            ) {
+                Icon(
+                    if (isSearching) Icons.Outlined.Close
+                    else Icons.Default.Search, "Search"
+                )
+            }
+            IconButton(
+                onClick = {
+                    clearHistoryDialog.open()
+                }, Modifier.tooltip(stringResource(R.string.clear_history))
+            ) {
+                Icon(Icons.Default.Delete, "Clear history")
+            }
+        },
+        scrollBehavior = scrollBehavior
     )
 
-    ConfirmDialog(dialogState = clearHistoryDialog,
-        title = stringResource(R.string.clear_history),
+    ConfirmDialog(
+        dialogState = clearHistoryDialog,
+        title = stringResource(R.string.clear_history), // TODO: update title
         onConfirm = {
-            HistoryViewModel.clearHistory()
+            if (isSelecting) {
+                deleteSelectedItems()
+            } else {
+                HistoryViewModel.clearHistory()
+            }
             close()
-        }) {
-        Text(stringResource(R.string.clear_history_desc))
+        }
+    ) {
+        if (isSelecting) {
+            // TODO: localize
+            Text("Are you sure you want to delete the selected item(s)?")
+        } else {
+            Text(stringResource(R.string.clear_history_desc))
+        }
     }
 }
 
