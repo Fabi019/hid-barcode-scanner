@@ -90,9 +90,9 @@ class HistoryViewModel : ViewModel() {
                     val text = it.first.rawValue.toString()
                     val timestamp = it.second
                     val type = parseBarcodeType(it.first.format)
-                    """"{"text":"$text","timestamp":$timestamp,"type":"$type"}""""
+                    """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
                 }
-                "{\"entries\":[" + entries.fastJoinToString(System.lineSeparator()) + "]}"
+                "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
             }
         }
     }
