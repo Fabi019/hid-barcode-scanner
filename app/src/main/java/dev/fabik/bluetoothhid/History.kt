@@ -250,7 +250,11 @@ private fun HistoryViewModel.HistoryTopBar(
 
     ConfirmDialog(
         dialogState = clearHistoryDialog,
-        title = stringResource(R.string.clear_history), // TODO: update title
+        title = if (isSelecting) {
+            stringResource(R.string.delete_selection)
+        } else {
+            stringResource(R.string.clear_history)
+        },
         onConfirm = {
             if (isSelecting) {
                 deleteSelectedItems()
@@ -260,12 +264,13 @@ private fun HistoryViewModel.HistoryTopBar(
             close()
         }
     ) {
-        if (isSelecting) {
-            // TODO: localize
-            Text("Are you sure you want to delete the selected item(s)?")
-        } else {
-            Text(stringResource(R.string.clear_history_desc))
-        }
+        Text(
+            if (isSelecting) {
+                stringResource(R.string.delete_selection_desc)
+            } else {
+                stringResource(R.string.clear_history_desc)
+            }
+        )
     }
 }
 

@@ -241,4 +241,6 @@
         <item quantity="other">%1$d Elemente exportieren</item>
     </plurals>
     <string name="export_as">Exportieren als</string>
+    <string name="delete_selection">Auswahl löschen?</string>
+    <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
 </resources>
