@@ -50,6 +50,7 @@ fun NavGraph() {
     val startDestination = remember {
         when (activity.intent.dataString) {
             "Scanner" -> Routes.Main
+            "History" -> Routes.History
             else -> Routes.Devices
         }
     }
@@ -97,7 +98,10 @@ fun NavGraph() {
             composable(Routes.History) {
                 // Go back either by pressing the back button or the back arrow
                 val onBack: () -> Unit = {
-                    navController.navigateUp()
+                    if (!navController.navigateUp()) {
+                        navController.popBackStack()
+                        navController.navigate(Routes.Devices)
+                    }
                 }
 
                 History(onBack) {
