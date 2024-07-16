@@ -231,4 +231,16 @@
     <string name="private_mode_desc">Versteckt den gescannten Wert standardmäßig</string>
     <string name="camera_error">Kamera Fehler!</string>
     <string name="camera_error_desc">Fehler beim Initialisieren der Kamera. Bitte starten Sie die App oder das Gerät neu. Wenn dieses Problem weiterhin auftritt, melden Sie dies bitte auf Github.</string>
+    <string name="export">Exportieren</string>
+    <string name="export_csv">CSV Format</string>
+    <string name="export_json">JSON Format</string>
+    <string name="export_lines">Zeilen</string>
+    <string name="export_lines_description">Text mit Linien</string>
+    <plurals name="export_items">
+        <item quantity="one">%1$d Element exportieren</item>
+        <item quantity="other">%1$d Elemente exportieren</item>
+    </plurals>
+    <string name="export_as">Exportieren als</string>
+    <string name="delete_selection">Auswahl löschen?</string>
+    <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
 </resources>
