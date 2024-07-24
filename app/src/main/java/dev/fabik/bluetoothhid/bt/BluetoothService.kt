@@ -1,17 +1,27 @@
 package dev.fabik.bluetoothhid.bt
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
 import dev.fabik.bluetoothhid.MainActivity
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -96,4 +106,40 @@ class BluetoothService : Service() {
         return START_STICKY
     }
 
+}
+
+@Composable
+fun rememberBluetoothControllerService(context: Context): BluetoothService.LocalBinder? {
+    val serviceBinder = remember { mutableStateOf<BluetoothService.LocalBinder?>(null) }
+    val intent = remember { Intent(context, BluetoothService::class.java) }
+
+    DisposableEffect(Unit) {
+        val serviceConnection =
+            object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                    serviceBinder.value = service as BluetoothService.LocalBinder?
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    serviceBinder.value = null
+                }
+            }
+
+        context.bindService(intent, serviceConnection, Activity.BIND_AUTO_CREATE)
+
+        onDispose {
+            context.unbindService(serviceConnection)
+            serviceBinder.value = null
+        }
+    }
+
+    ComposableLifecycle { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> context.startForegroundService(intent)
+            Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
+            else -> {}
+        }
+    }
+
+    return serviceBinder.value
 }

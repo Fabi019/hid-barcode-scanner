@@ -44,6 +44,8 @@ open class PreferenceStore {
         val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout") defaultsTo 0
         val EXTRA_KEYS = intPreferencesKey("extra_keys") defaultsTo 0 // None
         val TEMPLATE_TEXT = stringPreferencesKey("template_text") defaultsTo ""
+        val ENABLE_JS = booleanPreferencesKey("enable_js") defaultsTo false
+        val JS_CODE = stringPreferencesKey("js_code") defaultsTo ""
 
         // Appearance
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on") defaultsTo false

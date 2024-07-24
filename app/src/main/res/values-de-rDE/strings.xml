@@ -231,6 +231,16 @@
     <string name="private_mode_desc">Versteckt den gescannten Wert standardmäßig</string>
     <string name="camera_error">Kamera Fehler!</string>
     <string name="camera_error_desc">Fehler beim Initialisieren der Kamera. Bitte starten Sie die App oder das Gerät neu. Wenn dieses Problem weiterhin auftritt, melden Sie dies bitte auf Github.</string>
+    <string name="press_run_to_evaluate">Drücke Ausführen zum starten</string>
+    <string name="custom_javascript">Benutzerdefiniertes JavaScript</string>
+    <string name="custom_js_desc">Bearbeite den gescannten Wert mit JS</string>
+    <string name="editor_desc">Ermöglicht die Eingabe von beliebigem JavaScript, um den Wert des Codes zu ändern. Es sind zwei Konstanten definiert (\'format\' und \'code\'). Die letzte Anweisung wird als Ergebnis verwendet (kein return erforderlich).</string>
+    <string name="editor">Editor</string>
+    <string name="debug">Debug</string>
+    <string name="code">Code</string>
+    <string name="format">Format</string>
+    <string name="output">Ausgabe</string>
+    <string name="run">Ausführen</string>
     <string name="export">Exportieren</string>
     <string name="export_csv">CSV Format</string>
     <string name="export_json">JSON Format</string>

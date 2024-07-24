@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.BuildConfig
+import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
@@ -65,6 +67,7 @@ import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 
@@ -74,6 +77,7 @@ fun CameraArea(
     onBarCodeReady: (String) -> Unit
 ) = with(viewModel<CameraViewModel>()) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
@@ -81,6 +85,8 @@ fun CameraArea(
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
+    val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
+    val jsCode by rememberPreference(PreferenceStore.JS_CODE)
 
     val regex by rememberUpdatedState(remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -120,6 +126,8 @@ fun CameraArea(
         }
     }
 
+    val jsEngineService = LocalJsEngineService.current
+
     // Sets up the Barcode scanner
     val cameraReadyCB: (CameraController) -> Unit = remember(scanFormats) {
         { camera ->
@@ -155,7 +163,14 @@ fun CameraArea(
                 updateScale(source, previewView)
 
                 filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
-                    onBarCodeReady(it)
+                    scope.launch {
+                        val value = if (jsEnabled) {
+                            mapWithJs(jsEngineService, currentBarCode!!, it, jsCode)
+                        } else {
+                            it
+                        }
+                        onBarCodeReady(value)
+                    }
                 }
             }
 

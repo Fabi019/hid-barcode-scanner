@@ -158,7 +158,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
                 },
                 supportingContent = {
-                    Text(parseBarcodeType(barcode.format))
+                    Text(HistoryViewModel.parseBarcodeType(barcode.format))
                 },
                 tonalElevation = if (isSelected) {
                     8.0.dp
