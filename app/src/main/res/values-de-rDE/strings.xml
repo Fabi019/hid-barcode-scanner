@@ -241,4 +241,16 @@
     <string name="format">Format</string>
     <string name="output">Ausgabe</string>
     <string name="run">Ausführen</string>
+    <string name="export">Exportieren</string>
+    <string name="export_csv">CSV Format</string>
+    <string name="export_json">JSON Format</string>
+    <string name="export_lines">Zeilen</string>
+    <string name="export_lines_description">Text mit Linien</string>
+    <plurals name="export_items">
+        <item quantity="one">%1$d Element exportieren</item>
+        <item quantity="other">%1$d Elemente exportieren</item>
+    </plurals>
+    <string name="export_as">Exportieren als</string>
+    <string name="delete_selection">Auswahl löschen?</string>
+    <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
 </resources>
