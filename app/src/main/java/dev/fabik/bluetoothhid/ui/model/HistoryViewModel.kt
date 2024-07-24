@@ -51,6 +51,7 @@ class HistoryViewModel : ViewModel() {
             Barcode.FORMAT_AZTEC -> "AZTEC"
             else -> "UNKNOWN"
         }
+    }
 
     fun deleteSelectedItems() {
         historyEntries = historyEntries.filter {
