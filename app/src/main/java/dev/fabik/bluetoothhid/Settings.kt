@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeviceUnknown
+import androidx.compose.material.icons.filled.Expand
 import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.FlipCameraAndroid
@@ -172,8 +173,16 @@ fun ConnectionSettings() {
         title = stringResource(R.string.custom_template),
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
+        validator = { it.contains("{CODE}") || it.contains("{CODE_B64}") || it.contains("{CODE_HEX}") },
         icon = Icons.Default.LibraryAdd,
         preference = PreferenceStore.TEMPLATE_TEXT
+    )
+
+    SwitchPreference(
+        title = "Templates in value",
+        desc = "Expand templates in the code value (Requires custom template)",
+        icon = Icons.Default.Expand,
+        preference = PreferenceStore.EXPAND_CODE
     )
 
     SwitchPreference(

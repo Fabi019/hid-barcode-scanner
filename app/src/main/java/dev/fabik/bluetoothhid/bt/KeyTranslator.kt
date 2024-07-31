@@ -123,7 +123,8 @@ class KeyTranslator(context: Context) {
     fun translateStringWithTemplate(
         string: String,
         locale: String,
-        templateString: String
+        templateString: String,
+        expandedCode: List<Key>? = null
     ): List<Key> {
         val keys = mutableListOf<Key>()
         val templateRegex = Regex("\\{([+^#@]*\\w+)\\}")
@@ -137,12 +138,18 @@ class KeyTranslator(context: Context) {
             // Adds the template
             val template = it.groupValues[1]
             if (template.startsWith("CODE")) {
-                val text = when (template) {
-                    "CODE_HEX" -> string.toByteArray().joinToString("") { b -> "%02x".format(b) }
-                    "CODE_B64" -> Base64.encodeToString(string.toByteArray(), Base64.NO_WRAP)
-                    else -> string
+                if (expandedCode == null) {
+                    val text = when (template) {
+                        "CODE_HEX" -> string.toByteArray()
+                            .joinToString("") { b -> "%02x".format(b) }
+
+                        "CODE_B64" -> Base64.encodeToString(string.toByteArray(), Base64.NO_WRAP)
+                        else -> string
+                    }
+                    keys.addAll(translateString(text, locale))
+                } else {
+                    keys.addAll(expandedCode)
                 }
-                keys.addAll(translateString(text, locale))
             } else {
                 var modifiers = 0.toByte()
                 var temp = template
