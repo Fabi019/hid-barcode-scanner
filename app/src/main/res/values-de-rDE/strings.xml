@@ -191,7 +191,7 @@
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">
-        Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code ist erforderlich)\n
         Kombinationen können mit den folgenen Zeichen verwendet werden:\n
             \t^: Shift\n
             \t+: Ctrl\n
@@ -253,4 +253,6 @@
     <string name="export_as">Exportieren als</string>
     <string name="delete_selection">Auswahl löschen?</string>
     <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
+    <string name="templates_in_value">Templates im Code</string>
+    <string name="template_in_value_desc">Ersetzt Templates aus dem Code-Wert (Benötigt benutzerdefiniertes Template)</string>
 </resources>

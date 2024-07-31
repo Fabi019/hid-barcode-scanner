@@ -173,14 +173,17 @@ fun ConnectionSettings() {
         title = stringResource(R.string.custom_template),
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
-        validator = { it.contains("{CODE}") || it.contains("{CODE_B64}") || it.contains("{CODE_HEX}") },
+        validator = {
+            // TODO: generalize
+            it.contains("{CODE}") || it.contains("{CODE_B64}") || it.contains("{CODE_HEX}")
+        },
         icon = Icons.Default.LibraryAdd,
         preference = PreferenceStore.TEMPLATE_TEXT
     )
 
     SwitchPreference(
-        title = "Templates in value",
-        desc = "Expand templates in the code value (Requires custom template)",
+        title = stringResource(R.string.templates_in_value),
+        desc = stringResource(R.string.template_in_value_desc),
         icon = Icons.Default.Expand,
         preference = PreferenceStore.EXPAND_CODE
     )
