@@ -137,7 +137,7 @@
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">
-        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code is required)\n
         Modifiers can be set by prepending the following chars:\n
             \t^: Shift\n
             \t+: Ctrl\n
@@ -188,6 +188,8 @@
     <string name="export_as">Export as</string>
     <string name="delete_selection">Delete selection?</string>
     <string name="delete_selection_desc">Are you sure you want to delete the selected item(s)?</string>
+    <string name="templates_in_value">Templates in value</string>
+    <string name="template_in_value_desc">Expand templates in the code value (Requires custom template)</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

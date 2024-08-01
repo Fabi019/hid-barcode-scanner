@@ -29,13 +29,27 @@ open class KeyboardSender(
         sendDelay: Long,
         appendKey: Int,
         locale: String,
-        template: String
+        template: String,
+        expandCode: Boolean,
     ) {
         when (appendKey) {
             1 -> keyboardTranslator.translateString("$string\n", locale)
             2 -> keyboardTranslator.translateString("$string\t", locale)
             3 -> keyboardTranslator.translateString("$string ", locale)
-            4 -> keyboardTranslator.translateStringWithTemplate(string, locale, template)
+            4 -> {
+                if (expandCode) {
+                    val expandedCode =
+                        keyboardTranslator.translateStringWithTemplate(string, locale, string)
+                    keyboardTranslator.translateStringWithTemplate(
+                        "",
+                        locale,
+                        template,
+                        expandedCode
+                    )
+                } else {
+                    keyboardTranslator.translateStringWithTemplate(string, locale, template)
+                }
+            }
             else -> keyboardTranslator.translateString(string, locale)
         }.forEach { key ->
             Log.d(TAG, "sendString: $key")
