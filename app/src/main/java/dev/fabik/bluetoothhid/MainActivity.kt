@@ -21,7 +21,7 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
-val LocalController = staticCompositionLocalOf<BluetoothController> {
+val LocalController = staticCompositionLocalOf<BluetoothController?> {
     error("No BluetoothController provided")
 }
 
@@ -51,13 +51,11 @@ class MainActivity : ComponentActivity() {
                         val bluetoothService = rememberBluetoothControllerService(this)
                         val jsEngineService = rememberJsEngineService(this)
 
-                        bluetoothService?.let {
-                            CompositionLocalProvider(
-                                LocalController provides it.getController(),
-                                LocalJsEngineService provides jsEngineService
-                            ) {
-                                NavGraph()
-                            }
+                        CompositionLocalProvider(
+                            LocalController provides bluetoothService?.getController(),
+                            LocalJsEngineService provides jsEngineService
+                        ) {
+                            NavGraph()
                         }
                     }
                 }

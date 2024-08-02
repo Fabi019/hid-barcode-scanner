@@ -79,15 +79,15 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(controller.currentDevice) {
+                Scanner(controller?.currentDevice) {
                     scope.launch {
-                        controller.sendString(it)
+                        controller?.sendString(it)
                     }
                 }
 
                 BackHandler {
                     // Disconnect from device and navigate back to devices list
-                    controller.disconnect()
+                    controller?.disconnect()
                     if (!navController.navigateUp()) {
                         navController.popBackStack()
                         navController.navigate(Routes.Devices)
@@ -106,7 +106,7 @@ fun NavGraph() {
 
                 History(onBack) {
                     scope.launch {
-                        controller.sendString(it)
+                        controller?.sendString(it)
                     }
                 }
 
@@ -116,9 +116,9 @@ fun NavGraph() {
     }
 
     // Listen for changes in the current device
-    LaunchedEffect(controller.currentDevice) {
+    LaunchedEffect(controller?.currentDevice) {
         // When connected to a device, navigate to the scanner
-        if (controller.currentDevice != null) {
+        if (controller?.currentDevice != null) {
             // Single-top is used to avoid creating multiple instances of the scanner
             navController.navigate(Routes.Main) {
                 launchSingleTop = true

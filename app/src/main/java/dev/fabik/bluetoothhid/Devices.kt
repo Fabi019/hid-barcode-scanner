@@ -110,7 +110,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                     IconButton(
                         onClick = {
                             if (!isScanning) refresh(controller)
-                            else controller.cancelScan()
+                            else controller?.cancelScan()
                         },
                         modifier = Modifier.tooltip(
                             if (isScanning) stringResource(R.string.cancel)
@@ -145,23 +145,27 @@ fun DevicesViewModel.DeviceContent() {
     val controller = LocalController.current
 
     DisposableEffect(controller) {
-        isScanning = controller.isScanning
-        isBluetoothEnabled = controller.bluetoothEnabled
+        val listener = controller?.let {
+            isScanning = it.isScanning
+            isBluetoothEnabled = it.bluetoothEnabled
 
-        if (pairedDevices.isEmpty()) {
-            pairedDevices.addAll(controller.pairedDevices)
-        }
+            if (pairedDevices.isEmpty()) {
+                pairedDevices.addAll(it.pairedDevices)
+            }
 
-        val listener = controller.registerListener { _, state ->
-            dialogState.openState = when (state) {
-                BluetoothProfile.STATE_CONNECTING -> true
-                BluetoothProfile.STATE_DISCONNECTING -> true
-                else -> false // Only close if connected or fully disconnected
+            it.registerListener { _, state ->
+                dialogState.openState = when (state) {
+                    BluetoothProfile.STATE_CONNECTING -> true
+                    BluetoothProfile.STATE_DISCONNECTING -> true
+                    else -> false // Only close if connected or fully disconnected
+                }
             }
         }
 
         onDispose {
-            controller.unregisterListener(listener)
+            listener?.let {
+                controller.unregisterListener(it)
+            }
         }
     }
 
@@ -182,17 +186,20 @@ fun DevicesViewModel.DeviceContent() {
     }
 
     Box(Modifier.nestedScroll(state.nestedScrollConnection)) {
-        DeviceList(controller::connect)
+        if (!isBluetoothEnabled) {
+            BluetoothDisabledCard()
+        } else {
             DeviceList {
                 CoroutineScope(Dispatchers.IO).launch {
                     controller?.connect(it)
                 }
             }
 
-        PullToRefreshContainer(
-            modifier = Modifier.align(Alignment.TopCenter),
-            state = state,
-        )
+            PullToRefreshContainer(
+                modifier = Modifier.align(Alignment.TopCenter),
+                state = state,
+            )
+        }
     }
 }
 
@@ -247,70 +254,64 @@ fun DevicesViewModel.DeviceList(
             .padding(12.dp, 0.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (!isBluetoothEnabled) {
-            item {
-                BluetoothDisabledCard()
-            }
-        } else {
-            item {
-                Text(
-                    stringResource(R.string.scanned_devices),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
+        item {
+            Text(
+                stringResource(R.string.scanned_devices),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
 
-            if (isScanning) {
+        if (isScanning) {
+            item {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            }
+        }
+
+        // Filter out unnamed devices depending on preference
+        with(foundDevices.filter { showUnnamed || it.name != null }) {
+            if (isEmpty()) {
                 item {
-                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                }
-            }
-
-            // Filter out unnamed devices depending on preference
-            with(foundDevices.filter { showUnnamed || it.name != null }) {
-                if (isEmpty() || !isBluetoothEnabled) {
-                    item {
-                        RequireLocationPermission {
-                            if (!isScanning) {
-                                Text(stringResource(R.string.swipe_refresh))
-                            }
+                    RequireLocationPermission {
+                        if (!isScanning) {
+                            Text(stringResource(R.string.swipe_refresh))
                         }
                     }
-                } else {
-                    items(this) { d ->
-                        runCatching {
-                            DeviceCard(d) {
-                                onConnect(d)
-                            }
-                        }.onFailure {
-                            Log.e("DeviceList", "Failed to get device info", it)
-                        }
-                    }
-                }
-            }
-
-            item {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.paired_devices),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
-
-            if (pairedDevices.isEmpty() || !isBluetoothEnabled) {
-                item {
-                    Text(stringResource(R.string.no_paired_devices))
                 }
             } else {
-                items(pairedDevices) {
+                items(this) { d ->
                     runCatching {
-                        DeviceCard(it) {
-                            onConnect(it)
+                        DeviceCard(d) {
+                            onConnect(d)
                         }
                     }.onFailure {
                         Log.e("DeviceList", "Failed to get device info", it)
                     }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.paired_devices),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+
+        if (pairedDevices.isEmpty()) {
+            item {
+                Text(stringResource(R.string.no_paired_devices))
+            }
+        } else {
+            items(pairedDevices) {
+                runCatching {
+                    DeviceCard(it) {
+                        onConnect(it)
+                    }
+                }.onFailure {
+                    Log.e("DeviceList", "Failed to get device info", it)
                 }
             }
         }
