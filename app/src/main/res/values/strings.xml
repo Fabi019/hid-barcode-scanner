@@ -190,6 +190,7 @@
     <string name="delete_selection_desc">Are you sure you want to delete the selected item(s)?</string>
     <string name="templates_in_value">Templates in value</string>
     <string name="template_in_value_desc">Expand templates in the code value (Requires custom template)</string>
+    <string name="error_connecting_to_device">Error connecting to device! Trying to restart service…</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

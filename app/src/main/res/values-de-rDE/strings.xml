@@ -255,4 +255,5 @@
     <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
     <string name="templates_in_value">Templates im Code</string>
     <string name="template_in_value_desc">Ersetzt Templates aus dem Code-Wert (Benötigt benutzerdefiniertes Template)</string>
+    <string name="error_connecting_to_device">Fehler bei der Verbindung mit dem Gerät! Starte service neu…</string>
 </resources>

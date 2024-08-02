@@ -78,6 +78,9 @@ import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Devices screen. Lists all paired devices and also allows to scan for new ones by
@@ -179,7 +182,11 @@ fun DevicesViewModel.DeviceContent() {
     }
 
     Box(Modifier.nestedScroll(state.nestedScrollConnection)) {
-        DeviceList(controller::connect)
+        DeviceList {
+            CoroutineScope(Dispatchers.IO).launch {
+                controller.connect(it)
+            }
+        }
 
         PullToRefreshContainer(
             modifier = Modifier.align(Alignment.TopCenter),

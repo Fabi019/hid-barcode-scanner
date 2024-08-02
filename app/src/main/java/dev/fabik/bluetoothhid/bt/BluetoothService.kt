@@ -136,7 +136,11 @@ fun rememberBluetoothControllerService(context: Context): BluetoothService.Local
     ComposableLifecycle { _, event ->
         when (event) {
             Lifecycle.Event.ON_START -> context.startForegroundService(intent)
-            Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
+            Lifecycle.Event.ON_DESTROY -> {
+                if ((context as? Activity)?.isChangingConfigurations == false) {
+                    context.stopService(intent)
+                }
+            }
             else -> {}
         }
     }

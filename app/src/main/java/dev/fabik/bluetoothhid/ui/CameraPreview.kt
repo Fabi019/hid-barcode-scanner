@@ -223,9 +223,17 @@ fun CameraViewModel.CameraPreview(
     ComposableLifecycle(lifecycleOwner) { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> {
+                Log.d("CameraPreview", "Initializing camera")
+
+                if (initialized) {
+                    Log.w("CameraPreview", "Camera already initialized")
+                    return@ComposableLifecycle
+                }
+
                 runCatching {
                     cameraController.bindToLifecycle(lifecycleOwner)
                 }.onFailure {
+                    Log.e("CameraPreview", "Failed to bind camera", it)
                     errorDialog.open()
                     return@ComposableLifecycle
                 }
@@ -259,8 +267,10 @@ fun CameraViewModel.CameraPreview(
             }
 
             Lifecycle.Event.ON_PAUSE -> {
+                Log.d("CameraPreview", "Closing camera")
                 initialized = false
                 cameraController.tapToFocusState.removeObservers(lifecycleOwner)
+                previewView.controller = null
                 cameraController.clearImageAnalysisAnalyzer()
                 cameraController.unbind()
             }
