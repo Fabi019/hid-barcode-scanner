@@ -35,11 +35,8 @@ class BarCodeAnalyser(
 
         // Close image directly if wait time has not passed
         if (deltaTime < scanDelay) {
-            Log.d(TAG, "Skipping image")
             imageProxy.close()
         } else {
-            Log.d(TAG, "Processing image")
-
             val analysisToTarget = Matrix()
             val sensorToTarget = sensorTransform ?: run {
                 Log.d(TAG, "Transform is null.")
@@ -96,7 +93,6 @@ class BarCodeAnalyser(
                     .addOnCompleteListener {
                         lastAnalyzedTimeStamp = currentTime
                         imageProxy.close()
-                        Log.d(TAG, "Image processed")
                     }
             }.onFailure { e ->
                 Log.e(TAG, "Error processing image", e)
