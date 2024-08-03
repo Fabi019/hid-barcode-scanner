@@ -263,9 +263,13 @@ class BluetoothController(var context: Context) {
     }
 
     fun disconnect(): Boolean {
+        if (isSending) {
+            return false
+        }
+
         return hostDevice?.let {
             hidDevice?.disconnect(it)
-        } ?: false
+        } ?: true
     }
 
     suspend fun sendString(string: String) = with(context) {

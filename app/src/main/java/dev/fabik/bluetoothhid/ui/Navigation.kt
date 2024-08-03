@@ -23,6 +23,8 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -80,17 +82,18 @@ fun NavGraph() {
 
             composable(Routes.Main) {
                 Scanner(controller.currentDevice) {
-                    scope.launch {
+                    CoroutineScope(Dispatchers.IO).launch {
                         controller.sendString(it)
                     }
                 }
 
                 BackHandler {
                     // Disconnect from device and navigate back to devices list
-                    controller.disconnect()
-                    if (!navController.navigateUp()) {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Devices)
+                    if (controller.disconnect()) {
+                        if (!navController.navigateUp()) {
+                            navController.popBackStack()
+                            navController.navigate(Routes.Devices)
+                        }
                     }
                 }
             }
@@ -105,7 +108,7 @@ fun NavGraph() {
                 }
 
                 History(onBack) {
-                    scope.launch {
+                    CoroutineScope(Dispatchers.IO).launch {
                         controller.sendString(it)
                     }
                 }
