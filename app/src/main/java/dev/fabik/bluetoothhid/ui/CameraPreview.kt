@@ -56,7 +56,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
-import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
@@ -87,6 +86,7 @@ fun CameraArea(
     val autoZoom by rememberPreference(PreferenceStore.AUTO_ZOOM)
     val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
     val jsCode by rememberPreference(PreferenceStore.JS_CODE)
+    val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
 
     val regex by rememberUpdatedState(remember(scanRegex) {
         if (scanRegex.isBlank())
@@ -157,10 +157,16 @@ fun CameraArea(
             val analyzer = BarCodeAnalyser(
                 scanDelay = scanFrequency,
                 scannerOptions = options,
-                onAnalyze = { updateCameraFPS() }
+                onAnalyze = {
+                    if (developerMode) {
+                        updateCameraFPS()
+                    }
+                }
             ) { barcodes, source ->
-                updateDetectorFPS()
-                updateScale(source, previewView)
+                if (developerMode) {
+                    updateDetectorFPS()
+                    updateScale(source, previewView)
+                }
 
                 filterBarCodes(barcodes, fullyInside, useRawValue, regex)?.let {
                     scope.launch {
@@ -320,6 +326,7 @@ fun CameraViewModel.OverlayCanvas() {
     val restrictArea by rememberPreference(PreferenceStore.RESTRICT_AREA)
     val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
+    val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
 
     val transition = updateTransition(targetState = isFocusing, label = "focusCircle")
 
@@ -427,7 +434,7 @@ fun CameraViewModel.OverlayCanvas() {
         }
 
         // Draw debug overlay
-        if (BuildConfig.DEBUG) {
+        if (developerMode) {
             drawDebugOverlay(drawContext.canvas.nativeCanvas, this.size)
         }
     }

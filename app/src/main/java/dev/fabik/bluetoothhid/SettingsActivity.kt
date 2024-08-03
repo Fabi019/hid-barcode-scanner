@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import dev.fabik.bluetoothhid.ui.SettingsDropdown
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
 
@@ -45,6 +46,9 @@ class SettingsActivity : ComponentActivity() {
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                                     }
+                                },
+                                actions = {
+                                    SettingsDropdown()
                                 },
                                 scrollBehavior = scrollBehavior
                             )

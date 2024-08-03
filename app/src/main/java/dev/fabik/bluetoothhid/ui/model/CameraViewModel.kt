@@ -18,7 +18,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
-import dev.fabik.bluetoothhid.BuildConfig
 import dev.fabik.bluetoothhid.utils.JsEngineService
 
 class CameraViewModel : ViewModel() {
@@ -212,10 +211,6 @@ class CameraViewModel : ViewModel() {
     var cameraLatencies by mutableStateOf(BoundedList(100))
 
     fun updateDetectorFPS() {
-        if (!BuildConfig.DEBUG) {
-            return
-        }
-
         val now = System.currentTimeMillis()
         detectorLatency = now - lastTimestamp
         lastTimestamp = now
@@ -230,10 +225,6 @@ class CameraViewModel : ViewModel() {
     var latencyCamera by mutableLongStateOf(0L)
 
     fun updateCameraFPS() {
-        if (!BuildConfig.DEBUG) {
-            return
-        }
-
         val now = System.currentTimeMillis()
 
         latencyCamera = now - lastCameraLatencyTimestamp

@@ -191,6 +191,7 @@
     <string name="templates_in_value">Templates in value</string>
     <string name="template_in_value_desc">Expand templates in the code value (Requires custom template)</string>
     <string name="error_connecting_to_device">Error connecting to device! Trying to restart service…</string>
+    <string name="developer_mode">Developer mode</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

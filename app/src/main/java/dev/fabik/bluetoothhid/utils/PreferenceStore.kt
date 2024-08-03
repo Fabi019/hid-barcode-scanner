@@ -18,6 +18,7 @@ import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.fabik.bluetoothhid.BuildConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -79,6 +80,8 @@ open class PreferenceStore {
         val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
         // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
+
+        val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
     }
 }
 
