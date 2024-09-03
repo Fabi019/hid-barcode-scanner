@@ -16,8 +16,8 @@ android {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
         targetSdk 34
-        versionCode 47
-        versionName "1.9.0"
+        versionCode 48
+        versionName "1.9.1"
 
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitHash}\""
 
@@ -35,12 +35,14 @@ android {
         }
     }
 
-    flavorDimensions "default"
+    flavorDimensions += "default"
     productFlavors {
         bundled {
+            dimension = "default"
             manifestPlaceholders = [dep: ""]
         }
         standard {
+            dimension = "default"
             manifestPlaceholders = [dep: "barcode"]
         }
     }
