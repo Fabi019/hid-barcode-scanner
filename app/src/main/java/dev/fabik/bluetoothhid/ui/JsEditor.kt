@@ -57,11 +57,11 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
         title = stringResource(R.string.custom_javascript),
         onDismiss = {
             close()
-            outputText = ""
+            outputText = outString
         }, onConfirm = {
             close()
             codePreference = codeText
-            outputText = ""
+            outputText = outString
         }
     ) {
         JavaScriptEditor(
@@ -71,7 +71,9 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
                     outputText = ""
                     jsEngine?.evaluateTemplate(code, value, type) { message ->
                         outputText += message + "\n"
-                    } ?: "Engine not initialized or unsupported!"
+                    } ?: run {
+                        outputText += "JSEngine not initialized or unsupported! Make sure that you have enabled the feature."
+                    }
                 }
             },
             onEdit = { codeText = it },
