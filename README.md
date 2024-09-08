@@ -23,10 +23,15 @@ running Android 9 or greater.
 - Supports a wide range of Linear and 2D-Codes thanks to
   Googles [ML-Kit](https://developers.google.com/ml-kit/vision/barcode-scanning)
 - Doesn't require any internet connection
+- History feature that allows exporting the session as text, JSON or CSV
+- Multiple different keyboard layouts to choose from
 - Large amount of customization for different use-cases
+    - Extra keys like \n or \t
+    - Template engine to send additional special keys including modifier combinations
+    - Regex filtering of codes with support for capture group extraction
+    - JavaScript engine to implement custom logic based on the value and type
     - Auto connect with last device
     - Auto send on detection
-    - Extra keys like \n or \t
     - And much more
 
 ## Screenshots
@@ -111,6 +116,19 @@ that says the Bluetooth proxy was successfully connected. Otherwise you may have
 device. This could also mean that your device does not support the Bluetooth HID profile. To test
 this, search for the app "Bluetooth HID Profile Tester" in the PlayStore and see what the result is.
 If the test is not successful, unfortunately your device is not supported.
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open a new issue with the tag "enhancement".
+If you want to work on an existing issue, please let me and others know by leaving a small comment.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
