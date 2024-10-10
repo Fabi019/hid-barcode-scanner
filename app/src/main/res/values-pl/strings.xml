@@ -1,0 +1,264 @@
+<!-- Translated by: zselog @ 10.10.2024 -->
+<resources>
+    <string name="app_name">BT Scanner</string>
+    <string name="scanner">Skaner</string>
+    <string name="send_to_device">Wyślij do Urządzenia</string>
+    <string name="scan_code_to_start">Zeskanuj dowolny kod QR / kod kreskowy,\naby rozpocząć.</string>
+    <string name="settings">Ustawienia</string>
+    <string name="connection">Połączenie</string>
+    <string name="auto_connect">Automatyczne połączenie</string>
+    <string name="auto_connect_desc">Przy starcie łącz z ostatnim urządzeniem</string>
+    <string name="show_unnamed">Nienazwane urządzenia</string>
+    <string name="show_unnamed_desc">Pokazuje urządzenia bez nazwy</string>
+    <string name="appearance">Wygląd</string>
+    <string name="theme">Motyw</string>
+    <string name="theme_desc">Zmień preferowany motyw UI</string>
+    <string name="dynamic_theme">Motyw dynamiczny</string>
+    <string name="dynamic_theme_desc">Użyj nowego motywu dynamicznego</string>
+    <string name="front_camera">Przednia kamera</string>
+    <string name="front_camera_desc">Użyj przedniej kamery zamiast tylnej, jeśli jest obsługiwana</string>
+    <string name="restrict_area">Ogranicz obszar skanowania</string>
+    <string name="restrict_area_desc">Pokaż ramkę na podlgądzie</string>
+    <string name="overlay_type">Typ ramki</string>
+    <string name="overlay_type_desc">Określ kształt ramki</string>
+    <string name="full_inside">Cały kod w ramce</string>
+    <string name="full_inside_desc">Kody kreskowe muszą być w pełni widoczne w obszarze ramki</string>
+    <string name="scan_freq">Częstotliwość skanowania</string>
+    <string name="scan_freq_desc">Interwał, w którym analizowany jest obraz. Wyższa częstotliwość = wyższe wykorzystanie procesora.</string>
+    <string name="scan_res">Rozdzielczość skanowania</string>
+    <string name="scan_res_desc">Rozdzielczość analizowanego obrazu. Wyższa rozdzielczość = dłuższy czas analizy.</string>
+    <string name="auto_send">Auto-wysyłanie</string>
+    <string name="auto_send_desc">Automatycznie wysyłaj wszystkie wykryte kody</string>
+    <string name="extra_keys">Extra klawisze</string>
+    <string name="extra_keys_desc">Określa, który klawisz ma być dołączany na końcu każdego wysyłanego tekstu</string>
+    <string name="play_sound">Dźwięk skanowania</string>
+    <string name="play_sound_desc">Odtwórz dźwięk podczas skanowania kodu</string>
+    <string name="raw_value">Wartość surowa</string>
+    <string name="raw_value_desc">Używa nieprzetworzonej wartości z kodu</string>
+    <string name="about">Informacje o aplikacji</string>
+    <string name="repository" translatable="true">Repozytorium</string>
+    <string name="build_version" translatable="true">Wersja</string>
+    <string name="confirm">Potwierdź</string>
+    <string name="dismiss">Anuluj</string>
+    <string name="scanned_devices">Wykryte urządzenia</string>
+    <string name="swipe_refresh">(Przeciągnij w dół, aby odświeżyć)</string>
+    <string name="paired_devices">Urządzenia sparowane</string>
+    <string name="no_paired_devices">(Nie odnaleziono sparowanych urządzeń)</string>
+    <string name="skip">Pomiń</string>
+    <string name="request_again">Poproś ponownie</string>
+    <string name="exit">Wyjście</string>
+    <string name="send_delay">Opóźnienie transmisji</string>
+    <string name="send_delay_desc">Określa czas pomiędzy poszczególnymi znakami/cyframi podczas wysyłania tekstu</string>
+    <string name="send_delay_template">Opóźnienie (ms): %.0f</string>
+    <string name="request_permission">Prośba o zezwolenie</string>
+    <string name="bluetooth_permission">Ta aplikacja wymaga uprawnień Bluetooth do komunikacji z innymi urządzeniami. Zezwól aplikacji na dostęp do \'Urządzeń w pobliżu\'.</string>
+    <string name="camera_permission">Aparat jest wymagany do wyświetlania podglądu i skanowania kodów. Zezwól aplikacji na dostęp do \'Aparatu\'.</string>
+    <string name="location_permission">Zezwolenie na lokalizację jest wymagane do wykrywania nowych urządzeń.</string>
+    <string name="location_enable">Lokalizacja musi być włączona na urządzeniu.</string>
+    <string name="open_location_settings">Otwórz Ustawienia lokalizacji</string>
+    <string name="connecting">Łączenie…</string>
+    <string name="connect_help">Jeśli nie możesz się połączyć, należy rozparować urządzenie po obu stronach, a następnie spróbować połączyć się z nim ponownie z poziomu aplikacji.</string>
+    <string name="haptic_feedback">Haptyczne sprzężenie zwrotne</string>
+    <string name="haptic_feedback_desc">Wibruj podczas skanowania nowego kodu</string>
+    <string name="connected_with">Połączono z: %s</string>
+    <string name="info">Info</string>
+    <string name="name">Nazwa</string>
+    <string name="mac_address">Adres MAC</string>
+    <string name="alias">Alias</string>
+    <string name="type">Typ</string>
+    <string name="clazz">Klasa</string>
+    <string name="services">Usługi</string>
+    <string name="uuids">UUIDs</string>
+    <string name="code_types">Typ kodu</string>
+    <string name="code_types_desc">Aby zwiększyć szybkość skanowania, zaznacz tylko żądane typy kodów. Jeśli chcesz włączyć wszystkie, pozostaw wszystkie niezaznaczone.</string>
+    <string name="code_types_desc_short">Włącz tylko określone typy, aby zwiększyć szybkość skanowania</string>
+    <string name="bt_proxy_registered">Zarejestrowano BT-Proxy!</string>
+    <string name="bt_proxy_error">Nie można uzyskać BT-Proxy! Spróbuj ponownie uruchomić aplikację…</string>
+    <string name="bt_service_disconnected">Usługa BT rozłączona!</string>
+    <string name="bt_service_connected">Usługa BT połączona!</string>
+    <string name="please_wait">Proszę czekać!</string>
+    <string name="copied_to_clipboard">Skopiowano do schowka!</string>
+    <string name="devices">Urządzenia</string>
+    <string name="keyboard_layout">Układ klawiatury</string>
+    <string name="keyboard_layout_desc">Ustawienia układu klawiatury. Zmień, jeśli chcesz wpisywać znaki specjalne lub nie używasz układu QWERTY.</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
+    <string name="disconnect">Rozłącz</string>
+    <string name="more">Więcej</string>
+    <string name="toggle_flash">Włącz lampę błyskową</string>
+    <string name="loading">Ładowanie…</string>
+    <string name="error">Błąd</string>
+    <string name="failed_to_download">Nie udało się pobrać i zainstalować modułu kodów kreskowych ML-Kit.</string>
+    <string name="ensure_internet_and_play">Upewnij się, że masz aktywne połączenie internetowe i że usługi Google Play są zainstalowane na Twoim urządzeniu.</string>
+    <string name="download_bundled">Możesz również pobrać wersję bundled APK ze strony GitHub, która zawiera ten moduł.</string>
+    <string name="downloading_module">Żądanie pobrania i zainstalowania modułu ML-Kit Barcode za pośrednictwem Google Play.\n\nTrzeba to zrobić tylko raz. Zwykle podczas instalowania aplikacji jako APK lub czyszczenia danych Usług Google Play.</string>
+    <string name="unpair_device">Rozparować z %s?</string>
+    <string name="unpair_desc">Rozparowanie spowoduje usunięcie urządzenia z listy sparowanych urządzeń.</string>
+    <string name="connect">Połącz</string>
+    <string name="unpair">Rozparowanie</string>
+    <string name="error_code" formatted="false">Błąd: %s (%s)</string>
+    <string name="downloading">Pobieranie…</string>
+    <string name="installing">Instalowanie…</string>
+    <string name="ok">OK</string>
+    <string name="reset_default">Reset do ustawień domyślnych?</string>
+    <string name="reset_default_desc">Czy na pewno chcesz przywrócić ustawienia domyślne?</string>
+    <string name="reset">Przywróć domyślne</string>
+    <string name="back">Wstecz</string>
+    <string name="source_code">Kod źródłowy</string>
+    <string name="source_code_desc">Wyświetl kod źródłowy na GitHub</string>
+    <string name="report_issue">Zgłoś problem</string>
+    <string name="report_issue_desc">Zgłoś problem na GitHub</string>
+    <string name="rate">Oceń w Google Play</string>
+    <string name="rate_desc">Jeśli podoba Ci się ta aplikacja, oceń ją w Google Play</string>
+    <string name="share">Udostępnij</string>
+    <string name="share_desc">Udostępnij aplikację znajomym</string>
+    <string name="share_via">Udostępnij przez</string>
+    <string name="refresh">Odśwież</string>
+    <string name="cancel">Anuluj</string>
+    <string name="bluetooth_disabled">Bluetooth jest wyłączony</string>
+    <string name="enable_bluetooth">Proszę włączyć Bluetooth w ustawieniach systemu lub klikając poniższy przycisk.</string>
+    <string name="enable_bluetooth_btn">Włącz Bluetooth</string>
+    <string name="no_device">Żadne urządzenie nie jest podłączone</string>
+    <string name="highlight_type">Typ wyróżnienia</string>
+    <string name="highlight_type_desc">Wybierz jak wyróżniać kody</string>
+    <string name="auto_focus">Auto-focus</string>
+    <string name="auto_focus_desc">Wyłącz, jeśli chcesz ustawiać ostrość przez dotknięcie ekranu.</string>
+    <string name="bt_hid_service">Usługa Bluetooth HID</string>
+    <string name="service_running">Usługa jest uruchomiona</string>
+    <string name="refresh_proxy">Odśwież proxy</string>
+    <string name="stop_proxy">Zatrzymaj proxy</string>
+    <string name="proxy_waiting">Oczekiwanie na BT-Proxy, aby połączyć…</string>
+    <string name="exit_confirm">Naciśnij ponownie przycisk Wstecz, aby wyjść</string>
+    <string name="allow_screen_rotation">Zezwalaj na obracanie ekranu</string>
+    <string name="allow_screen_rotation_desc">Umożliwia obracanie ekranu przy zmianie orientacji urządzenia</string>
+    <string name="fix_exposure">Napraw ekspozycję kamery</string>
+    <string name="fix_exposure_desc">Pomaga zredukować rozmycie obrazu spowodowane ruchem.</string>
+    <string name="filter_regex">Filtr regex</string>
+    <string name="filter_regex_desc">Umożliwia filtrowanie kodów za pomocą wyrażenia regularnego</string>
+    <string name="filter_desc_long">Obsługuje typową składnię regex. Użyj pustego ciągu lub .*, aby dopasować wszystko. Jeśli wyrażenie regularne zawiera grupę przechwytywania „(...)”, zostanie użyta wartość grupy.</string>
+    <string name="custom_template">Własny szablon</string>
+    <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
+    <string name="custom_templ_desc_long">
+        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (znacznik CODE jest wymagany)\n
+        Modyfikatory mogą być ustawione poprzez dodanie następujących znaków:\n
+            \t^: Shift\n
+            \t+: Ctrl\n
+            \t#: Alt\n
+            \t@: Meta\n
+        Przykład: {+r} prześle CTRL+R, {^#F1} prześle SHIFT+ALT+F1
+    </string>
+    <string name="camera">Aparat</string>
+    <string name="focus_mode">Tryb ostrości</string>
+    <string name="focus_mode_desc">Wybierz preferowany sposób ustawiania ostrości. Niektóre tryby wyłączają możliwość ręcznego ustawiania ostrości poprzez dotknięcie ekranu.</string>
+    <string name="search_by_value">Szukaj według wartości</string>
+    <string name="history">Historia</string>
+    <string name="search">Wyszukiwanie</string>
+    <string name="clear_history">Wyczyść historię</string>
+    <string name="clear_history_desc">Czy na pewno chcesz usunąć historię?</string>
+    <string name="preview_mode_desc">Może obniżyć opóźnienia i zużycie baterii.</string>
+    <string name="preview_performance_mode">Zwiększ wydajność podglądu</string>
+    <string name="full_screen_scanner">Skaner w trybie pełnoekranowym</string>
+    <string name="full_screen_scanner_desc">Skaner zostanie wyświetlony na pełnym ekranie</string>
+    <string name="auto_zoom">Automatyczne powiększanie</string>
+    <string name="zooms_in_on_codes_to_far_away">Przybliża kody, które są zbyt daleko</string>
+    <string name="show_possible">Pokaż możliwe</string>
+    <string name="highlights_possible_codes">Wyróżnia możliwe kody kropkami</string>
+    <string name="caps_lock_activated">Caps Lock jest włączony</string>
+    <string name="click_to_turn_off">Kliknij tutaj, aby wyłączyć</string>
+    <string name="keep_screen_on">Nie wyłączaj podświetlenia</string>
+    <string name="keep_screen_on_desc">Zapobiega wyłączaniu ekranu podczas skanowania</string>
+    <string name="private_mode">Tryb prywatności</string>
+    <string name="private_mode_desc">Domyślnie ukrywa wartość skanowanego kodu</string>
+    <string name="camera_error">Błąd aparatu!</string>
+    <string name="camera_error_desc">Błąd inicjalizacji kamery. Uruchom ponownie aplikację lub urządzenie. Jeśli problem będzie się powtarzał, utwórz nowe zgłoszenie w serwisie Github.</string>
+    <string name="press_run_to_evaluate">Naciśnij przycisk uruchom, aby przetestować</string>
+    <string name="custom_javascript">Niestandardowy JavaScript</string>
+    <string name="custom_js_desc">Zmodyfikuj zeskanowaną wartość za pomocą JS</string>
+    <string name="editor_desc">Umożliwia wprowadzenie dowolnego kodu JavaScript w celu zmodyfikowania wartości kodu. Zdefiniowane są dwie stałe (\'format\' i \'code\'). Ostatnia instrukcja jest używana jako wynik (ENTER nie jest wymagany).</string>
+    <string name="editor">Edytor</string>
+    <string name="debug">Debug</string>
+    <string name="code">Kod</string>
+    <string name="format">Format</string>
+    <string name="output">Wyjście</string>
+    <string name="run">Uruchom</string>
+    <string name="export">Eksport</string>
+    <string name="export_csv">CSV</string>
+    <string name="export_json">JSON</string>
+    <string name="export_lines">Linie</string>
+    <string name="export_fields" translatable="false">tekst, sygnatura czasowa, typ</string>
+    <string name="export_lines_description">tekst z podziałami wierszy</string>
+    <string name="export_as">Eksportuj jako</string>
+    <string name="delete_selection">Usunąć zaznaczenie?</string>
+    <string name="delete_selection_desc">Czy na pewno chcesz usunąć wybrane elementy?</string>
+    <string name="templates_in_value">Szablony w wartości</string>
+    <string name="template_in_value_desc">Rozwiń szablony w wartości kodu (wymaga opcji "Własny szablon")</string>
+    <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
+    <string name="developer_mode">Tryb dewelopera</string>
+    <string-array name="theme_values">
+        <item>System</item>
+        <item>Jasny</item>
+        <item>Ciemny</item>
+    </string-array>
+    <string-array name="overlay_values">
+        <item>Kwadratowa (QR-Code)</item>
+        <item>Prostokątna (Barcode)</item>
+    </string-array>
+    <string-array name="scan_freq_values">
+        <item>Najszybsze</item>
+        <item>Szybkie (100ms)</item>
+        <item>Normalne (500ms)</item>
+        <item>Wolne (1s)</item>
+    </string-array>
+    <string-array name="scan_res_values">
+        <item>SD (480P)</item>
+        <item>HD (720P)</item>
+        <item>FHD (1080P)</item>
+        <item>UHD (2160P)</item>
+    </string-array>
+    <string-array name="extra_keys_values">
+        <item>Brak</item>
+        <item>Enter</item>
+        <item>Tabulator</item>
+        <item>Spacja</item>
+        <item>Własny szablon</item>
+    </string-array>
+    <string-array name="code_types_values">
+        <item>CODE_128</item>
+        <item>CODE_39</item>
+        <item>CODE_93</item>
+        <item>CODABAR</item>
+        <item>DATA_MATRIX</item>
+        <item>EAN_13</item>
+        <item>EAN_8</item>
+        <item>ITF</item>
+        <item>QR_CODE</item>
+        <item>UPC_A</item>
+        <item>UPC_E</item>
+        <item>PDF417</item>
+        <item>AZTEC</item>
+    </string-array>
+    <string-array name="keyboard_layout_values">
+        <item>Angielski (US)</item>
+        <item>Niemiecki (DE)</item>
+        <item>Francuski (FR)</item>
+        <item>Angielski (GB)</item>
+        <item>Hiszpański (ES)</item>
+        <item>Włoski (IT)</item>
+        <item>Turecki Q (TR)</item>
+    </string-array>
+    <string-array name="highlight_values">
+        <item>Ramka</item>
+        <item>Kropki</item>
+    </string-array>
+    <string-array name="focus_mode_values">
+        <item>Auto</item>
+        <item>Ręczny</item>
+        <item>Makro</item>
+        <item>Ciągły</item>
+        <item>EDOF</item>
+        <item>Stałe (Nieskończoność)</item>
+    </string-array>
+    <plurals name="export_items">
+        <item quantity="one">Eksport %1$d elementu</item>
+        <item quantity="other">Eksport %1$d elementów</item>
+    </plurals>
+</resources>
