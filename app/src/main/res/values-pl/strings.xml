@@ -199,8 +199,8 @@
         <item>Ciemny</item>
     </string-array>
     <string-array name="overlay_values">
-        <item>Kwadratowa (QR-Code)</item>
-        <item>Prostokątna (Barcode)</item>
+        <item>Kwadratowa (Kody QR)</item>
+        <item>Prostokątna (Kody kreskowe)</item>
     </string-array>
     <string-array name="scan_freq_values">
         <item>Najszybsze</item>
