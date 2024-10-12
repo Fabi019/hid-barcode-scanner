@@ -243,6 +243,7 @@
         <item>Spanish (ES)</item>
         <item>Italian (IT)</item>
         <item>Turkish Q (TR)</item>
+        <item>Polish Programmer (PL)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>
