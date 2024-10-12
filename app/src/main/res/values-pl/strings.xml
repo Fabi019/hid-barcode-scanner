@@ -23,13 +23,13 @@
     <string name="overlay_type_desc">Określ kształt ramki</string>
     <string name="full_inside">Cały kod w ramce</string>
     <string name="full_inside_desc">Kody kreskowe muszą być w pełni widoczne w obszarze ramki</string>
-    <string name="scan_freq">Częstotliwość skanowania</string>
+    <string name="scan_freq">Częstość skanowania</string>
     <string name="scan_freq_desc">Interwał, w którym analizowany jest obraz. Wyższa częstotliwość = wyższe wykorzystanie procesora.</string>
-    <string name="scan_res">Rozdzielczość skanowania</string>
+    <string name="scan_res">Rozdzielczość skanera</string>
     <string name="scan_res_desc">Rozdzielczość analizowanego obrazu. Wyższa rozdzielczość = dłuższy czas analizy.</string>
     <string name="auto_send">Auto-wysyłanie</string>
     <string name="auto_send_desc">Automatycznie wysyłaj wszystkie wykryte kody</string>
-    <string name="extra_keys">Extra klawisze</string>
+    <string name="extra_keys">Ekstra klawisze</string>
     <string name="extra_keys_desc">Określa, który klawisz ma być dołączany na końcu każdego wysyłanego tekstu</string>
     <string name="play_sound">Dźwięk skanowania</string>
     <string name="play_sound_desc">Odtwórz dźwięk podczas skanowania kodu</string>
@@ -138,7 +138,7 @@
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
     <string name="custom_templ_desc_long">
-        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (znacznik CODE jest wymagany)\n
+        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (znacznik CODE jest wymagany)\n
         Modyfikatory mogą być ustawione poprzez dodanie następujących znaków:\n
             \t^: Shift\n
             \t+: Ctrl\n
@@ -203,10 +203,10 @@
         <item>Prostokątna (Kody kreskowe)</item>
     </string-array>
     <string-array name="scan_freq_values">
-        <item>Najszybsze</item>
-        <item>Szybkie (100ms)</item>
-        <item>Normalne (500ms)</item>
-        <item>Wolne (1s)</item>
+        <item>Najszybciej</item>
+        <item>Szybko (100ms)</item>
+        <item>Normalnie (500ms)</item>
+        <item>Wolno (1s)</item>
     </string-array>
     <string-array name="scan_res_values">
         <item>SD (480P)</item>
