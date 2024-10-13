@@ -55,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -201,18 +202,24 @@ fun DevicesViewModel.DeviceContent() {
  */
 @Composable
 fun DevicesViewModel.BroadcastListener() {
+    val scope = rememberCoroutineScope()
+
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_STATE_CHANGED) { intent ->
-        isBluetoothEnabled =
-            intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) == BluetoothAdapter.STATE_ON
+        scope.launch {
+            isBluetoothEnabled =
+                intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) == BluetoothAdapter.STATE_ON
+        }
     }
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_STARTED) {
-        isScanning = true
-        foundDevices.clear()
+        scope.launch {
+            isScanning = true
+            foundDevices.clear()
+        }
     }
 
     SystemBroadcastReceiver(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-        isScanning = false
+        scope.launch { isScanning = false }
     }
 
     SystemBroadcastReceiver(BluetoothDevice.ACTION_FOUND) {
@@ -221,8 +228,10 @@ fun DevicesViewModel.BroadcastListener() {
         } else {
             @Suppress("DEPRECATION") it?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         }?.let { dev ->
-            if (!foundDevices.contains(dev)) {
-                foundDevices.add(dev)
+            scope.launch {
+                if (!foundDevices.contains(dev)) {
+                    foundDevices.add(dev)
+                }
             }
         }
     }
