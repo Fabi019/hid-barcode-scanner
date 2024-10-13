@@ -73,6 +73,24 @@ class KeyTranslator(context: Context) {
         staticTemplates["DOWN"] = Key(0, 0x51)
         staticTemplates["UP"] = Key(0, 0x52)
 
+//     winlin97:  added unused function keys for special usage
+//                F1-F12 are binded in many Windows apps - also in Explorer
+//                Now You can write an external app that can recognize this keys
+//                as a triggers (StartKey -> Barcode -> StopKey), 
+//                without any unexpected interactions with the system.
+        staticTemplates["F13"] = Key(0, 0x68)
+        staticTemplates["F14"] = Key(0, 0x69)
+        staticTemplates["F15"] = Key(0, 0x6a)
+        staticTemplates["F16"] = Key(0, 0x6b)
+        staticTemplates["F17"] = Key(0, 0x6c)
+        staticTemplates["F18"] = Key(0, 0x6d)
+        staticTemplates["F19"] = Key(0, 0x6e)
+        staticTemplates["F20"] = Key(0, 0x6f)
+        staticTemplates["F21"] = Key(0, 0x70)
+        staticTemplates["F22"] = Key(0, 0x71)
+        staticTemplates["F23"] = Key(0, 0x72)
+        staticTemplates["F24"] = Key(0, 0x73)
+
         val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
         val timeFormat = DateFormat.getTimeInstance()
 

@@ -137,7 +137,7 @@
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">
-        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–12}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code is required)\n
+        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code is required)\n
         Modifiers can be set by prepending the following chars:\n
             \t^: Shift\n
             \t+: Ctrl\n
@@ -243,6 +243,7 @@
         <item>Spanish (ES)</item>
         <item>Italian (IT)</item>
         <item>Turkish Q (TR)</item>
+        <item>Polish Programmer (PL)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>

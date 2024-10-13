@@ -1,0 +1,92 @@
+## Keymap overlay for a Polish Programmer keyboard
+
+## -------------------------
+## SOME USEFUL INFORMATIONS
+## -------------------------
+##  ... for everyone who, just like me (winlin97), had no idea how it works, and want to make a custom keyboard layout.
+## -------------------------
+## The PC (thanks to the HID interface) see this application just like the physical keyboard.
+## Application does not know the actual layout of the keyboard in the system.
+## We must to call the language-appropriate characters just as if we were typing them on a physical keyboard with this layout.
+## -------------------------
+## This file contains a table of key mapping.
+## Column order in the table: CHAR <-SPACE-> HID_KEY_SCANCODE <-SPACE-> MODIFIERS
+## -------------------------
+## <-SPACE-> is only a representation for spacebar (" " char), which is used by the program to separate individual values from every line in the table.
+## -------------------------
+## CHAR is just the letter, number or character, which we have to send to the computer.
+## -------------------------
+## HID_KEY_SCANCODE is a byte value, which corresponds to every key on the keyboard.
+## Firstly you can look at "base.layout" file to see what scancode is e.g. for "numbers and letters"
+## Important: "base.layout" is used with every custom layout. We don't have to add the chars to our table that this file already contains.
+## More scancodes -> https://source.android.com/docs/core/interaction/input/keyboard-devices#hid-keyboard-and-keypad-page-0x07
+## -------------------------
+## MODIFIERS such as LCTRL, LSHIFT, LALT, etc. can be combined using the “or” (|) bit operation.
+## The modifier value is stored using 1 byte [8 bits] - that allows to combine modifiers, setting the corresponding bits to 1.
+## Each modifier corresponds to one bit in the byte, so no bits overlap.
+## 00: none     [bit: 0000 0000] // DEFAULT VALUE - all modifiers is off
+## 01: LCTRL    [bit: 0000 0001]
+## 02: LSHIFT   [bit: 0000 0010]
+## 04: LALT     [bit: 0000 0100]
+## 08: LMETA    [bit: 0000 1000]
+## 10: RCTRL    [bit: 0001 0000]
+## 20: RSHIFT   [bit: 0010 0000]
+## 40: RALT     [bit: 0100 0000] // "ALTGR" in polish programmers layout -> https://kbdlayout.info/KBDPL1/
+## 80: RMETA    [bit: 1000 0000]
+## So, to get RALT and LSHIFT in the same time we have: 0x40 | 0x02 -> [bit: 0100 0010] -> 0x42
+## -------------------------
+## More info -> https://source.android.com/docs/core/interaction/input/keyboard-devices
+## -------------------------
+
+## START OF THE RIGHT TABLE:
+ą 04 40
+ć 06 40
+ę 08 40
+ł 0F 40
+ń 11 40
+ó 12 40
+ś 16 40
+ź 1B 40
+ż 1D 40
+
+Ą 04 42
+Ć 06 42
+Ę 08 42
+Ł 0F 42
+Ń 11 42
+Ó 12 42
+Ś 16 42
+Ź 1B 42
+Ż 1D 42
+
+| 31 02
+? 38 02
+< 36 02
+> 37 02
+: 33 02
+" 34 02
+{ 2F 02
+} 30 02
+
+\ 31 00
+/ 38 00
+, 36 00
+. 37 00
+; 33 00
+' 34 00
+[ 2F 00
+] 30 00
+
+! 1E 02
+@ 1F 02
+# 20 02
+$ 21 02
+% 22 02
+^ 23 02
+& 24 02
+* 25 02
+( 26 02
+) 27 02
+_ 2D 02
++ 2E 02
+~ 35 02
