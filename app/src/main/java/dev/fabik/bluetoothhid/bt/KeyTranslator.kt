@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.util.Base64
 import android.util.Log
+import java.io.FileInputStream
+import java.io.ObjectInputStream
 import java.text.DateFormat
 import java.util.Calendar
 import kotlin.experimental.or
@@ -18,9 +20,9 @@ class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
 
-        private const val LCTRL: Byte = 0x01
-        private const val LSHIFT: Byte = 0x02
-        private const val LALT: Byte = 0x04
+        const val LCTRL: Byte = 0x01
+        const val LSHIFT: Byte = 0x02
+        const val LALT: Byte = 0x04
         private const val LMETA: Byte = 0x08
 //        private const val RCTRL: Byte = 0x10
 //        private const val RSHIFT: Byte = 0x20
@@ -32,6 +34,8 @@ class KeyTranslator(context: Context) {
         private val RETURN = '\n' to Key(0, 0x28)
 
         val CAPS_LOCK_KEY = Key(0, 0x39)
+
+        var CUSTOM_KEYMAP = mutableMapOf<Char, Key>()
     }
 
     private val assetManager: AssetManager = context.assets
@@ -50,6 +54,19 @@ class KeyTranslator(context: Context) {
         baseMap = keyMaps.remove("base") ?: run {
             Log.e(TAG, "No base keymap found?")
             emptyMap()
+        }
+
+        // Load custom user-defined keys from filesystem
+        runCatching {
+            val fis = FileInputStream(context.filesDir.resolve("custom.layout"))
+            ObjectInputStream(fis).apply {
+                (readObject() as? Keymap)?.forEach { (k, m) ->
+                    CUSTOM_KEYMAP[k] = m
+                }
+                close()
+            }
+        }.onFailure {
+            Log.e(TAG, "Error loading custom keymap:", it)
         }
 
         staticTemplates["F1"] = Key(0, 0x3A)
@@ -224,7 +241,7 @@ class KeyTranslator(context: Context) {
 
     private fun translate(char: Char, locale: String): Key? {
         val keymap = keyMaps[locale] ?: baseMap
-        return keymap[char] ?: baseMap[char]
+        return CUSTOM_KEYMAP[char] ?: keymap[char] ?: baseMap[char]
     }
 
 }
