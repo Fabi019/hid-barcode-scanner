@@ -6,6 +6,7 @@ import android.util.Base64
 import android.util.Log
 import java.io.FileInputStream
 import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.text.DateFormat
 import java.util.Calendar
 import kotlin.experimental.or
@@ -35,7 +36,42 @@ class KeyTranslator(context: Context) {
 
         val CAPS_LOCK_KEY = Key(0, 0x39)
 
+        private const val CUSTOM_KEYMAP_FILE = "custom.layout"
         var CUSTOM_KEYMAP = mutableMapOf<Char, Key>()
+
+        // Load custom user-defined keys from filesystem
+        fun loadCustomKeyMap(context: Context) {
+            runCatching {
+                val fis = FileInputStream(context.filesDir.resolve(CUSTOM_KEYMAP_FILE))
+                ObjectInputStream(fis).apply {
+                    (readObject() as? Keymap)?.forEach { (k, m) ->
+                        CUSTOM_KEYMAP[k] = m
+                    }
+                    close()
+                }
+            }.onFailure {
+                Log.e(TAG, "Error loading custom keymap:", it)
+            }
+        }
+
+        // Save user-defined keys to filesystem
+        fun saveCustomKeyMap(context: Context) {
+            runCatching {
+                // Cleanup
+                if (CUSTOM_KEYMAP.isEmpty()) {
+                    context.deleteFile(CUSTOM_KEYMAP_FILE)
+                    return
+                }
+
+                val fos = context.openFileOutput(CUSTOM_KEYMAP_FILE, Context.MODE_PRIVATE)
+                ObjectOutputStream(fos).apply {
+                    writeObject(CUSTOM_KEYMAP)
+                    close()
+                }
+            }.onFailure {
+                Log.e("CustomKeys", "Error saving custom keymap", it)
+            }
+        }
     }
 
     private val assetManager: AssetManager = context.assets
@@ -56,18 +92,7 @@ class KeyTranslator(context: Context) {
             emptyMap()
         }
 
-        // Load custom user-defined keys from filesystem
-        runCatching {
-            val fis = FileInputStream(context.filesDir.resolve("custom.layout"))
-            ObjectInputStream(fis).apply {
-                (readObject() as? Keymap)?.forEach { (k, m) ->
-                    CUSTOM_KEYMAP[k] = m
-                }
-                close()
-            }
-        }.onFailure {
-            Log.e(TAG, "Error loading custom keymap:", it)
-        }
+        loadCustomKeyMap(context)
 
         staticTemplates["F1"] = Key(0, 0x3A)
         staticTemplates["F2"] = Key(0, 0x3B)

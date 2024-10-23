@@ -1,7 +1,5 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.bt.Key
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.bt.Keymap
-import java.io.ObjectOutputStream
 import kotlin.experimental.or
 
 
@@ -48,18 +45,7 @@ fun CustomKeysDialog(dialogState: DialogState) {
         onDismiss = {
             close()
         }, onConfirm = {
-            val keys = KeyTranslator.CUSTOM_KEYMAP
-
-            runCatching {
-                val fos = context.openFileOutput("custom.layout", Context.MODE_PRIVATE)
-                ObjectOutputStream(fos).apply {
-                    writeObject(keys)
-                    close()
-                }
-            }.onFailure {
-                Log.e("CustomKeys", "Error saving custom keymap", it)
-            }
-
+            KeyTranslator.saveCustomKeyMap(context)
             close()
         }
     ) {
