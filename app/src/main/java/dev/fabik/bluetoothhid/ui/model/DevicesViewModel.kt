@@ -18,15 +18,16 @@ class DevicesViewModel : ViewModel() {
     var isScanning by mutableStateOf(false)
     private var isRefreshing by mutableStateOf(false)
 
-    var isBluetoothEnabled by mutableStateOf(false)
+    // Initially assume it is enabled to prevent the card from wrongly showing up
+    var isBluetoothEnabled by mutableStateOf(true)
 
-    fun refresh(controller: BluetoothController) {
+    fun refresh(controller: BluetoothController?) {
         viewModelScope.launch {
             isRefreshing = true
             pairedDevices.clear()
-            pairedDevices.addAll(controller.pairedDevices)
+            pairedDevices.addAll(controller?.pairedDevices ?: emptyList())
             if (!isScanning) {
-                controller.scanDevices()
+                controller?.scanDevices()
             }
             delay(500)
             isRefreshing = false

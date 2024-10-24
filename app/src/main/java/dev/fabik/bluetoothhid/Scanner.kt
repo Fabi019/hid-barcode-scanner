@@ -278,7 +278,7 @@ private fun SendToDeviceFAB(
 ) {
     currentBarcode?.let {
         val controller = LocalController.current
-        val disabled = controller.isSending
+        val disabled = controller?.isSending ?: true
 
         val (containerColor, contentColor) = if (!disabled) {
             MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
@@ -410,30 +410,36 @@ fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
-    AnimatedVisibility(
-        controller.isCapsLockOn, Modifier
-            .padding(12.dp)
-            .align(Alignment.TopCenter)
-    ) {
-        ElevatedCard(
-            onClick = {
-                scope.launch {
-                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
-                }
-            }
+    controller?.let {
+        AnimatedVisibility(
+            controller.isCapsLockOn, Modifier
+                .padding(12.dp)
+                .align(Alignment.TopCenter)
         ) {
-            Row(
-                Modifier.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            ElevatedCard(
+                onClick = {
+                    scope.launch {
+                        controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+                    }
+                }
             ) {
-                Icon(Icons.Rounded.Warning, "Warning")
-                Column {
-                    Text(stringResource(R.string.caps_lock_activated))
-                    Text(stringResource(R.string.click_to_turn_off), style = Typography.bodySmall)
+                Row(
+                    Modifier.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Warning, "Warning")
+                    Column {
+                        Text(stringResource(R.string.caps_lock_activated))
+                        Text(
+                            stringResource(R.string.click_to_turn_off),
+                            style = Typography.bodySmall
+                        )
+                    }
                 }
             }
         }
+
     }
 }
 

@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.util.Base64
 import android.util.Log
+import java.io.FileInputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.text.DateFormat
 import java.util.Calendar
 import kotlin.experimental.or
@@ -18,9 +21,9 @@ class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
 
-        private const val LCTRL: Byte = 0x01
-        private const val LSHIFT: Byte = 0x02
-        private const val LALT: Byte = 0x04
+        const val LCTRL: Byte = 0x01
+        const val LSHIFT: Byte = 0x02
+        const val LALT: Byte = 0x04
         private const val LMETA: Byte = 0x08
 //        private const val RCTRL: Byte = 0x10
 //        private const val RSHIFT: Byte = 0x20
@@ -32,6 +35,43 @@ class KeyTranslator(context: Context) {
         private val RETURN = '\n' to Key(0, 0x28)
 
         val CAPS_LOCK_KEY = Key(0, 0x39)
+
+        private const val CUSTOM_KEYMAP_FILE = "custom.layout"
+        var CUSTOM_KEYMAP = mutableMapOf<Char, Key>()
+
+        // Load custom user-defined keys from filesystem
+        fun loadCustomKeyMap(context: Context) {
+            runCatching {
+                val fis = FileInputStream(context.filesDir.resolve(CUSTOM_KEYMAP_FILE))
+                ObjectInputStream(fis).apply {
+                    (readObject() as? Keymap)?.forEach { (k, m) ->
+                        CUSTOM_KEYMAP[k] = m
+                    }
+                    close()
+                }
+            }.onFailure {
+                Log.e(TAG, "Error loading custom keymap:", it)
+            }
+        }
+
+        // Save user-defined keys to filesystem
+        fun saveCustomKeyMap(context: Context) {
+            runCatching {
+                // Cleanup
+                if (CUSTOM_KEYMAP.isEmpty()) {
+                    context.deleteFile(CUSTOM_KEYMAP_FILE)
+                    return
+                }
+
+                val fos = context.openFileOutput(CUSTOM_KEYMAP_FILE, Context.MODE_PRIVATE)
+                ObjectOutputStream(fos).apply {
+                    writeObject(CUSTOM_KEYMAP)
+                    close()
+                }
+            }.onFailure {
+                Log.e("CustomKeys", "Error saving custom keymap", it)
+            }
+        }
     }
 
     private val assetManager: AssetManager = context.assets
@@ -51,6 +91,8 @@ class KeyTranslator(context: Context) {
             Log.e(TAG, "No base keymap found?")
             emptyMap()
         }
+
+        loadCustomKeyMap(context)
 
         staticTemplates["F1"] = Key(0, 0x3A)
         staticTemplates["F2"] = Key(0, 0x3B)
@@ -224,7 +266,7 @@ class KeyTranslator(context: Context) {
 
     private fun translate(char: Char, locale: String): Key? {
         val keymap = keyMaps[locale] ?: baseMap
-        return keymap[char] ?: baseMap[char]
+        return CUSTOM_KEYMAP[char] ?: keymap[char] ?: baseMap[char]
     }
 
 }

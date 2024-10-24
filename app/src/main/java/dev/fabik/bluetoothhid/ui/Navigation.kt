@@ -81,19 +81,18 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(controller.currentDevice) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        controller.sendString(it)
+                Scanner(controller?.currentDevice) {
+                    scope.launch {
+                        controller?.sendString(it)
                     }
                 }
 
                 BackHandler {
                     // Disconnect from device and navigate back to devices list
-                    if (controller.disconnect()) {
-                        if (!navController.navigateUp()) {
-                            navController.popBackStack()
-                            navController.navigate(Routes.Devices)
-                        }
+                    controller?.disconnect()
+                    if (!navController.navigateUp()) {
+                        navController.popBackStack()
+                        navController.navigate(Routes.Devices)
                     }
                 }
             }
@@ -109,7 +108,7 @@ fun NavGraph() {
 
                 History(onBack) {
                     CoroutineScope(Dispatchers.IO).launch {
-                        controller.sendString(it)
+                        controller?.sendString(it)
                     }
                 }
 
@@ -119,9 +118,9 @@ fun NavGraph() {
     }
 
     // Listen for changes in the current device
-    LaunchedEffect(controller.currentDevice) {
+    LaunchedEffect(controller?.currentDevice) {
         // When connected to a device, navigate to the scanner
-        if (controller.currentDevice != null) {
+        if (controller?.currentDevice != null) {
             // Single-top is used to avoid creating multiple instances of the scanner
             navController.navigate(Routes.Main) {
                 launchSingleTop = true
