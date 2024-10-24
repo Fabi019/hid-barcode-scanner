@@ -22,11 +22,11 @@ import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
 val LocalController = staticCompositionLocalOf<BluetoothController?> {
-    error("No BluetoothController provided")
+    null
 }
 
 val LocalJsEngineService = staticCompositionLocalOf<JsEngineService.LocalBinder?> {
-    error("No JsEngineService provided")
+    null
 }
 
 class MainActivity : ComponentActivity() {

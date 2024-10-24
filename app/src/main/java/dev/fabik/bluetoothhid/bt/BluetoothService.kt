@@ -110,7 +110,10 @@ class BluetoothService : Service() {
 }
 
 @Composable
-fun rememberBluetoothControllerService(context: Context): BluetoothService.LocalBinder? {
+fun rememberBluetoothControllerService(
+    context: Context,
+    startStop: Boolean = true
+): BluetoothService.LocalBinder? {
     val serviceBinder = remember { mutableStateOf<BluetoothService.LocalBinder?>(null) }
     val intent = remember { Intent(context, BluetoothService::class.java) }
 
@@ -126,7 +129,11 @@ fun rememberBluetoothControllerService(context: Context): BluetoothService.Local
                 }
             }
 
-        context.bindService(intent, serviceConnection, Activity.BIND_AUTO_CREATE)
+        context.bindService(
+            intent,
+            serviceConnection,
+            if (startStop) Activity.BIND_AUTO_CREATE else 0
+        )
 
         onDispose {
             context.unbindService(serviceConnection)
@@ -134,15 +141,18 @@ fun rememberBluetoothControllerService(context: Context): BluetoothService.Local
         }
     }
 
-    ComposableLifecycle { _, event ->
-        when (event) {
-            Lifecycle.Event.ON_RESUME -> context.startForegroundService(intent)
-            Lifecycle.Event.ON_DESTROY -> {
-                if ((context as? Activity)?.isChangingConfigurations == false) {
-                    context.stopService(intent)
+    if (startStop) {
+        ComposableLifecycle { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> context.startForegroundService(intent)
+                Lifecycle.Event.ON_DESTROY -> {
+                    if ((context as? Activity)?.isChangingConfigurations == false) {
+                        context.stopService(intent)
+                    }
                 }
+
+                else -> {}
             }
-            else -> {}
         }
     }
 
