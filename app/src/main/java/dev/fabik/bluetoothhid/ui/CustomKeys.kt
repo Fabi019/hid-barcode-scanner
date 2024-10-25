@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,8 @@ import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.experimental.and
+import kotlin.experimental.inv
 import kotlin.experimental.or
 
 
@@ -76,29 +79,31 @@ fun CustomKeysDialog(dialogState: DialogState) {
 }
 
 @Composable
-fun AddCustomKeyDialog(dialogState: DialogState, onAddKey: (Pair<Char, Key>) -> Unit) {
-    var valueChar by remember(dialogState.openState) { mutableStateOf("") }
-    var valueHID by remember(dialogState.openState) { mutableStateOf("") }
+fun AddCustomKeyDialog(
+    dialogState: DialogState,
+    initialChar: String = "",
+    initialHID: Byte? = null,
+    initialModifier: Byte? = null,
+    onAddKey: (Pair<Char, Key>) -> Unit
+) {
+    var valueChar by remember(dialogState.openState) { mutableStateOf(initialChar) }
+    var valueHID by remember(dialogState.openState) { mutableStateOf(initialHID) }
+    var valueModifier by remember(dialogState.openState) { mutableStateOf(initialModifier) }
 
-    val modifierNames = remember { arrayOf("Shift", "Ctrl", "Alt") }
+    val modifierNames = remember { arrayOf("Ctrl", "Shift", "Alt") }
     val modifierCheckedStates =
-        remember(dialogState.openState) { mutableStateListOf(false, false, false) }
+        remember(dialogState.openState, valueModifier) {
+            mutableStateListOf(
+                (valueModifier ?: 0) and KeyTranslator.LCTRL == KeyTranslator.LCTRL,
+                (valueModifier ?: 0) and KeyTranslator.LSHIFT == KeyTranslator.LSHIFT,
+                (valueModifier ?: 0) and KeyTranslator.LALT == KeyTranslator.LALT
+            )
+        }
 
-    val currentKey = remember(valueChar, valueHID, modifierCheckedStates) {
+    val currentKey = remember(valueChar, valueHID, valueModifier) {
         val char = valueChar.firstOrNull() ?: return@remember null
-        val hidCode = valueHID.toByteOrNull(16) ?: return@remember null
-        var modifier = 0.toByte()
-
-        if (modifierCheckedStates[0]) {
-            modifier = modifier or KeyTranslator.LSHIFT
-        }
-        if (modifierCheckedStates[1]) {
-            modifier = modifier or KeyTranslator.LCTRL
-        }
-        if (modifierCheckedStates[2]) {
-            modifier = modifier or KeyTranslator.LALT
-        }
-
+        val hidCode = valueHID ?: return@remember null
+        val modifier = valueModifier ?: return@remember null
         char to (modifier to hidCode)
     }
 
@@ -119,44 +124,72 @@ fun AddCustomKeyDialog(dialogState: DialogState, onAddKey: (Pair<Char, Key>) -> 
 
             Spacer(Modifier.height(8.dp))
 
-            // Input fields
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextField(
-                    value = valueChar,
-                    onValueChange = {
-                        if (it.length <= 1) {
-                            valueChar = it
-                            // preselect shift state
-                            modifierCheckedStates[0] = it.firstOrNull()?.isUpperCase() ?: false
+            TextField(
+                value = valueChar,
+                onValueChange = {
+                    if (it.length <= 1) {
+                        valueChar = it
+                        // preselect shift state
+                        valueModifier = if (it.firstOrNull()?.isUpperCase() == true) {
+                            (valueModifier ?: 0) or KeyTranslator.LSHIFT
+                        } else {
+                            (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
                         }
-                    },
-                    modifier = Modifier
-                        .padding(end = 8.dp),
-                    placeholder = { Text("Character") }
-                )
+                    }
+                },
+                modifier = Modifier
+                    .padding(end = 8.dp),
+                placeholder = { Text("Character") }
+            )
 
-                TextField(
-                    value = valueHID,
-                    onValueChange = { valueHID = it },
-                    modifier = Modifier
-                        .padding(end = 8.dp),
-                    placeholder = { Text("HID-Code (HEX)") }
-                )
-            }
+            Spacer(Modifier.height(4.dp))
+
+            TextField(
+                value = valueHID?.toString() ?: "",
+                onValueChange = { valueHID = it.toByteOrNull() },
+                modifier = Modifier
+                    .padding(end = 8.dp),
+                placeholder = { Text("HID-Code (HEX)") }
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text("Modifier", style = MaterialTheme.typography.titleMedium)
+
+            TextField(
+                value = valueModifier?.toString() ?: "",
+                onValueChange = { valueModifier = it.toByteOrNull() },
+                modifier = Modifier
+                    .padding(end = 8.dp),
+                placeholder = { Text("Modifier") }
+            )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 modifierNames.zip(modifierCheckedStates).forEachIndexed { index, (name, checked) ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(name)
                         Checkbox(
                             checked = checked,
                             onCheckedChange = { isChecked ->
                                 modifierCheckedStates[index] = isChecked
+
+                                valueModifier = if (modifierCheckedStates[0]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LCTRL
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LCTRL.inv()
+                                }
+
+                                valueModifier = if (modifierCheckedStates[1]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LSHIFT
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
+                                }
+
+                                valueModifier = if (modifierCheckedStates[2]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LALT
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LALT.inv()
+                                }
                             }
                         )
                     }
@@ -189,7 +222,7 @@ fun AddCustomKeyDialog(dialogState: DialogState, onAddKey: (Pair<Char, Key>) -> 
             }
 
             Text(
-                "* To test the key out you need to be connected to a device.",
+                "* To test the key out you need to be connected with a device.",
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -204,6 +237,10 @@ fun CustomKeys(
 ) {
     val addKeyDialog = rememberDialogState()
 
+    var initialChar by remember { mutableStateOf("") }
+    var initialHID by remember { mutableStateOf<Byte?>(null) }
+    var initialModifier by remember { mutableStateOf<Byte?>(null) }
+
     LazyColumn {
         item {
             Text("Allows you to define custom character to HID-code mappings, that will override any definitions from the selected keyboard layout.")
@@ -217,12 +254,21 @@ fun CustomKeys(
                     IconButton(onClick = { onDeleteKey(item) }) {
                         Icon(Icons.Default.Delete, "Delete $item")
                     }
+                },
+                modifier = Modifier.clickable {
+                    initialChar = item.first.toString()
+                    initialHID = item.second.second
+                    initialModifier = item.second.first
+                    addKeyDialog.open()
                 }
             )
         }
 
         item {
             OutlinedButton(onClick = {
+                initialChar = ""
+                initialHID = null
+                initialModifier = null
                 addKeyDialog.open()
             }) {
                 Text("Add")
@@ -230,7 +276,9 @@ fun CustomKeys(
         }
     }
 
-    AddCustomKeyDialog(addKeyDialog, onAddKey)
+    AddCustomKeyDialog(addKeyDialog, initialChar, initialHID, initialModifier) {
+        onAddKey(it)
+    }
 }
 
 @Preview
