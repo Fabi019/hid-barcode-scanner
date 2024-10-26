@@ -258,4 +258,14 @@
     <string name="template_in_value_desc">Ersetzt Templates aus dem Code-Wert (Benötigt benutzerdefiniertes Template)</string>
     <string name="error_connecting_to_device">Fehler bei der Verbindung mit dem Gerät! Starte service neu…</string>
     <string name="developer_mode">Entwicklermodus</string>
+    <string name="custom_keys">Eigene Tasten</string>
+    <string name="add_custom_key">Eigene Taste hinzufügen</string>
+    <string name="add_custom_key_desc_long">Geben Sie das Zeichen und den entsprechenden HID-Code (nicht Scancode) einschließlich der Modifikatoren ein. Der HID-Code der ENTER-Taste ist beispielsweise 28 (hex).</string>
+    <string name="character">Zeichen</string>
+    <string name="hid_code_hex">HID-Code (HEX)</string>
+    <string name="modifier">Modifikator</string>
+    <string name="test">Test</string>
+    <string name="test_key">* Um die Taste auszuprobieren muss die Verbindung zu einem Gerät bestehen.</string>
+    <string name="add_custom_key_desc">Ermöglicht es, benutzerdefinierte Zuordnungen von Zeichen zu HID-Codes zu definieren, die alle Definitionen des ausgewählten Tastaturlayouts überschreiben.</string>
+    <string name="define_custom_keys">Erstellen von eigenen Tasten</string>
 </resources>

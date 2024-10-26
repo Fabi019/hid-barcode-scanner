@@ -166,8 +166,8 @@ fun ConnectionSettings() {
     val customKeysDialog = rememberDialogState()
 
     ButtonPreference(
-        title = "Custom keys",
-        desc = "Define custom keys",
+        title = stringResource(R.string.custom_keys),
+        desc = stringResource(R.string.define_custom_keys),
         icon = Icons.Default.KeyboardCommandKey,
         extra = {
         },
