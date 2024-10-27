@@ -210,22 +210,38 @@ class BluetoothController(var context: Context) {
 
     suspend fun connect(device: BluetoothDevice) {
         // Cancel discovery because it otherwise slows down the connection.
-        bluetoothAdapter?.cancelDiscovery()
+        cancelScan()
 
-        val success = hidDevice?.connect(device) ?: run {
+        Log.d(TAG, "connecting to $device")
+
+        val success = hidDevice?.connect(device) ?: false
+
+        if (!success) {
+            Log.d(TAG, "unsuccessful connection to device")
+
             // Initialize latch to wait for service to be connected.
             latch = CountDownLatch(1)
 
             // Try to register proxy.
-            return@run if (!register()) {
+            if (!register()) {
                 (context as? Activity)?.runOnUiThread {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.bt_proxy_error),
+                        context.getString(R.string.error_connecting_to_device),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-                false
+
+                Intent(
+                    context,
+                    BluetoothService::class.java
+                ).apply {
+                    action = BluetoothService.ACTION_REGISTER
+                }.also {
+                    (context as? Activity)?.runOnUiThread {
+                        context.startForegroundService(it)
+                    }
+                }
             } else {
                 (context as? Activity)?.runOnUiThread {
                     Toast.makeText(
@@ -236,28 +252,9 @@ class BluetoothController(var context: Context) {
                 }
 
                 latch.await(5000, TimeUnit.MILLISECONDS)
-                hidDevice?.connect(device) ?: false
-            }
-        }
 
-        if (!success) {
-            (context as? Activity)?.runOnUiThread {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.error_connecting_to_device),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-
-            Intent(
-                context,
-                BluetoothService::class.java
-            ).apply {
-                action = BluetoothService.ACTION_REGISTER
-            }.also {
-                (context as? Activity)?.runOnUiThread {
-                    context.startForegroundService(it)
-                }
+                // Retry connection again
+                hidDevice?.connect(device)
             }
         }
     }
