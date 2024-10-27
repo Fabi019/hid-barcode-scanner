@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,9 +91,9 @@ fun AddCustomKeyDialog(
     initialModifier: Byte? = null,
     onAddKey: (Pair<Char, Key>) -> Unit
 ) {
-    var valueChar by remember(dialogState.openState) { mutableStateOf(initialChar) }
-    var valueHID by remember(dialogState.openState) { mutableStateOf(initialHID) }
-    var valueModifier by remember(dialogState.openState) { mutableStateOf(initialModifier) }
+    var valueChar by rememberSaveable(dialogState.openState) { mutableStateOf(initialChar) }
+    var valueHID by rememberSaveable(dialogState.openState) { mutableStateOf(initialHID) }
+    var valueModifier by rememberSaveable(dialogState.openState) { mutableStateOf(initialModifier) }
 
     val modifierNames = remember { arrayOf("Ctrl", "Shift", "Alt") }
     val modifierCheckedStates = remember(dialogState.openState, valueModifier) {
@@ -249,7 +250,7 @@ fun CustomKeys(
                 initialModifier = null
                 addKeyDialog.open()
             }, modifier = Modifier.fillMaxWidth()) {
-                Text("Add")
+                Text(stringResource(R.string.add))
             }
         }
 

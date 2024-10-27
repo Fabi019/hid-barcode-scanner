@@ -27,7 +27,7 @@
     <string name="scan_freq_desc">Intervall in dem das Bild analysiert wird. Höhere Frequenzen führen zu einer größeren CPU Nutzung.</string>
     <string name="scan_res">Scan Auflösung</string>
     <string name="auto_send">Automatisch Senden</string>
-    <string name="auto_send_desc">Senden von neuen Codes senden</string>
+    <string name="auto_send_desc">Sendet neu erkannte Codes automatisch</string>
     <string name="extra_keys">Extra Tasten</string>
     <string name="extra_keys_desc">Tasten die jedem Text, der an den PC gesendet wird, angehängt werden sollen</string>
     <string name="play_sound">Scan Ton</string>
@@ -268,4 +268,5 @@
     <string name="test_key">* Um die Taste auszuprobieren muss die Verbindung zu einem Gerät bestehen.</string>
     <string name="add_custom_key_desc">Ermöglicht es, benutzerdefinierte Zuordnungen von Zeichen zu HID-Codes zu definieren, die alle Definitionen des ausgewählten Tastaturlayouts überschreiben.</string>
     <string name="define_custom_keys">Erstellen von eigenen Tasten</string>
+    <string name="add">Hinzufügen</string>
 </resources>

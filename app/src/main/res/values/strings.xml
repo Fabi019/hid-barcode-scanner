@@ -202,6 +202,7 @@
     <string name="test_key">* To test the key out you need to be connected with a device.</string>
     <string name="add_custom_key_desc">Allows you to define custom character to HID-code mappings, that will override any definitions from the selected keyboard layout.</string>
     <string name="define_custom_keys">Define custom keys</string>
+    <string name="add">Add</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
