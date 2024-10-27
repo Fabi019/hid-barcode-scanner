@@ -32,16 +32,16 @@ import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material.ripple.RippleTheme
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -271,6 +271,7 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
  * @param currentBarcode the current barcode value
  * @param onClick callback to send text to the current device
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SendToDeviceFAB(
     currentBarcode: String?,
@@ -288,18 +289,15 @@ private fun SendToDeviceFAB(
         }
 
         val noRippleTheme = remember {
-            object : RippleTheme {
-                @Composable
-                override fun defaultColor() = Color.Unspecified
-
-                @Composable
-                override fun rippleAlpha(): RippleAlpha = RippleAlpha(0.0f, 0.0f, 0.0f, 0.0f)
-            }
+            RippleConfiguration(
+                color = Color.Unspecified,
+                rippleAlpha = RippleAlpha(0.0f, 0.0f, 0.0f, 0.0f)
+            )
         }
 
         CompositionLocalProvider(
-            LocalRippleTheme provides
-                    if (!disabled) LocalRippleTheme.current else noRippleTheme
+            LocalRippleConfiguration provides
+                    if (!disabled) LocalRippleConfiguration.current else noRippleTheme
         ) {
             ExtendedFloatingActionButton(
                 text = {

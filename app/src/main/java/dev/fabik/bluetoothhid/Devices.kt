@@ -47,11 +47,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -178,15 +176,9 @@ fun DevicesViewModel.DeviceContent() {
 
     BroadcastListener()
 
-    val state = rememberPullToRefreshState()
-    if (state.isRefreshing) {
-        LaunchedEffect(true) {
-            refresh(controller)
-            state.endRefresh()
-        }
-    }
-
-    Box(Modifier.nestedScroll(state.nestedScrollConnection)) {
+    PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = {
+        refresh(controller)
+    }) {
         if (!isBluetoothEnabled) {
             BluetoothDisabledCard()
         } else {
@@ -195,11 +187,6 @@ fun DevicesViewModel.DeviceContent() {
                     controller?.connect(it)
                 }
             }
-
-            PullToRefreshContainer(
-                modifier = Modifier.align(Alignment.TopCenter),
-                state = state,
-            )
         }
     }
 }

@@ -16,7 +16,7 @@ class DevicesViewModel : ViewModel() {
     var pairedDevices = mutableStateListOf<BluetoothDevice>()
 
     var isScanning by mutableStateOf(false)
-    private var isRefreshing by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
 
     // Initially assume it is enabled to prevent the card from wrongly showing up
     var isBluetoothEnabled by mutableStateOf(true)
