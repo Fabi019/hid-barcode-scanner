@@ -68,7 +68,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
@@ -123,7 +122,7 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
                 putExtra(Intent.EXTRA_TEXT, data)
             }
             val shareIntent = Intent.createChooser(intent, exportString)
-            startActivity(context, shareIntent, null)
+            context.startActivity(shareIntent)
         }
     }
 }

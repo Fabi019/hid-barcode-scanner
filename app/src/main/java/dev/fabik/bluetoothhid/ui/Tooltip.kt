@@ -2,7 +2,6 @@
 
 package dev.fabik.bluetoothhid.ui
 
-import androidx.compose.animation.core.ExperimentalTransitionApi
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
@@ -64,7 +63,6 @@ fun Tooltip(
 }
 
 @Composable
-@OptIn(ExperimentalTransitionApi::class)
 fun TooltipContent(
     expandedStates: MutableTransitionState<Boolean>,
     content: @Composable () -> Unit
