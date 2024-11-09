@@ -38,6 +38,9 @@ class CameraViewModel : ViewModel() {
     var lastSourceRes: Size? = null
     var lastPreviewRes: Size? = null
 
+    var userSpecifiedOffset = Offset.Zero
+    var userSpecifiedSize = androidx.compose.ui.geometry.Size(200f, 200f)
+
     // TODO: remove - no longer used for transformation
     var scale = 1f
     var transX = 0f
@@ -104,16 +107,39 @@ class CameraViewModel : ViewModel() {
             // Filter out codes without value
             it.rawBytes != null && !it.rawValue.isNullOrEmpty() && !it.displayValue.isNullOrEmpty()
         }.filter {
-            // Filter if they are within the scan area
-            it.cornerPoints?.map { p ->
+            val points = it.cornerPoints?.map { p ->
                 Offset(p.x * scale - transX, p.y * scale - transY)
-            }?.forEach { o ->
+            }
+
+            // Filter if the edge points are within the scan area
+            points?.forEach { o ->
                 if (fullyInside && !scanRect.contains(o)) {
                     return@filter false
-                } else if (scanRect.contains(o)) {
+                }
+                if (!fullyInside && scanRect.contains(o)) {
                     return@filter true
                 }
             }
+
+            // Check if the center lines are included
+            points?.let {
+                if (!fullyInside) {
+                    val leftMiddle = (it[0] + it[3]) / 2f
+                    val rightMiddle = (it[1] + it[2]) / 2f
+
+                    if (scanRect.contains(leftMiddle) && scanRect.contains(rightMiddle)) {
+                        return@filter true
+                    }
+
+                    val topMiddle = (it[0] + it[1]) / 2f
+                    val bottomMiddle = (it[3] + it[2]) / 2f
+
+                    if (scanRect.contains(topMiddle) && scanRect.contains(bottomMiddle)) {
+                        return@filter true
+                    }
+                }
+            }
+
             fullyInside
         }.filter {
             // Filter by regex

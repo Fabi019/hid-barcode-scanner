@@ -201,6 +201,7 @@
     <string-array name="overlay_values">
         <item>Kwadratowa (Kody QR)</item>
         <item>Prostokątna (Kody kreskowe)</item>
+        <item>Custom</item>
     </string-array>
     <string-array name="scan_freq_values">
         <item>Najszybciej</item>

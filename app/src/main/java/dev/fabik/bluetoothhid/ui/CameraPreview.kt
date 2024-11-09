@@ -18,16 +18,23 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,8 +54,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -68,6 +77,7 @@ import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -368,6 +378,15 @@ fun CameraViewModel.OverlayCanvas() {
                     )
                 }
 
+                2 -> {
+                    val pos = userSpecifiedOffset
+                    val size = userSpecifiedSize
+                    Rect(
+                        pos + Offset(x - size.width, y - size.height),
+                        pos + Offset(x + size.width, y + size.height)
+                    )
+                }
+
                 // Square for scanning qr codes
                 else -> {
                     val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
@@ -418,6 +437,41 @@ fun CameraViewModel.OverlayCanvas() {
             }
 
             drawPath(path, color = Color.Blue, style = Stroke(5f))
+
+            // Draw horizontal line
+            points?.let {
+                val leftMiddle =
+                    Offset((it[0].first + it[3].first) / 2f, (it[0].second + it[3].second) / 2f)
+                val rightMiddle =
+                    Offset((it[1].first + it[2].first) / 2f, (it[1].second + it[2].second) / 2f)
+                val hDist = (rightMiddle - leftMiddle).getDistanceSquared()
+
+                val topMiddle =
+                    Offset((it[0].first + it[1].first) / 2f, (it[0].second + it[1].second) / 2f)
+                val bottomMiddle =
+                    Offset((it[3].first + it[2].first) / 2f, (it[3].second + it[2].second) / 2f)
+                val vDist = (bottomMiddle - topMiddle).getDistanceSquared()
+
+                val relDiff = (hDist - vDist) / (hDist + vDist)
+                if (relDiff > 0.05) {
+                    drawLine(
+                        Color.Red,
+                        leftMiddle,
+                        rightMiddle
+                    )
+                } else if (relDiff < -0.05) {
+                    drawLine(
+                        Color.Red,
+                        topMiddle,
+                        bottomMiddle
+                    )
+                }
+
+//                drawCircle(Color.Yellow, 10f, leftMiddle)
+//                drawCircle(Color.Green, 10f, rightMiddle)
+//                drawCircle(Color.Cyan, 10f, topMiddle)
+//                drawCircle(Color.Magenta, 10f, bottomMiddle)
+            }
         }
 
         // Draw the focus circle if currently focusing
@@ -437,6 +491,72 @@ fun CameraViewModel.OverlayCanvas() {
         if (developerMode) {
             drawDebugOverlay(drawContext.canvas.nativeCanvas, this.size)
         }
+    }
+
+    // Show the adjust buttons
+    if (restrictArea && overlayType == 2) {
+        TransformableSample()
+    }
+}
+
+@Composable
+private fun CameraViewModel.TransformableSample() {
+    var posOffsetX by remember { mutableFloatStateOf(userSpecifiedOffset.x) }
+    var posOffsetY by remember { mutableFloatStateOf(userSpecifiedOffset.x) }
+    var sizeOffsetX by remember { mutableFloatStateOf(userSpecifiedSize.width) }
+    var sizeOffsetY by remember { mutableFloatStateOf(userSpecifiedSize.height) }
+
+    fun reset() {
+        posOffsetX = 0f
+        posOffsetY = 0f
+        userSpecifiedOffset = Offset(posOffsetX, posOffsetY)
+        sizeOffsetX = 200f
+        sizeOffsetY = 200f
+        userSpecifiedSize = Size(sizeOffsetX, sizeOffsetY)
+    }
+
+    IconButton(
+        onClick = { reset() },
+        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        modifier = Modifier
+            .offset {
+                IntOffset(
+                    (posOffsetX + sizeOffsetX).roundToInt(),
+                    (posOffsetY + sizeOffsetY).roundToInt()
+                )
+            }
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    sizeOffsetX += dragAmount.x
+                    sizeOffsetY += dragAmount.y
+                    userSpecifiedSize = Size(sizeOffsetX, sizeOffsetY)
+                }
+            }
+    ) {
+        Icon(Icons.Default.OpenInFull, "Modify size")
+    }
+
+    IconButton(
+        onClick = { reset() },
+        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        modifier = Modifier
+            .offset {
+                IntOffset(
+                    (posOffsetX - sizeOffsetX).roundToInt(),
+                    (posOffsetY + sizeOffsetY).roundToInt()
+                )
+            }
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    posOffsetX += dragAmount.x
+                    posOffsetY += dragAmount.y
+                    userSpecifiedOffset = Offset(posOffsetX, posOffsetY)
+                }
+            }
+    ) {
+        Icon(Icons.Default.DragIndicator, "Modify position")
     }
 }
 
@@ -482,6 +602,17 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
         "Preview size: ${lastPreviewRes?.width}x${lastPreviewRes?.height}",
         10f,
         y + 150f,
+        Paint().apply {
+            color = Color.White.toArgb()
+            textSize = 50f
+        }
+    )
+
+    // Draw the custom selection
+    canvas.drawText(
+        "Selector size: ${userSpecifiedSize.width.roundToInt()}x${userSpecifiedSize.height.roundToInt()} at (${userSpecifiedOffset.x.roundToInt()}, ${userSpecifiedOffset.y.roundToInt()})",
+        10f,
+        y + 200f,
         Paint().apply {
             color = Color.White.toArgb()
             textSize = 50f
