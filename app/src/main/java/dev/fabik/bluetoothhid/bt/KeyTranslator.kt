@@ -18,9 +18,9 @@ class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
 
-        private const val LCTRL: Byte = 0x01
-        private const val LSHIFT: Byte = 0x02
-        private const val LALT: Byte = 0x04
+        const val LCTRL: Byte = 0x01
+        const val LSHIFT: Byte = 0x02
+        const val LALT: Byte = 0x04
         private const val LMETA: Byte = 0x08
 //        private const val RCTRL: Byte = 0x10
 //        private const val RSHIFT: Byte = 0x20
@@ -32,6 +32,76 @@ class KeyTranslator(context: Context) {
         private val RETURN = '\n' to Key(0, 0x28)
 
         val CAPS_LOCK_KEY = Key(0, 0x39)
+
+        private const val CUSTOM_KEYMAP_FILE = "custom.layout"
+        private var customKeyMapLoaded = false
+        var CUSTOM_KEYMAP = mutableMapOf<Char, Key>()
+
+        // Load custom user-defined keys from filesystem
+        fun loadCustomKeyMap(context: Context) {
+            // Only load once
+            if (customKeyMapLoaded) {
+                return
+            }
+            customKeyMapLoaded = true
+
+            runCatching {
+                val file = context.filesDir.resolve(CUSTOM_KEYMAP_FILE)
+
+                if (!file.exists()) {
+                    Log.d(TAG, "No custom keymap exists: $file")
+                    return
+                }
+
+                Log.d(TAG, "Loading from $file")
+
+                CUSTOM_KEYMAP = loadKeymap(file.readLines()).toMutableMap()
+            }.onFailure {
+                Log.e(TAG, "Error loading custom keymap:", it)
+            }
+        }
+
+        // Save user-defined keys to filesystem
+        fun saveCustomKeyMap(context: Context) {
+            runCatching {
+                val file = context.filesDir.resolve(CUSTOM_KEYMAP_FILE)
+
+                // Cleanup file
+                if (CUSTOM_KEYMAP.isEmpty()) {
+                    context.deleteFile(file.name)
+                    return
+                }
+
+                file.bufferedWriter().use {
+                    CUSTOM_KEYMAP.forEach { k, (m, h) ->
+                        it.write("$k ${h.toString(16)} ${m.toString(16)}")
+                        it.newLine()
+                    }
+                }
+            }.onFailure {
+                Log.e("CustomKeys", "Error saving custom keymap", it)
+            }
+        }
+
+        private fun loadKeymap(lines: List<String>): Keymap {
+            val keymap = mutableMapOf<Char, Key>()
+
+            lines.forEach {
+                if (it.startsWith("##") || it.isBlank())
+                    return@forEach
+
+                runCatching {
+                    val (key, code, modifier) = it.split(" ")
+
+                    keymap[key.first()] =
+                        Key(modifier.toByte(16), code.toByte(16))
+                }.onFailure { e ->
+                    Log.e(TAG, "Failed to parse keymap line: $it", e)
+                }
+            }
+
+            return keymap
+        }
     }
 
     private val assetManager: AssetManager = context.assets
@@ -44,13 +114,23 @@ class KeyTranslator(context: Context) {
 
     init {
         assetManager.list("keymaps")?.forEach {
-            keyMaps[it.removeSuffix(".layout")] = loadKeymap("keymaps/$it")
+            val fileName = "keymaps/$it"
+
+            val lines = runCatching {
+                assetManager.open(fileName).bufferedReader().readLines()
+            }.onFailure {
+                Log.e(TAG, "Failed to load keymap: $fileName", it)
+            }.getOrNull() ?: return@forEach
+
+            keyMaps[it.removeSuffix(".layout")] = loadKeymap(lines)
         }
 
-        baseMap = keyMaps.remove("base") ?: run {
+        baseMap = (keyMaps.remove("base") ?: run {
             Log.e(TAG, "No base keymap found?")
             emptyMap()
-        }
+        }) + mutableMapOf(SPACE, TAB, RETURN)
+
+        loadCustomKeyMap(context)
 
         staticTemplates["F1"] = Key(0, 0x3A)
         staticTemplates["F2"] = Key(0, 0x3B)
@@ -107,34 +187,6 @@ class KeyTranslator(context: Context) {
                 locale,
             )
         }
-    }
-
-    private fun loadKeymap(fileName: String): Keymap {
-        Log.d(TAG, "Loading keymap: $fileName")
-
-        val keymap = mutableMapOf(SPACE, TAB, RETURN)
-
-        val lines = runCatching {
-            assetManager.open(fileName).bufferedReader().readLines()
-        }.onFailure {
-            Log.e(TAG, "Failed to load keymap: $fileName", it)
-        }.getOrNull() ?: return keymap
-
-        lines.forEach {
-            if (it.startsWith("##") || it.isBlank())
-                return@forEach
-
-            runCatching {
-                val (key, code, modifier) = it.split(" ")
-
-                keymap[key.first()] =
-                    Key(modifier.toByte(16), code.toByte(16))
-            }.onFailure { e ->
-                Log.e(TAG, "Failed to parse keymap line: $it", e)
-            }
-        }
-
-        return keymap
     }
 
     // Translates a string into a list of keys using a template string
@@ -224,7 +276,7 @@ class KeyTranslator(context: Context) {
 
     private fun translate(char: Char, locale: String): Key? {
         val keymap = keyMaps[locale] ?: baseMap
-        return keymap[char] ?: baseMap[char]
+        return CUSTOM_KEYMAP[char] ?: keymap[char] ?: baseMap[char]
     }
 
 }
