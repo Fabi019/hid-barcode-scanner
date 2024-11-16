@@ -38,8 +38,8 @@ class CameraViewModel : ViewModel() {
     var lastSourceRes: Size? = null
     var lastPreviewRes: Size? = null
 
-    var userSpecifiedOffset = Offset.Zero
-    var userSpecifiedSize = androidx.compose.ui.geometry.Size(200f, 200f)
+    var overlayPosition: Offset? = null
+    var overlaySize: androidx.compose.ui.geometry.Size? = null
 
     // TODO: remove - no longer used for transformation
     var scale = 1f

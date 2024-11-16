@@ -19,8 +19,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Error
@@ -74,8 +74,11 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
@@ -379,12 +382,15 @@ fun CameraViewModel.OverlayCanvas() {
                 }
 
                 2 -> {
-                    val pos = userSpecifiedOffset
-                    val size = userSpecifiedSize
-                    Rect(
-                        pos + Offset(x - size.width, y - size.height),
-                        pos + Offset(x + size.width, y + size.height)
-                    )
+                    val pos = overlayPosition
+                    val size = overlaySize
+
+                    if (pos != null && size != null)
+                        Rect(
+                            pos + Offset(x - size.width, y - size.height),
+                            pos + Offset(x + size.width, y + size.height)
+                        )
+                    else Rect.Zero
                 }
 
                 // Square for scanning qr codes
@@ -495,42 +501,86 @@ fun CameraViewModel.OverlayCanvas() {
 
     // Show the adjust buttons
     if (restrictArea && overlayType == 2) {
-        TransformableSample()
+        CustomOverlayButtons()
     }
 }
 
 @Composable
-private fun CameraViewModel.TransformableSample() {
-    var posOffsetX by remember { mutableFloatStateOf(userSpecifiedOffset.x) }
-    var posOffsetY by remember { mutableFloatStateOf(userSpecifiedOffset.x) }
-    var sizeOffsetX by remember { mutableFloatStateOf(userSpecifiedSize.width) }
-    var sizeOffsetY by remember { mutableFloatStateOf(userSpecifiedSize.height) }
+private fun CameraViewModel.CustomOverlayButtons() {
+    val context = LocalContext.current
+    var posOffsetX by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_POS_X
+            ).first()
+        })
+    }
+    var posOffsetY by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_POS_Y
+            ).first()
+        })
+    }
+    var sizeOffsetX by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_WIDTH
+            ).first()
+        })
+    }
+    var sizeOffsetY by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_HEIGHT
+            ).first()
+        })
+    }
+
+    LaunchedEffect(Unit) {
+        overlayPosition = Offset(posOffsetX, posOffsetY)
+        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+    }
+
+    fun saveState() {
+        runBlocking {
+            context.setPreference(PreferenceStore.OVERLAY_POS_X, posOffsetX)
+            context.setPreference(PreferenceStore.OVERLAY_POS_Y, posOffsetY)
+            context.setPreference(PreferenceStore.OVERLAY_WIDTH, sizeOffsetX)
+            context.setPreference(PreferenceStore.OVERLAY_HEIGHT, sizeOffsetY)
+        }
+    }
 
     fun reset() {
-        posOffsetX = 0f
-        posOffsetY = 0f
-        userSpecifiedOffset = Offset(posOffsetX, posOffsetY)
-        sizeOffsetX = 200f
-        sizeOffsetY = 200f
-        userSpecifiedSize = Size(sizeOffsetX, sizeOffsetY)
+        posOffsetX = PreferenceStore.OVERLAY_POS_X.defaultValue
+        posOffsetY = PreferenceStore.OVERLAY_POS_Y.defaultValue
+        sizeOffsetX = PreferenceStore.OVERLAY_WIDTH.defaultValue
+        sizeOffsetY = PreferenceStore.OVERLAY_HEIGHT.defaultValue
+
+        overlayPosition = Offset(posOffsetX, posOffsetY)
+        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+
+        saveState()
     }
 
     IconButton(
         onClick = { reset() },
         colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
         modifier = Modifier
-            .offset {
+            .absoluteOffset {
                 IntOffset(
                     (posOffsetX + sizeOffsetX).roundToInt(),
                     (posOffsetY + sizeOffsetY).roundToInt()
                 )
             }
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
+                detectDragGestures(onDragEnd = {
+                    saveState()
+                }) { change, dragAmount ->
                     change.consume()
                     sizeOffsetX += dragAmount.x
                     sizeOffsetY += dragAmount.y
-                    userSpecifiedSize = Size(sizeOffsetX, sizeOffsetY)
+                    overlaySize = Size(sizeOffsetX, sizeOffsetY)
                 }
             }
     ) {
@@ -541,18 +591,20 @@ private fun CameraViewModel.TransformableSample() {
         onClick = { reset() },
         colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
         modifier = Modifier
-            .offset {
+            .absoluteOffset {
                 IntOffset(
                     (posOffsetX - sizeOffsetX).roundToInt(),
                     (posOffsetY + sizeOffsetY).roundToInt()
                 )
             }
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
+                detectDragGestures(onDragEnd = {
+                    saveState()
+                }) { change, dragAmount ->
                     change.consume()
                     posOffsetX += dragAmount.x
                     posOffsetY += dragAmount.y
-                    userSpecifiedOffset = Offset(posOffsetX, posOffsetY)
+                    overlayPosition = Offset(posOffsetX, posOffsetY)
                 }
             }
     ) {
@@ -610,7 +662,7 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
 
     // Draw the custom selection
     canvas.drawText(
-        "Selector size: ${userSpecifiedSize.width.roundToInt()}x${userSpecifiedSize.height.roundToInt()} at (${userSpecifiedOffset.x.roundToInt()}, ${userSpecifiedOffset.y.roundToInt()})",
+        "Selector size: ${overlaySize?.width?.roundToInt()}x${overlaySize?.height?.roundToInt()} at (${overlayPosition?.x?.roundToInt()}, ${overlayPosition?.y?.roundToInt()})",
         10f,
         y + 200f,
         Paint().apply {
