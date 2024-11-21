@@ -59,10 +59,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.LocalJsEngineService
@@ -80,6 +81,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 
@@ -251,6 +253,9 @@ fun CameraViewModel.CameraPreview(
 
                 runCatching {
                     cameraController.bindToLifecycle(lifecycleOwner)
+
+                    // Enable only the image analysis use case
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
                 }.onFailure {
                     Log.e("CameraPreview", "Failed to bind camera", it)
                     errorDialog.open()
@@ -266,23 +271,36 @@ fun CameraViewModel.CameraPreview(
                     Log.d("CameraPreview", "Focusing: $isFocusing ($it)")
                 }
 
-                cameraController.initializationFuture.addListener({
-                    // Enable only the image analysis use case
-                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+                Futures.addCallback(
+                    cameraController.initializationFuture,
+                    object : FutureCallback<Void> {
+                        override fun onSuccess(result: Void?) {
+                            runCatching {
+                                // Attach PreviewView after we know the camera is available.
+                                previewView.controller = cameraController
+                                previewView.setOnTouchListener { _, event ->
+                                    if (event.action == MotionEvent.ACTION_DOWN)
+                                        focusTouchPoint = Offset(event.x, event.y)
+                                    false
+                                }
 
-                    // Attach PreviewView after we know the camera is available.
-                    previewView.controller = cameraController
-                    previewView.setOnTouchListener { _, event ->
-                        if (event.action == MotionEvent.ACTION_DOWN)
-                            focusTouchPoint = Offset(event.x, event.y)
-                        false
-                    }
+                                // Camera is ready
+                                onCameraReady(cameraController)
 
-                    // Camera is ready
-                    onCameraReady(cameraController)
+                                initialized = true
+                            }.onFailure {
+                                Log.e("CameraPreview", "Failed to bind preview", it)
+                                errorDialog.open()
+                            }
+                        }
 
-                    initialized = true
-                }, ContextCompat.getMainExecutor(context))
+                        override fun onFailure(t: Throwable) {
+                            Log.e("CameraPreview", "Failed to initialize camera", t)
+                            errorDialog.open()
+                        }
+                    },
+                    context.mainExecutor
+                )
             }
 
             Lifecycle.Event.ON_PAUSE -> {
@@ -387,8 +405,14 @@ fun CameraViewModel.OverlayCanvas() {
 
                     if (pos != null && size != null)
                         Rect(
-                            pos + Offset(x - size.width, y - size.height),
-                            pos + Offset(x + size.width, y + size.height)
+                            pos + Offset(
+                                x - size.width.absoluteValue,
+                                y - size.height.absoluteValue
+                            ),
+                            pos + Offset(
+                                x + size.width.absoluteValue,
+                                y + size.height.absoluteValue
+                            )
                         )
                     else Rect.Zero
                 }
