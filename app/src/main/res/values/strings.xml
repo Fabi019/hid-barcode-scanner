@@ -35,8 +35,8 @@
     <string name="raw_value">Raw value</string>
     <string name="raw_value_desc">Uses the raw value from the code</string>
     <string name="about">About</string>
-    <string name="repository" translatable="false">Repository</string>
-    <string name="build_version" translatable="false">Version</string>
+    <string name="repository">Repository</string>
+    <string name="build_version">Version</string>
     <string name="confirm">Confirm</string>
     <string name="dismiss">Cancel</string>
     <string name="scanned_devices">Scanned devices</string>
@@ -192,6 +192,17 @@
     <string name="template_in_value_desc">Expand templates in the code value (Requires custom template)</string>
     <string name="error_connecting_to_device">Error connecting to device! Trying to restart service…</string>
     <string name="developer_mode">Developer mode</string>
+    <string name="custom_keys">Custom keys</string>
+    <string name="add_custom_key">Add custom key</string>
+    <string name="add_custom_key_desc_long">Enter the character and the corresponding HID-code (not scancode) including any modifiers. The HID-code of the ENTER key is for example 28 (hex).</string>
+    <string name="character">Character</string>
+    <string name="hid_code_hex">HID-Code (HEX)</string>
+    <string name="modifier">Modifier</string>
+    <string name="test">Test</string>
+    <string name="test_key">* To test the key out you need to be connected with a device.</string>
+    <string name="add_custom_key_desc">Allows you to define custom character to HID-code mappings, that will override any definitions from the selected keyboard layout.</string>
+    <string name="define_custom_keys">Define custom keys</string>
+    <string name="add">Add</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

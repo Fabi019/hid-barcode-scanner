@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.HdrAuto
 import androidx.compose.material.icons.filled.Highlight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.KeyboardCommandKey
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.QrCode2
@@ -65,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
+import dev.fabik.bluetoothhid.ui.CustomKeysDialog
 import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
@@ -160,6 +162,19 @@ fun ConnectionSettings() {
         values = stringArrayResource(R.array.keyboard_layout_values),
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
+
+    val customKeysDialog = rememberDialogState()
+
+    ButtonPreference(
+        title = stringResource(R.string.custom_keys),
+        desc = stringResource(R.string.define_custom_keys),
+        icon = Icons.Default.KeyboardCommandKey,
+        extra = {
+        },
+        onClick = customKeysDialog::open
+    )
+
+    CustomKeysDialog(customKeysDialog)
 
     ComboBoxPreference(
         title = stringResource(R.string.extra_keys),
