@@ -18,16 +18,23 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,13 +54,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.LocalJsEngineService
@@ -65,9 +75,14 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.RequiresModuleInstallation
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -238,6 +253,9 @@ fun CameraViewModel.CameraPreview(
 
                 runCatching {
                     cameraController.bindToLifecycle(lifecycleOwner)
+
+                    // Enable only the image analysis use case
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
                 }.onFailure {
                     Log.e("CameraPreview", "Failed to bind camera", it)
                     errorDialog.open()
@@ -253,23 +271,36 @@ fun CameraViewModel.CameraPreview(
                     Log.d("CameraPreview", "Focusing: $isFocusing ($it)")
                 }
 
-                cameraController.initializationFuture.addListener({
-                    // Enable only the image analysis use case
-                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+                Futures.addCallback(
+                    cameraController.initializationFuture,
+                    object : FutureCallback<Void> {
+                        override fun onSuccess(result: Void?) {
+                            runCatching {
+                                // Attach PreviewView after we know the camera is available.
+                                previewView.controller = cameraController
+                                previewView.setOnTouchListener { _, event ->
+                                    if (event.action == MotionEvent.ACTION_DOWN)
+                                        focusTouchPoint = Offset(event.x, event.y)
+                                    false
+                                }
 
-                    // Attach PreviewView after we know the camera is available.
-                    previewView.controller = cameraController
-                    previewView.setOnTouchListener { _, event ->
-                        if (event.action == MotionEvent.ACTION_DOWN)
-                            focusTouchPoint = Offset(event.x, event.y)
-                        false
-                    }
+                                // Camera is ready
+                                onCameraReady(cameraController)
 
-                    // Camera is ready
-                    onCameraReady(cameraController)
+                                initialized = true
+                            }.onFailure {
+                                Log.e("CameraPreview", "Failed to bind preview", it)
+                                errorDialog.open()
+                            }
+                        }
 
-                    initialized = true
-                }, ContextCompat.getMainExecutor(context))
+                        override fun onFailure(t: Throwable) {
+                            Log.e("CameraPreview", "Failed to initialize camera", t)
+                            errorDialog.open()
+                        }
+                    },
+                    context.mainExecutor
+                )
             }
 
             Lifecycle.Event.ON_PAUSE -> {
@@ -368,6 +399,24 @@ fun CameraViewModel.OverlayCanvas() {
                     )
                 }
 
+                2 -> {
+                    val pos = overlayPosition
+                    val size = overlaySize
+
+                    if (pos != null && size != null)
+                        Rect(
+                            pos + Offset(
+                                x - size.width.absoluteValue,
+                                y - size.height.absoluteValue
+                            ),
+                            pos + Offset(
+                                x + size.width.absoluteValue,
+                                y + size.height.absoluteValue
+                            )
+                        )
+                    else Rect.Zero
+                }
+
                 // Square for scanning qr codes
                 else -> {
                     val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
@@ -418,6 +467,41 @@ fun CameraViewModel.OverlayCanvas() {
             }
 
             drawPath(path, color = Color.Blue, style = Stroke(5f))
+
+            // Draw horizontal line
+            points?.let {
+                val leftMiddle =
+                    Offset((it[0].first + it[3].first) / 2f, (it[0].second + it[3].second) / 2f)
+                val rightMiddle =
+                    Offset((it[1].first + it[2].first) / 2f, (it[1].second + it[2].second) / 2f)
+                val hDist = (rightMiddle - leftMiddle).getDistanceSquared()
+
+                val topMiddle =
+                    Offset((it[0].first + it[1].first) / 2f, (it[0].second + it[1].second) / 2f)
+                val bottomMiddle =
+                    Offset((it[3].first + it[2].first) / 2f, (it[3].second + it[2].second) / 2f)
+                val vDist = (bottomMiddle - topMiddle).getDistanceSquared()
+
+                val relDiff = (hDist - vDist) / (hDist + vDist)
+                if (relDiff > 0.05) {
+                    drawLine(
+                        Color.Red,
+                        leftMiddle,
+                        rightMiddle
+                    )
+                } else if (relDiff < -0.05) {
+                    drawLine(
+                        Color.Red,
+                        topMiddle,
+                        bottomMiddle
+                    )
+                }
+
+//                drawCircle(Color.Yellow, 10f, leftMiddle)
+//                drawCircle(Color.Green, 10f, rightMiddle)
+//                drawCircle(Color.Cyan, 10f, topMiddle)
+//                drawCircle(Color.Magenta, 10f, bottomMiddle)
+            }
         }
 
         // Draw the focus circle if currently focusing
@@ -437,6 +521,118 @@ fun CameraViewModel.OverlayCanvas() {
         if (developerMode) {
             drawDebugOverlay(drawContext.canvas.nativeCanvas, this.size)
         }
+    }
+
+    // Show the adjust buttons
+    if (restrictArea && overlayType == 2) {
+        CustomOverlayButtons()
+    }
+}
+
+@Composable
+private fun CameraViewModel.CustomOverlayButtons() {
+    val context = LocalContext.current
+    var posOffsetX by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_POS_X
+            ).first()
+        })
+    }
+    var posOffsetY by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_POS_Y
+            ).first()
+        })
+    }
+    var sizeOffsetX by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_WIDTH
+            ).first()
+        })
+    }
+    var sizeOffsetY by remember {
+        mutableFloatStateOf(runBlocking {
+            context.getPreference(
+                PreferenceStore.OVERLAY_HEIGHT
+            ).first()
+        })
+    }
+
+    LaunchedEffect(Unit) {
+        overlayPosition = Offset(posOffsetX, posOffsetY)
+        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+    }
+
+    fun saveState() {
+        runBlocking {
+            context.setPreference(PreferenceStore.OVERLAY_POS_X, posOffsetX)
+            context.setPreference(PreferenceStore.OVERLAY_POS_Y, posOffsetY)
+            context.setPreference(PreferenceStore.OVERLAY_WIDTH, sizeOffsetX)
+            context.setPreference(PreferenceStore.OVERLAY_HEIGHT, sizeOffsetY)
+        }
+    }
+
+    fun reset() {
+        posOffsetX = PreferenceStore.OVERLAY_POS_X.defaultValue
+        posOffsetY = PreferenceStore.OVERLAY_POS_Y.defaultValue
+        sizeOffsetX = PreferenceStore.OVERLAY_WIDTH.defaultValue
+        sizeOffsetY = PreferenceStore.OVERLAY_HEIGHT.defaultValue
+
+        overlayPosition = Offset(posOffsetX, posOffsetY)
+        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+
+        saveState()
+    }
+
+    IconButton(
+        onClick = { reset() },
+        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        modifier = Modifier
+            .absoluteOffset {
+                IntOffset(
+                    (posOffsetX + sizeOffsetX).roundToInt(),
+                    (posOffsetY + sizeOffsetY).roundToInt()
+                )
+            }
+            .pointerInput(Unit) {
+                detectDragGestures(onDragEnd = {
+                    saveState()
+                }) { change, dragAmount ->
+                    change.consume()
+                    sizeOffsetX += dragAmount.x
+                    sizeOffsetY += dragAmount.y
+                    overlaySize = Size(sizeOffsetX, sizeOffsetY)
+                }
+            }
+    ) {
+        Icon(Icons.Default.OpenInFull, "Modify size")
+    }
+
+    IconButton(
+        onClick = { reset() },
+        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        modifier = Modifier
+            .absoluteOffset {
+                IntOffset(
+                    (posOffsetX - sizeOffsetX).roundToInt(),
+                    (posOffsetY + sizeOffsetY).roundToInt()
+                )
+            }
+            .pointerInput(Unit) {
+                detectDragGestures(onDragEnd = {
+                    saveState()
+                }) { change, dragAmount ->
+                    change.consume()
+                    posOffsetX += dragAmount.x
+                    posOffsetY += dragAmount.y
+                    overlayPosition = Offset(posOffsetX, posOffsetY)
+                }
+            }
+    ) {
+        Icon(Icons.Default.DragIndicator, "Modify position")
     }
 }
 
@@ -482,6 +678,17 @@ fun CameraViewModel.drawDebugOverlay(canvas: NativeCanvas, size: Size) {
         "Preview size: ${lastPreviewRes?.width}x${lastPreviewRes?.height}",
         10f,
         y + 150f,
+        Paint().apply {
+            color = Color.White.toArgb()
+            textSize = 50f
+        }
+    )
+
+    // Draw the custom selection
+    canvas.drawText(
+        "Selector size: ${overlaySize?.width?.roundToInt()}x${overlaySize?.height?.roundToInt()} at (${overlayPosition?.x?.roundToInt()}, ${overlayPosition?.y?.roundToInt()})",
+        10f,
+        y + 200f,
         Paint().apply {
             color = Color.White.toArgb()
             textSize = 50f

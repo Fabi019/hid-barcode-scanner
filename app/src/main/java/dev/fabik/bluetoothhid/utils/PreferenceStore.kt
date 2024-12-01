@@ -82,6 +82,12 @@ open class PreferenceStore {
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
+
+        // Utility preferences
+        val OVERLAY_POS_X = floatPreferencesKey("overlay_pos_x") defaultsTo 0.0f
+        val OVERLAY_POS_Y = floatPreferencesKey("overlay_pos_y") defaultsTo 0.0f
+        val OVERLAY_WIDTH = floatPreferencesKey("overlay_width") defaultsTo 100.0f
+        val OVERLAY_HEIGHT = floatPreferencesKey("overlay_height") defaultsTo 100.0f
     }
 }
 
