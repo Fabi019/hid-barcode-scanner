@@ -1,7 +1,6 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
@@ -17,7 +16,9 @@ import androidx.compose.runtime.setValue
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -219,42 +220,34 @@ class BluetoothController(var context: Context) {
         if (!success) {
             Log.d(TAG, "unsuccessful connection to device")
 
+            // Try to start service (doesn't matter if it already runs)
+            MainScope().launch {
+                // Catch ForegroundServiceStartNotAllowedException when app is in background
+                runCatching {
+                    context.startForegroundService(
+                        Intent(context, BluetoothService::class.java)
+                    )
+                }.onFailure {
+                    Log.e("BTService", "Failed to start service", it)
+                }
+            }
+
             // Initialize latch to wait for service to be connected.
             latch = CountDownLatch(1)
 
             // Try to register proxy.
-            if (!register()) {
-                (context as? Activity)?.runOnUiThread {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.error_connecting_to_device),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                Intent(
-                    context,
-                    BluetoothService::class.java
-                ).apply {
-                    action = BluetoothService.ACTION_REGISTER
-                }.also {
-                    (context as? Activity)?.runOnUiThread {
-                        context.startForegroundService(it)
-                    }
-                }
-            } else {
-                (context as? Activity)?.runOnUiThread {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.proxy_waiting),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                latch.await(5000, TimeUnit.MILLISECONDS)
-
+            if (register() && latch.await(5000, TimeUnit.MILLISECONDS)) {
                 // Retry connection again
                 hidDevice?.connect(device)
+                return
+            }
+
+            MainScope().launch {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_proxy_error),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

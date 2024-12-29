@@ -14,6 +14,7 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -144,7 +145,13 @@ fun rememberBluetoothControllerService(
     if (startStop) {
         ComposableLifecycle { _, event ->
             when (event) {
-                Lifecycle.Event.ON_RESUME -> context.startForegroundService(intent)
+                Lifecycle.Event.ON_RESUME ->
+                    // Catch ForegroundServiceStartNotAllowedException when app is in background
+                    runCatching {
+                        context.startForegroundService(intent)
+                    }.onFailure {
+                        Log.e("BTService", "Failed to start service", it)
+                    }
                 Lifecycle.Event.ON_DESTROY -> {
                     if ((context as? Activity)?.isChangingConfigurations == false) {
                         context.stopService(intent)
