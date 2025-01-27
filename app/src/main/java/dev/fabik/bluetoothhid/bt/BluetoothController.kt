@@ -72,11 +72,13 @@ class BluetoothController(var context: Context) {
                 hidDeviceCallback
             )
 
-            Toast.makeText(
-                context,
-                context.getString(R.string.bt_service_connected),
-                Toast.LENGTH_SHORT
-            ).show()
+            MainScope().launch {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_service_connected),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
 
             latch.countDown()
         }
@@ -87,11 +89,13 @@ class BluetoothController(var context: Context) {
             hidDevice = null
             hostDevice = null
 
-            Toast.makeText(
-                context,
-                context.getString(R.string.bt_service_disconnected),
-                Toast.LENGTH_SHORT
-            ).show()
+            MainScope().launch {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.bt_service_disconnected),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
