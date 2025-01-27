@@ -100,7 +100,18 @@ class BluetoothService : Service() {
         notification.flags = Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+            // Catch ForegroundServiceStartNotAllowedException when app is in background
+            runCatching {
+                startForeground(
+                    1,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                )
+            }.onFailure {
+                Log.e("BTService", "Error starting foreground service!", it)
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            }
         } else {
             startForeground(1, notification)
         }
