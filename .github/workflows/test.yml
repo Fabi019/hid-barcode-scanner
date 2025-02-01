@@ -36,13 +36,13 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: APK(s) debug generated
           path: ./app/build/outputs/apk/standard/debug/
 
       - name: Upload Debug APK (Bundled)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: APK(s) debug generated (Bundled)
           path: ./app/build/outputs/apk/bundled/debug/
