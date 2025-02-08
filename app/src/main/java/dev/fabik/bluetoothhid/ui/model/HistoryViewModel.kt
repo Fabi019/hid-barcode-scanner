@@ -1,5 +1,7 @@
 package dev.fabik.bluetoothhid.ui.model
 
+import android.content.Context
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DataObject
@@ -14,6 +16,8 @@ import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.historyEntries
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
 
 class HistoryViewModel : ViewModel() {
     private var selectedHistory: Set<Int> by mutableStateOf(emptySet())
@@ -24,11 +28,78 @@ class HistoryViewModel : ViewModel() {
     var searchQuery by mutableStateOf("")
 
     companion object {
-        var historyEntries: List<Pair<Barcode, Long>> by mutableStateOf(emptyList())
+        private const val TAG = "History"
+
+        private const val HISTORY_FILE = "history.csv"
+        private var historyFileLoaded = false
+
+        var historyEntries: List<HistoryEntry> by mutableStateOf(emptyList())
+
+        fun saveHistory(context: Context) {
+            runCatching {
+                val file = context.filesDir.resolve(HISTORY_FILE)
+
+                // Cleanup file if history empty
+                if (historyEntries.isEmpty()) {
+                    context.deleteFile(file.name)
+                    return
+                }
+
+                Log.d(TAG, "Saving history to: $file")
+
+                file.bufferedWriter().use {
+                    it.write(exportEntries(historyEntries, ExportType.CSV, true))
+                }
+            }.onFailure {
+                Log.e(TAG, "Failed to store history:", it)
+            }
+        }
+
+        fun restoreHistory(context: Context) {
+            // guard for only loading once
+            if (historyFileLoaded) {
+                return
+            }
+
+            historyFileLoaded = true
+
+            runCatching {
+                val file = context.filesDir.resolve(HISTORY_FILE)
+
+                if (!file.exists()) {
+                    Log.d(TAG, "No history file exists: $file")
+                    return
+                }
+
+                Log.d(TAG, "Loading history from: $file")
+
+                val regex = "^\"(.*)\",([0-9]+),([0-9]+)$".toRegex()
+                val history = mutableListOf<HistoryEntry>()
+
+                file.useLines {
+                    val lines = it.iterator()
+                    lines.next() // skip header
+
+                    for (line in lines) {
+                        regex.matchEntire(line)?.let {
+                            val text = it.groupValues[1]
+                            val timestamp = it.groupValues[2].toLongOrNull() ?: 0
+                            val type = it.groupValues[3].toIntOrNull() ?: -1
+
+                            history.add(HistoryEntry(text, timestamp, type))
+                        }
+                    }
+                }
+
+                historyEntries = history
+            }.onFailure {
+                Log.e(TAG, "Error loading custom keymap:", it)
+            }
+        }
 
         fun addHistoryItem(barcode: Barcode) {
             val currentTime = System.currentTimeMillis()
-            historyEntries = historyEntries + (barcode to currentTime)
+            historyEntries = historyEntries + barcode.toHistoryEntry(currentTime)
         }
 
         fun clearHistory() {
@@ -51,11 +122,44 @@ class HistoryViewModel : ViewModel() {
             Barcode.FORMAT_AZTEC -> "AZTEC"
             else -> "UNKNOWN"
         }
+
+        fun exportEntries(
+            dataToExport: List<HistoryEntry>,
+            exportType: ExportType,
+            numericType: Boolean = false
+        ) = when (exportType) {
+            ExportType.LINES -> {
+                dataToExport.map {
+                    it.value
+                }.fastJoinToString(System.lineSeparator())
+            }
+
+            ExportType.CSV -> {
+                val header = "text,timestamp,type"
+                val rows = dataToExport.map {
+                    val text = it.value
+                    val timestamp = it.timestamp
+                    val type = if (numericType) it.format else parseBarcodeType(it.format)
+                    "\"$text\",$timestamp,$type"
+                }
+                header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
+            }
+
+            ExportType.JSON -> {
+                val entries = dataToExport.map {
+                    val text = it.value
+                    val timestamp = it.timestamp
+                    val type = if (numericType) it.format else parseBarcodeType(it.format)
+                    """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
+                }
+                "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
+            }
+        }
     }
 
     fun deleteSelectedItems() {
         historyEntries = historyEntries.filter {
-            !selectedHistory.contains(it.first.hashCode())
+            !selectedHistory.contains(it.hashCode())
         }
         clearSelection()
     }
@@ -64,11 +168,11 @@ class HistoryViewModel : ViewModel() {
         selectedHistory = emptySet()
     }
 
-    fun isItemSelected(item: Barcode): Boolean {
+    fun isItemSelected(item: HistoryEntry): Boolean {
         return selectedHistory.contains(item.hashCode())
     }
 
-    fun setItemSelected(item: Barcode, selected: Boolean) {
+    fun setItemSelected(item: HistoryEntry, selected: Boolean) {
         selectedHistory = if (selected) {
             selectedHistory + item.hashCode()
         } else {
@@ -79,40 +183,15 @@ class HistoryViewModel : ViewModel() {
     fun exportHistory(exportType: ExportType): String {
         val dataToExport = if (isSearching) {
             historyEntries.filter {
-                it.first.rawValue.toString().contains(searchQuery, ignoreCase = true)
+                it.value.contains(searchQuery, ignoreCase = true)
             }
         } else {
             historyEntries
         }
-        return when (exportType) {
-            ExportType.LINES -> {
-                dataToExport.map {
-                    it.first.rawValue.toString()
-                }.fastJoinToString(System.lineSeparator())
-            }
-
-            ExportType.CSV -> {
-                val header = "text,timestamp,type"
-                val rows = dataToExport.map {
-                    val text = it.first.rawValue.toString()
-                    val timestamp = it.second
-                    val type = parseBarcodeType(it.first.format)
-                    "\"$text\",$timestamp,$type"
-                }
-                header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
-            }
-
-            ExportType.JSON -> {
-                val entries = dataToExport.map {
-                    val text = it.first.rawValue.toString()
-                    val timestamp = it.second
-                    val type = parseBarcodeType(it.first.format)
-                    """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
-                }
-                "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
-            }
-        }
+        return exportEntries(dataToExport, exportType)
     }
+
+    data class HistoryEntry(val value: String, val timestamp: Long, val format: Int)
 
     enum class ExportType(
         @StringRes val label: Int,
@@ -124,3 +203,6 @@ class HistoryViewModel : ViewModel() {
         LINES(R.string.export_lines, R.string.export_lines_description, Icons.Default.TableRows)
     }
 }
+
+fun Barcode.toHistoryEntry(timestamp: Long): HistoryEntry =
+    HistoryEntry(rawValue.toString(), timestamp, format)

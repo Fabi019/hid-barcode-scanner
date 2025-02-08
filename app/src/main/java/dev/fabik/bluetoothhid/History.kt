@@ -131,8 +131,8 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 @Composable
 fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
-        HistoryViewModel.historyEntries.filter { (barcode, _) ->
-            barcode.rawValue?.contains(searchQuery, ignoreCase = true) ?: false
+        HistoryViewModel.historyEntries.filter { (barcode) ->
+            barcode.contains(searchQuery, ignoreCase = true) == true
         }
     }
 
@@ -141,20 +141,20 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        items(filteredHistory) { (barcode, time) ->
+        items(filteredHistory) { barcode ->
             val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
             ListItem(
                 overlineContent = {
                     val timeString = remember {
                         val format = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
                             .withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault())
-                        val instant = Instant.ofEpochMilli(time)
+                        val instant = Instant.ofEpochMilli(barcode.timestamp)
                         format.format(instant)
                     }
                     Text(timeString)
                 },
                 headlineContent = {
-                    Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
+                    Text(barcode.value)
                 },
                 supportingContent = {
                     Text(HistoryViewModel.parseBarcodeType(barcode.format))
@@ -168,9 +168,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     .combinedClickable(onLongClick = {
                         setItemSelected(barcode, true)
                     }, onClick = {
-                        barcode.rawValue?.let {
-                            onClick(it)
-                        }
+                        onClick(barcode.value)
                     })
                     .then(
                         if (isSelecting) {
@@ -380,7 +378,7 @@ private fun ExportSheetContent(
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
-        HistoryViewModel.ExportType.values().forEach { type ->
+        HistoryViewModel.ExportType.entries.forEach { type ->
             ListItem(headlineContent = { Text(stringResource(id = type.label)) },
                 supportingContent = { Text(stringResource(id = type.description)) },
                 leadingContent = { Icon(type.icon, null) },
