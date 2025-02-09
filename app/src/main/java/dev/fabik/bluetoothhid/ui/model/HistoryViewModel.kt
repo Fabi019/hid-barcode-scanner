@@ -9,23 +9,30 @@ import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.R
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.Companion.historyEntries
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
 
 class HistoryViewModel : ViewModel() {
-    private var selectedHistory: Set<Int> by mutableStateOf(emptySet())
+    private var selectedHistory: SnapshotStateList<Int> = mutableStateListOf<Int>()
 
     val selectionSize by derivedStateOf { selectedHistory.size }
     val isSelecting by derivedStateOf { selectedHistory.isNotEmpty() }
     var isSearching by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
+
+    val filteredHistory by derivedStateOf {
+        historyEntries.filter { (barcode) ->
+            barcode.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     companion object {
         private const val TAG = "History"
@@ -33,7 +40,7 @@ class HistoryViewModel : ViewModel() {
         private const val HISTORY_FILE = "history.csv"
         private var historyFileLoaded = false
 
-        var historyEntries: List<HistoryEntry> by mutableStateOf(emptyList())
+        var historyEntries: SnapshotStateList<HistoryEntry> = mutableStateListOf<HistoryEntry>()
 
         fun saveHistory(context: Context) {
             runCatching {
@@ -91,7 +98,7 @@ class HistoryViewModel : ViewModel() {
                     }
                 }
 
-                historyEntries = history
+                historyEntries.addAll(history)
             }.onFailure {
                 Log.e(TAG, "Error loading custom keymap:", it)
             }
@@ -99,11 +106,11 @@ class HistoryViewModel : ViewModel() {
 
         fun addHistoryItem(barcode: Barcode) {
             val currentTime = System.currentTimeMillis()
-            historyEntries = historyEntries + barcode.toHistoryEntry(currentTime)
+            historyEntries.add(barcode.toHistoryEntry(currentTime))
         }
 
         fun clearHistory() {
-            historyEntries = emptyList()
+            historyEntries.clear()
         }
 
         fun parseBarcodeType(format: Int): String = when (format) {
@@ -158,14 +165,14 @@ class HistoryViewModel : ViewModel() {
     }
 
     fun deleteSelectedItems() {
-        historyEntries = historyEntries.filter {
-            !selectedHistory.contains(it.hashCode())
+        historyEntries.removeIf {
+            selectedHistory.contains(it.hashCode())
         }
         clearSelection()
     }
 
     fun clearSelection() {
-        selectedHistory = emptySet()
+        selectedHistory.clear()
     }
 
     fun isItemSelected(item: HistoryEntry): Boolean {
@@ -173,22 +180,15 @@ class HistoryViewModel : ViewModel() {
     }
 
     fun setItemSelected(item: HistoryEntry, selected: Boolean) {
-        selectedHistory = if (selected) {
-            selectedHistory + item.hashCode()
+        if (selected) {
+            selectedHistory.add(item.hashCode())
         } else {
-            selectedHistory - item.hashCode()
+            selectedHistory.remove(item.hashCode())
         }
     }
 
     fun exportHistory(exportType: ExportType): String {
-        val dataToExport = if (isSearching) {
-            historyEntries.filter {
-                it.value.contains(searchQuery, ignoreCase = true)
-            }
-        } else {
-            historyEntries
-        }
-        return exportEntries(dataToExport, exportType)
+        return exportEntries(filteredHistory, exportType)
     }
 
     data class HistoryEntry(val value: String, val timestamp: Long, val format: Int)

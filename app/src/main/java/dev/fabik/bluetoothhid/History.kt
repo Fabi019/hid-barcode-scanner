@@ -131,12 +131,6 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
-    val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
-        HistoryViewModel.historyEntries.filter { (barcode) ->
-            barcode.contains(searchQuery, ignoreCase = true) == true
-        }
-    }
-
     BackHandler(enabled = isSelecting) {
         clearSelection()
     }
