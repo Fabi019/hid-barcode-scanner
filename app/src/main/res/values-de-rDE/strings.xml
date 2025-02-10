@@ -270,4 +270,6 @@
     <string name="add_custom_key_desc">Ermöglicht es, benutzerdefinierte Zuordnungen von Zeichen zu HID-Codes zu definieren, die alle Definitionen des ausgewählten Tastaturlayouts überschreiben.</string>
     <string name="define_custom_keys">Erstellen von eigenen Tasten</string>
     <string name="add">Hinzufügen</string>
+    <string name="persistent_history">Speichern des Verlaufs</string>
+    <string name="persistent_history_desc">Der Verlauf wird beim Beenden nicht gelöscht</string>
 </resources>

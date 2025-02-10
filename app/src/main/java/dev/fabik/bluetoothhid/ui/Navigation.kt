@@ -14,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +25,10 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -125,6 +131,32 @@ fun NavGraph() {
             navController.navigate(Routes.Main) {
                 launchSingleTop = true
             }
+        }
+    }
+
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val persistHistory by rememberPreference(PreferenceStore.PERSIST_HISTORY)
+
+    ComposableLifecycle(lifecycleOwner) { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> {
+                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
+                    HistoryViewModel.restoreHistory(
+                        context
+                    )
+                }
+            }
+
+            Lifecycle.Event.ON_DESTROY -> {
+                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
+                    HistoryViewModel.saveHistory(
+                        context
+                    )
+                }
+            }
+
+            else -> {}
         }
     }
 }

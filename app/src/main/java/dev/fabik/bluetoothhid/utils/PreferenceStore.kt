@@ -80,6 +80,7 @@ open class PreferenceStore {
         val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
         // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
+        val PERSIST_HISTORY = booleanPreferencesKey("persist_history") defaultsTo true
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
 
