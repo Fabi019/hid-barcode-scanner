@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextFieldDefaults.indicatorLine
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -130,31 +131,25 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
-    val filteredHistory = remember(HistoryViewModel.historyEntries, searchQuery) {
-        HistoryViewModel.historyEntries.filter { (barcode, _) ->
-            barcode.rawValue?.contains(searchQuery, ignoreCase = true) ?: false
-        }
-    }
-
     BackHandler(enabled = isSelecting) {
         clearSelection()
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        items(filteredHistory) { (barcode, time) ->
+        items(filteredHistory) { barcode ->
             val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
             ListItem(
                 overlineContent = {
                     val timeString = remember {
                         val format = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
                             .withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault())
-                        val instant = Instant.ofEpochMilli(time)
+                        val instant = Instant.ofEpochMilli(barcode.timestamp)
                         format.format(instant)
                     }
                     Text(timeString)
                 },
                 headlineContent = {
-                    Text(barcode.rawValue ?: barcode.rawBytes?.contentToString() ?: "")
+                    Text(barcode.value)
                 },
                 supportingContent = {
                     Text(HistoryViewModel.parseBarcodeType(barcode.format))
@@ -168,9 +163,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     .combinedClickable(onLongClick = {
                         setItemSelected(barcode, true)
                     }, onClick = {
-                        barcode.rawValue?.let {
-                            onClick(it)
-                        }
+                        onClick(barcode.value)
                     })
                     .then(
                         if (isSelecting) {
@@ -200,14 +193,14 @@ private fun HistoryViewModel.HistoryTopBar(
 
     TopAppBar(
         title = {
-            if (isSearching) {
-                AppBarTextField(
+            when (isSearching) {
+                true -> AppBarTextField(
                     value = searchQuery, onValueChange = {
                         searchQuery = it
                     }, hint = stringResource(R.string.search_by_value)
                 )
-            } else {
-                Text(stringResource(R.string.history))
+
+                false -> Text(stringResource(R.string.history))
             }
         },
         navigationIcon = {
@@ -288,12 +281,9 @@ fun AppBarTextField(
     val textStyle = LocalTextStyle.current
     // make sure there is no background color in the decoration box
     val colors = TextFieldDefaults.colors(
-        focusedContainerColor = Color.Unspecified,
-        unfocusedContainerColor = Color.Unspecified,
-        disabledContainerColor = Color.Unspecified,
-        // Hides the indicator line below the text field
-        focusedIndicatorColor = Color.Unspecified,
-        unfocusedIndicatorColor = Color.Unspecified,
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent,
     )
 
     // If color is not provided via the text style, use content color as a default
@@ -301,7 +291,7 @@ fun AppBarTextField(
         MaterialTheme.colorScheme.onSurface
     }
     val mergedTextStyle =
-        textStyle.merge(TextStyle(color = textColor, lineHeight = 50.sp, fontSize = 16.sp))
+        textStyle.merge(TextStyle(color = textColor, lineHeight = 16.sp, fontSize = 16.sp))
 
     // request focus when this composable is first initialized
     val focusRequester = FocusRequester()
@@ -323,7 +313,13 @@ fun AppBarTextField(
         },
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(32.dp)
+            .height(32.dp)
+            .indicatorLine(
+                enabled = true,
+                isError = false,
+                interactionSource = interactionSource,
+                colors = colors
+            )
             .focusRequester(focusRequester),
         textStyle = mergedTextStyle,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -380,7 +376,7 @@ private fun ExportSheetContent(
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
-        HistoryViewModel.ExportType.values().forEach { type ->
+        HistoryViewModel.ExportType.entries.forEach { type ->
             ListItem(headlineContent = { Text(stringResource(id = type.label)) },
                 supportingContent = { Text(stringResource(id = type.description)) },
                 leadingContent = { Icon(type.icon, null) },
