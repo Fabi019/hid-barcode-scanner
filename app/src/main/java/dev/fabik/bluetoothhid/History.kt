@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -52,7 +55,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -71,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
+import dev.fabik.bluetoothhid.ui.FilterModal
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
@@ -229,6 +235,7 @@ private fun HistoryViewModel.HistoryTopBar(
                     else Icons.Default.Search, "Search"
                 )
             }
+            FilterModal()
             IconButton(
                 onClick = {
                     clearHistoryDialog.open()
@@ -370,19 +377,42 @@ fun ExportSheet(
 private fun ExportSheetContent(
     onSelect: (HistoryViewModel.ExportType) -> Unit = {},
 ) {
+    var checked by remember { mutableStateOf(true) }
+
     Column {
+        Text(
+            "Options",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(4.dp, 2.dp)
+        ) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = { checked = it }
+            )
+            Text("Exclude duplicates")
+        }
+
         Text(
             stringResource(R.string.export_as),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
+
         HistoryViewModel.ExportType.entries.forEach { type ->
-            ListItem(headlineContent = { Text(stringResource(id = type.label)) },
+            ListItem(
+                headlineContent = { Text(stringResource(id = type.label)) },
                 supportingContent = { Text(stringResource(id = type.description)) },
                 leadingContent = { Icon(type.icon, null) },
-                modifier = Modifier.clickable {
-                    onSelect(type)
-                })
+                modifier = Modifier
+                    .clickable { onSelect(type) }
+                    .clip(RoundedCornerShape(15.dp))
+                    .padding(4.dp, 2.dp)
+            )
         }
     }
 }
