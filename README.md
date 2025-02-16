@@ -3,7 +3,6 @@
   <a href="https://github.com/Fabi019/hid-barcode-scanner/releases"><img src="https://img.shields.io/github/v/release/Fabi019/hid-barcode-scanner?include_prereleases" /></a>
   <a href="https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1"><img src="https://img.shields.io/endpoint?color=brightgreen&logo=google-play&logoColor=white&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Ddev.fabik.bluetoothhid%26l%3DDownloads%26m%3D%24totalinstalls"></a>
   <a href="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml"><img src="https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml/badge.svg" /></a>
-  <a href="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/overview/main"><img src="https://www.codefactor.io/repository/github/fabi019/hid-barcode-scanner/badge/main" /></a>
 
   <br/>
   <br/>
@@ -122,17 +121,42 @@ If the test is not successful, unfortunately your device is not supported.
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open a new issue with the tag "enhancement".
-If you want to work on an existing issue, please let me and others know by leaving a small comment.
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Clone/Open the Repository in Android Studio
+3. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+4. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the Branch (`git push origin feature/AmazingFeature`)
+6. Open a Pull Request
+
+### Adding new keyboard layout
+
+When the app sends a code to the connected device it doesn't send characters directly.
+Instead the app works by sending raw HID-codes to the connected device (The same way a USB-keyboard
+behaves).
+It is then up to the connected device to interpret this HID-code depending on the layout that is
+currently selected in the OS.
+This means, that if a scanned barcode contains the character 'Z', the app needs to know the keyboard
+layout that the host PC expects (QWERTZ/QWERTY) to send the right HID-code that result in that
+character.
+To solve this the layout in the app must match the selected layout in the PC.
+
+The app already implements a basic set of keyboard layouts to choose from.
+If you want to add a new keyboard layout the following steps might help you:
+
+1. The first step is to create the actual keyboard layout file, for this a great guide already
+   exists in the layout for the [polish keyboard](app/src/main/assets/keymaps/pl.layout).
+   The layout file always consists of a list of characters with the hid code and modifier.
+2. Add the name of the layout to the `<string-array name="keyboard_layout_values">` for every
+   available language under `app/src/main/res/values-*/strings.xml`
+3. Extend the switch case
+   in [BluetoothController.kt#sendString](app/src/main/java/dev/fabik/bluetoothhid/bt/BluetoothController.kt#L285).
+   The number is the index of the entry in the `keyboard_layout_values` and the value is the name of
+   the layout file without extension (usually two letters)
 
 ## License
 
-Copyright (C) 2023 Fabi019
+Copyright (C) 2023-2025 Fabi019
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
