@@ -12,7 +12,7 @@ buildscript {
         camerax_version = '1.4.1'
         accomp_version = '0.37.2'
         play_version = '18.3.0'
-        agp_version = '8.7.3'
+        agp_version = '8.8.1'
         kotlin_version = '2.1.0'
     }
 }
