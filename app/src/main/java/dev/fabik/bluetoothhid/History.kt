@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -383,7 +383,8 @@ fun ExportSheet(
 private fun ExportSheetContent(
     onSelect: (HistoryViewModel.ExportType) -> Unit = {},
 ) {
-    var checked by remember { mutableStateOf(true) }
+    var deduplicateChecked by remember { mutableStateOf(true) }
+    var saveIntoFileChecked by remember { mutableStateOf(true) }
 
     Column(
         modifier = Modifier
@@ -399,25 +400,43 @@ private fun ExportSheetContent(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { checked = !checked }
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { deduplicateChecked = !deduplicateChecked }
         ) {
             Checkbox(
-                checked = checked,
-                onCheckedChange = { checked = it }
+                checked = deduplicateChecked,
+                onCheckedChange = { deduplicateChecked = it }
             )
             Text("Exclude duplicates")
         }
 
-        HistoryViewModel.ExportType.entries.forEach { type ->
-            ListItem(
-                headlineContent = { Text(stringResource(id = type.label)) },
-                supportingContent = { Text(stringResource(id = type.description)) },
-                leadingContent = { Icon(type.icon, null) },
-                modifier = Modifier
-                    .clickable { onSelect(type) }
-                    .clip(RoundedCornerShape(15.dp))
-                    .padding(4.dp, 2.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { saveIntoFileChecked = !saveIntoFileChecked }
+        ) {
+            Checkbox(
+                checked = saveIntoFileChecked,
+                onCheckedChange = { saveIntoFileChecked = it }
             )
+            Text("Save into file")
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(HistoryViewModel.ExportType.entries) { type ->
+                ListItem(
+                    headlineContent = { Text(stringResource(id = type.label)) },
+                    supportingContent = { Text(stringResource(id = type.description)) },
+                    leadingContent = { Icon(type.icon, null) },
+                    modifier = Modifier
+                        .clickable { onSelect(type) }
+                        .clip(MaterialTheme.shapes.medium)
+                )
+            }
         }
     }
 }
