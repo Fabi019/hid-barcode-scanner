@@ -25,12 +25,20 @@ class HistoryViewModel : ViewModel() {
 
     val selectionSize by derivedStateOf { selectedHistory.size }
     val isSelecting by derivedStateOf { selectedHistory.isNotEmpty() }
+
     var isSearching by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
 
+    var filteredTypes = mutableStateListOf<String>()
+    var filterDateStart by mutableStateOf<Long?>(null)
+    var filterDateEnd by mutableStateOf<Long?>(null)
+
     val filteredHistory by derivedStateOf {
-        historyEntries.filter { (barcode) ->
+        historyEntries.filter { (barcode, timestamp, type) ->
             barcode.contains(searchQuery, ignoreCase = true)
+                    && (filteredTypes.isEmpty() || filteredTypes.contains(parseBarcodeType(type)))
+                    && (filterDateStart == null || timestamp > filterDateStart!!)
+                    && (filterDateEnd == null || timestamp < filterDateEnd!!)
         }
     }
 

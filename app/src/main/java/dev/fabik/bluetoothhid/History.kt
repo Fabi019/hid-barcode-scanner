@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -235,7 +236,12 @@ private fun HistoryViewModel.HistoryTopBar(
                     else Icons.Default.Search, "Search"
                 )
             }
-            FilterModal()
+            FilterModal(filteredTypes, filterDateStart, filterDateEnd) { sel, a, b ->
+                filteredTypes.clear()
+                filteredTypes.addAll(sel)
+                filterDateStart = a
+                filterDateEnd = b
+            }
             IconButton(
                 onClick = {
                     clearHistoryDialog.open()
@@ -379,16 +385,21 @@ private fun ExportSheetContent(
 ) {
     var checked by remember { mutableStateOf(true) }
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         Text(
-            "Options",
+            stringResource(R.string.export_as),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(4.dp, 2.dp)
+            modifier = Modifier.clickable { checked = !checked }
         ) {
             Checkbox(
                 checked = checked,
@@ -396,12 +407,6 @@ private fun ExportSheetContent(
             )
             Text("Exclude duplicates")
         }
-
-        Text(
-            stringResource(R.string.export_as),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-        )
 
         HistoryViewModel.ExportType.entries.forEach { type ->
             ListItem(

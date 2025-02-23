@@ -2,17 +2,18 @@ package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -22,18 +23,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.R
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -42,35 +50,60 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilterModal() {
+fun FilterModal(
+    selectedTypes: List<String>,
+    startDate: Long?,
+    endDate: Long?,
+    onApply: (List<String>, Long?, Long?) -> Unit
+) {
     var showModal by remember { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     IconButton(onClick = { showModal = true }) {
-        Icon(Icons.Default.FilterAlt, "Open Filter")
+        BadgedBox(badge = {
+            if (selectedTypes.isNotEmpty() || startDate != null || endDate != null)
+                Badge()
+        }) {
+            Icon(Icons.Default.FilterAlt, "Open Filter")
+        }
     }
 
     if (showModal) {
         ModalBottomSheet(
+            sheetState = bottomSheetState,
             onDismissRequest = { showModal = false },
             content = {
-                FilterModalContent(onApply = {}, onCancel = { showModal = false })
+                FilterModalContent(
+                    selectedTypes, startDate, endDate,
+                    onApply = { sel, a, b ->
+                        showModal = false
+                        onApply(sel, a, b)
+                    }
+                )
             }
         )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FilterModalContent(onApply: () -> Unit, onCancel: () -> Unit) {
-    var selectedTypes by remember { mutableStateOf(setOf("QR Code", "Barcode")) }
+fun FilterModalContent(
+    selectedTypes: List<String>,
+    startDate: Long?,
+    endDate: Long?,
+    onApply: (List<String>, Long?, Long?) -> Unit
+) {
+    var selectedTypes = remember { mutableStateListOf<String>().also { it.addAll(selectedTypes) } }
 
-    var selectedDateStart by remember { mutableStateOf<Long?>(null) }
-    var selectedDateEnd by remember { mutableStateOf<Long?>(null) }
-    var showDateModal by remember { mutableStateOf(false) }
+    var selectedDateStart by rememberSaveable { mutableStateOf<Long?>(startDate) }
+    var selectedDateEnd by rememberSaveable { mutableStateOf<Long?>(endDate) }
+    var showDateModal by rememberSaveable { mutableStateOf(false) }
 
     if (showDateModal) {
         DateRangePickerModal(
             onDateRangeSelected = { (start, end) ->
-                selectedDateStart = start; selectedDateEnd = end
+                selectedDateStart = start
+                selectedDateEnd = end
             },
             onDismiss = { showDateModal = false }
         )
@@ -81,7 +114,10 @@ fun FilterModalContent(onApply: () -> Unit, onCancel: () -> Unit) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Text("Filter Options", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            "Filter by",
+            style = MaterialTheme.typography.titleLarge,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -113,19 +149,23 @@ fun FilterModalContent(onApply: () -> Unit, onCancel: () -> Unit) {
 
         // Type Filter with Chips
         Text("Select Types")
-        LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 120.dp)) {
-            items(listOf("QR Code", "Barcode", "Matrix", "Text")) { type ->
+
+        FlowRow(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            for (type in stringArrayResource(R.array.code_types_values)) {
                 FilterChip(
                     selected = selectedTypes.contains(type),
                     onClick = {
                         if (selectedTypes.contains(type)) {
-                            selectedTypes = selectedTypes - type
+                            selectedTypes.remove(type)
                         } else {
-                            selectedTypes = selectedTypes + type
+                            selectedTypes.add(type)
                         }
                     },
                     label = { Text(type) },
-                    modifier = Modifier.padding(4.dp)
+                    Modifier.padding(horizontal = 2.dp)
                 )
             }
         }
@@ -134,14 +174,18 @@ fun FilterModalContent(onApply: () -> Unit, onCancel: () -> Unit) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = { onCancel() }) {
-                Text("Cancel")
+            OutlinedButton(onClick = {
+                selectedDateStart = null
+                selectedDateEnd = null
+                selectedTypes.clear()
+            }) {
+                Text("Clear")
             }
 
-            Button(onClick = { onApply() }) {
-                Text("Apply Filters")
+            Button(onClick = { onApply(selectedTypes, selectedDateStart, selectedDateEnd) }) {
+                Text("Apply")
             }
         }
     }
@@ -161,35 +205,22 @@ fun DateRangePickerModal(
             TextButton(
                 onClick = {
                     onDateRangeSelected(
-                        Pair(
-                            dateRangePickerState.selectedStartDateMillis,
-                            dateRangePickerState.selectedEndDateMillis
-                        )
+                        dateRangePickerState.selectedStartDateMillis to dateRangePickerState.selectedEndDateMillis
                     )
                     onDismiss()
                 }
             ) {
-                Text("OK")
+                Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(android.R.string.cancel))
             }
         }
     ) {
         DateRangePicker(
             state = dateRangePickerState,
-            title = {
-                Text(
-                    text = "Select date range"
-                )
-            },
-            showModeToggle = false,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(500.dp)
-                .padding(16.dp)
         )
     }
 }
@@ -208,5 +239,5 @@ fun convertMillisToDate(millis: Long?): String {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    FilterModalContent({}) { }
+    FilterModalContent(listOf(), null, null) { sel, a, b -> }
 }
