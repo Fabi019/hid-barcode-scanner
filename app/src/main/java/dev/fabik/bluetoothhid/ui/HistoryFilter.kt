@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -56,10 +58,11 @@ fun FilterModal(
     endDate: Long?,
     onApply: (List<String>, Long?, Long?) -> Unit
 ) {
-    var showModal by remember { mutableStateOf(false) }
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showSheet by remember { mutableStateOf(false) }
 
-    IconButton(onClick = { showModal = true }) {
+    IconButton(onClick = { showSheet = true }) {
         BadgedBox(badge = {
             if (selectedTypes.isNotEmpty() || startDate != null || endDate != null)
                 Badge()
@@ -68,15 +71,16 @@ fun FilterModal(
         }
     }
 
-    if (showModal) {
+    if (showSheet) {
         ModalBottomSheet(
-            sheetState = bottomSheetState,
-            onDismissRequest = { showModal = false },
+            sheetState = state,
+            onDismissRequest = { showSheet = false },
             content = {
                 FilterModalContent(
                     selectedTypes, startDate, endDate,
                     onApply = { sel, a, b ->
-                        showModal = false
+                        scope.launch { state.hide() }
+                            .invokeOnCompletion { showSheet = state.isVisible }
                         onApply(sel, a, b)
                     }
                 )

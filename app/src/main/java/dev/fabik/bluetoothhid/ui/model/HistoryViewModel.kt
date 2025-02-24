@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -195,8 +196,12 @@ class HistoryViewModel : ViewModel() {
         }
     }
 
-    fun exportHistory(exportType: ExportType): String {
-        return exportEntries(filteredHistory, exportType)
+    fun exportHistory(exportType: ExportType, deduplicate: Boolean): String {
+        var history = filteredHistory
+        if (deduplicate) {
+            history = history.fastDistinctBy { it.value }
+        }
+        return exportEntries(history, exportType)
     }
 
     data class HistoryEntry(val value: String, val timestamp: Long, val format: Int)

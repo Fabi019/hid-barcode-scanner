@@ -1,7 +1,11 @@
 package dev.fabik.bluetoothhid
 
+import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
@@ -68,6 +73,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -119,18 +125,53 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
         Box(Modifier.padding(padding)) {
             HistoryContent(onClick)
         }
-        ExportSheet(sheetState = exportSheetState) {
-            val data = exportHistory(it)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = when (it) {
-                    HistoryViewModel.ExportType.CSV -> "text/csv"
-                    HistoryViewModel.ExportType.JSON -> "application/json"
-                    HistoryViewModel.ExportType.LINES -> "text/plain"
+
+        var exportData = remember { "" }
+        val startForResult =
+            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val fileUri = result.data?.data
+                    fileUri?.let {
+                        runCatching {
+                            context.contentResolver.openOutputStream(it, "w").use {
+                                it?.bufferedWriter().use {
+                                    it?.write(exportData)
+                                }
+                            }
+                        }.onFailure {
+                            Log.e("History", "Error saving history to file!", it)
+                        }
+                    }
                 }
-                putExtra(Intent.EXTRA_TEXT, data)
+
+                exportData = ""
             }
-            val shareIntent = Intent.createChooser(intent, exportString)
-            context.startActivity(shareIntent)
+
+        ExportSheet(sheetState = exportSheetState) { typ, dedup, saveToFile ->
+            val data = exportHistory(typ, dedup)
+
+            val (mime, name) = when (typ) {
+                HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
+                HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
+                HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
+            }
+
+            if (saveToFile) {
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    type = mime
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    putExtra(Intent.EXTRA_TITLE, name)
+                }
+                exportData = data
+                startForResult.launch(intent)
+            } else {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = mime
+                    putExtra(Intent.EXTRA_TEXT, data)
+                }
+                val shareIntent = Intent.createChooser(intent, exportString)
+                context.startActivity(shareIntent)
+            }
         }
     }
 }
@@ -362,16 +403,16 @@ fun AppBarTextField(
 fun ExportSheet(
     sheetState: SheetState,
     scope: CoroutineScope = rememberCoroutineScope(),
-    onExport: (HistoryViewModel.ExportType) -> Unit,
+    onExport: (HistoryViewModel.ExportType, Boolean, Boolean) -> Unit,
 ) = with(sheetState) {
     if (isVisible) {
         ModalBottomSheet(
             sheetState = sheetState,
             onDismissRequest = { scope.launch { hide() } },
             content = {
-                ExportSheetContent {
+                ExportSheetContent { t, d, s ->
                     scope.launch { hide() }
-                    onExport(it)
+                    onExport(t, d, s)
                 }
             },
         )
@@ -381,10 +422,10 @@ fun ExportSheet(
 @Composable
 @Preview
 private fun ExportSheetContent(
-    onSelect: (HistoryViewModel.ExportType) -> Unit = {},
+    onSelect: (HistoryViewModel.ExportType, Boolean, Boolean) -> Unit = { _, _, _ -> },
 ) {
-    var deduplicateChecked by remember { mutableStateOf(true) }
-    var saveIntoFileChecked by remember { mutableStateOf(true) }
+    var (deduplicateChecked, setDeduplicate) = remember { mutableStateOf(true) }
+    var (saveIntoFileChecked, setSaveIntoFile) = remember { mutableStateOf(true) }
 
     Column(
         modifier = Modifier
@@ -396,35 +437,41 @@ private fun ExportSheetContent(
             style = MaterialTheme.typography.titleLarge,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { deduplicateChecked = !deduplicateChecked }
+            Modifier
+                .toggleable(
+                    value = deduplicateChecked,
+                    role = Role.Checkbox,
+                    onValueChange = setDeduplicate
+                )
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(
-                checked = deduplicateChecked,
-                onCheckedChange = { deduplicateChecked = it }
-            )
+            Checkbox(checked = deduplicateChecked, onCheckedChange = null)
+            Spacer(Modifier.width(12.dp))
             Text("Exclude duplicates")
         }
 
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { saveIntoFileChecked = !saveIntoFileChecked }
+            Modifier
+                .toggleable(
+                    value = saveIntoFileChecked,
+                    role = Role.Checkbox,
+                    onValueChange = setSaveIntoFile
+                )
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(
-                checked = saveIntoFileChecked,
-                onCheckedChange = { saveIntoFileChecked = it }
-            )
-            Text("Save into file")
+            Checkbox(checked = saveIntoFileChecked, onCheckedChange = null)
+            Spacer(Modifier.width(12.dp))
+            Text("Save to file")
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(Modifier.height(4.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             items(HistoryViewModel.ExportType.entries) { type ->
@@ -433,7 +480,7 @@ private fun ExportSheetContent(
                     supportingContent = { Text(stringResource(id = type.description)) },
                     leadingContent = { Icon(type.icon, null) },
                     modifier = Modifier
-                        .clickable { onSelect(type) }
+                        .clickable { onSelect(type, deduplicateChecked, saveIntoFileChecked) }
                         .clip(MaterialTheme.shapes.medium)
                 )
             }
