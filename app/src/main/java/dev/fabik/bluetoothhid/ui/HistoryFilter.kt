@@ -60,7 +60,7 @@ fun FilterModal(
 ) {
     val scope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showSheet by remember { mutableStateOf(false) }
+    var showSheet by rememberSaveable { mutableStateOf(false) }
 
     IconButton(onClick = { showSheet = true }) {
         BadgedBox(badge = {

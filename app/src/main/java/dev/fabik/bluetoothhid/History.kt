@@ -45,7 +45,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextFieldDefaults.indicatorLine
@@ -60,6 +59,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,7 +87,6 @@ import dev.fabik.bluetoothhid.ui.FilterModal
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -99,79 +98,20 @@ import java.util.Locale
 @Composable
 fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val context = LocalContext.current
-    val exportString = stringResource(R.string.export)
-    val exportSheetState = rememberModalBottomSheetState(true)
-    val scope: CoroutineScope = rememberCoroutineScope()
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        HistoryTopBar(scrollBehavior) {
-            onBack()
-        }
-    }, floatingActionButton = {
-        ExtendedFloatingActionButton(text = {
-            Text(
-                if (isSelecting) pluralStringResource(
-                    R.plurals.export_items, selectionSize, selectionSize
-                ) else stringResource(R.string.export),
-                modifier = Modifier.animateContentSize(),
-            )
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            HistoryTopBar(scrollBehavior) {
+                onBack()
+            }
         },
-            icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
-            onClick = {
-                scope.launch { exportSheetState.show() }
-            })
-    }) { padding ->
+        floatingActionButton = {
+            ExportSheet()
+        }
+    ) { padding ->
         Box(Modifier.padding(padding)) {
             HistoryContent(onClick)
-        }
-
-        var exportData = remember { "" }
-        val startForResult =
-            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    val fileUri = result.data?.data
-                    fileUri?.let {
-                        runCatching {
-                            context.contentResolver.openOutputStream(it, "w").use {
-                                it?.bufferedWriter().use {
-                                    it?.write(exportData)
-                                }
-                            }
-                        }.onFailure {
-                            Log.e("History", "Error saving history to file!", it)
-                        }
-                    }
-                }
-
-                exportData = ""
-            }
-
-        ExportSheet(sheetState = exportSheetState) { typ, dedup, saveToFile ->
-            val data = exportHistory(typ, dedup)
-
-            val (mime, name) = when (typ) {
-                HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
-                HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
-                HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
-            }
-
-            if (saveToFile) {
-                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    type = mime
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    putExtra(Intent.EXTRA_TITLE, name)
-                }
-                exportData = data
-                startForResult.launch(intent)
-            } else {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = mime
-                    putExtra(Intent.EXTRA_TEXT, data)
-                }
-                val shareIntent = Intent.createChooser(intent, exportString)
-                context.startActivity(shareIntent)
-            }
         }
     }
 }
@@ -400,21 +340,84 @@ fun AppBarTextField(
 
 @Composable
 @ExperimentalMaterial3Api
-fun ExportSheet(
-    sheetState: SheetState,
-    scope: CoroutineScope = rememberCoroutineScope(),
-    onExport: (HistoryViewModel.ExportType, Boolean, Boolean) -> Unit,
-) = with(sheetState) {
-    if (isVisible) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = { scope.launch { hide() } },
-            content = {
-                ExportSheetContent { t, d, s ->
-                    scope.launch { hide() }
-                    onExport(t, d, s)
+fun HistoryViewModel.ExportSheet() {
+    val context = LocalContext.current
+
+    val exportString = stringResource(R.string.export)
+
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    var exportData = remember { "" }
+
+    ExtendedFloatingActionButton(
+        text = {
+            Text(
+                if (isSelecting) pluralStringResource(
+                    R.plurals.export_items, selectionSize, selectionSize
+                ) else stringResource(R.string.export),
+                modifier = Modifier.animateContentSize(),
+            )
+        },
+        icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
+        onClick = { showSheet = true }
+    )
+
+    val startForResult =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val fileUri = result.data?.data
+                fileUri?.let {
+                    runCatching {
+                        context.contentResolver.openOutputStream(it, "w").use {
+                            it?.bufferedWriter().use {
+                                it?.write(exportData)
+                            }
+                        }
+                    }.onFailure {
+                        Log.e("History", "Error saving history to file!", it)
+                    }
                 }
-            },
+            }
+
+            exportData = ""
+        }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            sheetState = state,
+            onDismissRequest = { showSheet = false },
+            content = {
+                ExportSheetContent { typ, dedup, saveToFile ->
+                    scope.launch { state.hide() }.invokeOnCompletion { showSheet = state.isVisible }
+
+                    val data = exportHistory(typ, dedup)
+
+                    val (mime, name) = when (typ) {
+                        HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
+                        HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
+                        HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
+                    }
+
+                    if (saveToFile) {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            type = mime
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            putExtra(Intent.EXTRA_TITLE, name)
+                        }
+                        exportData = data
+                        startForResult.launch(intent)
+                    } else {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = mime
+                            putExtra(Intent.EXTRA_TEXT, data)
+                        }
+                        val shareIntent = Intent.createChooser(intent, exportString)
+                        context.startActivity(shareIntent)
+                    }
+                }
+            }
         )
     }
 }
@@ -424,8 +427,8 @@ fun ExportSheet(
 private fun ExportSheetContent(
     onSelect: (HistoryViewModel.ExportType, Boolean, Boolean) -> Unit = { _, _, _ -> },
 ) {
-    var (deduplicateChecked, setDeduplicate) = remember { mutableStateOf(true) }
-    var (saveIntoFileChecked, setSaveIntoFile) = remember { mutableStateOf(true) }
+    var (deduplicateChecked, setDeduplicate) = rememberSaveable { mutableStateOf(true) }
+    var (saveIntoFileChecked, setSaveIntoFile) = rememberSaveable { mutableStateOf(true) }
 
     Column(
         modifier = Modifier
