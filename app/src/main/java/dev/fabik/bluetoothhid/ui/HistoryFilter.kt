@@ -33,10 +33,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -62,7 +63,7 @@ fun FilterModal(
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
-    IconButton(onClick = { showSheet = true }) {
+    IconButton(onClick = { showSheet = true }, Modifier.tooltip(stringResource(R.string.filter))) {
         BadgedBox(badge = {
             if (selectedTypes.isNotEmpty() || startDate != null || endDate != null)
                 Badge()
@@ -97,7 +98,10 @@ fun FilterModalContent(
     endDate: Long?,
     onApply: (List<String>, Long?, Long?) -> Unit
 ) {
-    var selectedTypes = remember { mutableStateListOf<String>().also { it.addAll(selectedTypes) } }
+    var selectedTypes =
+        rememberSaveable(saver = listSaver({ it.toList() }, { it.toMutableStateList() })) {
+            mutableStateListOf<String>().also { it.addAll(selectedTypes) }
+        }
 
     var selectedDateStart by rememberSaveable { mutableStateOf<Long?>(startDate) }
     var selectedDateEnd by rememberSaveable { mutableStateOf<Long?>(endDate) }
@@ -119,14 +123,11 @@ fun FilterModalContent(
             .padding(16.dp)
     ) {
         Text(
-            "Filter by",
+            stringResource(R.string.filter),
             style = MaterialTheme.typography.titleLarge,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Date Range Picker
-        Text("Select Date Range")
 
         OutlinedTextField(
             value = convertMillisToDate(selectedDateStart) + " - " + convertMillisToDate(
@@ -134,14 +135,10 @@ fun FilterModalContent(
             ),
             onValueChange = { },
             readOnly = true,
-            label = { Text("Date range") },
-            placeholder = { Text("Click to set a date range") },
+            label = { Text(stringResource(R.string.date_range)) },
             trailingIcon = {
                 IconButton(onClick = { showDateModal = !showDateModal }) {
-                    Icon(
-                        imageVector = Icons.Default.DateRange,
-                        contentDescription = "Select date"
-                    )
+                    Icon(Icons.Default.DateRange, "Select date")
                 }
             },
             modifier = Modifier
@@ -152,7 +149,7 @@ fun FilterModalContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Type Filter with Chips
-        Text("Select Types")
+        Text(stringResource(R.string.select_types))
 
         FlowRow(
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -185,11 +182,11 @@ fun FilterModalContent(
                 selectedDateEnd = null
                 selectedTypes.clear()
             }) {
-                Text("Clear")
+                Text(stringResource(R.string.clear))
             }
 
             Button(onClick = { onApply(selectedTypes, selectedDateStart, selectedDateEnd) }) {
-                Text("Apply")
+                Text(stringResource(R.string.apply))
             }
         }
     }
@@ -223,9 +220,7 @@ fun DateRangePickerModal(
             }
         }
     ) {
-        DateRangePicker(
-            state = dateRangePickerState,
-        )
+        DateRangePicker(dateRangePickerState)
     }
 }
 

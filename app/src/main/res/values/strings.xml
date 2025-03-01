@@ -205,6 +205,11 @@
     <string name="add">Add</string>
     <string name="persistent_history">Persistent history</string>
     <string name="persistent_history_desc">Remembers the scan history</string>
+    <string name="filter">Filter</string>
+    <string name="date_range">Date range</string>
+    <string name="select_types">Select Types</string>
+    <string name="clear">Clear</string>
+    <string name="apply">Apply</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

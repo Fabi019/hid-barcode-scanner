@@ -272,4 +272,9 @@
     <string name="add">Hinzufügen</string>
     <string name="persistent_history">Speichern des Verlaufs</string>
     <string name="persistent_history_desc">Der Verlauf wird beim Beenden nicht gelöscht</string>
+    <string name="filter">Filter</string>
+    <string name="date_range">Zeitraum</string>
+    <string name="select_types">Angezeigte Typen</string>
+    <string name="clear">Löschen</string>
+    <string name="apply">Anwenden</string>
 </resources>
