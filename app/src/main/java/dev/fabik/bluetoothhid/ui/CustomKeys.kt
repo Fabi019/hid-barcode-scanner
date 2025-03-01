@@ -55,11 +55,15 @@ import kotlin.experimental.or
 fun CustomKeysDialog(dialogState: DialogState) {
     val context = LocalContext.current
 
-    ConfirmDialog(
+    ConfirmResetDialog(
         dialogState = dialogState,
         title = stringResource(R.string.custom_keys),
         onDismiss = {
             close()
+        },
+        onReset = {
+            KeyTranslator.CUSTOM_KEYMAP.clear()
+            KeyTranslator.saveCustomKeyMap(context)
         },
         onConfirm = {
             KeyTranslator.saveCustomKeyMap(context)
