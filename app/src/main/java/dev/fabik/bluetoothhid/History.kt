@@ -455,7 +455,7 @@ private fun ExportSheetContent(
         ) {
             Checkbox(checked = deduplicateChecked, onCheckedChange = null)
             Spacer(Modifier.width(12.dp))
-            Text("Exclude duplicates")
+            Text(stringResource(R.string.exclude_duplicates))
         }
 
         Row(
@@ -471,7 +471,7 @@ private fun ExportSheetContent(
         ) {
             Checkbox(checked = saveIntoFileChecked, onCheckedChange = null)
             Spacer(Modifier.width(12.dp))
-            Text("Save to file")
+            Text(stringResource(R.string.save_to_file))
         }
 
         Spacer(Modifier.height(4.dp))

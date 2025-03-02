@@ -277,4 +277,6 @@
     <string name="select_types">Angezeigte Typen</string>
     <string name="clear">Löschen</string>
     <string name="apply">Anwenden</string>
+    <string name="exclude_duplicates">Duplikate ausschließen</string>
+    <string name="save_to_file">Als Datei speichern</string>
 </resources>

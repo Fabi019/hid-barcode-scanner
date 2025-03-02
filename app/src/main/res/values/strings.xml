@@ -210,6 +210,8 @@
     <string name="select_types">Select Types</string>
     <string name="clear">Clear</string>
     <string name="apply">Apply</string>
+    <string name="exclude_duplicates">Exclude duplicates</string>
+    <string name="save_to_file">Save to file</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
