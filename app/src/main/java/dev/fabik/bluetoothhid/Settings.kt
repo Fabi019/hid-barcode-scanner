@@ -368,7 +368,27 @@ fun ScannerSettings() {
         desc = stringResource(R.string.overlay_type_desc),
         icon = Icons.Default.CenterFocusWeak,
         values = stringArrayResource(R.array.overlay_values),
-        preference = PreferenceStore.OVERLAY_TYPE
+        preference = PreferenceStore.OVERLAY_TYPE,
+        onReset = {
+            scope.launch {
+                context.setPreference(
+                    PreferenceStore.OVERLAY_POS_X,
+                    PreferenceStore.OVERLAY_POS_X.defaultValue
+                )
+                context.setPreference(
+                    PreferenceStore.OVERLAY_POS_Y,
+                    PreferenceStore.OVERLAY_POS_Y.defaultValue
+                )
+                context.setPreference(
+                    PreferenceStore.OVERLAY_WIDTH,
+                    PreferenceStore.OVERLAY_WIDTH.defaultValue
+                )
+                context.setPreference(
+                    PreferenceStore.OVERLAY_HEIGHT,
+                    PreferenceStore.OVERLAY_HEIGHT.defaultValue
+                )
+            }
+        }
     )
 
     /*ComboBoxPreference(
