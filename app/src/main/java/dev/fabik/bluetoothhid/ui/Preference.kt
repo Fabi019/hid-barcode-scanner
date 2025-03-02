@@ -240,7 +240,7 @@ fun TextBoxPreference(
     title: String,
     desc: String,
     descLong: String? = desc,
-    validator: (String) -> Boolean = { true },
+    validator: (String) -> String? = { null },
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<String>
 ) {
@@ -264,7 +264,7 @@ fun TextBoxPreference(
     desc: String,
     descLong: String? = desc,
     value: String?,
-    validator: (String) -> Boolean = { true },
+    validator: (String) -> String? = { null },
     icon: ImageVector? = null,
     onReset: () -> Unit,
     onSelect: (String) -> Unit

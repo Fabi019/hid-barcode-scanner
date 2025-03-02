@@ -273,4 +273,6 @@
     <string name="add">Hinzufügen</string>
     <string name="persistent_history">Speichern des Verlaufs</string>
     <string name="persistent_history_desc">Der Verlauf wird beim Beenden nicht gelöscht</string>
+    <string name="invalid_regex">Fehler in Regex</string>
+    <string name="template_error">Template muss entweder {CODE}, {CODE_B64} oder {CODE_HEX} enthalten</string>
 </resources>

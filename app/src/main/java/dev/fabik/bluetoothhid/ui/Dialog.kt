@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -75,16 +76,18 @@ fun TextBoxDialog(
     dialogState: DialogState,
     title: String,
     text: String,
-    validator: (String) -> Boolean,
+    validator: (String) -> String?,
     description: String? = null,
     onReset: () -> Unit,
     onDismiss: () -> Unit = {},
     onConfirm: (String) -> Unit
 ) {
     var currentText by remember(text) { mutableStateOf(text) }
+    val hasError by remember { derivedStateOf { validator(currentText) } }
 
     ConfirmResetDialog(
-        dialogState, title, enabled = validator(currentText),
+        dialogState, title,
+        enabled = hasError != null,
         onConfirm = {
             close()
             onConfirm(currentText)
@@ -93,7 +96,8 @@ fun TextBoxDialog(
             close()
             currentText = text
             onDismiss()
-        }, onReset = onReset
+        },
+        onReset = onReset
     ) {
         Column {
             description?.let {
@@ -102,8 +106,17 @@ fun TextBoxDialog(
             }
             TextField(
                 value = currentText,
-                isError = !validator(currentText),
+                isError = hasError != null,
                 onValueChange = { currentText = it },
+                supportingText = {
+                    hasError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }

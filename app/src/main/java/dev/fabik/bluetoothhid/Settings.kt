@@ -55,6 +55,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -75,6 +77,8 @@ import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
+import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsContent() {
@@ -133,6 +137,8 @@ fun SectionTitle(@StringRes id: Int) {
 
 @Composable
 fun ConnectionSettings() {
+    val context = LocalContext.current
+
     SwitchPreference(
         title = stringResource(R.string.auto_connect),
         desc = stringResource(R.string.auto_connect_desc),
@@ -165,17 +171,14 @@ fun ConnectionSettings() {
     )
 
     val customKeysDialog = rememberDialogState()
+    CustomKeysDialog(customKeysDialog)
 
     ButtonPreference(
         title = stringResource(R.string.custom_keys),
         desc = stringResource(R.string.define_custom_keys),
         icon = Icons.Default.KeyboardCommandKey,
-        extra = {
-        },
         onClick = customKeysDialog::open
     )
-
-    CustomKeysDialog(customKeysDialog)
 
     ComboBoxPreference(
         title = stringResource(R.string.extra_keys),
@@ -185,13 +188,16 @@ fun ConnectionSettings() {
         preference = PreferenceStore.EXTRA_KEYS
     )
 
+    val errorString = remember { context.getString(R.string.template_error) }
+
     TextBoxPreference(
         title = stringResource(R.string.custom_template),
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
         validator = {
-            // TODO: generalize
-            it.contains("{CODE}") || it.contains("{CODE_B64}") || it.contains("{CODE_HEX}")
+            if (!it.contains("{CODE}") && !it.contains("{CODE_B64}") && !it.contains("{CODE_HEX}"))
+                return@TextBoxPreference errorString
+            null
         },
         icon = Icons.Default.LibraryAdd,
         preference = PreferenceStore.TEMPLATE_TEXT
@@ -323,6 +329,9 @@ fun CameraSettings() {
 
 @Composable
 fun ScannerSettings() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     CheckBoxPreference(
         title = stringResource(R.string.code_types),
         desc = stringResource(R.string.code_types_desc_short),
@@ -339,11 +348,17 @@ fun ScannerSettings() {
         preference = PreferenceStore.RESTRICT_AREA
     )
 
+    val errorString = remember { context.getString(R.string.invalid_regex) }
+
     TextBoxPreference(
         title = stringResource(R.string.filter_regex),
         desc = stringResource(R.string.filter_regex_desc),
         descLong = stringResource(R.string.filter_desc_long),
-        validator = { it.isBlank() || runCatching { it.toRegex() }.isSuccess },
+        validator = {
+            if (!it.isBlank() && runCatching { it.toRegex() }.isFailure)
+                return@TextBoxPreference errorString
+            null
+        },
         icon = Icons.Default.FilterAlt,
         preference = PreferenceStore.SCAN_REGEX
     )
