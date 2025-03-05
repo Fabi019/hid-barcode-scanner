@@ -212,6 +212,8 @@
     <string name="apply">Apply</string>
     <string name="exclude_duplicates">Exclude duplicates</string>
     <string name="save_to_file">Save to file</string>
+    <string name="invalid_regex">Invalid regex</string>
+    <string name="template_error">Template must contain either {CODE}, {CODE_B64} or {CODE_HEX}</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -265,6 +267,7 @@
         <item>Italian (IT)</item>
         <item>Turkish Q (TR)</item>
         <item>Polish Programmer (PL)</item>
+        <item>Czech (CZ)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>

@@ -62,9 +62,10 @@ fun SwitchPreference(
     ButtonPreference(
         title, desc, icon, {
             checked?.let { c ->
-                Switch(c, onCheckedChange = {
-                    onToggle(it)
-                }, modifier = Modifier.semantics(mergeDescendants = true) {
+                Switch(
+                    c,
+                    onCheckedChange = null,
+                    modifier = Modifier.semantics(mergeDescendants = true) {
                     stateDescription = "$title is ${if (c) "On" else "Off"}"
                 })
             }
@@ -82,7 +83,8 @@ fun ComboBoxPreference(
     desc: String,
     values: Array<String>,
     icon: ImageVector? = null,
-    preference: PreferenceStore.Preference<Int>
+    preference: PreferenceStore.Preference<Int>,
+    onReset: () -> Unit = {},
 ) {
     var selectedItem by rememberPreferenceNull(preference)
 
@@ -92,7 +94,8 @@ fun ComboBoxPreference(
         selectedItem,
         values,
         icon,
-        onReset = { selectedItem = preference.defaultValue }) {
+        onReset = { selectedItem = preference.defaultValue; onReset() }
+    ) {
         selectedItem = it
     }
 }
@@ -240,7 +243,7 @@ fun TextBoxPreference(
     title: String,
     desc: String,
     descLong: String? = desc,
-    validator: (String) -> Boolean = { true },
+    validator: (String) -> String? = { null },
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<String>
 ) {
@@ -264,7 +267,7 @@ fun TextBoxPreference(
     desc: String,
     descLong: String? = desc,
     value: String?,
-    validator: (String) -> Boolean = { true },
+    validator: (String) -> String? = { null },
     icon: ImageVector? = null,
     onReset: () -> Unit,
     onSelect: (String) -> Unit

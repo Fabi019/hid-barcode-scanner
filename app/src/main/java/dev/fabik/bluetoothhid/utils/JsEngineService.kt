@@ -136,9 +136,11 @@ class JsEngineService : Service() {
             type: String,
             onOutput: ((String) -> Unit)? = null
         ): String {
+            val escapedVal = value.replace("\\", "\\\\").replace("\"", "\\\"")
+
             val template = """
             const format = "$type";
-            const code = "$value";
+            const code = "$escapedVal";
             $code""".trimIndent()
 
             return evaluate(template, onOutput)

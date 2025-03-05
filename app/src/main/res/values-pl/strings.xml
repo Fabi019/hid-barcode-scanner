@@ -246,6 +246,7 @@
         <item>Włoski (IT)</item>
         <item>Turecki Q (TR)</item>
         <item>Polski Programisty (PL)</item>
+        <item>Czech (CZ)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Ramka</item>
