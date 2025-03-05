@@ -273,6 +273,13 @@
     <string name="add">Hinzufügen</string>
     <string name="persistent_history">Speichern des Verlaufs</string>
     <string name="persistent_history_desc">Der Verlauf wird beim Beenden nicht gelöscht</string>
+    <string name="filter">Filter</string>
+    <string name="date_range">Zeitraum</string>
+    <string name="select_types">Angezeigte Typen</string>
+    <string name="clear">Löschen</string>
+    <string name="apply">Anwenden</string>
+    <string name="exclude_duplicates">Duplikate ausschließen</string>
+    <string name="save_to_file">Als Datei speichern</string>
     <string name="invalid_regex">Fehler in Regex</string>
     <string name="template_error">Template muss entweder {CODE}, {CODE_B64} oder {CODE_HEX} enthalten</string>
 </resources>

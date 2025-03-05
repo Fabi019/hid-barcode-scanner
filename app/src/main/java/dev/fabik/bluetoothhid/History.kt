@@ -1,19 +1,27 @@
 package dev.fabik.bluetoothhid
 
+import android.app.Activity
 import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
@@ -26,6 +34,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -36,7 +45,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextFieldDefaults.indicatorLine
@@ -51,8 +59,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -62,6 +73,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -71,10 +83,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
+import dev.fabik.bluetoothhid.ui.FilterModal
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -86,44 +98,20 @@ import java.util.Locale
 @Composable
 fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val context = LocalContext.current
-    val exportString = stringResource(R.string.export)
-    val exportSheetState = rememberModalBottomSheetState(true)
-    val scope: CoroutineScope = rememberCoroutineScope()
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        HistoryTopBar(scrollBehavior) {
-            onBack()
-        }
-    }, floatingActionButton = {
-        ExtendedFloatingActionButton(text = {
-            Text(
-                if (isSelecting) pluralStringResource(
-                    R.plurals.export_items, selectionSize, selectionSize
-                ) else stringResource(R.string.export),
-                modifier = Modifier.animateContentSize(),
-            )
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            HistoryTopBar(scrollBehavior) {
+                onBack()
+            }
         },
-            icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
-            onClick = {
-                scope.launch { exportSheetState.show() }
-            })
-    }) { padding ->
+        floatingActionButton = {
+            ExportSheet()
+        }
+    ) { padding ->
         Box(Modifier.padding(padding)) {
             HistoryContent(onClick)
-        }
-        ExportSheet(sheetState = exportSheetState) {
-            val data = exportHistory(it)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = when (it) {
-                    HistoryViewModel.ExportType.CSV -> "text/csv"
-                    HistoryViewModel.ExportType.JSON -> "application/json"
-                    HistoryViewModel.ExportType.LINES -> "text/plain"
-                }
-                putExtra(Intent.EXTRA_TEXT, data)
-            }
-            val shareIntent = Intent.createChooser(intent, exportString)
-            context.startActivity(shareIntent)
         }
     }
 }
@@ -228,6 +216,12 @@ private fun HistoryViewModel.HistoryTopBar(
                     if (isSearching) Icons.Outlined.Close
                     else Icons.Default.Search, "Search"
                 )
+            }
+            FilterModal(filteredTypes, filterDateStart, filterDateEnd) { sel, a, b ->
+                filteredTypes.clear()
+                filteredTypes.addAll(sel)
+                filterDateStart = a
+                filterDateEnd = b
             }
             IconButton(
                 onClick = {
@@ -346,21 +340,84 @@ fun AppBarTextField(
 
 @Composable
 @ExperimentalMaterial3Api
-fun ExportSheet(
-    sheetState: SheetState,
-    scope: CoroutineScope = rememberCoroutineScope(),
-    onExport: (HistoryViewModel.ExportType) -> Unit,
-) = with(sheetState) {
-    if (isVisible) {
-        ModalBottomSheet(
-            sheetState = sheetState,
-            onDismissRequest = { scope.launch { hide() } },
-            content = {
-                ExportSheetContent {
-                    scope.launch { hide() }
-                    onExport(it)
+fun HistoryViewModel.ExportSheet() {
+    val context = LocalContext.current
+
+    val exportString = stringResource(R.string.export)
+
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    var exportData = remember { "" }
+
+    ExtendedFloatingActionButton(
+        text = {
+            Text(
+                if (isSelecting) pluralStringResource(
+                    R.plurals.export_items, selectionSize, selectionSize
+                ) else stringResource(R.string.export),
+                modifier = Modifier.animateContentSize(),
+            )
+        },
+        icon = { Icon(Icons.Default.FileDownload, stringResource(R.string.export)) },
+        onClick = { showSheet = true }
+    )
+
+    val startForResult =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val fileUri = result.data?.data
+                fileUri?.let {
+                    runCatching {
+                        context.contentResolver.openOutputStream(it, "w").use {
+                            it?.bufferedWriter().use {
+                                it?.write(exportData)
+                            }
+                        }
+                    }.onFailure {
+                        Log.e("History", "Error saving history to file!", it)
+                    }
                 }
-            },
+            }
+
+            exportData = ""
+        }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            sheetState = state,
+            onDismissRequest = { showSheet = false },
+            content = {
+                ExportSheetContent { typ, dedup, saveToFile ->
+                    scope.launch { state.hide() }.invokeOnCompletion { showSheet = state.isVisible }
+
+                    val data = exportHistory(typ, dedup)
+
+                    val (mime, name) = when (typ) {
+                        HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
+                        HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
+                        HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
+                    }
+
+                    if (saveToFile) {
+                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                            type = mime
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            putExtra(Intent.EXTRA_TITLE, name)
+                        }
+                        exportData = data
+                        startForResult.launch(intent)
+                    } else {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = mime
+                            putExtra(Intent.EXTRA_TEXT, data)
+                        }
+                        val shareIntent = Intent.createChooser(intent, exportString)
+                        context.startActivity(shareIntent)
+                    }
+                }
+            }
         )
     }
 }
@@ -368,21 +425,68 @@ fun ExportSheet(
 @Composable
 @Preview
 private fun ExportSheetContent(
-    onSelect: (HistoryViewModel.ExportType) -> Unit = {},
+    onSelect: (HistoryViewModel.ExportType, Boolean, Boolean) -> Unit = { _, _, _ -> },
 ) {
-    Column {
+    var (deduplicateChecked, setDeduplicate) = rememberSaveable { mutableStateOf(true) }
+    var (saveIntoFileChecked, setSaveIntoFile) = rememberSaveable { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
         Text(
             stringResource(R.string.export_as),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
-        HistoryViewModel.ExportType.entries.forEach { type ->
-            ListItem(headlineContent = { Text(stringResource(id = type.label)) },
-                supportingContent = { Text(stringResource(id = type.description)) },
-                leadingContent = { Icon(type.icon, null) },
-                modifier = Modifier.clickable {
-                    onSelect(type)
-                })
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            Modifier
+                .toggleable(
+                    value = deduplicateChecked,
+                    role = Role.Checkbox,
+                    onValueChange = setDeduplicate
+                )
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = deduplicateChecked, onCheckedChange = null)
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.exclude_duplicates))
+        }
+
+        Row(
+            Modifier
+                .toggleable(
+                    value = saveIntoFileChecked,
+                    role = Role.Checkbox,
+                    onValueChange = setSaveIntoFile
+                )
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = saveIntoFileChecked, onCheckedChange = null)
+            Spacer(Modifier.width(12.dp))
+            Text(stringResource(R.string.save_to_file))
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(HistoryViewModel.ExportType.entries) { type ->
+                ListItem(
+                    headlineContent = { Text(stringResource(id = type.label)) },
+                    supportingContent = { Text(stringResource(id = type.description)) },
+                    leadingContent = { Icon(type.icon, null) },
+                    modifier = Modifier
+                        .clickable { onSelect(type, deduplicateChecked, saveIntoFileChecked) }
+                        .clip(MaterialTheme.shapes.medium)
+                )
+            }
         }
     }
 }
