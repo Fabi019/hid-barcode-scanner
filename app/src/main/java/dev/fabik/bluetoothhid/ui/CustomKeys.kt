@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -34,8 +38,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
@@ -55,6 +62,12 @@ import kotlin.experimental.or
 fun CustomKeysDialog(dialogState: DialogState) {
     val context = LocalContext.current
 
+    var keyMap by remember {
+        // Internally checks if it is already loaded once
+        KeyTranslator.loadCustomKeyMap(context)
+        mutableStateOf(KeyTranslator.CUSTOM_KEYMAP.toMap())
+    }
+
     ConfirmResetDialog(
         dialogState = dialogState,
         title = stringResource(R.string.custom_keys),
@@ -63,6 +76,7 @@ fun CustomKeysDialog(dialogState: DialogState) {
         },
         onReset = {
             KeyTranslator.CUSTOM_KEYMAP.clear()
+            keyMap = KeyTranslator.CUSTOM_KEYMAP.toMap()
             KeyTranslator.saveCustomKeyMap(context)
         },
         onConfirm = {
@@ -70,12 +84,6 @@ fun CustomKeysDialog(dialogState: DialogState) {
             close()
         }
     ) {
-        var keyMap by remember {
-            // Internally checks if it is already loaded once
-            KeyTranslator.loadCustomKeyMap(context)
-            mutableStateOf(KeyTranslator.CUSTOM_KEYMAP.toMap())
-        }
-
         CustomKeys(keyMap, { (char, key) ->
             // Sync changes between the local copy and real
             KeyTranslator.CUSTOM_KEYMAP[char] = key
@@ -107,6 +115,8 @@ fun AddCustomKeyDialog(
             (valueModifier ?: 0) and KeyTranslator.LALT == KeyTranslator.LALT
         )
     }
+    val modifierNameStates =
+        remember(modifierCheckedStates) { modifierNames.zip(modifierCheckedStates) }
 
     val currentKey = remember(valueChar, valueHID, valueModifier) {
         val char = valueChar.firstOrNull() ?: return@remember null
@@ -118,6 +128,7 @@ fun AddCustomKeyDialog(
     ConfirmDialog(
         dialogState = dialogState,
         title = stringResource(R.string.add_custom_key),
+        enabled = currentKey != null,
         onDismiss = {
             close()
         },
@@ -167,34 +178,40 @@ fun AddCustomKeyDialog(
                 value = valueModifier?.toString() ?: "",
                 onValueChange = { valueModifier = it.toByteOrNull() },
                 modifier = Modifier.padding(end = 8.dp),
-                placeholder = { Text(stringResource(R.string.modifier)) }
+                placeholder = { Text(stringResource(R.string.modifier)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                modifierNames.zip(modifierCheckedStates).forEachIndexed { index, (name, checked) ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                itemsIndexed(modifierNameStates) { index, (name, checked) ->
+                    Row(Modifier
+                        .toggleable(
+                            value = checked,
+                            role = Role.Checkbox,
+                            onValueChange = { isChecked ->
+                                modifierCheckedStates[index] = isChecked
+
+                                valueModifier = if (modifierCheckedStates[0]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LCTRL
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LCTRL.inv()
+                                }
+
+                                valueModifier = if (modifierCheckedStates[1]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LSHIFT
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
+                                }
+
+                                valueModifier = if (modifierCheckedStates[2]) {
+                                    (valueModifier ?: 0) or KeyTranslator.LALT
+                                } else {
+                                    (valueModifier ?: 0) and KeyTranslator.LALT.inv()
+                                }
+                            }
+                        ), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = checked, onCheckedChange = null, Modifier.padding(8.dp))
                         Text(name)
-                        Checkbox(checked = checked, onCheckedChange = { isChecked ->
-                            modifierCheckedStates[index] = isChecked
-
-                            valueModifier = if (modifierCheckedStates[0]) {
-                                (valueModifier ?: 0) or KeyTranslator.LCTRL
-                            } else {
-                                (valueModifier ?: 0) and KeyTranslator.LCTRL.inv()
-                            }
-
-                            valueModifier = if (modifierCheckedStates[1]) {
-                                (valueModifier ?: 0) or KeyTranslator.LSHIFT
-                            } else {
-                                (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
-                            }
-
-                            valueModifier = if (modifierCheckedStates[2]) {
-                                (valueModifier ?: 0) or KeyTranslator.LALT
-                            } else {
-                                (valueModifier ?: 0) and KeyTranslator.LALT.inv()
-                            }
-                        })
                     }
                 }
             }
@@ -242,7 +259,7 @@ fun CustomKeys(
     var initialHID by remember { mutableStateOf<Byte?>(null) }
     var initialModifier by remember { mutableStateOf<Byte?>(null) }
 
-    LazyColumn {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         item {
             Text(stringResource(R.string.add_custom_key_desc))
         }
@@ -258,7 +275,7 @@ fun CustomKeys(
             }
         }
 
-        items(keyMap.toList()) { item ->
+        items(keyMap.toList(), key = { i -> i.first }) { item ->
             ListItem(
                 headlineContent = { Text(item.first.toString()) },
                 supportingContent = { Text(item.second.toString()) },
@@ -267,12 +284,14 @@ fun CustomKeys(
                         Icon(Icons.Default.Delete, "Delete $item")
                     }
                 },
-                modifier = Modifier.clickable {
-                    initialChar = item.first.toString()
-                    initialHID = item.second.second
-                    initialModifier = item.second.first
-                    addKeyDialog.open()
-                }
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable {
+                        initialChar = item.first.toString()
+                        initialHID = item.second.second
+                        initialModifier = item.second.first
+                        addKeyDialog.open()
+                    }
             )
         }
     }
