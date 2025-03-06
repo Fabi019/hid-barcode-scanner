@@ -50,6 +50,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -243,6 +244,7 @@ fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
     val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
+    val filteredDevices by remember { derivedStateOf { foundDevices.filter { showUnnamed || it.name != null } } }
 
     LazyColumn(
         Modifier
@@ -256,38 +258,35 @@ fun DevicesViewModel.DeviceList(
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleSmall
             )
-        }
 
-        if (isScanning) {
-            item {
+            if (isScanning) {
+                Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         }
 
         // Filter out unnamed devices depending on preference
-        with(foundDevices.filter { showUnnamed || it.name != null }) {
-            if (isEmpty()) {
-                item {
-                    RequireLocationPermission {
-                        if (!isScanning) {
-                            Text(stringResource(R.string.swipe_refresh))
-                        }
+        if (filteredDevices.isEmpty()) {
+            item(key = "no_found") {
+                RequireLocationPermission {
+                    if (!isScanning) {
+                        Text(stringResource(R.string.swipe_refresh))
                     }
                 }
-            } else {
-                items(this) { d ->
-                    runCatching {
-                        DeviceCard(d) {
-                            onConnect(d)
-                        }
-                    }.onFailure {
-                        Log.e("DeviceList", "Failed to get device info", it)
+            }
+        } else {
+            items(filteredDevices, key = { d -> "found_" + d.address }) { d ->
+                runCatching {
+                    DeviceCard(d, Modifier.animateItem()) {
+                        onConnect(d)
                     }
+                }.onFailure {
+                    Log.e("DeviceList", "Failed to get device info", it)
                 }
             }
         }
 
-        item {
+        item(key = "paired") {
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.paired_devices),
@@ -297,13 +296,13 @@ fun DevicesViewModel.DeviceList(
         }
 
         if (pairedDevices.isEmpty()) {
-            item {
+            item(key = "no_paired") {
                 Text(stringResource(R.string.no_paired_devices))
             }
         } else {
-            items(pairedDevices) {
+            items(pairedDevices, key = { d -> "paired_" + d.address }) {
                 runCatching {
-                    DeviceCard(it) {
+                    DeviceCard(it, Modifier.animateItem()) {
                         onConnect(it)
                     }
                 }.onFailure {
@@ -319,12 +318,14 @@ fun DevicesViewModel.DeviceList(
  * Card for a device. Shows the name and the address of the device.
  *
  * @param device Bluetooth device to show.
+ * @param modifier Additional modifier to use
  * @param onClick Callback function when the card is clicked.
  */
 @SuppressLint("MissingPermission")
 @Composable
 fun DevicesViewModel.DeviceCard(
     device: BluetoothDevice,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val infoDialog = rememberDialogState()
@@ -335,7 +336,7 @@ fun DevicesViewModel.DeviceCard(
     ElevatedCard(
         onClick,
         shape = MaterialTheme.shapes.small,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
