@@ -30,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -82,12 +81,12 @@ fun TextBoxDialog(
     onDismiss: () -> Unit = {},
     onConfirm: (String) -> Unit
 ) {
-    var currentText by remember(text) { mutableStateOf(text) }
-    val hasError by remember { derivedStateOf { validator(currentText) } }
+    var currentText by rememberSaveable(text) { mutableStateOf(text) }
+    val hasError = remember(currentText) { validator(currentText) }
 
     ConfirmResetDialog(
         dialogState, title,
-        enabled = hasError != null,
+        enabled = hasError == null,
         onConfirm = {
             close()
             onConfirm(currentText)
@@ -134,7 +133,7 @@ fun CheckBoxDialog(
     onDismiss: () -> Unit = {},
     onConfirm: (List<Int>) -> Unit
 ) {
-    var currentSelection = remember(selectedValues) {
+    var currentSelection = rememberSaveable(selectedValues) {
         selectedValues.toMutableStateList()
     }
 
@@ -199,7 +198,7 @@ fun ComboBoxDialog(
     onDismiss: () -> Unit = {},
     onConfirm: (Int) -> Unit
 ) {
-    var currentSelection by remember(selectedItem) {
+    var currentSelection by rememberSaveable(selectedItem) {
         mutableIntStateOf(selectedItem)
     }
 
@@ -256,7 +255,7 @@ fun SliderDialog(
     onDismiss: () -> Unit = {},
     onValueChange: (Float) -> Unit
 ) {
-    var sliderPosition by remember(value) {
+    var sliderPosition by rememberSaveable(value) {
         mutableFloatStateOf(value)
     }
 
@@ -378,6 +377,7 @@ fun ConfirmResetDialog(
 fun ConfirmDialog(
     dialogState: DialogState,
     title: String,
+    enabled: Boolean = true,
     onDismiss: DialogState.() -> Unit = { close() },
     onConfirm: DialogState.() -> Unit,
     content: @Composable () -> Unit,
@@ -389,6 +389,7 @@ fun ConfirmDialog(
             text = { content() },
             confirmButton = {
                 TextButton(
+                    enabled = enabled,
                     onClick = { onConfirm() }
                 ) {
                     Text(stringResource(android.R.string.ok))
