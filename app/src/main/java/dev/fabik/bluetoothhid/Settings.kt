@@ -355,8 +355,9 @@ fun ScannerSettings() {
         desc = stringResource(R.string.filter_regex_desc),
         descLong = stringResource(R.string.filter_desc_long),
         validator = {
-            if (!it.isBlank() && runCatching { it.toRegex() }.isFailure)
-                return@TextBoxPreference errorString
+            val result = runCatching { it.toRegex() }
+            if (!it.isBlank() && result.isFailure)
+                return@TextBoxPreference result.exceptionOrNull()?.message ?: errorString
             null
         },
         icon = Icons.Default.FilterAlt,
