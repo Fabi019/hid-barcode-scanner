@@ -53,14 +53,22 @@ open class KeyboardSender(
             else -> keyboardTranslator.translateString(string, locale)
         }.forEach { key ->
             Log.d(TAG, "sendString: $key")
-            sendKey(key)
-            delay(sendDelay)
+            sendKey(key, sendDelay / 2)
+            delay(sendDelay / 2)
         }
+        // Send final release key (just to be sure)
+        sendKey(0, 0)
     }
 
-    suspend fun sendKey(key: Key) = sendKey(key.second, key.first)
+    suspend fun sendKey(key: Key, releaseDelay: Long = 10) =
+        sendKey(key.second, key.first, releaseDelay = releaseDelay)
 
-    private suspend fun sendKey(key: Byte, modifier: Byte = 0, releaseKey: Boolean = true) {
+    private suspend fun sendKey(
+        key: Byte,
+        modifier: Byte = 0,
+        releaseKey: Boolean = true,
+        releaseDelay: Long = 10
+    ) {
         report[0] = modifier
         report[2] = key
 
@@ -68,7 +76,7 @@ open class KeyboardSender(
 
         if (releaseKey) {
             report.fill(0)
-            delay(1)
+            delay(releaseDelay)
             sendReport(report)
         }
     }
