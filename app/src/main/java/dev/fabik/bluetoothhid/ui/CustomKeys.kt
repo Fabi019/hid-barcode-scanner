@@ -32,6 +32,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -62,10 +63,12 @@ import kotlin.experimental.or
 fun CustomKeysDialog(dialogState: DialogState) {
     val context = LocalContext.current
 
-    var keyMap by remember {
+    var keyMap = remember(dialogState.openState) {
         // Internally checks if it is already loaded once
         KeyTranslator.loadCustomKeyMap(context)
-        mutableStateOf(KeyTranslator.CUSTOM_KEYMAP.toMap())
+        mutableStateMapOf<Char, Key>().apply {
+            putAll(KeyTranslator.CUSTOM_KEYMAP.toMap())
+        }
     }
 
     ConfirmResetDialog(
@@ -75,22 +78,18 @@ fun CustomKeysDialog(dialogState: DialogState) {
             close()
         },
         onReset = {
-            KeyTranslator.CUSTOM_KEYMAP.clear()
-            keyMap = KeyTranslator.CUSTOM_KEYMAP.toMap()
-            KeyTranslator.saveCustomKeyMap(context)
+            keyMap.clear()
         },
         onConfirm = {
+            KeyTranslator.CUSTOM_KEYMAP = keyMap
             KeyTranslator.saveCustomKeyMap(context)
             close()
         }
     ) {
         CustomKeys(keyMap, { (char, key) ->
-            // Sync changes between the local copy and real
-            KeyTranslator.CUSTOM_KEYMAP[char] = key
-            keyMap = KeyTranslator.CUSTOM_KEYMAP.toMap()
+            keyMap[char] = key
         }, { (char, _) ->
-            KeyTranslator.CUSTOM_KEYMAP.remove(char)
-            keyMap = KeyTranslator.CUSTOM_KEYMAP.toMap()
+            keyMap.remove(char)
         })
     }
 }
@@ -285,6 +284,7 @@ fun CustomKeys(
                     }
                 },
                 modifier = Modifier
+                    .animateItem()
                     .clip(MaterialTheme.shapes.medium)
                     .clickable {
                         initialChar = item.first.toString()
