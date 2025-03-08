@@ -31,7 +31,6 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
@@ -100,7 +99,7 @@ fun FilterModalContent(
 ) {
     var selectedTypes =
         rememberSaveable(saver = listSaver({ it.toList() }, { it.toMutableStateList() })) {
-            mutableStateListOf<String>().also { it.addAll(selectedTypes) }
+            selectedTypes.toMutableStateList()
         }
 
     var selectedDateStart by rememberSaveable { mutableStateOf<Long?>(startDate) }

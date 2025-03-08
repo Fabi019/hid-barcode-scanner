@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
@@ -133,7 +134,11 @@ fun CheckBoxDialog(
     onDismiss: () -> Unit = {},
     onConfirm: (List<Int>) -> Unit
 ) {
-    var currentSelection = rememberSaveable(selectedValues) {
+    var currentSelection = rememberSaveable(
+        dialogState.openState,
+        selectedValues,
+        saver = listSaver({ it.toList() }, { it.toMutableStateList() })
+    ) {
         selectedValues.toMutableStateList()
     }
 
@@ -142,7 +147,6 @@ fun CheckBoxDialog(
         onConfirm(currentSelection)
     }, onDismiss = {
         close()
-        currentSelection = selectedValues.toMutableStateList()
         onDismiss()
     }, onReset = onReset) {
         LazyColumn {
