@@ -1,8 +1,8 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -12,10 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,10 +22,6 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
-import dev.fabik.bluetoothhid.utils.ComposableLifecycle
-import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -47,7 +40,7 @@ val LocalNavigation = staticCompositionLocalOf<NavHostController> {
 @Composable
 fun NavGraph() {
     val controller = LocalController.current
-    val activity = LocalContext.current as Activity
+    val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
@@ -56,7 +49,7 @@ fun NavGraph() {
 
     // Handles shortcut to scanner
     val startDestination = remember {
-        when (activity.intent.dataString) {
+        when (activity?.intent?.dataString) {
             "Scanner" -> Routes.Main
             "History" -> Routes.History
             else -> Routes.Devices
@@ -74,7 +67,7 @@ fun NavGraph() {
                 // Confirm back presses to exit the app
                 BackHandler {
                     if (canExit) {
-                        activity.finishAfterTransition()
+                        activity?.finishAfterTransition()
                     } else {
                         canExit = true
                         Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
@@ -131,32 +124,6 @@ fun NavGraph() {
             navController.navigate(Routes.Main) {
                 launchSingleTop = true
             }
-        }
-    }
-
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val persistHistory by rememberPreference(PreferenceStore.PERSIST_HISTORY)
-
-    ComposableLifecycle(lifecycleOwner) { _, event ->
-        when (event) {
-            Lifecycle.Event.ON_CREATE -> {
-                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
-                    HistoryViewModel.restoreHistory(
-                        context
-                    )
-                }
-            }
-
-            Lifecycle.Event.ON_DESTROY -> {
-                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
-                    HistoryViewModel.saveHistory(
-                        context
-                    )
-                }
-            }
-
-            else -> {}
         }
     }
 }

@@ -60,6 +60,8 @@ class MainActivity : ComponentActivity() {
                         ) {
                             NavGraph()
                         }
+
+                        PersistHistory()
                     }
                 }
             }

@@ -81,12 +81,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.FilterModal
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -487,6 +494,35 @@ private fun ExportSheetContent(
                         .clip(MaterialTheme.shapes.medium)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun PersistHistory() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val persistHistory by rememberPreference(PreferenceStore.PERSIST_HISTORY)
+
+    ComposableLifecycle(lifecycleOwner) { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_CREATE -> {
+                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
+                    HistoryViewModel.restoreHistory(
+                        context
+                    )
+                }
+            }
+
+            Lifecycle.Event.ON_DESTROY -> {
+                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
+                    HistoryViewModel.saveHistory(
+                        context
+                    )
+                }
+            }
+
+            else -> {}
         }
     }
 }
