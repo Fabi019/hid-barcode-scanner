@@ -279,25 +279,27 @@ private fun SendToDeviceFAB(
 ) {
     currentBarcode?.let {
         val controller = LocalController.current
-        val disabled = controller?.isSending ?: true
+        val colorScheme = MaterialTheme.colorScheme
 
-        val (containerColor, contentColor) = if (!disabled) {
-            MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f) to
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+        val (containerColor, contentColor) = remember(controller?.isSending) {
+            if (controller?.isSending == false) {
+                colorScheme.primary to colorScheme.onPrimary
+            } else {
+                colorScheme.surface.copy(alpha = 0.12f) to
+                        colorScheme.onSurface.copy(alpha = 0.32f)
+            }
         }
 
         val noRippleTheme = remember {
             RippleConfiguration(
-                color = Color.Unspecified,
+                color = Color.Transparent,
                 rippleAlpha = RippleAlpha(0.0f, 0.0f, 0.0f, 0.0f)
             )
         }
 
         CompositionLocalProvider(
             LocalRippleConfiguration provides
-                    if (!disabled) LocalRippleConfiguration.current else noRippleTheme
+                    if (controller?.isSending == false) LocalRippleConfiguration.current else noRippleTheme
         ) {
             ExtendedFloatingActionButton(
                 text = {
@@ -308,7 +310,7 @@ private fun SendToDeviceFAB(
                 },
                 contentColor = contentColor,
                 containerColor = containerColor,
-                onClick = { if (!disabled) onClick(it) }
+                onClick = { if (controller?.isSending == false) onClick(it) }
             )
         }
     }

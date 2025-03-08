@@ -589,7 +589,7 @@ private fun CameraViewModel.CustomOverlayButtons() {
 
     IconButton(
         onClick = { reset() },
-        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        colors = IconButtonDefaults.iconButtonColors(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
         modifier = Modifier
             .absoluteOffset {
                 IntOffset(
@@ -613,7 +613,7 @@ private fun CameraViewModel.CustomOverlayButtons() {
 
     IconButton(
         onClick = { reset() },
-        colors = IconButtonDefaults.iconButtonColors(Color.Black.copy(alpha = 0.5f)),
+        colors = IconButtonDefaults.iconButtonColors(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
         modifier = Modifier
             .absoluteOffset {
                 IntOffset(
