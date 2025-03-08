@@ -93,6 +93,9 @@ fun CameraArea(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val currentOnCameraReady by rememberUpdatedState(onCameraReady)
+    val currentOnBarcodeReady by rememberUpdatedState(onBarCodeReady)
+
     val cameraResolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val useRawValue by rememberPreference(PreferenceStore.RAW_VALUE)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
@@ -103,13 +106,13 @@ fun CameraArea(
     val jsCode by rememberPreference(PreferenceStore.JS_CODE)
     val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
 
-    val regex by rememberUpdatedState(remember(scanRegex) {
+    val regex = remember(scanRegex) {
         if (scanRegex.isBlank())
             return@remember null
         runCatching {
             scanRegex.toRegex()
         }.getOrNull()
-    })
+    }
 
     val scanFrequency by remember {
         context.getPreference(PreferenceStore.SCAN_FREQUENCY).map {
@@ -190,7 +193,7 @@ fun CameraArea(
                         } else {
                             it
                         }
-                        onBarCodeReady(value)
+                        currentOnBarcodeReady(value)
                     }
                 }
             }
@@ -212,7 +215,7 @@ fun CameraArea(
             camera.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
             camera.setImageAnalysisAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
 
-            onCameraReady(camera)
+            currentOnCameraReady(camera)
         }
     }
 
@@ -231,6 +234,8 @@ fun CameraViewModel.CameraPreview(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
+    val currentOnCameraReady by rememberUpdatedState(onCameraReady)
 
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
@@ -285,7 +290,7 @@ fun CameraViewModel.CameraPreview(
                                 }
 
                                 // Camera is ready
-                                onCameraReady(cameraController)
+                                currentOnCameraReady(cameraController)
 
                                 initialized = true
                             }.onFailure {

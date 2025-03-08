@@ -56,6 +56,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,6 +105,8 @@ fun Scanner(
     var camera by remember { mutableStateOf<CameraController?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val currentSendText by rememberUpdatedState(sendText)
+
     val fullScreen by rememberPreference(PreferenceStore.SCANNER_FULL_SCREEN)
 
     Scaffold(
@@ -113,7 +116,7 @@ fun Scanner(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             currentDevice?.let {
-                SendToDeviceFAB(currentBarcode, sendText)
+                SendToDeviceFAB(currentBarcode, currentSendText)
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -130,7 +133,7 @@ fun Scanner(
                 ) { value, send ->
                     currentBarcode = value
                     if (send) {
-                        sendText(value)
+                        currentSendText(value)
                     }
                 }
             }

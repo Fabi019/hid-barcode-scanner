@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,7 +96,8 @@ fun JavaScriptEditor(
     var valueText by remember { mutableStateOf(TextFieldValue("")) }
     var typeText by remember { mutableStateOf("") }
 
-    val output by rememberUpdatedState(newValue = outputText)
+    val currentOnRunClicked by rememberUpdatedState(onRunClicked)
+    val currentOnEdit by rememberUpdatedState(onEdit)
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         Text(stringResource(R.string.editor_desc))
@@ -109,7 +111,7 @@ fun JavaScriptEditor(
         // JavaScript code editor
         TextField(
             value = codeText,
-            onValueChange = { codeText = it; onEdit(it.text) },
+            onValueChange = { codeText = it; currentOnEdit(it.text) },
             textStyle = TextStyle(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -133,7 +135,18 @@ fun JavaScriptEditor(
                 placeholder = { Text(stringResource(R.string.code)) }
             )
 
-            val options = stringArrayResource(R.array.code_types_values).toList()
+            val options = stringArrayResource(R.array.code_types_values)
+            val filterOpts by remember {
+                derivedStateOf {
+                    options.filter {
+                        it.contains(
+                            typeText,
+                            ignoreCase = true
+                        )
+                    }
+                }
+            }
+
             var exp by remember { mutableStateOf(false) }
 
             ExposedDropdownMenuBox(
@@ -152,7 +165,6 @@ fun JavaScriptEditor(
                     modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true)
                 )
                 // filter options based on text field value (i.e. crude autocomplete)
-                val filterOpts = options.filter { it.contains(typeText, ignoreCase = true) }
                 if (filterOpts.isNotEmpty()) {
                     ExposedDropdownMenu(expanded = exp, onDismissRequest = { exp = false }) {
                         filterOpts.forEach { option ->
@@ -171,7 +183,7 @@ fun JavaScriptEditor(
 
         // Run button
         Button(
-            onClick = { onRunClicked(codeText.text, valueText.text, typeText) },
+            onClick = { currentOnRunClicked(codeText.text, valueText.text, typeText) },
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 8.dp)
@@ -183,7 +195,7 @@ fun JavaScriptEditor(
 
         // Output text
         Card(Modifier.fillMaxWidth()) {
-            Text(output)
+            Text(outputText)
         }
     }
 }
