@@ -43,29 +43,26 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun JavaScriptEditorDialog(jsDialog: DialogState) {
-    val context = LocalContext.current
-    val jsEngine = rememberJsEngineService(context)
-    val scope = rememberCoroutineScope()
-
     var codePreference by rememberPreference(PreferenceStore.JS_CODE)
+    var codeText by remember { mutableStateOf(codePreference) }
 
     val outString = stringResource(R.string.press_run_to_evaluate)
-    var outputText by remember { mutableStateOf(outString) }
-
-    var codeText by remember { mutableStateOf(codePreference) }
+    var outputText by remember(jsDialog.openState) { mutableStateOf(outString) }
 
     ConfirmDialog(
         dialogState = jsDialog,
         title = stringResource(R.string.custom_javascript),
         onDismiss = {
             close()
-            outputText = outString
         }, onConfirm = {
             close()
             codePreference = codeText
-            outputText = outString
         }
     ) {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        val jsEngine = rememberJsEngineService(context)
+
         JavaScriptEditor(
             initialCode = codePreference,
             onRunClicked = { code, value, type ->
