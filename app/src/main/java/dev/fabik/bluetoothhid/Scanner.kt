@@ -75,6 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraArea
+import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.InfoDialog
@@ -124,11 +125,10 @@ fun Scanner(
         Box(
             Modifier
                 .padding(if (fullScreen) PaddingValues(0.dp) else padding)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
         ) {
             RequiresCameraPermission {
-                CameraPreviewArea(
+                CameraPreviewContent(
                     onCameraReady = { camera = it }
                 ) { value, send ->
                     currentBarcode = value
