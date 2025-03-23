@@ -3,8 +3,6 @@ package dev.fabik.bluetoothhid.ui.model
 import android.content.Context
 import android.graphics.Point
 import android.graphics.PointF
-import android.util.Log
-import android.util.Rational
 import android.util.Size
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
@@ -14,17 +12,21 @@ import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
 import androidx.camera.core.UseCaseGroup
-import androidx.camera.core.ViewPort
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.toPointF
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
+import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +46,14 @@ class NewCameraViewModel : ViewModel() {
 
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
+    private var barcodeAnalyzer: ZXingAnalyzer? = null
+
+    var scanRect = Rect.Zero
+    var overlayPosition by mutableStateOf<Offset?>(null)
+    var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
+
+    val cameraTrace = LatencyTrace(100)
+    val detectorTrace = LatencyTrace(100)
 
     private val cameraPreviewUseCase =
         Preview.Builder()
@@ -67,7 +77,6 @@ class NewCameraViewModel : ViewModel() {
         lifecycleOwner: LifecycleOwner,
         frontCamera: Boolean,
         resolution: Int,
-        frequency: Int,
         codeTypes: Set<String>
     ) {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
@@ -75,14 +84,9 @@ class NewCameraViewModel : ViewModel() {
         val options = BarcodeReader.Options()
         options.formats = ZXingAnalyzer.convertCodeTypes(codeTypes.map { it.toIntOrNull() })
 
-        val barcodeReader = ZXingAnalyzer(
+        barcodeAnalyzer = ZXingAnalyzer(
             options,
-            when (frequency) {
-                0 -> 0
-                1 -> 100
-                3 -> 1000
-                else -> 500
-            },
+            _scanDelay,
             ::onBarcodeAnalyze,
             ::onBarcodeResult,
         )
@@ -104,17 +108,11 @@ class NewCameraViewModel : ViewModel() {
             .setOutputImageRotationEnabled(true)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-        analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), barcodeReader)
-
-        val viewPort = ViewPort.Builder(
-            Rational(9, 16),
-            cameraPreviewUseCase.targetRotation
-        ).build()
+        analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyzer!!)
 
         val useCaseGroup = UseCaseGroup.Builder()
             .addUseCase(cameraPreviewUseCase)
             .addUseCase(analyzer)
-            //.setViewPort(viewPort)
             .build()
 
         val camera = processCameraProvider.bindToLifecycle(
@@ -136,7 +134,7 @@ class NewCameraViewModel : ViewModel() {
     }
 
     fun onBarcodeAnalyze() {
-
+        cameraTrace.trigger()
     }
 
     var viewSize: IntSize? = null
@@ -171,12 +169,21 @@ class NewCameraViewModel : ViewModel() {
     private var _fullyInside: Boolean = false
     private var _scanRegex: Regex? = null
     private var _jsCode: String? = null
+    private var _scanDelay: Int = 0
 
     fun updateScanParameters(
         fullyInside: Boolean,
         scanRegex: Regex?,
-        jsCode: String?
+        jsCode: String?,
+        frequency: Int,
     ) {
+        _scanDelay = when (frequency) {
+            0 -> 0
+            1 -> 100
+            3 -> 1000
+            else -> 500
+        }
+        barcodeAnalyzer?.scanDelay = _scanDelay
         _fullyInside = fullyInside
         _scanRegex = scanRegex
         _jsCode = jsCode
@@ -191,6 +198,8 @@ class NewCameraViewModel : ViewModel() {
         result: List<BarcodeReader.Result>,
         source: Size
     ) {
+        detectorTrace.trigger()
+
         result.firstOrNull()?.let {
             val cornerPoints = listOf(
                 it.position.topLeft,
@@ -208,7 +217,6 @@ class NewCameraViewModel : ViewModel() {
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {
-        Log.d("NewCameraViewModel", "Trying to focus at point $tapCoords")
         surfaceMeteringPointFactory?.createPoint(tapCoords.x, tapCoords.y)?.let {
             val meteringAction = FocusMeteringAction.Builder(it).build()
             suspendCoroutine {

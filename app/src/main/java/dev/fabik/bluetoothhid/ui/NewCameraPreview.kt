@@ -7,11 +7,9 @@ import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -26,10 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.takeOrElse
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -55,37 +50,38 @@ fun CameraPreviewContent(
     // Camera settings
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
-    val frequency by rememberPreference(PreferenceStore.SCAN_FREQUENCY)
     val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    LaunchedEffect(lifecycleOwner, frontCamera, resolution, frequency, codeTypes) {
+    LaunchedEffect(lifecycleOwner, frontCamera, resolution, codeTypes) {
         viewModel.bindToCamera(
             context.applicationContext,
             lifecycleOwner,
             frontCamera,
             resolution,
-            frequency,
             codeTypes
         )
     }
 
     // Scanner settings
+    val frequency by rememberPreference(PreferenceStore.SCAN_FREQUENCY)
     val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
     val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
     val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
     val jsCode by rememberPreference(PreferenceStore.JS_CODE)
 
-    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode) {
-        viewModel.updateScanParameters(fullyInside, runCatching {
-            if (!scanRegex.isBlank()) scanRegex.toRegex() else null
-        }.getOrNull(), if (jsEnabled) jsCode else null)
+    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency) {
+        viewModel.updateScanParameters(
+            fullyInside, runCatching {
+                if (!scanRegex.isBlank()) scanRegex.toRegex() else null
+            }.getOrNull(), if (jsEnabled) jsCode else null, frequency
+        )
     }
 
-    var isFocusing by remember { mutableStateOf(false) }
-    var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
-
     surfaceRequest?.let { request ->
+        var isFocusing by remember { mutableStateOf(false) }
+        var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
+
         val coordinateTransformer = remember { MutableCoordinateTransformer() }
 
         CameraXViewfinder(
@@ -108,6 +104,8 @@ fun CameraPreviewContent(
             }
         )
 
+        viewModel.OverlayCanvas()
+
         AnimatedVisibility(
             visible = isFocusing,
             enter = fadeIn(),
@@ -125,30 +123,6 @@ fun CameraPreviewContent(
                     .border(2.dp, Color.White, CircleShape)
                     .size(48.dp)
             )
-        }
-
-        val currentBarcode by viewModel.currentBarcode.collectAsStateWithLifecycle()
-
-        Canvas(
-            Modifier
-                .fillMaxSize()
-                .onGloballyPositioned {
-                    viewModel.viewSize = it.size
-                    viewModel.lastScanSize = null
-                }) {
-            currentBarcode?.let {
-                // Draw a rectangle around the barcode
-                val path = Path().apply {
-                    it.cornerPoints.forEach { p ->
-                        if (isEmpty)
-                            moveTo(p.x, p.y)
-                        lineTo(p.x, p.y)
-                    }
-                    close()
-                }
-
-                drawPath(path, color = Color.Blue, style = Stroke(5f))
-            }
         }
     }
 }

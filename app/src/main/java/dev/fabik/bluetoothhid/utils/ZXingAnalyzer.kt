@@ -10,7 +10,7 @@ import zxingcpp.BarcodeReader.Options
 
 class ZXingAnalyzer(
     options: Options = Options(),
-    private val scanDelay: Int,
+    var scanDelay: Int,
     private val onAnalyze: () -> Unit,
     private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
@@ -39,7 +39,6 @@ class ZXingAnalyzer(
     }
 
     private val reader = BarcodeReader(options)
-
     private var lastAnalyzedTimeStamp = 0L
 
     @OptIn(TransformExperimental::class)
@@ -51,6 +50,7 @@ class ZXingAnalyzer(
         if (deltaTime < scanDelay) {
             image.close()
         } else {
+            lastAnalyzedTimeStamp = currentTime
             val results = image.use {
                 reader.read(image)
             }
