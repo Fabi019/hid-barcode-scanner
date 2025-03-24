@@ -229,9 +229,7 @@ fun CameraArea(
 
     RequiresModuleInstallation {
         Column(modifier = Modifier.fillMaxSize()) {
-            if (!isDeviceConnected) {
-                WarningCard()
-            }
+
             CameraPreview(previewView, cameraReadyCB)
         }
     }
@@ -239,25 +237,7 @@ fun CameraArea(
     OverlayCanvas()
 }
 
-@Composable
-fun WarningCard() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0B2)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp) // Set elevation
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Icon(Icons.Filled.Warning, contentDescription = "Warning", tint = Color.Red)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("No device connected. This is test/demo mode.", color = Color.Black)
-        }
-    }
-}
+
 
 
 @SuppressLint("ClickableViewAccessibility")
