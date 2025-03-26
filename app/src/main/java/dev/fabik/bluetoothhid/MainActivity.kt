@@ -1,10 +1,7 @@
 package dev.fabik.bluetoothhid
 
-import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.view.KeyEvent
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,8 +22,13 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
-val LocalController = staticCompositionLocalOf<BluetoothController?> { null }
-val LocalJsEngineService = staticCompositionLocalOf<JsEngineService.LocalBinder?> { null }
+val LocalController = staticCompositionLocalOf<BluetoothController?> {
+    null
+}
+
+val LocalJsEngineService = staticCompositionLocalOf<JsEngineService.LocalBinder?> {
+    null
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -58,26 +60,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                             NavGraph()
                         }
+
+                        PersistHistory()
                     }
                 }
             }
         }
-    }
-
-    @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            when (event.keyCode) {
-                KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                    sendBarcodeToDevice()
-                    return true
-                }
-            }
-        }
-        return super.dispatchKeyEvent(event)
-    }
-
-    private fun sendBarcodeToDevice() {
-        Toast.makeText(this, "Barcode Sent!", Toast.LENGTH_SHORT).show()
     }
 }

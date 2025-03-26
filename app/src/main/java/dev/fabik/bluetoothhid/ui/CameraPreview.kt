@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid.ui
 
-
 import android.annotation.SuppressLint
 import android.graphics.Paint
 import android.util.Log
@@ -20,21 +19,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.OpenInFull
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -43,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -70,7 +58,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -82,7 +69,6 @@ import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
 import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
-import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.utils.BarCodeAnalyser
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -97,6 +83,7 @@ import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+
 
 @Composable
 fun CameraArea(
@@ -120,8 +107,11 @@ fun CameraArea(
     val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
 
     val regex = remember(scanRegex) {
-        if (scanRegex.isBlank()) return@remember null
-        runCatching { scanRegex.toRegex() }.getOrNull()
+        if (scanRegex.isBlank())
+            return@remember null
+        runCatching {
+            scanRegex.toRegex()
+        }.getOrNull()
     }
 
     val scanFrequency by remember {
@@ -156,14 +146,13 @@ fun CameraArea(
 
     val jsEngineService = LocalJsEngineService.current
 
-    val devicesViewModel: DevicesViewModel = viewModel()
-    val isDeviceConnected by remember { derivedStateOf { devicesViewModel.pairedDevices.isNotEmpty() } }
-
     // Sets up the Barcode scanner
     val cameraReadyCB: (CameraController) -> Unit = remember(scanFormats) {
         { camera ->
+            // Callback for the auto-zoom feature
             val zoomCallback: (Float) -> Boolean = cb@{ zoom ->
                 if (!autoZoom) return@cb false
+                // Reduce the zoom ratio by 20% to avoid the camera being too close
                 camera.setZoomRatio(
                     (zoom * 0.8f).coerceAtLeast(1f)
                         .coerceAtMost(camera.zoomState.value?.maxZoomRatio ?: 1.0f)
@@ -171,6 +160,7 @@ fun CameraArea(
                 true
             }
 
+            // Scanner options
             val options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(0, *scanFormats)
                 .enableAllPotentialBarcodes()
@@ -181,6 +171,7 @@ fun CameraArea(
                 )
                 .build()
 
+            // Setup the camera analysis
             val analyzer = BarCodeAnalyser(
                 scanDelay = scanFrequency,
                 scannerOptions = options,
@@ -207,6 +198,7 @@ fun CameraArea(
                 }
             }
 
+            // Set the image analysis use case
             camera.imageAnalysisResolutionSelector = ResolutionSelector.Builder()
                 .setResolutionStrategy(
                     ResolutionStrategy(
@@ -228,17 +220,11 @@ fun CameraArea(
     }
 
     RequiresModuleInstallation {
-        Column(modifier = Modifier.fillMaxSize()) {
-
-            CameraPreview(previewView, cameraReadyCB)
-        }
+        CameraPreview(previewView, cameraReadyCB)
     }
 
     OverlayCanvas()
 }
-
-
-
 
 @SuppressLint("ClickableViewAccessibility")
 @Composable
