@@ -106,7 +106,8 @@ import kotlinx.coroutines.launch
 fun ElevatedWarningCard(
     message: String,
     subMessage: String? = null,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    visible: Boolean
 ) {
     val scope = rememberCoroutineScope()
 
@@ -117,7 +118,7 @@ fun ElevatedWarningCard(
         contentAlignment = Alignment.TopCenter
     ) {
         AnimatedVisibility(
-            visible = true, // You will control visibility dynamically
+            visible = visible, // You will control visibility dynamically
             modifier = Modifier.padding(12.dp)
         ) {
             ElevatedCard(
@@ -196,7 +197,8 @@ fun Scanner(
                         subMessage = stringResource(R.string.click_to_connect),
                         onClick = {
                         navController.navigate(Routes.Devices)
-                        }
+                        },
+                        visible = currentDevice == null
                     )
                 }
 
@@ -479,7 +481,8 @@ fun BoxScope.CapsLockWarning() {
                     scope.launch {
                         controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                     }
-                }
+                },
+                visible = controller.isCapsLockOn
             )
         }
     }
