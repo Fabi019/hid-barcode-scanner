@@ -5,6 +5,7 @@ import android.graphics.Point
 import android.graphics.PointF
 import android.util.Size
 import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
@@ -48,6 +49,8 @@ class NewCameraViewModel : ViewModel() {
     private var cameraControl: CameraControl? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
+    private var onBarcodeDetected: (String) -> Unit = {}
+
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
     var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
@@ -77,13 +80,16 @@ class NewCameraViewModel : ViewModel() {
         lifecycleOwner: LifecycleOwner,
         frontCamera: Boolean,
         resolution: Int,
-        codeTypes: Set<String>
+        codeTypes: Set<String>,
+        onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+        onBarcode: (String) -> Unit,
     ) {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         val options = BarcodeReader.Options()
         options.formats = ZXingAnalyzer.convertCodeTypes(codeTypes.map { it.toIntOrNull() })
 
+        onBarcodeDetected = onBarcode
         barcodeAnalyzer = ZXingAnalyzer(
             options,
             _scanDelay,
@@ -123,6 +129,7 @@ class NewCameraViewModel : ViewModel() {
         )
 
         cameraControl = camera.cameraControl
+        onCameraReady(camera.cameraControl, camera.cameraInfo)
 
         // Cancellation signals we're done with the camera
         try {
@@ -130,6 +137,7 @@ class NewCameraViewModel : ViewModel() {
         } finally {
             processCameraProvider.unbindAll()
             cameraControl = null
+            onCameraReady(null, null)
         }
     }
 
@@ -189,6 +197,7 @@ class NewCameraViewModel : ViewModel() {
         _jsCode = jsCode
     }
 
+    private var _lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
 
@@ -200,7 +209,7 @@ class NewCameraViewModel : ViewModel() {
     ) {
         detectorTrace.trigger()
 
-        result.firstOrNull()?.let {
+        val barcode = result.map {
             val cornerPoints = listOf(
                 it.position.topLeft,
                 it.position.topRight,
@@ -210,9 +219,21 @@ class NewCameraViewModel : ViewModel() {
                 transformPoint(it, source)
             }
 
-            _currentBarcode.update { _ -> Barcode(it.text, cornerPoints, source) }
-        } ?: run {
-            _currentBarcode.update { _ -> null }
+            Barcode(it.text, cornerPoints, source)
+        }.filter {
+            when (_fullyInside) {
+                true -> it.cornerPoints.all { scanRect.contains(Offset(it.x, it.y)) }
+                false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
+            }
+        }.firstOrNull()
+
+        _currentBarcode.update { _ -> barcode }
+
+        barcode?.value?.let {
+            if (it != _lastBarcode) {
+                onBarcodeDetected(it)
+                _lastBarcode = it
+            }
         }
     }
 

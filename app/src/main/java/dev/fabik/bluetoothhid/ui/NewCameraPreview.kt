@@ -1,7 +1,8 @@
 package dev.fabik.bluetoothhid.ui
 
 import androidx.camera.compose.CameraXViewfinder
-import androidx.camera.view.CameraController
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
@@ -40,8 +41,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun CameraPreviewContent(
     viewModel: NewCameraViewModel = viewModel<NewCameraViewModel>(),
-    onCameraReady: (CameraController) -> Unit,
-    onBarcodeDetected: (String, Boolean) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+    onBarcodeDetected: (String) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -51,6 +52,7 @@ fun CameraPreviewContent(
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
+    val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     LaunchedEffect(lifecycleOwner, frontCamera, resolution, codeTypes) {
@@ -59,7 +61,9 @@ fun CameraPreviewContent(
             lifecycleOwner,
             frontCamera,
             resolution,
-            codeTypes
+            codeTypes,
+            onCameraReady = onCameraReady,
+            onBarcode = onBarcodeDetected,
         )
     }
 
@@ -87,7 +91,7 @@ fun CameraPreviewContent(
         CameraXViewfinder(
             surfaceRequest = request,
             coordinateTransformer = coordinateTransformer,
-            implementationMode = ImplementationMode.EXTERNAL,
+            implementationMode = if (previewMode) ImplementationMode.EXTERNAL else ImplementationMode.EMBEDDED,
             modifier = Modifier.pointerInput(viewModel, coordinateTransformer) {
                 detectTapGestures { tapCoords ->
                     if (!isFocusing) {
@@ -104,7 +108,7 @@ fun CameraPreviewContent(
             }
         )
 
-        viewModel.OverlayCanvas()
+        OverlayCanvas(viewModel)
 
         AnimatedVisibility(
             visible = isFocusing,

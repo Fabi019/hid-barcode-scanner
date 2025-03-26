@@ -11,8 +11,9 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import android.widget.Toast
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.TorchState
-import androidx.camera.view.CameraController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +75,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.bt.KeyTranslator
-import dev.fabik.bluetoothhid.ui.CameraArea
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.Dropdown
@@ -103,7 +103,8 @@ fun Scanner(
     sendText: (String) -> Unit
 ) {
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
-    var camera by remember { mutableStateOf<CameraController?>(null) }
+    var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentSendText by rememberUpdatedState(sendText)
@@ -112,7 +113,7 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, currentDevice, fullScreen)
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -128,8 +129,8 @@ fun Scanner(
                 .fillMaxSize()
         ) {
             RequiresCameraPermission {
-                CameraPreviewContent(
-                    onCameraReady = { camera = it }
+                CameraPreviewArea(
+                    onCameraReady = { control, info -> cameraControl = control; cameraInfo = info }
                 ) { value, send ->
                     currentBarcode = value
                     if (send) {
@@ -146,7 +147,7 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
-            camera?.let {
+            cameraInfo?.let {
                 ZoomStateInfo(it)
             }
             KeepScreenOn()
@@ -162,7 +163,7 @@ fun Scanner(
  */
 @Composable
 private fun CameraPreviewArea(
-    onCameraReady: (CameraController) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
     onBarcodeDetected: (String, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
@@ -199,7 +200,7 @@ private fun CameraPreviewArea(
     val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
-    CameraArea(onCameraReady) {
+    CameraPreviewContent(onCameraReady = onCameraReady) {
         onBarcodeDetected(it, autoSend)
 
         if (playSound) {
@@ -323,6 +324,7 @@ private fun SendToDeviceFAB(
  * Scanner app bar with a toggle flash button and a disconnect button.
  *
  * @param camera the camera to toggle the flash on
+ * @param info the camera info for getting the flash state
  * @param currentDevice the device that is currently connected, can be null if no device is connected
  * @param transparent whether the app bar should be transparent or not
  */
@@ -330,7 +332,8 @@ private fun SendToDeviceFAB(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
-    camera: CameraController?,
+    camera: CameraControl?,
+    info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
 ) {
@@ -349,10 +352,8 @@ private fun ScannerAppBar(
             }
         },
         actions = {
-            camera?.let {
-                if (it.cameraInfo?.hasFlashUnit() == true) {
-                    ToggleFlashButton(it)
-                }
+            if (camera != null && info != null && info.hasFlashUnit()) {
+                ToggleFlashButton(camera, info)
             }
             IconButton(onClick = {
                 navigation.navigate(Routes.History)
@@ -380,12 +381,12 @@ private fun ScannerAppBar(
  * @param camera the camera to toggle the flash on
  */
 @Composable
-fun ToggleFlashButton(camera: CameraController) {
-    val torchState by camera.torchState.observeAsState()
+fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
+    val torchState by info.torchState.observeAsState()
 
     IconButton(
         onClick = {
-            camera.enableTorch(
+            camera?.enableTorch(
                 when (torchState) {
                     TorchState.OFF -> true
                     else -> false
@@ -453,7 +454,7 @@ fun BoxScope.CapsLockWarning() {
  * @param camera the camera to get the zoom-factor from
  */
 @Composable
-fun BoxScope.ZoomStateInfo(camera: CameraController) {
+fun BoxScope.ZoomStateInfo(camera: CameraInfo) {
     val zoomState by camera.zoomState.observeAsState()
     zoomState?.let {
         if (it.zoomRatio > 1.0f) {

@@ -49,21 +49,21 @@ import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @Composable
-fun NewCameraViewModel.OverlayCanvas() {
+fun OverlayCanvas(viewModel: NewCameraViewModel) {
     val overlayType by rememberPreference(PreferenceStore.OVERLAY_TYPE)
     val restrictArea by rememberPreference(PreferenceStore.RESTRICT_AREA)
     val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
     val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
 
-    val currentBarcode by currentBarcode.collectAsStateWithLifecycle()
+    val currentBarcode by viewModel.currentBarcode.collectAsStateWithLifecycle()
 
     Canvas(
         Modifier
             .fillMaxSize()
             .onGloballyPositioned {
-                viewSize = it.size
-                lastScanSize = null
+                viewModel.viewSize = it.size
+                viewModel.lastScanSize = null
             }) {
         val x = this.size.width / 2
         val y = this.size.height / 2
@@ -71,7 +71,7 @@ fun NewCameraViewModel.OverlayCanvas() {
 
         // Draws the scanner area
         if (restrictArea) {
-            scanRect = when (overlayType) {
+            viewModel.scanRect = when (overlayType) {
                 // Rectangle optimized for barcodes
                 1 -> {
                     val length = this.size.width * 0.8f
@@ -83,8 +83,8 @@ fun NewCameraViewModel.OverlayCanvas() {
                 }
 
                 2 -> {
-                    val pos = overlayPosition
-                    val size = overlaySize
+                    val pos = viewModel.overlayPosition
+                    val size = viewModel.overlaySize
 
                     if (pos != null && size != null)
                         Rect(
@@ -108,7 +108,7 @@ fun NewCameraViewModel.OverlayCanvas() {
             }
 
             val markerPath = Path().apply {
-                addRoundRect(RoundRect(scanRect, CornerRadius(30f)))
+                addRoundRect(RoundRect(viewModel.scanRect, CornerRadius(30f)))
             }
 
             clipPath(markerPath, clipOp = ClipOp.Difference) {
@@ -117,7 +117,7 @@ fun NewCameraViewModel.OverlayCanvas() {
 
             drawPath(markerPath, color = Color.White, style = Stroke(5f))
         } else {
-            scanRect = Rect(Offset(0f, 0f), size)
+            viewModel.scanRect = Rect(Offset(0f, 0f), size)
         }
 
         // Highlights the current barcode on screen (with a rectangle)
@@ -139,18 +139,18 @@ fun NewCameraViewModel.OverlayCanvas() {
     // Show the adjust buttons
     if (restrictArea && overlayType == 2) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CustomOverlayButtons()
+            CustomOverlayButtons(viewModel)
         }
     }
 
     // Draw debug overlay
     if (developerMode) {
-        DebugOverlay()
+        DebugOverlay(viewModel)
     }
 }
 
 @Composable
-private fun NewCameraViewModel.CustomOverlayButtons() {
+fun CustomOverlayButtons(viewModel: NewCameraViewModel) {
     val context = LocalContext.current
     var posOffsetX by remember {
         mutableFloatStateOf(runBlocking {
@@ -182,8 +182,8 @@ private fun NewCameraViewModel.CustomOverlayButtons() {
     }
 
     LaunchedEffect(Unit) {
-        overlayPosition = Offset(posOffsetX, posOffsetY)
-        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+        viewModel.overlayPosition = Offset(posOffsetX, posOffsetY)
+        viewModel.overlaySize = Size(sizeOffsetX, sizeOffsetY)
     }
 
     fun saveState() {
@@ -201,8 +201,8 @@ private fun NewCameraViewModel.CustomOverlayButtons() {
         sizeOffsetX = PreferenceStore.OVERLAY_WIDTH.defaultValue
         sizeOffsetY = PreferenceStore.OVERLAY_HEIGHT.defaultValue
 
-        overlayPosition = Offset(posOffsetX, posOffsetY)
-        overlaySize = Size(sizeOffsetX, sizeOffsetY)
+        viewModel.overlayPosition = Offset(posOffsetX, posOffsetY)
+        viewModel.overlaySize = Size(sizeOffsetX, sizeOffsetY)
 
         saveState()
     }
@@ -226,7 +226,7 @@ private fun NewCameraViewModel.CustomOverlayButtons() {
                     change.consume()
                     sizeOffsetX += dragAmount.x
                     sizeOffsetY += dragAmount.y
-                    overlaySize = Size(sizeOffsetX, sizeOffsetY)
+                    viewModel.overlaySize = Size(sizeOffsetX, sizeOffsetY)
                 }
             }
     ) {
@@ -252,7 +252,7 @@ private fun NewCameraViewModel.CustomOverlayButtons() {
                     change.consume()
                     posOffsetX += dragAmount.x
                     posOffsetY += dragAmount.y
-                    overlayPosition = Offset(posOffsetX, posOffsetY)
+                    viewModel.overlayPosition = Offset(posOffsetX, posOffsetY)
                 }
             }
     ) {
@@ -261,9 +261,9 @@ private fun NewCameraViewModel.CustomOverlayButtons() {
 }
 
 @Composable
-fun NewCameraViewModel.DebugOverlay() {
-    val cameraTrace by cameraTrace.state.collectAsStateWithLifecycle()
-    val detectorTrace by detectorTrace.state.collectAsStateWithLifecycle()
+fun DebugOverlay(viewModel: NewCameraViewModel) {
+    val cameraTrace by viewModel.cameraTrace.state.collectAsStateWithLifecycle()
+    val detectorTrace by viewModel.detectorTrace.state.collectAsStateWithLifecycle()
 
     Canvas(Modifier.fillMaxSize()) {
         val canvas = drawContext.canvas.nativeCanvas
@@ -299,7 +299,7 @@ fun NewCameraViewModel.DebugOverlay() {
 
         // Draw the input image size
         canvas.drawText(
-            "Image size: ${lastScanSize?.width}x${lastScanSize?.height}",
+            "Image size: ${viewModel.lastScanSize?.width}x${viewModel.lastScanSize?.height}",
             10f,
             y + 100f,
             Paint().apply {
@@ -310,7 +310,7 @@ fun NewCameraViewModel.DebugOverlay() {
 
         // Draw the preview image size
         canvas.drawText(
-            "Preview size: ${viewSize?.width}x${viewSize?.height}",
+            "Preview size: ${viewModel.viewSize?.width}x${viewModel.viewSize?.height}",
             10f,
             y + 150f,
             Paint().apply {
@@ -321,7 +321,8 @@ fun NewCameraViewModel.DebugOverlay() {
 
         // Draw the custom selection
         canvas.drawText(
-            "Selector size: ${overlaySize?.width?.roundToInt()}x${overlaySize?.height?.roundToInt()} at (${overlayPosition?.x?.roundToInt()}, ${overlayPosition?.y?.roundToInt()})",
+            "Selector size: ${viewModel.overlaySize?.width?.roundToInt()}x${viewModel.overlaySize?.height?.roundToInt()} " +
+                    "at (${viewModel.overlayPosition?.x?.roundToInt()}, ${viewModel.overlayPosition?.y?.roundToInt()})",
             10f,
             y + 200f,
             Paint().apply {

@@ -1,10 +1,8 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.util.Size
-import androidx.annotation.OptIn
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.view.TransformExperimental
 import zxingcpp.BarcodeReader
 import zxingcpp.BarcodeReader.Options
 
@@ -16,8 +14,6 @@ class ZXingAnalyzer(
 ) : ImageAnalysis.Analyzer {
 
     companion object {
-        const val TAG = "ZXingAnalyzer"
-
         fun convertCodeTypes(types: List<Int?>): Set<BarcodeReader.Format> = types.map {
             when (it) {
                 0 -> BarcodeReader.Format.CODE_128
@@ -41,7 +37,6 @@ class ZXingAnalyzer(
     private val reader = BarcodeReader(options)
     private var lastAnalyzedTimeStamp = 0L
 
-    @OptIn(TransformExperimental::class)
     override fun analyze(image: ImageProxy) {
         val currentTime = System.currentTimeMillis()
         val deltaTime = currentTime - lastAnalyzedTimeStamp
