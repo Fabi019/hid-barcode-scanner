@@ -21,6 +21,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import kotlin.math.log2
 
 class HistoryViewModel : ViewModel() {
     private var selectedHistory: SnapshotStateList<Int> = mutableStateListOf<Int>()
@@ -99,13 +100,19 @@ class HistoryViewModel : ViewModel() {
 
                 file.useLines {
                     val lines = it.iterator()
-                    lines.next() // skip header
+
+                    // Check if old barcode format used
+                    val migrate = lines.next() == "text,timestamp,type"
 
                     for (line in lines) {
                         regex.matchEntire(line)?.let {
                             val text = it.groupValues[1]
                             val timestamp = it.groupValues[2].toLongOrNull() ?: 0
-                            val type = it.groupValues[3].toIntOrNull() ?: -1
+
+                            var type = it.groupValues[3].toIntOrNull() ?: -1
+                            if (migrate) {
+                                type = log2(type.toFloat()).toInt()
+                            }
 
                             history.add(HistoryEntry(text, timestamp, type))
                         }
@@ -139,7 +146,7 @@ class HistoryViewModel : ViewModel() {
             }
 
             ExportType.CSV -> {
-                val header = "text,timestamp,type"
+                val header = if (numericType) "text,timestamp,format" else "text,timestamp,type"
                 val rows = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
