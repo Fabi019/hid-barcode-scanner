@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.round
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.ui.model.NewCameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
@@ -44,8 +45,10 @@ fun CameraPreviewContent(
     onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
     onBarcodeDetected: (String) -> Unit,
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val jsEngineService = LocalJsEngineService.current
+
     val scope = rememberCoroutineScope()
 
     // Camera settings
@@ -74,11 +77,11 @@ fun CameraPreviewContent(
     val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
     val jsCode by rememberPreference(PreferenceStore.JS_CODE)
 
-    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency) {
+    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
         viewModel.updateScanParameters(
             fullyInside, runCatching {
                 if (!scanRegex.isBlank()) scanRegex.toRegex() else null
-            }.getOrNull(), if (jsEnabled) jsCode else null, frequency
+            }.getOrNull(), if (jsEnabled) jsCode else null, frequency, jsEngineService
         )
     }
 

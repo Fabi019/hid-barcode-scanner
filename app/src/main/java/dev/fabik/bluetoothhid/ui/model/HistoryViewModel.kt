@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 
 class HistoryViewModel : ViewModel() {
     private var selectedHistory: SnapshotStateList<Int> = mutableStateListOf<Int>()
@@ -37,7 +38,11 @@ class HistoryViewModel : ViewModel() {
     val filteredHistory by derivedStateOf {
         historyEntries.filter { (barcode, timestamp, type) ->
             barcode.contains(searchQuery, ignoreCase = true)
-                    && (filteredTypes.isEmpty() || filteredTypes.contains(parseBarcodeType(type)))
+                    && (filteredTypes.isEmpty() || filteredTypes.contains(
+                ZXingAnalyzer.format2String(
+                    ZXingAnalyzer.index2Format(type)
+                )
+            ))
                     && (filterDateStart == null || timestamp > filterDateStart!!)
                     && (filterDateEnd == null || timestamp < filterDateEnd!!)
         }
@@ -113,30 +118,13 @@ class HistoryViewModel : ViewModel() {
             }
         }
 
-        fun addHistoryItem(barcode: Barcode) {
+        fun addHistoryItem(value: String, format: Int) {
             val currentTime = System.currentTimeMillis()
-            historyEntries.add(barcode.toHistoryEntry(currentTime))
+            historyEntries.add(HistoryEntry(value, currentTime, format))
         }
 
         fun clearHistory() {
             historyEntries.clear()
-        }
-
-        fun parseBarcodeType(format: Int): String = when (format) {
-            Barcode.FORMAT_CODE_128 -> "CODE_128"
-            Barcode.FORMAT_CODE_39 -> "CODE_39"
-            Barcode.FORMAT_CODE_93 -> "CODE_93"
-            Barcode.FORMAT_CODABAR -> "CODABAR"
-            Barcode.FORMAT_DATA_MATRIX -> "DATA_MATRIX"
-            Barcode.FORMAT_EAN_13 -> "EAN_13"
-            Barcode.FORMAT_EAN_8 -> "EAN_8"
-            Barcode.FORMAT_ITF -> "ITF"
-            Barcode.FORMAT_QR_CODE -> "QR_CODE"
-            Barcode.FORMAT_UPC_A -> "UPC_A"
-            Barcode.FORMAT_UPC_E -> "UPC_E"
-            Barcode.FORMAT_PDF417 -> "PDF417"
-            Barcode.FORMAT_AZTEC -> "AZTEC"
-            else -> "UNKNOWN"
         }
 
         fun exportEntries(
@@ -155,7 +143,9 @@ class HistoryViewModel : ViewModel() {
                 val rows = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else parseBarcodeType(it.format)
+                    val type = if (numericType) it.format else ZXingAnalyzer.format2String(
+                        ZXingAnalyzer.index2Format(it.format)
+                    )
                     "\"$text\",$timestamp,$type"
                 }
                 header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
@@ -165,7 +155,9 @@ class HistoryViewModel : ViewModel() {
                 val entries = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else parseBarcodeType(it.format)
+                    val type = if (numericType) it.format else ZXingAnalyzer.format2String(
+                        ZXingAnalyzer.index2Format(it.format)
+                    )
                     """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
                 }
                 "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"

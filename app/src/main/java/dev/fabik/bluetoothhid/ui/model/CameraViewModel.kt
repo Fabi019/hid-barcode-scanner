@@ -178,7 +178,7 @@ class CameraViewModel : ViewModel() {
                     lastBarCodeValue = value
                     result = value
                     // Add barcode to history
-                    HistoryViewModel.addHistoryItem(it)
+                    //HistoryViewModel.addHistoryItem(it)
                 }
             }
         }
@@ -195,7 +195,7 @@ class CameraViewModel : ViewModel() {
         return jsEngineService?.evaluateTemplate(
             js,
             value,
-            HistoryViewModel.parseBarcodeType(barcode.format)
+            "" //HistoryViewModel.parseBarcodeType(barcode.format)
         ) ?: value
     }
 

@@ -91,6 +91,7 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +148,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     Text(barcode.value)
                 },
                 supportingContent = {
-                    Text(HistoryViewModel.parseBarcodeType(barcode.format))
+                    Text(ZXingAnalyzer.format2String(ZXingAnalyzer.index2Format(barcode.format)))
                 },
                 tonalElevation = if (isSelected) {
                     8.0.dp

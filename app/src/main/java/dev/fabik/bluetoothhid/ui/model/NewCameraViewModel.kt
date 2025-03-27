@@ -27,13 +27,17 @@ import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.toPointF
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import zxingcpp.BarcodeReader
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
@@ -49,7 +53,7 @@ class NewCameraViewModel : ViewModel() {
     private var cameraControl: CameraControl? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    private var onBarcodeDetected: (String) -> Unit = {}
+    private var onBarcodeDetected: (String, Int) -> Unit = { _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -87,14 +91,22 @@ class NewCameraViewModel : ViewModel() {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         val options = BarcodeReader.Options()
-        options.formats = ZXingAnalyzer.convertCodeTypes(codeTypes.map { it.toIntOrNull() })
+        options.formats = codeTypes.mapNotNull { it.toIntOrNull() }
+            .map { ZXingAnalyzer.index2Format(it) }.toSet()
 
-        onBarcodeDetected = onBarcode
+        onBarcodeDetected = { value, format ->
+            if (value != _lastBarcode) {
+                HistoryViewModel.addHistoryItem(value, format)
+                onBarcode(value)
+                _lastBarcode = value
+            }
+        }
+
         barcodeAnalyzer = ZXingAnalyzer(
             options,
             _scanDelay,
             ::onBarcodeAnalyze,
-            ::onBarcodeResult,
+            ::onBarcodeResult
         )
 
         val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
@@ -178,12 +190,14 @@ class NewCameraViewModel : ViewModel() {
     private var _scanRegex: Regex? = null
     private var _jsCode: String? = null
     private var _scanDelay: Int = 0
+    private var _jsEngineService: JsEngineService.LocalBinder? = null
 
     fun updateScanParameters(
         fullyInside: Boolean,
         scanRegex: Regex?,
         jsCode: String?,
         frequency: Int,
+        jsEngineService: JsEngineService.LocalBinder?
     ) {
         _scanDelay = when (frequency) {
             0 -> 0
@@ -195,13 +209,19 @@ class NewCameraViewModel : ViewModel() {
         _fullyInside = fullyInside
         _scanRegex = scanRegex
         _jsCode = jsCode
+        _jsEngineService = jsEngineService
     }
 
     private var _lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
 
-    data class Barcode(val value: String?, val cornerPoints: List<PointF>, val size: Size)
+    data class Barcode(
+        var value: String?,
+        val cornerPoints: List<PointF>,
+        val size: Size,
+        val format: BarcodeReader.Format
+    )
 
     fun onBarcodeResult(
         result: List<BarcodeReader.Result>,
@@ -219,22 +239,41 @@ class NewCameraViewModel : ViewModel() {
                 transformPoint(it, source)
             }
 
-            Barcode(it.text, cornerPoints, source)
+            Barcode(it.text, cornerPoints, source, it.format)
         }.filter {
             when (_fullyInside) {
                 true -> it.cornerPoints.all { scanRect.contains(Offset(it.x, it.y)) }
                 false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
             }
+        }.filter {
+            _scanRegex?.matches(it.value ?: return@filter true) != false
         }.firstOrNull()
 
         _currentBarcode.update { _ -> barcode }
 
         barcode?.value?.let {
-            if (it != _lastBarcode) {
-                onBarcodeDetected(it)
-                _lastBarcode = it
+            _jsEngineService?.let { s ->
+                viewModelScope.launch(Dispatchers.IO) {
+                    val value =
+                        mapJS(s, it, ZXingAnalyzer.format2String(barcode.format))
+                    onBarcodeDetected(value, ZXingAnalyzer.format2Index(barcode.format))
+                }
+            } ?: run {
+                onBarcodeDetected(it, ZXingAnalyzer.format2Index(barcode.format))
             }
         }
+    }
+
+    private suspend fun mapJS(
+        service: JsEngineService.LocalBinder,
+        value: String,
+        format: String
+    ): String {
+        return service.evaluateTemplate(
+            _jsCode ?: return value,
+            value,
+            format,
+        )
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {
