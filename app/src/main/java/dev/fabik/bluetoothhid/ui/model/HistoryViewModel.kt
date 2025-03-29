@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
-import com.google.mlkit.vision.barcode.common.Barcode
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
@@ -40,8 +39,8 @@ class HistoryViewModel : ViewModel() {
         historyEntries.filter { (barcode, timestamp, type) ->
             barcode.contains(searchQuery, ignoreCase = true)
                     && (filteredTypes.isEmpty() || filteredTypes.contains(
-                ZXingAnalyzer.format2String(
-                    ZXingAnalyzer.index2Format(type)
+                ZXingAnalyzer.index2String(
+                    type
                 )
             ))
                     && (filterDateStart == null || timestamp > filterDateStart!!)
@@ -150,9 +149,7 @@ class HistoryViewModel : ViewModel() {
                 val rows = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else ZXingAnalyzer.format2String(
-                        ZXingAnalyzer.index2Format(it.format)
-                    )
+                    val type = if (numericType) it.format else ZXingAnalyzer.index2String(it.format)
                     "\"$text\",$timestamp,$type"
                 }
                 header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
@@ -162,9 +159,7 @@ class HistoryViewModel : ViewModel() {
                 val entries = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else ZXingAnalyzer.format2String(
-                        ZXingAnalyzer.index2Format(it.format)
-                    )
+                    val type = if (numericType) it.format else ZXingAnalyzer.index2String(it.format)
                     """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
                 }
                 "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
@@ -215,6 +210,3 @@ class HistoryViewModel : ViewModel() {
         LINES(R.string.export_lines, R.string.export_lines_description, Icons.Default.TableRows)
     }
 }
-
-fun Barcode.toHistoryEntry(timestamp: Long): HistoryEntry =
-    HistoryEntry(rawValue.toString(), timestamp, format)

@@ -280,6 +280,7 @@
         <item>Continuous</item>
         <item>EDOF</item>
         <item>Fixed (Infinity)</item>
+        <item>Continuous (Fast)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>

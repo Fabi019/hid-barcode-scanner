@@ -212,6 +212,7 @@
         <item>Kontinuierlich</item>
         <item>EDOF</item>
         <item>Fest (Unendlich)</item>
+        <item>Kontinuierlich (Schnell)</item>
     </string-array>
     <string name="search_by_value">Suchen nach Wert</string>
     <string name="history">Verlauf</string>

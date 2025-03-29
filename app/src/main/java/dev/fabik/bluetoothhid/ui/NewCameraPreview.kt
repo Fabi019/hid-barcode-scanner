@@ -56,15 +56,19 @@ fun CameraPreviewContent(
     val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
     val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
+    val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
+    val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    LaunchedEffect(lifecycleOwner, frontCamera, resolution, codeTypes) {
+    LaunchedEffect(lifecycleOwner, frontCamera, resolution, codeTypes, fixExposure, focusMode) {
         viewModel.bindToCamera(
             context.applicationContext,
             lifecycleOwner,
             frontCamera,
             resolution,
             codeTypes,
+            fixExposure,
+            focusMode,
             onCameraReady = onCameraReady,
             onBarcode = onBarcodeDetected,
         )

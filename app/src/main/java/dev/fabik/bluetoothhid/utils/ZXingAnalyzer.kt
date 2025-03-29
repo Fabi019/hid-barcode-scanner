@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid.utils
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.collection.arrayMapOf
 import zxingcpp.BarcodeReader
 import zxingcpp.BarcodeReader.Options
 
@@ -14,63 +15,48 @@ class ZXingAnalyzer(
 ) : ImageAnalysis.Analyzer {
 
     companion object {
-        fun index2Format(index: Int?): BarcodeReader.Format = when (index) {
-            0 -> BarcodeReader.Format.CODE_128
-            1 -> BarcodeReader.Format.CODE_39
-            2 -> BarcodeReader.Format.CODE_93
-            3 -> BarcodeReader.Format.CODABAR
-            4 -> BarcodeReader.Format.DATA_MATRIX
-            5 -> BarcodeReader.Format.EAN_13
-            6 -> BarcodeReader.Format.EAN_8
-            7 -> BarcodeReader.Format.ITF
-            8 -> BarcodeReader.Format.QR_CODE
-            9 -> BarcodeReader.Format.UPC_A
-            10 -> BarcodeReader.Format.UPC_E
-            11 -> BarcodeReader.Format.PDF_417
-            12 -> BarcodeReader.Format.AZTEC
-            else -> BarcodeReader.Format.NONE
+        // Order based on the mlkit order to preserve indexes
+        private val FORMATS = arrayMapOf(
+            BarcodeReader.Format.CODE_128 to "CODE_128",
+            BarcodeReader.Format.CODE_39 to "CODE_39",
+            BarcodeReader.Format.CODE_93 to "CODE_93",
+            BarcodeReader.Format.CODABAR to "CODABAR",
+            BarcodeReader.Format.DATA_MATRIX to "DATA_MATRIX",
+            BarcodeReader.Format.EAN_13 to "EAN_13",
+            BarcodeReader.Format.EAN_8 to "EAN_8",
+            BarcodeReader.Format.ITF to "ITF",
+            BarcodeReader.Format.QR_CODE to "QR_CODE",
+            BarcodeReader.Format.UPC_A to "UPC_A",
+            BarcodeReader.Format.UPC_E to "UPC_E",
+            BarcodeReader.Format.PDF_417 to "PDF417",
+            BarcodeReader.Format.AZTEC to "AZTEC",
+            BarcodeReader.Format.DATA_BAR to "DATA_BAR",
+            BarcodeReader.Format.DATA_BAR_EXPANDED to "DATA_BAR_EXPANDED",
+            BarcodeReader.Format.DATA_BAR_LIMITED to "DATA_BAR_LIMITED",
+            BarcodeReader.Format.DX_FILM_EDGE to "DX_FILM_EDGE",
+            BarcodeReader.Format.MAXICODE to "MAXICODE",
+            BarcodeReader.Format.MICRO_QR_CODE to "MICRO_QR_CODE",
+            BarcodeReader.Format.RMQR_CODE to "RMQR_CODE"
+        )
+
+        fun index2Format(index: Int?): BarcodeReader.Format {
+            if ((index ?: return BarcodeReader.Format.NONE) >= FORMATS.keys.size)
+                return BarcodeReader.Format.NONE
+            return FORMATS.keyAt(index)
         }
 
-        fun format2Index(format: BarcodeReader.Format): Int = when (format) {
-            BarcodeReader.Format.CODE_128 -> 0
-            BarcodeReader.Format.CODE_39 -> 1
-            BarcodeReader.Format.CODE_93 -> 2
-            BarcodeReader.Format.CODABAR -> 3
-            BarcodeReader.Format.DATA_MATRIX -> 4
-            BarcodeReader.Format.EAN_13 -> 5
-            BarcodeReader.Format.EAN_8 -> 6
-            BarcodeReader.Format.ITF -> 7
-            BarcodeReader.Format.QR_CODE -> 8
-            BarcodeReader.Format.UPC_A -> 9
-            BarcodeReader.Format.UPC_E -> 10
-            BarcodeReader.Format.PDF_417 -> 11
-            BarcodeReader.Format.AZTEC -> 12
-            else -> -1
+        fun index2String(index: Int?): String {
+            if ((index ?: return "UNKNOWN") >= FORMATS.values.size)
+                return "UNKNOWN"
+            return FORMATS.valueAt(index)
         }
 
-        fun format2String(format: BarcodeReader.Format): String = when (format) {
-            BarcodeReader.Format.NONE -> "NONE"
-            BarcodeReader.Format.AZTEC -> "AZTEC"
-            BarcodeReader.Format.CODABAR -> "CODABAR"
-            BarcodeReader.Format.CODE_39 -> "CODE_39"
-            BarcodeReader.Format.CODE_93 -> "CODE_93"
-            BarcodeReader.Format.CODE_128 -> "CODE_128"
-            BarcodeReader.Format.DATA_BAR -> "DATA_BAR"
-            BarcodeReader.Format.DATA_BAR_EXPANDED -> "DATA_BAR_EXPANDED"
-            BarcodeReader.Format.DATA_BAR_LIMITED -> "DATA_BAR_LIMITED"
-            BarcodeReader.Format.DATA_MATRIX -> "DATA_MATRIX"
-            BarcodeReader.Format.DX_FILM_EDGE -> "DX_FILM_EDGE"
-            BarcodeReader.Format.EAN_8 -> "EAN_8"
-            BarcodeReader.Format.EAN_13 -> "EAN_13"
-            BarcodeReader.Format.ITF -> "ITF"
-            BarcodeReader.Format.MAXICODE -> "MAXICODE"
-            BarcodeReader.Format.PDF_417 -> "PDF417"
-            BarcodeReader.Format.QR_CODE -> "QR_CODE"
-            BarcodeReader.Format.MICRO_QR_CODE -> "MICRO_QR_CODE"
-            BarcodeReader.Format.RMQR_CODE -> "RMQR_CODE"
-            BarcodeReader.Format.UPC_A -> "UPC_A"
-            BarcodeReader.Format.UPC_E -> "UPC_E"
-            else -> "UNKNOWN"
+        fun format2Index(format: BarcodeReader.Format): Int {
+            return FORMATS.indexOfKey(format)
+        }
+
+        fun format2String(format: BarcodeReader.Format): String {
+            return FORMATS.get(format) ?: "UNKNOWN"
         }
     }
 

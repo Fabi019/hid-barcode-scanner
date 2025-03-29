@@ -259,6 +259,7 @@
         <item>Ciągły</item>
         <item>EDOF</item>
         <item>Stałe (Nieskończoność)</item>
+        <item>Ciągły (Szybki)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>

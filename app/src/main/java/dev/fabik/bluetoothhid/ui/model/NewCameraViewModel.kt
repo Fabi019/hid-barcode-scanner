@@ -3,7 +3,12 @@ package dev.fabik.bluetoothhid.ui.model
 import android.content.Context
 import android.graphics.Point
 import android.graphics.PointF
+import android.hardware.camera2.CaptureRequest
+import android.util.Log
 import android.util.Size
+import androidx.annotation.OptIn
+import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
@@ -45,6 +50,10 @@ import kotlin.coroutines.suspendCoroutine
 
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class NewCameraViewModel : ViewModel() {
+    companion object {
+        const val TAG = "NewCameraViewModel"
+    }
+
     // Used to set up a link between the Camera and your UI.
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
@@ -53,7 +62,7 @@ class NewCameraViewModel : ViewModel() {
     private var cameraControl: CameraControl? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    private var onBarcodeDetected: (String, Int) -> Unit = { _, _ -> }
+    private var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -79,15 +88,19 @@ class NewCameraViewModel : ViewModel() {
                 }
             }
 
+    @OptIn(ExperimentalCamera2Interop::class)
     suspend fun bindToCamera(
         appContext: Context,
         lifecycleOwner: LifecycleOwner,
         frontCamera: Boolean,
         resolution: Int,
         codeTypes: Set<String>,
+        fixExposure: Boolean,
+        focusMode: Int,
         onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
         onBarcode: (String) -> Unit,
     ) {
+        Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         val options = BarcodeReader.Options()
@@ -96,18 +109,19 @@ class NewCameraViewModel : ViewModel() {
 
         onBarcodeDetected = { value, format ->
             if (value != _lastBarcode) {
-                HistoryViewModel.addHistoryItem(value, format)
+                HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
                 onBarcode(value)
                 _lastBarcode = value
             }
         }
 
-        barcodeAnalyzer = ZXingAnalyzer(
+        val analyzer = ZXingAnalyzer(
             options,
             _scanDelay,
             ::onBarcodeAnalyze,
             ::onBarcodeResult
         )
+        barcodeAnalyzer = analyzer
 
         val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
             ResolutionStrategy(
@@ -121,16 +135,44 @@ class NewCameraViewModel : ViewModel() {
             )
         ).build()
 
-        val analyzer = ImageAnalysis.Builder()
+        val analyzerBuilder = ImageAnalysis.Builder()
             .setResolutionSelector(resolutionSelector)
             .setOutputImageRotationEnabled(true)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-        analyzer.setAnalyzer(Executors.newSingleThreadExecutor(), barcodeAnalyzer!!)
+
+        // Apply focus mode settings
+        Camera2Interop.Extender(analyzerBuilder).apply {
+            if (fixExposure) {
+                // Sets a fixed exposure compensation and iso for the image
+                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
+                setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, -8)
+            }
+
+            if (focusMode > 0) {
+                setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE, when (focusMode) {
+                        1 -> CaptureRequest.CONTROL_AF_MODE_AUTO // Manual mode
+                        2 -> CaptureRequest.CONTROL_AF_MODE_MACRO // Macro mode
+                        3 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO // Continuous mode
+                        4 -> CaptureRequest.CONTROL_AF_MODE_EDOF // EDOF mode
+                        5 -> CaptureRequest.CONTROL_AF_MODE_OFF // Infinity
+                        6 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE // Continuous mode faster
+                        else -> CaptureRequest.CONTROL_AF_MODE_OFF
+                    }
+                )
+
+                if (focusMode == 5) {
+                    setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f)
+                }
+            }
+        }
+
+        val analysis = analyzerBuilder.build()
+        analysis.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
 
         val useCaseGroup = UseCaseGroup.Builder()
             .addUseCase(cameraPreviewUseCase)
-            .addUseCase(analyzer)
+            .addUseCase(analysis)
             .build()
 
         val camera = processCameraProvider.bindToLifecycle(
@@ -141,12 +183,15 @@ class NewCameraViewModel : ViewModel() {
         )
 
         cameraControl = camera.cameraControl
+
         onCameraReady(camera.cameraControl, camera.cameraInfo)
+        Log.d(TAG, "Camera is ready!")
 
         // Cancellation signals we're done with the camera
         try {
             awaitCancellation()
         } finally {
+            Log.d(TAG, "Unbinding camera...")
             processCameraProvider.unbindAll()
             cameraControl = null
             onCameraReady(null, null)
@@ -256,10 +301,10 @@ class NewCameraViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.IO) {
                     val value =
                         mapJS(s, it, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, ZXingAnalyzer.format2Index(barcode.format))
+                    onBarcodeDetected(value, barcode.format)
                 }
             } ?: run {
-                onBarcodeDetected(it, ZXingAnalyzer.format2Index(barcode.format))
+                onBarcodeDetected(it, barcode.format)
             }
         }
     }
@@ -277,6 +322,7 @@ class NewCameraViewModel : ViewModel() {
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {
+        Log.d(TAG, "Focusing at $tapCoords")
         surfaceMeteringPointFactory?.createPoint(tapCoords.x, tapCoords.y)?.let {
             val meteringAction = FocusMeteringAction.Builder(it).build()
             suspendCoroutine {

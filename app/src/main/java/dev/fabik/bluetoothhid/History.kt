@@ -148,14 +148,11 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     Text(barcode.value)
                 },
                 supportingContent = {
-                    Text(ZXingAnalyzer.format2String(ZXingAnalyzer.index2Format(barcode.format)))
+                    Text(ZXingAnalyzer.index2String(barcode.format))
                 },
-                tonalElevation = if (isSelected) {
-                    8.0.dp
-                } else {
-                    0.0.dp
-                },
+                tonalElevation = if (isSelected) 8.0.dp else 0.0.dp,
                 modifier = Modifier
+                    .animateItem()
                     .combinedClickable(onLongClick = {
                         setItemSelected(barcode, true)
                     }, onClick = {
