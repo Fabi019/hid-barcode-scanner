@@ -72,6 +72,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
@@ -91,7 +92,6 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -131,6 +131,8 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
         clearSelection()
     }
 
+    val types = stringArrayResource(R.array.code_types_values)
+
     LazyColumn(Modifier.fillMaxSize()) {
         items(filteredHistory) { barcode ->
             val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
@@ -148,7 +150,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     Text(barcode.value)
                 },
                 supportingContent = {
-                    Text(ZXingAnalyzer.index2String(barcode.format))
+                    Text(types.getOrNull(barcode.format) ?: "UNKNOWN")
                 },
                 tonalElevation = if (isSelected) 8.0.dp else 0.0.dp,
                 modifier = Modifier
@@ -349,6 +351,7 @@ fun HistoryViewModel.ExportSheet() {
     val context = LocalContext.current
 
     val exportString = stringResource(R.string.export)
+    val types = stringArrayResource(R.array.code_types_values)
 
     val scope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -397,7 +400,7 @@ fun HistoryViewModel.ExportSheet() {
                 ExportSheetContent { typ, dedup, saveToFile ->
                     scope.launch { state.hide() }.invokeOnCompletion { showSheet = state.isVisible }
 
-                    val data = exportHistory(typ, dedup)
+                    val data = exportHistory(typ, dedup, types)
 
                     val (mime, name) = when (typ) {
                         HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"

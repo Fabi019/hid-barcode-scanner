@@ -53,10 +53,10 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterModal(
-    selectedTypes: List<String>,
+    selectedTypes: List<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<String>, Long?, Long?) -> Unit
+    onApply: (List<Int>, Long?, Long?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -92,10 +92,10 @@ fun FilterModal(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FilterModalContent(
-    selectedTypes: List<String>,
+    selectedTypes: List<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<String>, Long?, Long?) -> Unit
+    onApply: (List<Int>, Long?, Long?) -> Unit
 ) {
     var selectedTypes =
         rememberSaveable(saver = listSaver({ it.toList() }, { it.toMutableStateList() })) {
@@ -154,14 +154,14 @@ fun FilterModalContent(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
-            for (type in stringArrayResource(R.array.code_types_values)) {
+            stringArrayResource(R.array.code_types_values).forEachIndexed { i, type ->
                 FilterChip(
-                    selected = selectedTypes.contains(type),
+                    selected = selectedTypes.contains(i),
                     onClick = {
-                        if (selectedTypes.contains(type)) {
-                            selectedTypes.remove(type)
+                        if (selectedTypes.contains(i)) {
+                            selectedTypes.remove(i)
                         } else {
-                            selectedTypes.add(type)
+                            selectedTypes.add(i)
                         }
                     },
                     label = { Text(type) },

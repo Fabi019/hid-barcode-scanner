@@ -15,11 +15,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.util.fastDistinctBy
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
-import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlin.math.log2
 
 class HistoryViewModel : ViewModel() {
@@ -31,18 +31,14 @@ class HistoryViewModel : ViewModel() {
     var isSearching by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
 
-    var filteredTypes = mutableStateListOf<String>()
+    var filteredTypes = mutableStateListOf<Int>()
     var filterDateStart by mutableStateOf<Long?>(null)
     var filterDateEnd by mutableStateOf<Long?>(null)
 
     val filteredHistory by derivedStateOf {
-        historyEntries.filter { (barcode, timestamp, type) ->
+        historyEntries.fastFilter { (barcode, timestamp, type) ->
             barcode.contains(searchQuery, ignoreCase = true)
-                    && (filteredTypes.isEmpty() || filteredTypes.contains(
-                ZXingAnalyzer.index2String(
-                    type
-                )
-            ))
+                    && (filteredTypes.isEmpty() || filteredTypes.contains(type))
                     && (filterDateStart == null || timestamp > filterDateStart!!)
                     && (filterDateEnd == null || timestamp < filterDateEnd!!)
         }
@@ -69,7 +65,7 @@ class HistoryViewModel : ViewModel() {
                 Log.d(TAG, "Saving history to: $file")
 
                 file.bufferedWriter().use {
-                    it.write(exportEntries(historyEntries, ExportType.CSV, true))
+                    it.write(exportEntries(historyEntries, ExportType.CSV, numericType = true))
                 }
             }.onFailure {
                 Log.e(TAG, "Failed to store history:", it)
@@ -136,7 +132,8 @@ class HistoryViewModel : ViewModel() {
         fun exportEntries(
             dataToExport: List<HistoryEntry>,
             exportType: ExportType,
-            numericType: Boolean = false
+            numericType: Boolean = false,
+            formatNames: Array<String>? = null,
         ) = when (exportType) {
             ExportType.LINES -> {
                 dataToExport.map {
@@ -149,7 +146,9 @@ class HistoryViewModel : ViewModel() {
                 val rows = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else ZXingAnalyzer.index2String(it.format)
+                    val type =
+                        if (numericType) it.format else formatNames?.elementAtOrNull(it.format)
+                            ?: "UNKNOWN"
                     "\"$text\",$timestamp,$type"
                 }
                 header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
@@ -159,7 +158,9 @@ class HistoryViewModel : ViewModel() {
                 val entries = dataToExport.map {
                     val text = it.value
                     val timestamp = it.timestamp
-                    val type = if (numericType) it.format else ZXingAnalyzer.index2String(it.format)
+                    val type =
+                        if (numericType) it.format else formatNames?.elementAtOrNull(it.format)
+                            ?: "UNKNOWN"
                     """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
                 }
                 "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
@@ -190,12 +191,21 @@ class HistoryViewModel : ViewModel() {
         }
     }
 
-    fun exportHistory(exportType: ExportType, deduplicate: Boolean): String {
+    fun exportHistory(
+        exportType: ExportType,
+        deduplicate: Boolean,
+        formatNames: Array<String>
+    ): String {
         var history = filteredHistory
+        if (isSelecting) {
+            history = history.fastFilter {
+                selectedHistory.contains(it.hashCode())
+            }
+        }
         if (deduplicate) {
             history = history.fastDistinctBy { it.value }
         }
-        return exportEntries(history, exportType)
+        return exportEntries(history, exportType, formatNames = formatNames)
     }
 
     data class HistoryEntry(val value: String, val timestamp: Long, val format: Int)
