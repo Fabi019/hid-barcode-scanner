@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -63,20 +64,18 @@ fun CameraPreviewContent(
     // Camera settings
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
-    val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
     val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-    LaunchedEffect(lifecycleOwner, frontCamera, resolution, codeTypes, fixExposure, focusMode) {
+    LaunchedEffect(lifecycleOwner, frontCamera, resolution, fixExposure, focusMode) {
         runCatching {
             viewModel.bindToCamera(
                 context.applicationContext,
                 lifecycleOwner,
                 frontCamera,
                 resolution,
-                codeTypes,
                 fixExposure,
                 focusMode,
                 onCameraReady = onCameraReady,
@@ -103,6 +102,13 @@ fun CameraPreviewContent(
         )
     }
 
+    // Barcode reader options
+    val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
+
+    LaunchedEffect(codeTypes) {
+        viewModel.updateBarcodeReaderOptions(codeTypes)
+    }
+
     surfaceRequest?.let { request ->
         var isFocusing by remember { mutableStateOf(false) }
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
@@ -113,20 +119,26 @@ fun CameraPreviewContent(
             surfaceRequest = request,
             coordinateTransformer = coordinateTransformer,
             implementationMode = if (previewMode) ImplementationMode.EXTERNAL else ImplementationMode.EMBEDDED,
-            modifier = Modifier.pointerInput(viewModel, coordinateTransformer) {
-                detectTapGestures { tapCoords ->
-                    if (!isFocusing) {
-                        scope.launch {
-                            autofocusCoords = tapCoords
-                            isFocusing = true
-                            with(coordinateTransformer) {
-                                viewModel.tapToFocus(tapCoords.transform())
+            modifier = Modifier
+                .pointerInput(viewModel, coordinateTransformer) {
+                    detectTapGestures { tapCoords ->
+                        if (!isFocusing) {
+                            scope.launch {
+                                autofocusCoords = tapCoords
+                                isFocusing = true
+                                with(coordinateTransformer) {
+                                    viewModel.tapToFocus(tapCoords.transform())
+                                }
+                                isFocusing = false
                             }
-                            isFocusing = false
                         }
                     }
                 }
-            }
+                .pointerInput(viewModel) {
+                    detectTransformGestures { _, _, zoom, _ ->
+                        viewModel.pinchToZoom(zoom)
+                    }
+                }
         )
 
         OverlayCanvas(viewModel)

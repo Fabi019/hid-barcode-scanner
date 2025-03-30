@@ -36,6 +36,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +61,7 @@ class NewCameraViewModel : ViewModel() {
 
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
+    private var cameraInfo: CameraInfo? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     private var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
@@ -94,7 +96,6 @@ class NewCameraViewModel : ViewModel() {
         lifecycleOwner: LifecycleOwner,
         frontCamera: Boolean,
         resolution: Int,
-        codeTypes: Set<String>,
         fixExposure: Boolean,
         focusMode: Int,
         onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
@@ -103,12 +104,8 @@ class NewCameraViewModel : ViewModel() {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
-        val options = BarcodeReader.Options()
-        options.formats = codeTypes.mapNotNull { it.toIntOrNull() }
-            .map { ZXingAnalyzer.index2Format(it) }.toSet()
-
         onBarcodeDetected = { value, format ->
-            if (value != _lastBarcode) {
+            if (!value.contentEquals(_lastBarcode)) {
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
                 onBarcode(value)
                 _lastBarcode = value
@@ -116,7 +113,7 @@ class NewCameraViewModel : ViewModel() {
         }
 
         val analyzer = ZXingAnalyzer(
-            options,
+            _readerOptions,
             _scanDelay,
             ::onBarcodeAnalyze,
             ::onBarcodeResult
@@ -183,6 +180,7 @@ class NewCameraViewModel : ViewModel() {
         )
 
         cameraControl = camera.cameraControl
+        cameraInfo = camera.cameraInfo
 
         onCameraReady(camera.cameraControl, camera.cameraInfo)
         Log.d(TAG, "Camera is ready!")
@@ -190,10 +188,13 @@ class NewCameraViewModel : ViewModel() {
         // Cancellation signals we're done with the camera
         try {
             awaitCancellation()
+        } catch (_: CancellationException) {
+            Log.d(TAG, "Coroutine was cancelled")
         } finally {
             Log.d(TAG, "Unbinding camera...")
             processCameraProvider.unbindAll()
             cameraControl = null
+            cameraInfo = null
             onCameraReady(null, null)
         }
     }
@@ -229,6 +230,16 @@ class NewCameraViewModel : ViewModel() {
             lastScanSize = scanSize
         }
         return PointF(point.x * scale - translation.x, point.y * scale - translation.y)
+    }
+
+    private var _readerOptions = BarcodeReader.Options()
+
+    fun updateBarcodeReaderOptions(codeTypes: Set<String>) {
+        _readerOptions.formats = codeTypes.mapNotNull { it.toIntOrNull() }
+            .map { ZXingAnalyzer.index2Format(it) }.toSet()
+
+        Log.d(TAG, "Updating reader options: ${_readerOptions.formats}")
+        barcodeAnalyzer?.setOptions(_readerOptions)
     }
 
     private var _fullyInside: Boolean = false
@@ -332,4 +343,15 @@ class NewCameraViewModel : ViewModel() {
             }
         }
     }
+
+    fun pinchToZoom(zoom: Float) {
+        val currentZoom = cameraInfo?.zoomState?.value ?: return
+        val currentZoomRatio = currentZoom.zoomRatio
+        val newZoomRatio = (currentZoomRatio * zoom).coerceIn(
+            currentZoom.minZoomRatio,
+            currentZoom.maxZoomRatio
+        )
+        cameraControl?.setZoomRatio(newZoomRatio)
+    }
+
 }
