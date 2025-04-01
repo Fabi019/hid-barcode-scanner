@@ -441,7 +441,7 @@ private fun ExportSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             stringResource(R.string.export_as),
@@ -496,6 +496,8 @@ private fun ExportSheetContent(
                 )
             }
         }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 

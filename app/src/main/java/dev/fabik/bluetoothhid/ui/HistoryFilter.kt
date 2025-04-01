@@ -119,7 +119,7 @@ fun FilterModalContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             stringResource(R.string.filter),
@@ -188,6 +188,8 @@ fun FilterModalContent(
                 Text(stringResource(R.string.apply))
             }
         }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
