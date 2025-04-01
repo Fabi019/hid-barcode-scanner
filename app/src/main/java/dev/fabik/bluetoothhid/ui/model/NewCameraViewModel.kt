@@ -139,6 +139,9 @@ class NewCameraViewModel : ViewModel() {
 
         // Apply focus mode settings
         Camera2Interop.Extender(analyzerBuilder).apply {
+            //setCaptureRequestOption(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_USE_SCENE_MODE)
+            //setCaptureRequestOption(CaptureRequest.CONTROL_SCENE_MODE, CameraMetadata.CONTROL_SCENE_MODE_BARCODE)
+
             if (fixExposure) {
                 // Sets a fixed exposure compensation and iso for the image
                 setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 1600)
@@ -234,11 +237,42 @@ class NewCameraViewModel : ViewModel() {
 
     private var _readerOptions = BarcodeReader.Options()
 
-    fun updateBarcodeReaderOptions(codeTypes: Set<String>) {
+    fun updateBarcodeReaderOptions(
+        codeTypes: Set<String>,
+        tryHarder: Boolean,
+        tryRotate: Boolean,
+        tryInvert: Boolean,
+        tryDownscale: Boolean,
+        assumePure: Boolean,
+        binarizer: Int,
+        downscaleFactor: Int,
+        downscaleThreshold: Int,
+        textMode: Int
+    ) {
         _readerOptions.formats = codeTypes.mapNotNull { it.toIntOrNull() }
             .map { ZXingAnalyzer.index2Format(it) }.toSet()
+        _readerOptions.tryHarder = tryHarder
+        _readerOptions.tryRotate = tryRotate
+        _readerOptions.tryInvert = tryInvert
+        _readerOptions.tryDownscale = tryDownscale
+        _readerOptions.isPure = assumePure
+        _readerOptions.binarizer = when (binarizer) {
+            0 -> BarcodeReader.Binarizer.LOCAL_AVERAGE
+            1 -> BarcodeReader.Binarizer.GLOBAL_HISTOGRAM
+            2 -> BarcodeReader.Binarizer.FIXED_THRESHOLD
+            else -> BarcodeReader.Binarizer.BOOL_CAST
+        }
+        _readerOptions.downscaleFactor = downscaleFactor
+        _readerOptions.downscaleThreshold = downscaleThreshold
+        _readerOptions.textMode = when (textMode) {
+            0 -> BarcodeReader.TextMode.PLAIN
+            1 -> BarcodeReader.TextMode.ECI
+            2 -> BarcodeReader.TextMode.HRI
+            3 -> BarcodeReader.TextMode.HEX
+            else -> BarcodeReader.TextMode.ESCAPED
+        }
 
-        Log.d(TAG, "Updating reader options: ${_readerOptions.formats}")
+        Log.d(TAG, "Updating reader options: $_readerOptions")
         barcodeAnalyzer?.setOptions(_readerOptions)
     }
 
@@ -266,6 +300,8 @@ class NewCameraViewModel : ViewModel() {
         _scanRegex = scanRegex
         _jsCode = jsCode
         _jsEngineService = jsEngineService
+
+        Log.d(TAG, "Updated scan parameters")
     }
 
     private var _lastBarcode: String? = null
@@ -307,15 +343,26 @@ class NewCameraViewModel : ViewModel() {
 
         _currentBarcode.update { _ -> barcode }
 
-        barcode?.value?.let {
+        barcode?.value?.let { v ->
+            var value = v
+
+            _scanRegex?.let { re ->
+                // extract first capture group if it exists
+                re.find(value)?.let { match ->
+                    match.groupValues.getOrNull(1)?.let { group ->
+                        value = group
+                    }
+                }
+            }
+
             _jsEngineService?.let { s ->
                 viewModelScope.launch(Dispatchers.IO) {
-                    val value =
-                        mapJS(s, it, ZXingAnalyzer.format2String(barcode.format))
+                    value =
+                        mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
                     onBarcodeDetected(value, barcode.format)
                 }
             } ?: run {
-                onBarcodeDetected(it, barcode.format)
+                onBarcodeDetected(value, barcode.format)
             }
         }
     }

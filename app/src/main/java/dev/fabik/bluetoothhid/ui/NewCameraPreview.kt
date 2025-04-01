@@ -45,6 +45,7 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.NewCameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.launch
 
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
@@ -88,11 +89,11 @@ fun CameraPreviewContent(
     }
 
     // Scanner settings
-    val frequency by rememberPreference(PreferenceStore.SCAN_FREQUENCY)
-    val fullyInside by rememberPreference(PreferenceStore.FULL_INSIDE)
-    val scanRegex by rememberPreference(PreferenceStore.SCAN_REGEX)
-    val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
-    val jsCode by rememberPreference(PreferenceStore.JS_CODE)
+    val frequency by rememberPreferenceDefault(PreferenceStore.SCAN_FREQUENCY)
+    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
+    val scanRegex by rememberPreferenceDefault(PreferenceStore.SCAN_REGEX)
+    val jsEnabled by rememberPreferenceDefault(PreferenceStore.ENABLE_JS)
+    val jsCode by rememberPreferenceDefault(PreferenceStore.JS_CODE)
 
     LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
         viewModel.updateScanParameters(
@@ -103,10 +104,41 @@ fun CameraPreviewContent(
     }
 
     // Barcode reader options
-    val codeTypes by rememberPreference(PreferenceStore.CODE_TYPES)
+    val codeTypes by rememberPreferenceDefault(PreferenceStore.CODE_TYPES)
+    val tryHarder by rememberPreferenceDefault(PreferenceStore.ADV_TRY_HARDER)
+    val tryRotate by rememberPreferenceDefault(PreferenceStore.ADV_TRY_ROTATE)
+    val tryInvert by rememberPreferenceDefault(PreferenceStore.ADV_TRY_INVERT)
+    val tryDownscale by rememberPreferenceDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
+    val assumePure by rememberPreferenceDefault(PreferenceStore.ADV_IS_PURE)
+    val binarizer by rememberPreferenceDefault(PreferenceStore.ADV_BINARIZER)
+    val downscaleFactor by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
+    val downscaleThreshold by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
+    val textMode by rememberPreferenceDefault(PreferenceStore.ADV_TEXT_MODE)
 
-    LaunchedEffect(codeTypes) {
-        viewModel.updateBarcodeReaderOptions(codeTypes)
+    LaunchedEffect(
+        codeTypes,
+        tryHarder,
+        tryRotate,
+        tryInvert,
+        tryDownscale,
+        assumePure,
+        binarizer,
+        downscaleFactor,
+        downscaleThreshold,
+        textMode
+    ) {
+        viewModel.updateBarcodeReaderOptions(
+            codeTypes,
+            tryHarder,
+            tryRotate,
+            tryInvert,
+            tryDownscale,
+            assumePure,
+            binarizer,
+            downscaleFactor,
+            downscaleThreshold,
+            textMode,
+        )
     }
 
     surfaceRequest?.let { request ->
