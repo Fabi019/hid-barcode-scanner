@@ -66,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
@@ -340,6 +341,8 @@ fun ScannerSettings() {
         icon = Icons.Default.QrCode2,
         preference = PreferenceStore.CODE_TYPES
     )
+
+    AdvancedOptionsModal()
 
     SwitchPreference(
         title = stringResource(R.string.restrict_area),

@@ -82,6 +82,16 @@ open class PreferenceStore {
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
         val PERSIST_HISTORY = booleanPreferencesKey("persist_history") defaultsTo true
 
+        val ADV_TRY_HARDER = booleanPreferencesKey("adv_try_harder") defaultsTo false
+        val ADV_TRY_ROTATE = booleanPreferencesKey("adv_try_rotate") defaultsTo false
+        val ADV_TRY_INVERT = booleanPreferencesKey("adv_try_invert") defaultsTo false
+        val ADV_TRY_DOWNSCALE = booleanPreferencesKey("adv_try_downscale") defaultsTo false
+        val ADV_IS_PURE = booleanPreferencesKey("adv_is_pure") defaultsTo false
+        val ADV_BINARIZER = intPreferencesKey("adv_binarizer") defaultsTo 0
+        val ADV_DOWNSCALE_FACTOR = intPreferencesKey("adv_downscale_factor") defaultsTo 3
+        val ADV_DOWNSCALE_THRESHOLD = intPreferencesKey("adv_downscale_threshold") defaultsTo 500
+        val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode") defaultsTo 2
+
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
 
         // Utility preferences
