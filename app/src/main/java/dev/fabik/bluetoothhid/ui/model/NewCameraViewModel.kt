@@ -53,6 +53,11 @@ import kotlin.coroutines.suspendCoroutine
 class NewCameraViewModel : ViewModel() {
     companion object {
         const val TAG = "NewCameraViewModel"
+
+        val SD_480P = Size(640, 480)
+        val HD_720P = Size(960, 720)
+        val FHD_1080P = Size(1440, 1080)
+        val UHD_2160P = Size(2160, 1440)
     }
 
     // Used to set up a link between the Camera and your UI.
@@ -123,10 +128,10 @@ class NewCameraViewModel : ViewModel() {
         val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
             ResolutionStrategy(
                 when (resolution) {
-                    3 -> CameraViewModel.UHD_2160P
-                    2 -> CameraViewModel.FHD_1080P
-                    1 -> CameraViewModel.HD_720P
-                    else -> CameraViewModel.SD_480P
+                    3 -> UHD_2160P
+                    2 -> FHD_1080P
+                    1 -> HD_720P
+                    else -> SD_480P
                 },
                 ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
             )

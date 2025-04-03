@@ -80,7 +80,7 @@
     <string name="devices">Devices</string>
     <string name="keyboard_layout">Keyboard layout</string>
     <string name="keyboard_layout_desc">Set the keyboard layout. Change if you want to type special characters or don\'t use a QWERTY layout.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
     <string name="disconnect">Disconnect</string>
     <string name="more">More</string>
     <string name="toggle_flash">Toggle flash</string>

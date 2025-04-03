@@ -81,7 +81,6 @@
     <string name="devices">Urządzenia</string>
     <string name="keyboard_layout">Układ klawiatury</string>
     <string name="keyboard_layout_desc">Ustawienia układu klawiatury. Zmień, jeśli chcesz wpisywać znaki specjalne lub nie używasz układu QWERTY.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
     <string name="disconnect">Rozłącz</string>
     <string name="more">Więcej</string>
     <string name="toggle_flash">Włącz lampę błyskową</string>

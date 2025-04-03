@@ -522,8 +522,7 @@ fun AboutSettings() {
             BuildConfig.BUILD_TYPE,
             BuildConfig.VERSION_NAME,
             BuildConfig.GIT_COMMIT_HASH,
-            BuildConfig.VERSION_CODE,
-            BuildConfig.FLAVOR
+            BuildConfig.VERSION_CODE
         ),
         icon = Icons.Default.Info
     ) {
