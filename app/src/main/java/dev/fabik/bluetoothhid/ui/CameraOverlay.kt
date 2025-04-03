@@ -38,7 +38,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fabik.bluetoothhid.ui.model.NewCameraViewModel
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
@@ -49,7 +49,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @Composable
-fun OverlayCanvas(viewModel: NewCameraViewModel) {
+fun OverlayCanvas(viewModel: CameraViewModel) {
     val overlayType by rememberPreference(PreferenceStore.OVERLAY_TYPE)
     val restrictArea by rememberPreference(PreferenceStore.RESTRICT_AREA)
     val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
@@ -150,7 +150,7 @@ fun OverlayCanvas(viewModel: NewCameraViewModel) {
 }
 
 @Composable
-fun CustomOverlayButtons(viewModel: NewCameraViewModel) {
+fun CustomOverlayButtons(viewModel: CameraViewModel) {
     val context = LocalContext.current
     var posOffsetX by remember {
         mutableFloatStateOf(runBlocking {
@@ -261,7 +261,7 @@ fun CustomOverlayButtons(viewModel: NewCameraViewModel) {
 }
 
 @Composable
-fun DebugOverlay(viewModel: NewCameraViewModel) {
+fun DebugOverlay(viewModel: CameraViewModel) {
     val cameraTrace by viewModel.cameraTrace.state.collectAsStateWithLifecycle()
     val detectorTrace by viewModel.detectorTrace.state.collectAsStateWithLifecycle()
 

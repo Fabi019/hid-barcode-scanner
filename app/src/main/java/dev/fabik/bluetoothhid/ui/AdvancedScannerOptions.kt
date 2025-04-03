@@ -88,7 +88,7 @@ fun AdvancedOptionsModalContent() {
         AdvancedToggleOption("Try rotate image", PreferenceStore.ADV_TRY_ROTATE)
         AdvancedToggleOption("Try inverted", PreferenceStore.ADV_TRY_INVERT)
         AdvancedToggleOption("Try downscale", PreferenceStore.ADV_TRY_DOWNSCALE)
-        AdvancedToggleOption("Assume no errors", PreferenceStore.ADV_IS_PURE)
+        AdvancedSliderOption("Minimum scan-lines", 1 to 50, PreferenceStore.ADV_MIN_LINE_COUNT)
 
         Text(
             "Processing",
@@ -103,7 +103,7 @@ fun AdvancedOptionsModalContent() {
         )
         AdvancedSliderOption("Downscale factor", 1 to 10, PreferenceStore.ADV_DOWNSCALE_FACTOR)
         AdvancedSliderOption(
-            "Downscale threshold",
+            "Downscale threshold (px)",
             0 to 1000,
             PreferenceStore.ADV_DOWNSCALE_THRESHOLD
         )

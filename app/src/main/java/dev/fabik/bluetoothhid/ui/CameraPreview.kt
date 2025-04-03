@@ -42,22 +42,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
-import dev.fabik.bluetoothhid.ui.model.NewCameraViewModel
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.launch
 
-// based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 @Composable
 fun CameraPreviewContent(
-    viewModel: NewCameraViewModel = viewModel<NewCameraViewModel>(),
+    viewModel: CameraViewModel = viewModel<CameraViewModel>(),
     onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
     onBarcodeDetected: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val jsEngineService = LocalJsEngineService.current
 
     val scope = rememberCoroutineScope()
     val errorDialog = rememberDialogState()
@@ -69,7 +67,6 @@ fun CameraPreviewContent(
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     LaunchedEffect(lifecycleOwner, frontCamera, resolution, fixExposure, focusMode) {
         runCatching {
             viewModel.bindToCamera(
@@ -88,59 +85,9 @@ fun CameraPreviewContent(
         }
     }
 
-    // Scanner settings
-    val frequency by rememberPreferenceDefault(PreferenceStore.SCAN_FREQUENCY)
-    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
-    val scanRegex by rememberPreferenceDefault(PreferenceStore.SCAN_REGEX)
-    val jsEnabled by rememberPreferenceDefault(PreferenceStore.ENABLE_JS)
-    val jsCode by rememberPreferenceDefault(PreferenceStore.JS_CODE)
+    CameraPreviewPreferences(viewModel)
 
-    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
-        viewModel.updateScanParameters(
-            fullyInside, runCatching {
-                if (!scanRegex.isBlank()) scanRegex.toRegex() else null
-            }.getOrNull(), if (jsEnabled) jsCode else null, frequency, jsEngineService
-        )
-    }
-
-    // Barcode reader options
-    val codeTypes by rememberPreferenceDefault(PreferenceStore.CODE_TYPES)
-    val tryHarder by rememberPreferenceDefault(PreferenceStore.ADV_TRY_HARDER)
-    val tryRotate by rememberPreferenceDefault(PreferenceStore.ADV_TRY_ROTATE)
-    val tryInvert by rememberPreferenceDefault(PreferenceStore.ADV_TRY_INVERT)
-    val tryDownscale by rememberPreferenceDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
-    val assumePure by rememberPreferenceDefault(PreferenceStore.ADV_IS_PURE)
-    val binarizer by rememberPreferenceDefault(PreferenceStore.ADV_BINARIZER)
-    val downscaleFactor by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
-    val downscaleThreshold by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
-    val textMode by rememberPreferenceDefault(PreferenceStore.ADV_TEXT_MODE)
-
-    LaunchedEffect(
-        codeTypes,
-        tryHarder,
-        tryRotate,
-        tryInvert,
-        tryDownscale,
-        assumePure,
-        binarizer,
-        downscaleFactor,
-        downscaleThreshold,
-        textMode
-    ) {
-        viewModel.updateBarcodeReaderOptions(
-            codeTypes,
-            tryHarder,
-            tryRotate,
-            tryInvert,
-            tryDownscale,
-            assumePure,
-            binarizer,
-            downscaleFactor,
-            downscaleThreshold,
-            textMode,
-        )
-    }
-
+    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     surfaceRequest?.let { request ->
         var isFocusing by remember { mutableStateOf(false) }
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
@@ -205,5 +152,63 @@ fun CameraPreviewContent(
         }
     ) {
         Text(stringResource(R.string.camera_error_desc))
+    }
+}
+
+@Composable
+fun CameraPreviewPreferences(viewModel: CameraViewModel) {
+    val jsEngineService = LocalJsEngineService.current
+
+    // Scanner settings
+    val frequency by rememberPreferenceDefault(PreferenceStore.SCAN_FREQUENCY)
+    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
+    val scanRegex by rememberPreferenceDefault(PreferenceStore.SCAN_REGEX)
+    val jsEnabled by rememberPreferenceDefault(PreferenceStore.ENABLE_JS)
+    val jsCode by rememberPreferenceDefault(PreferenceStore.JS_CODE)
+
+    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
+        viewModel.updateScanParameters(
+            fullyInside, runCatching {
+                if (!scanRegex.isBlank()) scanRegex.toRegex() else null
+            }.getOrNull(), if (jsEnabled) jsCode else null, frequency, jsEngineService
+        )
+    }
+
+    // Barcode reader options
+    val codeTypes by rememberPreferenceDefault(PreferenceStore.CODE_TYPES)
+    val tryHarder by rememberPreferenceDefault(PreferenceStore.ADV_TRY_HARDER)
+    val tryRotate by rememberPreferenceDefault(PreferenceStore.ADV_TRY_ROTATE)
+    val tryInvert by rememberPreferenceDefault(PreferenceStore.ADV_TRY_INVERT)
+    val tryDownscale by rememberPreferenceDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
+    val minLines by rememberPreferenceDefault(PreferenceStore.ADV_MIN_LINE_COUNT)
+    val binarizer by rememberPreferenceDefault(PreferenceStore.ADV_BINARIZER)
+    val downscaleFactor by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
+    val downscaleThreshold by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
+    val textMode by rememberPreferenceDefault(PreferenceStore.ADV_TEXT_MODE)
+
+    LaunchedEffect(
+        codeTypes,
+        tryHarder,
+        tryRotate,
+        tryInvert,
+        tryDownscale,
+        minLines,
+        binarizer,
+        downscaleFactor,
+        downscaleThreshold,
+        textMode
+    ) {
+        viewModel.updateBarcodeReaderOptions(
+            codeTypes,
+            tryHarder,
+            tryRotate,
+            tryInvert,
+            tryDownscale,
+            minLines,
+            binarizer,
+            downscaleFactor,
+            downscaleThreshold,
+            textMode,
+        )
     }
 }

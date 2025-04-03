@@ -50,7 +50,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
-class NewCameraViewModel : ViewModel() {
+class CameraViewModel : ViewModel() {
     companion object {
         const val TAG = "NewCameraViewModel"
 
@@ -248,7 +248,7 @@ class NewCameraViewModel : ViewModel() {
         tryRotate: Boolean,
         tryInvert: Boolean,
         tryDownscale: Boolean,
-        assumePure: Boolean,
+        minLines: Int,
         binarizer: Int,
         downscaleFactor: Int,
         downscaleThreshold: Int,
@@ -260,7 +260,7 @@ class NewCameraViewModel : ViewModel() {
         _readerOptions.tryRotate = tryRotate
         _readerOptions.tryInvert = tryInvert
         _readerOptions.tryDownscale = tryDownscale
-        _readerOptions.isPure = assumePure
+        _readerOptions.minLineCount = minLines
         _readerOptions.binarizer = when (binarizer) {
             0 -> BarcodeReader.Binarizer.LOCAL_AVERAGE
             1 -> BarcodeReader.Binarizer.GLOBAL_HISTOGRAM
