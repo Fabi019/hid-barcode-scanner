@@ -283,4 +283,8 @@
     <string name="save_to_file">Als Datei speichern</string>
     <string name="invalid_regex">Fehler in Regex</string>
     <string name="template_error">Template muss entweder {CODE}, {CODE_B64} oder {CODE_HEX} enthalten</string>
+    <string name="advanced_options">Erweiterte Optionen</string>
+    <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
+    <string name="detection">Erkennung</string>
+    <string name="processing">Bearbeitung</string>
 </resources>
