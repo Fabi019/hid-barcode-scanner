@@ -31,10 +31,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlin.math.roundToInt
@@ -46,8 +48,8 @@ fun AdvancedOptionsModal() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     ButtonPreference(
-        title = "Advanced options",
-        desc = "Change further scan parameters",
+        title = stringResource(R.string.advanced_options),
+        desc = stringResource(R.string.advanced_opts_desc),
         icon = Icons.Default.Science,
         onClick = { showSheet = true }
     )
@@ -72,50 +74,64 @@ fun AdvancedOptionsModalContent() {
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            "Advanced options",
+            stringResource(R.string.advanced_options),
             style = MaterialTheme.typography.titleLarge,
         )
 
         Spacer(Modifier.height(4.dp))
 
         Text(
-            "Detection",
+            stringResource(R.string.detection),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleSmall
         )
 
-        AdvancedToggleOption("Try harder", PreferenceStore.ADV_TRY_HARDER)
-        AdvancedToggleOption("Try rotate image", PreferenceStore.ADV_TRY_ROTATE)
-        AdvancedToggleOption("Try inverted", PreferenceStore.ADV_TRY_INVERT)
-        AdvancedToggleOption("Try downscale", PreferenceStore.ADV_TRY_DOWNSCALE)
-        AdvancedSliderOption("Minimum scan-lines", 1 to 50, PreferenceStore.ADV_MIN_LINE_COUNT)
+        AdvancedToggleOption(stringResource(R.string.try_harder), PreferenceStore.ADV_TRY_HARDER)
+        AdvancedToggleOption(
+            stringResource(R.string.try_rotate_image),
+            PreferenceStore.ADV_TRY_ROTATE
+        )
+        AdvancedToggleOption(stringResource(R.string.try_inverted), PreferenceStore.ADV_TRY_INVERT)
+        AdvancedToggleOption(
+            stringResource(R.string.try_downscale),
+            PreferenceStore.ADV_TRY_DOWNSCALE
+        )
+        AdvancedSliderOption(
+            stringResource(R.string.minimum_scan_lines),
+            1 to 50,
+            PreferenceStore.ADV_MIN_LINE_COUNT
+        )
 
         Text(
-            "Processing",
+            stringResource(R.string.processing),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleSmall
         )
 
         AdvancedSelectionOption(
-            "Binarizer",
+            stringResource(R.string.binarizer),
             arrayOf("LOCAL_AVERAGE", "GLOBAL_HISTOGRAM", "FIXED_THRESHOLD", "BOOL_CAST"),
             PreferenceStore.ADV_BINARIZER
         )
-        AdvancedSliderOption("Downscale factor", 1 to 10, PreferenceStore.ADV_DOWNSCALE_FACTOR)
         AdvancedSliderOption(
-            "Downscale threshold (px)",
+            stringResource(R.string.downscale_factor),
+            1 to 10,
+            PreferenceStore.ADV_DOWNSCALE_FACTOR
+        )
+        AdvancedSliderOption(
+            stringResource(R.string.downscale_threshold),
             0 to 1000,
             PreferenceStore.ADV_DOWNSCALE_THRESHOLD
         )
 
         Text(
-            "Parser",
+            stringResource(R.string.parser),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleSmall
         )
 
         AdvancedSelectionOption(
-            "Text mode",
+            stringResource(R.string.text_mode),
             arrayOf("PLAIN", "ECI", "HRI", "HEX", "ESCAPED"),
             PreferenceStore.ADV_TEXT_MODE
         )
@@ -163,7 +179,7 @@ fun AdvancedSelectionOption(
         OutlinedTextField(
             readOnly = true,
             singleLine = true,
-            value = values[selectedIndex],
+            value = values.getOrNull(selectedIndex) ?: "",
             onValueChange = { },
             label = { Text(text) },
             trailingIcon = {

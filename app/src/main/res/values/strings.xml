@@ -214,6 +214,20 @@
     <string name="save_to_file">Save to file</string>
     <string name="invalid_regex">Invalid regex</string>
     <string name="template_error">Template must contain either {CODE}, {CODE_B64} or {CODE_HEX}</string>
+    <string name="advanced_options">Advanced options</string>
+    <string name="advanced_opts_desc">Adjust further scan parameters</string>
+    <string name="detection">Detection</string>
+    <string name="try_harder">Try harder</string>
+    <string name="try_rotate_image">Try rotate image</string>
+    <string name="try_inverted">Try inverted</string>
+    <string name="try_downscale">Try downscale</string>
+    <string name="minimum_scan_lines">Minimum scan-lines</string>
+    <string name="processing">Processing</string>
+    <string name="binarizer">Binarizer</string>
+    <string name="downscale_factor">Downscale factor</string>
+    <string name="downscale_threshold">Downscale threshold (px)</string>
+    <string name="parser">Parser</string>
+    <string name="text_mode">Text mode</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
