@@ -20,7 +20,7 @@ running Android 9 or greater.
 ## Features
 
 - Supports a wide range of Linear and 2D-Codes thanks to
-  Googles [ML-Kit](https://developers.google.com/ml-kit/vision/barcode-scanning)
+  the [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) library
 - Doesn't require any internet connection
 - History feature that allows exporting the session as text, JSON or CSV
 - Multiple different keyboard layouts to choose from
