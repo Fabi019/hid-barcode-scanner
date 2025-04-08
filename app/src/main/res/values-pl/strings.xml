@@ -221,21 +221,6 @@
         <item>Spacja</item>
         <item>Własny szablon</item>
     </string-array>
-    <string-array name="code_types_values">
-        <item>CODE_128</item>
-        <item>CODE_39</item>
-        <item>CODE_93</item>
-        <item>CODABAR</item>
-        <item>DATA_MATRIX</item>
-        <item>EAN_13</item>
-        <item>EAN_8</item>
-        <item>ITF</item>
-        <item>QR_CODE</item>
-        <item>UPC_A</item>
-        <item>UPC_E</item>
-        <item>PDF417</item>
-        <item>AZTEC</item>
-    </string-array>
     <string-array name="keyboard_layout_values">
         <item>Angielski (US)</item>
         <item>Niemiecki (DE)</item>
