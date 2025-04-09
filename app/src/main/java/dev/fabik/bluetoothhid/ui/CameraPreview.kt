@@ -44,8 +44,8 @@ import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import dev.fabik.bluetoothhid.utils.rememberPreference
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.launch
 
 @Composable
@@ -63,7 +63,6 @@ fun CameraPreviewContent(
     // Camera settings
     val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
     val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
-    val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
     val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
     val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
 
@@ -91,6 +90,8 @@ fun CameraPreviewContent(
     surfaceRequest?.let { request ->
         var isFocusing by remember { mutableStateOf(false) }
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
+
+        val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
 
         val coordinateTransformer = remember { MutableCoordinateTransformer() }
 
@@ -157,14 +158,15 @@ fun CameraPreviewContent(
 
 @Composable
 fun CameraPreviewPreferences(viewModel: CameraViewModel) {
+    val context = LocalContext.current
     val jsEngineService = LocalJsEngineService.current
 
     // Scanner settings
-    val frequency by rememberPreferenceDefault(PreferenceStore.SCAN_FREQUENCY)
-    val fullyInside by rememberPreferenceDefault(PreferenceStore.FULL_INSIDE)
-    val scanRegex by rememberPreferenceDefault(PreferenceStore.SCAN_REGEX)
-    val jsEnabled by rememberPreferenceDefault(PreferenceStore.ENABLE_JS)
-    val jsCode by rememberPreferenceDefault(PreferenceStore.JS_CODE)
+    val frequency by context.getPreferenceStateDefault(PreferenceStore.SCAN_FREQUENCY)
+    val fullyInside by context.getPreferenceStateDefault(PreferenceStore.FULL_INSIDE)
+    val scanRegex by context.getPreferenceStateDefault(PreferenceStore.SCAN_REGEX)
+    val jsEnabled by context.getPreferenceStateDefault(PreferenceStore.ENABLE_JS)
+    val jsCode by context.getPreferenceStateDefault(PreferenceStore.JS_CODE)
 
     LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
         viewModel.updateScanParameters(
@@ -175,16 +177,16 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
     }
 
     // Barcode reader options
-    val codeTypes by rememberPreferenceDefault(PreferenceStore.CODE_TYPES)
-    val tryHarder by rememberPreferenceDefault(PreferenceStore.ADV_TRY_HARDER)
-    val tryRotate by rememberPreferenceDefault(PreferenceStore.ADV_TRY_ROTATE)
-    val tryInvert by rememberPreferenceDefault(PreferenceStore.ADV_TRY_INVERT)
-    val tryDownscale by rememberPreferenceDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
-    val minLines by rememberPreferenceDefault(PreferenceStore.ADV_MIN_LINE_COUNT)
-    val binarizer by rememberPreferenceDefault(PreferenceStore.ADV_BINARIZER)
-    val downscaleFactor by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
-    val downscaleThreshold by rememberPreferenceDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
-    val textMode by rememberPreferenceDefault(PreferenceStore.ADV_TEXT_MODE)
+    val codeTypes by context.getPreferenceStateDefault(PreferenceStore.CODE_TYPES)
+    val tryHarder by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_HARDER)
+    val tryRotate by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_ROTATE)
+    val tryInvert by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_INVERT)
+    val tryDownscale by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
+    val minLines by context.getPreferenceStateDefault(PreferenceStore.ADV_MIN_LINE_COUNT)
+    val binarizer by context.getPreferenceStateDefault(PreferenceStore.ADV_BINARIZER)
+    val downscaleFactor by context.getPreferenceStateDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
+    val downscaleThreshold by context.getPreferenceStateDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
+    val textMode by context.getPreferenceStateDefault(PreferenceStore.ADV_TEXT_MODE)
 
     LaunchedEffect(
         codeTypes,

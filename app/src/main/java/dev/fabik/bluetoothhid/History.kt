@@ -224,7 +224,7 @@ private fun HistoryViewModel.HistoryTopBar(
                     else Icons.Default.Search, "Search"
                 )
             }
-            FilterModal(filteredTypes, filterDateStart, filterDateEnd) { sel, a, b ->
+            FilterModal(filteredTypes.toSet(), filterDateStart, filterDateEnd) { sel, a, b ->
                 filteredTypes.clear()
                 filteredTypes.addAll(sel)
                 filterDateStart = a

@@ -53,10 +53,10 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterModal(
-    selectedTypes: List<Int>,
+    selectedTypes: Set<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<Int>, Long?, Long?) -> Unit
+    onApply: (Set<Int>, Long?, Long?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -92,10 +92,10 @@ fun FilterModal(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FilterModalContent(
-    selectedTypes: List<Int>,
+    selectedTypes: Set<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<Int>, Long?, Long?) -> Unit
+    onApply: (Set<Int>, Long?, Long?) -> Unit
 ) {
     var selectedTypes =
         rememberSaveable(saver = listSaver({ it.toList() }, { it.toMutableStateList() })) {
@@ -184,7 +184,13 @@ fun FilterModalContent(
                 Text(stringResource(R.string.clear))
             }
 
-            Button(onClick = { onApply(selectedTypes, selectedDateStart, selectedDateEnd) }) {
+            Button(onClick = {
+                onApply(
+                    selectedTypes.toSet(),
+                    selectedDateStart,
+                    selectedDateEnd
+                )
+            }) {
                 Text(stringResource(R.string.apply))
             }
         }
@@ -239,5 +245,5 @@ fun convertMillisToDate(millis: Long?): String {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    FilterModalContent(listOf(), null, null) { sel, a, b -> }
+    FilterModalContent(setOf(), null, null) { sel, a, b -> }
 }

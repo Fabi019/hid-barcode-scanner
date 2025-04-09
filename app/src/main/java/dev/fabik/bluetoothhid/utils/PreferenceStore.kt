@@ -117,7 +117,10 @@ fun <T> Context.getPreference(pref: PreferenceStore.Preference<T>): Flow<T> = da
     }
 
 @Composable
-fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>, initial: T): State<T> {
+fun <T> Context.getPreferenceStateDefault(
+    pref: PreferenceStore.Preference<T>,
+    initial: T = pref.defaultValue
+): State<T> {
     return remember { getPreference(pref) }.collectAsState(initial)
 }
 
@@ -187,7 +190,7 @@ fun <T> rememberPreferenceDefault(
 ): MutableState<T> {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val state = context.getPreferenceState(pref, initial)
+    val state = context.getPreferenceStateDefault(pref, initial)
 
     return remember {
         object : MutableState<T> {
