@@ -15,16 +15,19 @@ import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
@@ -32,8 +35,11 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -83,7 +89,6 @@ import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
-import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -97,6 +102,42 @@ import kotlinx.coroutines.launch
  * @param currentDevice the device that is currently connected, can be null if no device is connected
  * @param sendText callback to send text to the current device
  */
+
+@Composable
+fun BoxScope.ElevatedWarningCard(
+    message: String,
+    subMessage: String? = null,
+    onClick: () -> Unit,
+    visible: Boolean
+) {
+    val scope = rememberCoroutineScope()
+    
+    AnimatedVisibility(
+        visible = visible, // You will control visibility dynamically
+        modifier = Modifier.padding(12.dp).align(Alignment.TopCenter)
+    ) {
+        ElevatedCard(
+            onClick = { scope.launch { onClick() } }
+        ) {
+            Row(
+                Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Rounded.Warning, contentDescription = "Warning")
+                Column {
+                    Text(message)
+                    subMessage?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
@@ -110,6 +151,8 @@ fun Scanner(
     val currentSendText by rememberUpdatedState(sendText)
 
     val fullScreen by rememberPreference(PreferenceStore.SCANNER_FULL_SCREEN)
+
+    val navController = LocalNavigation.current
 
     Scaffold(
         topBar = {
@@ -147,6 +190,17 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
+
+            ElevatedWarningCard(
+                    message = stringResource(R.string.no_device_connected),
+                    subMessage = stringResource(R.string.click_to_connect),
+                    onClick = {
+                        navController.navigate(Routes.Devices)
+                    },
+                    visible = currentDevice == null
+                )
+            }
+
             cameraInfo?.let {
                 ZoomStateInfo(it)
             }
@@ -415,37 +469,20 @@ fun BoxScope.CapsLockWarning() {
     val scope = rememberCoroutineScope()
 
     controller?.let {
-        AnimatedVisibility(
-            controller.isCapsLockOn, Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
-        ) {
-            ElevatedCard(
-                onClick = {
-                    scope.launch {
-                        controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
-                    }
+        ElevatedWarningCard(
+            message = stringResource(R.string.caps_lock_activated),
+            subMessage = stringResource(R.string.click_to_turn_off),
+            onClick = {
+                scope.launch {
+                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
-            ) {
-                Row(
-                    Modifier.padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Rounded.Warning, "Warning")
-                    Column {
-                        Text(stringResource(R.string.caps_lock_activated))
-                        Text(
-                            stringResource(R.string.click_to_turn_off),
-                            style = Typography.bodySmall
-                        )
-                    }
-                }
-            }
-        }
-
+            },
+            visible = controller.isCapsLockOn
+        )
     }
 }
+
+
 
 /**
  * Displays the current zoom-factor as a text in the top-start corner.
