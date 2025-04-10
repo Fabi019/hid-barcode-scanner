@@ -54,7 +54,10 @@ jobs:
           generate_release_notes: true
           draft: true
           files: |
-            ./app/build/outputs/apk/standard/release/app-standard-release.apk
-            ./app/build/outputs/apk/bundled/release/app-bundled-release.apk
-            ./app/build/outputs/bundle/bundledRelease/app-bundled-release.aab
-            ./app/build/outputs/bundle/standardRelease/app-standard-release.aab
+            ./app/build/outputs/apk/release/app-arm64-v8a-release.apk
+            ./app/build/outputs/apk/release/app-armeabi-v7a-release.apk
+            ./app/build/outputs/apk/release/app-armeabi-v7a-release.apk
+            ./app/build/outputs/apk/release/app-universal-release.apk
+            ./app/build/outputs/apk/release/app-x86_64-release.apk
+            ./app/build/outputs/apk/release/app-x86-release.apk
+            ./app/build/outputs/bundle/release/app-release.aab

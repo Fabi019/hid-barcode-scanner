@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CropFree
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeviceUnknown
 import androidx.compose.material.icons.filled.Expand
 import androidx.compose.material.icons.filled.Exposure
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Hd
 import androidx.compose.material.icons.filled.HdrAuto
-import androidx.compose.material.icons.filled.Highlight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.KeyboardCommandKey
@@ -48,7 +46,6 @@ import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -66,6 +63,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxPreference
@@ -319,12 +317,12 @@ fun CameraSettings() {
         preference = PreferenceStore.SCAN_RESOLUTION
     )
 
-    SwitchPreference(
-        title = stringResource(R.string.auto_zoom),
-        desc = stringResource(R.string.zooms_in_on_codes_to_far_away),
-        icon = Icons.Default.ZoomIn,
-        preference = PreferenceStore.AUTO_ZOOM
-    )
+    /*SwitchPreference(
+            title = stringResource(R.string.auto_zoom),
+            desc = stringResource(R.string.zooms_in_on_codes_to_far_away),
+            icon = Icons.Default.ZoomIn,
+            preference = PreferenceStore.AUTO_ZOOM
+    )*/
 }
 
 @Composable
@@ -340,6 +338,8 @@ fun ScannerSettings() {
         icon = Icons.Default.QrCode2,
         preference = PreferenceStore.CODE_TYPES
     )
+
+    AdvancedOptionsModal()
 
     SwitchPreference(
         title = stringResource(R.string.restrict_area),
@@ -400,12 +400,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.HIGHLIGHT_TYPE
     )*/
 
-    SwitchPreference(
+    /*SwitchPreference(
         title = stringResource(R.string.show_possible),
         desc = stringResource(R.string.highlights_possible_codes),
         icon = Icons.Default.Highlight,
         preference = PreferenceStore.SHOW_POSSIBLE
-    )
+    )*/
 
     SwitchPreference(
         title = stringResource(R.string.full_inside),
@@ -436,12 +436,12 @@ fun ScannerSettings() {
         preference = PreferenceStore.VIBRATE
     )
 
-    SwitchPreference(
+    /*SwitchPreference(
         title = stringResource(R.string.raw_value),
         desc = stringResource(R.string.raw_value_desc),
         icon = Icons.Default.Description,
         preference = PreferenceStore.RAW_VALUE
-    )
+    )*/
 
     SwitchPreference(
         title = stringResource(R.string.private_mode),
@@ -519,8 +519,7 @@ fun AboutSettings() {
             BuildConfig.BUILD_TYPE,
             BuildConfig.VERSION_NAME,
             BuildConfig.GIT_COMMIT_HASH,
-            BuildConfig.VERSION_CODE,
-            BuildConfig.FLAVOR
+            BuildConfig.VERSION_CODE
         ),
         icon = Icons.Default.Info
     ) {

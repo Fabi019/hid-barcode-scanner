@@ -53,10 +53,10 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterModal(
-    selectedTypes: List<String>,
+    selectedTypes: Set<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<String>, Long?, Long?) -> Unit
+    onApply: (Set<Int>, Long?, Long?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -92,10 +92,10 @@ fun FilterModal(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FilterModalContent(
-    selectedTypes: List<String>,
+    selectedTypes: Set<Int>,
     startDate: Long?,
     endDate: Long?,
-    onApply: (List<String>, Long?, Long?) -> Unit
+    onApply: (Set<Int>, Long?, Long?) -> Unit
 ) {
     var selectedTypes =
         rememberSaveable(saver = listSaver({ it.toList() }, { it.toMutableStateList() })) {
@@ -119,7 +119,7 @@ fun FilterModalContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             stringResource(R.string.filter),
@@ -154,14 +154,14 @@ fun FilterModalContent(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
-            for (type in stringArrayResource(R.array.code_types_values)) {
+            stringArrayResource(R.array.code_types_values).forEachIndexed { i, type ->
                 FilterChip(
-                    selected = selectedTypes.contains(type),
+                    selected = selectedTypes.contains(i),
                     onClick = {
-                        if (selectedTypes.contains(type)) {
-                            selectedTypes.remove(type)
+                        if (selectedTypes.contains(i)) {
+                            selectedTypes.remove(i)
                         } else {
-                            selectedTypes.add(type)
+                            selectedTypes.add(i)
                         }
                     },
                     label = { Text(type) },
@@ -184,10 +184,18 @@ fun FilterModalContent(
                 Text(stringResource(R.string.clear))
             }
 
-            Button(onClick = { onApply(selectedTypes, selectedDateStart, selectedDateEnd) }) {
+            Button(onClick = {
+                onApply(
+                    selectedTypes.toSet(),
+                    selectedDateStart,
+                    selectedDateEnd
+                )
+            }) {
                 Text(stringResource(R.string.apply))
             }
         }
+
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -237,5 +245,5 @@ fun convertMillisToDate(millis: Long?): String {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    FilterModalContent(listOf(), null, null) { sel, a, b -> }
+    FilterModalContent(setOf(), null, null) { sel, a, b -> }
 }

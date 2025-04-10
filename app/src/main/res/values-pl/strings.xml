@@ -81,7 +81,6 @@
     <string name="devices">Urządzenia</string>
     <string name="keyboard_layout">Układ klawiatury</string>
     <string name="keyboard_layout_desc">Ustawienia układu klawiatury. Zmień, jeśli chcesz wpisywać znaki specjalne lub nie używasz układu QWERTY.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
     <string name="disconnect">Rozłącz</string>
     <string name="more">Więcej</string>
     <string name="toggle_flash">Włącz lampę błyskową</string>
@@ -222,21 +221,6 @@
         <item>Spacja</item>
         <item>Własny szablon</item>
     </string-array>
-    <string-array name="code_types_values">
-        <item>CODE_128</item>
-        <item>CODE_39</item>
-        <item>CODE_93</item>
-        <item>CODABAR</item>
-        <item>DATA_MATRIX</item>
-        <item>EAN_13</item>
-        <item>EAN_8</item>
-        <item>ITF</item>
-        <item>QR_CODE</item>
-        <item>UPC_A</item>
-        <item>UPC_E</item>
-        <item>PDF417</item>
-        <item>AZTEC</item>
-    </string-array>
     <string-array name="keyboard_layout_values">
         <item>Angielski (US)</item>
         <item>Niemiecki (DE)</item>
@@ -259,6 +243,7 @@
         <item>Ciągły</item>
         <item>EDOF</item>
         <item>Stałe (Nieskończoność)</item>
+        <item>Ciągły (Szybki)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>

@@ -76,7 +76,7 @@ fun RequiresBluetoothPermission(
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun RequiresCameraPermission(
+fun BoxScope.RequiresCameraPermission(
     content: @Composable () -> Unit
 ) {
     val cameraPermission = rememberPermissionState(android.Manifest.permission.CAMERA)
@@ -87,6 +87,7 @@ fun RequiresCameraPermission(
         Column(
             Modifier
                 .padding(8.dp)
+                .align(Alignment.Center)
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally

@@ -135,21 +135,6 @@
         <item>Leerzeichen</item>
         <item>Benutzerdefiniert</item>
     </string-array>
-    <string-array name="code_types_values">
-        <item>CODE_128</item>
-        <item>CODE_39</item>
-        <item>CODE_93</item>
-        <item>CODABAR</item>
-        <item>DATA_MATRIX</item>
-        <item>EAN_13</item>
-        <item>EAN_8</item>
-        <item>ITF</item>
-        <item>QR_CODE</item>
-        <item>UPC_A</item>
-        <item>UPC_E</item>
-        <item>PDF417</item>
-        <item>AZTEC</item>
-    </string-array>
     <string-array name="keyboard_layout_values">
         <item>Englisch (US)</item>
         <item>Deutsch (DE)</item>
@@ -212,6 +197,7 @@
         <item>Kontinuierlich</item>
         <item>EDOF</item>
         <item>Fest (Unendlich)</item>
+        <item>Kontinuierlich (Schnell)</item>
     </string-array>
     <string name="search_by_value">Suchen nach Wert</string>
     <string name="history">Verlauf</string>
@@ -282,4 +268,8 @@
     <string name="save_to_file">Als Datei speichern</string>
     <string name="invalid_regex">Fehler in Regex</string>
     <string name="template_error">Template muss entweder {CODE}, {CODE_B64} oder {CODE_HEX} enthalten</string>
+    <string name="advanced_options">Erweiterte Optionen</string>
+    <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
+    <string name="detection">Erkennung</string>
+    <string name="processing">Bearbeitung</string>
 </resources>
