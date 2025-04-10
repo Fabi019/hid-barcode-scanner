@@ -15,19 +15,16 @@ import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
@@ -35,11 +32,8 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -96,12 +90,6 @@ import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.launch
 
-/**
- * Scanner screen with camera preview.
- *
- * @param currentDevice the device that is currently connected, can be null if no device is connected
- * @param sendText callback to send text to the current device
- */
 
 @Composable
 fun BoxScope.ElevatedWarningCard(
@@ -111,10 +99,12 @@ fun BoxScope.ElevatedWarningCard(
     visible: Boolean
 ) {
     val scope = rememberCoroutineScope()
-    
+
     AnimatedVisibility(
         visible = visible, // You will control visibility dynamically
-        modifier = Modifier.padding(12.dp).align(Alignment.TopCenter)
+        modifier = Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
     ) {
         ElevatedCard(
             onClick = { scope.launch { onClick() } }
@@ -136,8 +126,12 @@ fun BoxScope.ElevatedWarningCard(
     }
 }
 
-
-
+/**
+ * Scanner screen with camera preview.
+ *
+ * @param currentDevice the device that is currently connected, can be null if no device is connected
+ * @param sendText callback to send text to the current device
+ */
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
@@ -182,6 +176,7 @@ fun Scanner(
                 }
             }
         }
+
         Box(
             Modifier
                 .padding(padding)
@@ -192,14 +187,13 @@ fun Scanner(
             CapsLockWarning()
 
             ElevatedWarningCard(
-                    message = stringResource(R.string.no_device_connected),
-                    subMessage = stringResource(R.string.click_to_connect),
-                    onClick = {
-                        navController.navigate(Routes.Devices)
-                    },
-                    visible = currentDevice == null
-                )
-            }
+                message = stringResource(R.string.no_device_connected),
+                subMessage = stringResource(R.string.click_to_connect),
+                onClick = {
+                    navController.navigate(Routes.Devices)
+                },
+                visible = currentDevice == null
+            )
 
             cameraInfo?.let {
                 ZoomStateInfo(it)
@@ -481,8 +475,6 @@ fun BoxScope.CapsLockWarning() {
         )
     }
 }
-
-
 
 /**
  * Displays the current zoom-factor as a text in the top-start corner.
