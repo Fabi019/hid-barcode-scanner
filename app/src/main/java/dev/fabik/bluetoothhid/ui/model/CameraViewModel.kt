@@ -390,7 +390,7 @@ class CameraViewModel : ViewModel() {
             _jsCode ?: return value,
             value,
             format,
-        )
+        ) ?: value
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {
