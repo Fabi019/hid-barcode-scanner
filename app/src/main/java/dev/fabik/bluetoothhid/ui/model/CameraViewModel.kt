@@ -38,6 +38,7 @@ import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +53,7 @@ import kotlin.coroutines.suspendCoroutine
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class CameraViewModel : ViewModel() {
     companion object {
-        const val TAG = "NewCameraViewModel"
+        const val TAG = "CameraViewModel"
 
         val SD_480P = Size(640, 480)
         val HD_720P = Size(960, 720)
@@ -111,6 +112,7 @@ class CameraViewModel : ViewModel() {
 
         onBarcodeDetected = { value, format ->
             if (!value.contentEquals(_lastBarcode)) {
+                Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
                 onBarcode(value)
                 _lastBarcode = value
@@ -320,10 +322,16 @@ class CameraViewModel : ViewModel() {
         val format: BarcodeReader.Format
     )
 
+    private var detectionJob: Job? = null
+
     fun onBarcodeResult(
         result: List<BarcodeReader.Result>,
         source: Size
     ) {
+        if (detectionJob?.isActive == true) {
+            return
+        }
+
         detectorTrace.trigger()
 
         val barcode = result.map {
@@ -361,10 +369,11 @@ class CameraViewModel : ViewModel() {
             }
 
             _jsEngineService?.let { s ->
-                viewModelScope.launch(Dispatchers.IO) {
+                detectionJob = viewModelScope.launch(Dispatchers.IO) {
                     value =
                         mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
                     onBarcodeDetected(value, barcode.format)
+                    detectionJob = null
                 }
             } ?: run {
                 onBarcodeDetected(value, barcode.format)
