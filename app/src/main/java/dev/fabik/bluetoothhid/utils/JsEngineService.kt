@@ -23,6 +23,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.runCatching
 
 class JsEngineService : Service() {
     companion object {
@@ -62,6 +63,8 @@ class JsEngineService : Service() {
             }, Executors.newSingleThreadExecutor())
         }.onFailure {
             Log.e(TAG, "Failed to initialize js sandbox", it)
+            jsSandbox?.close()
+            isInitialized = true
         }
     }
 
@@ -79,8 +82,8 @@ class JsEngineService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     @SuppressLint("RequiresFeature")
-    suspend fun evaluate(code: String, onOutput: ((String) -> Unit)? = null): String {
-        var result = "Error: Unable to create isolate!"
+    suspend fun evaluate(code: String, onOutput: ((String) -> Unit)? = null): String? {
+        var result: String? = "Error: Unable to create isolate!"
 
         jsSandbox?.createIsolate()?.let {
             if (jsSandbox?.isFeatureSupported(JavaScriptSandbox.JS_FEATURE_CONSOLE_MESSAGING) == true) {
@@ -107,17 +110,13 @@ class JsEngineService : Service() {
                         it.resume(future.get(1, TimeUnit.SECONDS))
                     }.onFailure { err ->
                         Log.e(TAG, "Failed to evaluate code", err)
-                        it.resume(err.cause?.message ?: err.message ?: err.toString())
+                        onOutput?.invoke(err.cause?.message ?: err.message ?: err.toString())
+                        it.resume(null)
                     }
                 }
             }
 
             onOutput?.invoke("--- Execution finished (${System.currentTimeMillis() - start}ms) ---")
-            if (result.isEmpty()) {
-                onOutput?.invoke("Empty result (Make sure that your code has a string as the last statement)")
-            } else {
-                onOutput?.invoke(result)
-            }
 
             it.clearConsoleCallback()
             it.close()
@@ -135,7 +134,7 @@ class JsEngineService : Service() {
             value: String,
             type: String,
             onOutput: ((String) -> Unit)? = null
-        ): String {
+        ): String? {
             val escapedVal = value.replace("\\", "\\\\").replace("\"", "\\\"")
 
             val template = """

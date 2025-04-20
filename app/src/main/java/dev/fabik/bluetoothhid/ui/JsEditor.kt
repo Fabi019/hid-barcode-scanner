@@ -68,10 +68,15 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
             onRunClicked = { code, value, type ->
                 scope.launch {
                     outputText = ""
-                    jsEngine?.evaluateTemplate(code, value, type) { message ->
+
+                    val result = jsEngine?.evaluateTemplate(code, value, type) { message ->
                         outputText += message + "\n"
-                    } ?: run {
-                        outputText += "JSEngine not initialized or unsupported! Make sure that you have enabled the feature."
+                    }
+
+                    outputText += when {
+                        result == null -> "JSEngine not initialized or unsupported! Make sure that you have enabled the feature."
+                        result.isEmpty() -> "Empty result (Make sure that your code has a string as the last statement)"
+                        else -> result
                     }
                 }
             },
