@@ -82,6 +82,16 @@ open class PreferenceStore {
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
         val PERSIST_HISTORY = booleanPreferencesKey("persist_history") defaultsTo true
 
+        val ADV_TRY_HARDER = booleanPreferencesKey("adv_try_harder") defaultsTo false
+        val ADV_TRY_ROTATE = booleanPreferencesKey("adv_try_rotate") defaultsTo false
+        val ADV_TRY_INVERT = booleanPreferencesKey("adv_try_invert") defaultsTo false
+        val ADV_TRY_DOWNSCALE = booleanPreferencesKey("adv_try_downscale") defaultsTo false
+        val ADV_MIN_LINE_COUNT = intPreferencesKey("adv_min_line_count") defaultsTo 2
+        val ADV_BINARIZER = intPreferencesKey("adv_binarizer") defaultsTo 0
+        val ADV_DOWNSCALE_FACTOR = intPreferencesKey("adv_downscale_factor") defaultsTo 3
+        val ADV_DOWNSCALE_THRESHOLD = intPreferencesKey("adv_downscale_threshold") defaultsTo 500
+        val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode") defaultsTo 2
+
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
 
         // Utility preferences
@@ -107,7 +117,10 @@ fun <T> Context.getPreference(pref: PreferenceStore.Preference<T>): Flow<T> = da
     }
 
 @Composable
-fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>, initial: T): State<T> {
+fun <T> Context.getPreferenceStateDefault(
+    pref: PreferenceStore.Preference<T>,
+    initial: T = pref.defaultValue
+): State<T> {
     return remember { getPreference(pref) }.collectAsState(initial)
 }
 
@@ -177,7 +190,7 @@ fun <T> rememberPreferenceDefault(
 ): MutableState<T> {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val state = context.getPreferenceState(pref, initial)
+    val state = context.getPreferenceStateDefault(pref, initial)
 
     return remember {
         object : MutableState<T> {

@@ -11,8 +11,9 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import android.widget.Toast
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.TorchState
-import androidx.camera.view.CameraController
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.bt.KeyTranslator
-import dev.fabik.bluetoothhid.ui.CameraArea
+import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.InfoDialog
@@ -82,13 +83,48 @@ import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
-import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
 import kotlinx.coroutines.launch
+
+
+@Composable
+fun BoxScope.ElevatedWarningCard(
+    message: String,
+    subMessage: String? = null,
+    onClick: () -> Unit,
+    visible: Boolean
+) {
+    val scope = rememberCoroutineScope()
+
+    AnimatedVisibility(
+        visible = visible, // You will control visibility dynamically
+        modifier = Modifier
+            .padding(12.dp)
+            .align(Alignment.TopCenter)
+    ) {
+        ElevatedCard(
+            onClick = { scope.launch { onClick() } }
+        ) {
+            Row(
+                Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Rounded.Warning, contentDescription = "Warning")
+                Column {
+                    Text(message)
+                    subMessage?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+    }
+}
 
 /**
  * Scanner screen with camera preview.
@@ -102,16 +138,19 @@ fun Scanner(
     sendText: (String) -> Unit
 ) {
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
-    var camera by remember { mutableStateOf<CameraController?>(null) }
+    var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentSendText by rememberUpdatedState(sendText)
 
     val fullScreen by rememberPreference(PreferenceStore.SCANNER_FULL_SCREEN)
 
+    val navController = LocalNavigation.current
+
     Scaffold(
         topBar = {
-            ScannerAppBar(camera, currentDevice, fullScreen)
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -124,12 +163,11 @@ fun Scanner(
         Box(
             Modifier
                 .padding(if (fullScreen) PaddingValues(0.dp) else padding)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
         ) {
             RequiresCameraPermission {
                 CameraPreviewArea(
-                    onCameraReady = { camera = it }
+                    onCameraReady = { control, info -> cameraControl = control; cameraInfo = info }
                 ) { value, send ->
                     currentBarcode = value
                     if (send) {
@@ -138,6 +176,7 @@ fun Scanner(
                 }
             }
         }
+
         Box(
             Modifier
                 .padding(padding)
@@ -146,7 +185,17 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
-            camera?.let {
+
+            ElevatedWarningCard(
+                message = stringResource(R.string.no_device_connected),
+                subMessage = stringResource(R.string.click_to_connect),
+                onClick = {
+                    navController.navigate(Routes.Devices)
+                },
+                visible = currentDevice == null
+            )
+
+            cameraInfo?.let {
                 ZoomStateInfo(it)
             }
             KeepScreenOn()
@@ -162,7 +211,7 @@ fun Scanner(
  */
 @Composable
 private fun CameraPreviewArea(
-    onCameraReady: (CameraController) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
     onBarcodeDetected: (String, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
@@ -199,7 +248,7 @@ private fun CameraPreviewArea(
     val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
     val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
 
-    CameraArea(onCameraReady) {
+    CameraPreviewContent(onCameraReady = onCameraReady) {
         onBarcodeDetected(it, autoSend)
 
         if (playSound) {
@@ -323,6 +372,7 @@ private fun SendToDeviceFAB(
  * Scanner app bar with a toggle flash button and a disconnect button.
  *
  * @param camera the camera to toggle the flash on
+ * @param info the camera info for getting the flash state
  * @param currentDevice the device that is currently connected, can be null if no device is connected
  * @param transparent whether the app bar should be transparent or not
  */
@@ -330,7 +380,8 @@ private fun SendToDeviceFAB(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ScannerAppBar(
-    camera: CameraController?,
+    camera: CameraControl?,
+    info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
 ) {
@@ -349,10 +400,8 @@ private fun ScannerAppBar(
             }
         },
         actions = {
-            camera?.let {
-                if (it.cameraInfo?.hasFlashUnit() == true) {
-                    ToggleFlashButton(it)
-                }
+            if (camera != null && info != null && info.hasFlashUnit()) {
+                ToggleFlashButton(camera, info)
             }
             IconButton(onClick = {
                 navigation.navigate(Routes.History)
@@ -380,12 +429,12 @@ private fun ScannerAppBar(
  * @param camera the camera to toggle the flash on
  */
 @Composable
-fun ToggleFlashButton(camera: CameraController) {
-    val torchState by camera.torchState.observeAsState()
+fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
+    val torchState by info.torchState.observeAsState()
 
     IconButton(
         onClick = {
-            camera.enableTorch(
+            camera?.enableTorch(
                 when (torchState) {
                     TorchState.OFF -> true
                     else -> false
@@ -414,35 +463,16 @@ fun BoxScope.CapsLockWarning() {
     val scope = rememberCoroutineScope()
 
     controller?.let {
-        AnimatedVisibility(
-            controller.isCapsLockOn, Modifier
-                .padding(12.dp)
-                .align(Alignment.TopCenter)
-        ) {
-            ElevatedCard(
-                onClick = {
-                    scope.launch {
-                        controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
-                    }
+        ElevatedWarningCard(
+            message = stringResource(R.string.caps_lock_activated),
+            subMessage = stringResource(R.string.click_to_turn_off),
+            onClick = {
+                scope.launch {
+                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
-            ) {
-                Row(
-                    Modifier.padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Rounded.Warning, "Warning")
-                    Column {
-                        Text(stringResource(R.string.caps_lock_activated))
-                        Text(
-                            stringResource(R.string.click_to_turn_off),
-                            style = Typography.bodySmall
-                        )
-                    }
-                }
-            }
-        }
-
+            },
+            visible = controller.isCapsLockOn
+        )
     }
 }
 
@@ -453,7 +483,7 @@ fun BoxScope.CapsLockWarning() {
  * @param camera the camera to get the zoom-factor from
  */
 @Composable
-fun BoxScope.ZoomStateInfo(camera: CameraController) {
+fun BoxScope.ZoomStateInfo(camera: CameraInfo) {
     val zoomState by camera.zoomState.observeAsState()
     zoomState?.let {
         if (it.zoomRatio > 1.0f) {

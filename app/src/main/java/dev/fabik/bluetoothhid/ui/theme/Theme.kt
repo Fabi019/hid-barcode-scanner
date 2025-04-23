@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,11 +8,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
@@ -58,21 +54,6 @@ fun BluetoothHIDTheme(content: @Composable () -> Unit) {
         }
         dark -> DarkColorScheme
         else -> LightColorScheme
-    }
-
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-
-            // Replaced by enableEdgeToEdge() call in activity
-            //window.statusBarColor = Color.Transparent.toArgb()
-            //window.navigationBarColor = Color.Transparent.toArgb()
-
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !dark
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !dark
-        }
     }
 
     MaterialTheme(

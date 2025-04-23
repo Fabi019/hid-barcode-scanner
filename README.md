@@ -20,7 +20,7 @@ running Android 9 or greater.
 ## Features
 
 - Supports a wide range of Linear and 2D-Codes thanks to
-  Googles [ML-Kit](https://developers.google.com/ml-kit/vision/barcode-scanning)
+  the [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) library
 - Doesn't require any internet connection
 - History feature that allows exporting the session as text, JSON or CSV
 - Multiple different keyboard layouts to choose from
@@ -59,10 +59,6 @@ pictures)*
 
 ### Download as APK
 
-Since this app uses the ML-Kit there are two app version to choose from. The *standard* version
-doesn't contain the scanner library directly. Because of this the size much smaller than in the
-*bundled* but requires the user to have the Play Store installed on their device.
-
 You can either download the latest stable version from
 the [Releases](https://github.com/Fabi019/hid-barcode-scanner/releases) tab or directly from
 the [CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml) using the links
@@ -75,9 +71,6 @@ actions without being logged in.
 - Latest
   APK (
   Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
-- Latest Bundled
-  APK (
-  Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated%20%28Bundled%29.zip)
 
 ## Troubleshooting
 

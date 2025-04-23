@@ -60,6 +60,10 @@
     <string name="haptic_feedback">Haptic feedback</string>
     <string name="haptic_feedback_desc">Vibrates when scanning a new code</string>
     <string name="connected_with">Connected with: %s</string>
+
+    <string name="no_device_connected">No device connected.</string>
+    <string name="click_to_connect">Click to connect the devices.</string>
+
     <string name="info">Info</string>
     <string name="name">Name</string>
     <string name="mac_address">MAC-Address</string>
@@ -80,7 +84,7 @@
     <string name="devices">Devices</string>
     <string name="keyboard_layout">Keyboard layout</string>
     <string name="keyboard_layout_desc">Set the keyboard layout. Change if you want to type special characters or don\'t use a QWERTY layout.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s-%s)</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
     <string name="disconnect">Disconnect</string>
     <string name="more">More</string>
     <string name="toggle_flash">Toggle flash</string>
@@ -214,6 +218,20 @@
     <string name="save_to_file">Save to file</string>
     <string name="invalid_regex">Invalid regex</string>
     <string name="template_error">Template must contain either {CODE}, {CODE_B64} or {CODE_HEX}</string>
+    <string name="advanced_options">Advanced options</string>
+    <string name="advanced_opts_desc">Adjust further scan parameters</string>
+    <string name="detection">Detection</string>
+    <string name="try_harder">Try harder</string>
+    <string name="try_rotate_image">Try rotate image</string>
+    <string name="try_inverted">Try inverted</string>
+    <string name="try_downscale">Try downscale</string>
+    <string name="minimum_scan_lines">Minimum scan-lines</string>
+    <string name="processing">Processing</string>
+    <string name="binarizer">Binarizer</string>
+    <string name="downscale_factor">Downscale factor</string>
+    <string name="downscale_threshold">Downscale threshold (px)</string>
+    <string name="parser">Parser</string>
+    <string name="text_mode">Text mode</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -243,21 +261,6 @@
         <item>Space</item>
         <item>Custom</item>
     </string-array>
-    <string-array name="code_types_values">
-        <item>CODE_128</item>
-        <item>CODE_39</item>
-        <item>CODE_93</item>
-        <item>CODABAR</item>
-        <item>DATA_MATRIX</item>
-        <item>EAN_13</item>
-        <item>EAN_8</item>
-        <item>ITF</item>
-        <item>QR_CODE</item>
-        <item>UPC_A</item>
-        <item>UPC_E</item>
-        <item>PDF417</item>
-        <item>AZTEC</item>
-    </string-array>
     <string-array name="keyboard_layout_values">
         <item>English (US)</item>
         <item>German (DE)</item>
@@ -280,6 +283,7 @@
         <item>Continuous</item>
         <item>EDOF</item>
         <item>Fixed (Infinity)</item>
+        <item>Continuous (Fast)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>
