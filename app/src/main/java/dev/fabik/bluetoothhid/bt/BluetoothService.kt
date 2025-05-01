@@ -38,16 +38,17 @@ class BluetoothService : Service() {
     }
 
     private val binder = LocalBinder()
-    private var controller: BluetoothController? = null
+    private var controller: IBluetoothController? = null
 
     inner class LocalBinder : Binder() {
-        fun getController(): BluetoothController? = controller
+        fun getController(): IBluetoothController? = controller
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onCreate() {
-        controller = BluetoothController(this)
+        //controller = BluetoothController(this)
+        controller = BLEController(this)
 
         // Register controller once when service is created
         CoroutineScope(Dispatchers.IO).launch {
@@ -163,6 +164,7 @@ fun rememberBluetoothControllerService(
                     }.onFailure {
                         Log.e("BTService", "Failed to start service", it)
                     }
+
                 Lifecycle.Event.ON_DESTROY -> {
                     if ((context as? Activity)?.isChangingConfigurations == false) {
                         context.stopService(intent)

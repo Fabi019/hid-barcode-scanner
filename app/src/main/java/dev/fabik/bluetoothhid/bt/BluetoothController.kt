@@ -1,23 +1,19 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
-import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -26,42 +22,25 @@ import java.util.concurrent.TimeUnit
 typealias Listener = (BluetoothDevice?, Int) -> Unit
 
 @SuppressLint("MissingPermission")
-class BluetoothController(var context: Context) {
+class BluetoothController(context: Context) : IBluetoothController(context) {
     companion object {
         private const val TAG = "BluetoothController"
     }
 
     private val keyTranslator: KeyTranslator = KeyTranslator(context)
 
-    private val bluetoothManager: BluetoothManager =
-        context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-
-    private val bluetoothAdapter: BluetoothAdapter? by lazy { bluetoothManager.adapter }
-
-    private var deviceListener: MutableList<Listener> = mutableListOf()
-
     @Volatile
     private var hidDevice: BluetoothHidDevice? = null
-    private var hostDevice: BluetoothDevice? by mutableStateOf(null)
 
     private var latch: CountDownLatch = CountDownLatch(0)
 
     private var autoConnectEnabled: Boolean = false
 
-    var keyboardSender: KeyboardSender? = null
-        private set
-
-    var isSending: Boolean by mutableStateOf(false)
-        private set
-
-    var isCapsLockOn: Boolean by mutableStateOf(false)
-        private set
-
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
 
-            hostDevice = null
+            currentDevice.update { null }
             hidDevice = proxy as? BluetoothHidDevice
 
             hidDevice?.registerApp(
@@ -87,7 +66,7 @@ class BluetoothController(var context: Context) {
             Log.d(TAG, "onServiceDisconnected")
 
             hidDevice = null
-            hostDevice = null
+            currentDevice.update { null }
 
             MainScope().launch {
                 Toast.makeText(
@@ -104,12 +83,12 @@ class BluetoothController(var context: Context) {
             super.onConnectionStateChanged(device, state)
 
             if (state == BluetoothProfile.STATE_CONNECTED) {
-                hostDevice = device
+                currentDevice.update { device }
                 hidDevice?.let {
                     keyboardSender = KeyboardSender(keyTranslator, it, device)
                 }
             } else {
-                hostDevice = null
+                currentDevice.update { null }
                 keyboardSender = null
             }
 
@@ -143,7 +122,7 @@ class BluetoothController(var context: Context) {
             super.onInterruptData(device, reportId, data)
 
             data?.getOrNull(0)?.toInt()?.let {
-                isCapsLockOn = it and 0x02 != 0
+                isCapsLockOn.update { _ -> it and 0x02 != 0 }
                 // isNumLockOn = it and 0x01 != 0
                 // isScrollLockOn = it and 0x04 != 0
             }
@@ -153,26 +132,7 @@ class BluetoothController(var context: Context) {
 
     }
 
-    val currentDevice: BluetoothDevice?
-        get() = hostDevice
-
-    val bluetoothEnabled: Boolean
-        get() = bluetoothAdapter?.isEnabled ?: false
-
-    val pairedDevices: Set<BluetoothDevice>
-        get() = bluetoothAdapter?.bondedDevices ?: emptySet()
-
-    val isScanning: Boolean
-        get() = bluetoothAdapter?.isDiscovering ?: false
-
-    fun registerListener(listener: Listener): Listener {
-        deviceListener.add(listener)
-        return listener
-    }
-
-    fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
-
-    suspend fun register(): Boolean =
+    override suspend fun register(): Boolean =
         register(context.getPreference(PreferenceStore.AUTO_CONNECT).first())
 
     private fun register(autoConnect: Boolean): Boolean {
@@ -189,31 +149,20 @@ class BluetoothController(var context: Context) {
         ) ?: false
     }
 
-    fun unregister() {
+    override fun unregister() {
         disconnect()
 
         hidDevice?.unregisterApp()
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
 
         hidDevice = null
-        hostDevice = null
+        currentDevice.update { null }
 
         // Notify listeners that proxy is disconnected.
         deviceListener.forEach { it.invoke(null, -1) }
     }
 
-    fun scanDevices() {
-        if (bluetoothAdapter?.isDiscovering == true) {
-            bluetoothAdapter?.cancelDiscovery()
-        }
-        bluetoothAdapter?.startDiscovery()
-    }
-
-    fun cancelScan() {
-        bluetoothAdapter?.cancelDiscovery()
-    }
-
-    suspend fun connect(device: BluetoothDevice) {
+    override suspend fun connect(device: BluetoothDevice) {
         // Cancel discovery because it otherwise slows down the connection.
         cancelScan()
 
@@ -256,21 +205,20 @@ class BluetoothController(var context: Context) {
         }
     }
 
-    fun disconnect(): Boolean {
-        if (isSending) {
+    override fun disconnect(): Boolean {
+        if (isSending.value) {
             return false
         }
 
-        return hostDevice?.let {
+        return currentDevice.value?.let {
             hidDevice?.disconnect(it)
         } ?: true
     }
 
-    suspend fun sendString(string: String) = with(context) {
-        if (isSending) {
+    override suspend fun sendString(string: String) = with(context) {
+        if (!isSending.compareAndSet(false, true)) {
             return@with
         }
-        isSending = true
 
         val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
         val extraKeys = getPreference(PreferenceStore.EXTRA_KEYS).first()
@@ -297,7 +245,7 @@ class BluetoothController(var context: Context) {
             expand
         )
 
-        isSending = false
+        isSending.update { false }
     }
 
 }

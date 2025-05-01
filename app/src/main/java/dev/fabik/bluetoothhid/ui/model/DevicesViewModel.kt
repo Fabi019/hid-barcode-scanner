@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fabik.bluetoothhid.bt.BluetoothController
+import dev.fabik.bluetoothhid.bt.IBluetoothController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -21,7 +21,7 @@ class DevicesViewModel : ViewModel() {
     // Initially assume it is enabled to prevent the card from wrongly showing up
     var isBluetoothEnabled by mutableStateOf(true)
 
-    fun refresh(controller: BluetoothController?) {
+    fun refresh(controller: IBluetoothController?) {
         viewModelScope.launch {
             isRefreshing = true
             pairedDevices.clear()

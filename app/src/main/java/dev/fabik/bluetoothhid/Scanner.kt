@@ -74,6 +74,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
@@ -333,8 +334,11 @@ private fun SendToDeviceFAB(
         val controller = LocalController.current
         val colorScheme = MaterialTheme.colorScheme
 
-        val (containerColor, contentColor) = remember(controller?.isSending) {
-            if (controller?.isSending == false) {
+        val isSending by controller?.isSending?.collectAsStateWithLifecycle()
+            ?: remember { mutableStateOf(false) }
+
+        val (containerColor, contentColor) = remember(isSending) {
+            if (isSending) {
                 colorScheme.primary to colorScheme.onPrimary
             } else {
                 colorScheme.surface.copy(alpha = 0.12f) to
@@ -351,7 +355,7 @@ private fun SendToDeviceFAB(
 
         CompositionLocalProvider(
             LocalRippleConfiguration provides
-                    if (controller?.isSending == false) LocalRippleConfiguration.current else noRippleTheme
+                    if (!isSending) LocalRippleConfiguration.current else noRippleTheme
         ) {
             ExtendedFloatingActionButton(
                 text = {
@@ -362,7 +366,7 @@ private fun SendToDeviceFAB(
                 },
                 contentColor = contentColor,
                 containerColor = containerColor,
-                onClick = { if (controller?.isSending == false) onClick(it) }
+                onClick = { if (!isSending) onClick(it) }
             )
         }
     }
@@ -463,15 +467,17 @@ fun BoxScope.CapsLockWarning() {
     val scope = rememberCoroutineScope()
 
     controller?.let {
+        val capsLock by it.isCapsLockOn.collectAsStateWithLifecycle()
+
         ElevatedWarningCard(
             message = stringResource(R.string.caps_lock_activated),
             subMessage = stringResource(R.string.click_to_turn_off),
             onClick = {
                 scope.launch {
-                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+                    it.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
             },
-            visible = controller.isCapsLockOn
+            visible = capsLock
         )
     }
 }

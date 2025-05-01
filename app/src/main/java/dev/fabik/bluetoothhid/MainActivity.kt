@@ -12,7 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import dev.fabik.bluetoothhid.bt.BluetoothController
+import dev.fabik.bluetoothhid.bt.IBluetoothController
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
@@ -22,7 +22,7 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
-val LocalController = staticCompositionLocalOf<BluetoothController?> {
+val LocalController = staticCompositionLocalOf<IBluetoothController?> {
     null
 }
 

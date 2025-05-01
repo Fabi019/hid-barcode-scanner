@@ -7,7 +7,7 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings
 object Descriptor {
     const val ID = 0x8
 
-    private val KEYBOARD = byteArrayOf(
+    val KEYBOARD = byteArrayOf(
         0x05.toByte(), 0x01.toByte(),                         // Usage Page (Generic Desktop)
         0x09.toByte(), 0x06.toByte(),                         // Usage (Keyboard)
         0xA1.toByte(), 0x01.toByte(),                         // Collection (Application)
