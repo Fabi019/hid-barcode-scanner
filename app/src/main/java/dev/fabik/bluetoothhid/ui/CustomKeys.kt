@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.bt.Key
 import dev.fabik.bluetoothhid.bt.KeyTranslator
@@ -219,6 +220,8 @@ fun AddCustomKeyDialog(
 
             // Settings activity does not have the bluetooth controller via context
             val controller = rememberBluetoothControllerService(context, false)
+            val currentDevice by controller?.getController()?.currentDevice?.collectAsStateWithLifecycle()
+                ?: remember { mutableStateOf(null) }
 
             Button(
                 onClick = {
@@ -235,7 +238,7 @@ fun AddCustomKeyDialog(
                         Log.e("CustomKeys", "Error sending to PC:", it)
                     }
                 },
-                enabled = controller?.getController()?.currentDevice != null,
+                enabled = currentDevice != null,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text(stringResource(R.string.test))

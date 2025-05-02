@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -56,6 +57,9 @@ fun NavGraph() {
         }
     }
 
+    val currentDevice by controller?.currentDevice?.collectAsStateWithLifecycle()
+        ?: remember { mutableStateOf(null) }
+
     CompositionLocalProvider(LocalNavigation provides navController) {
         NavHost(
             navController,
@@ -80,7 +84,7 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(controller?.currentDevice) {
+                Scanner(currentDevice) {
                     scope.launch {
                         controller?.sendString(it)
                     }
@@ -117,9 +121,9 @@ fun NavGraph() {
     }
 
     // Listen for changes in the current device
-    LaunchedEffect(controller?.currentDevice) {
+    LaunchedEffect(currentDevice) {
         // When connected to a device, navigate to the scanner
-        if (controller?.currentDevice != null) {
+        if (currentDevice != null) {
             // Single-top is used to avoid creating multiple instances of the scanner
             navController.navigate(Routes.Main) {
                 launchSingleTop = true

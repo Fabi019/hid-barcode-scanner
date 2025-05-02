@@ -74,6 +74,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
@@ -155,7 +156,9 @@ fun Scanner(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             currentDevice?.let {
-                SendToDeviceFAB(currentBarcode, currentSendText)
+                currentBarcode?.let {
+                    SendToDeviceFAB(it, currentSendText)
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -326,19 +329,21 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SendToDeviceFAB(
-    currentBarcode: String?,
+    currentBarcode: String,
     onClick: (String) -> Unit
 ) {
-    currentBarcode?.let {
-        val controller = LocalController.current
-        val colorScheme = MaterialTheme.colorScheme
+    val controller = LocalController.current
 
-        val (containerColor, contentColor) = remember(controller?.isSending) {
-            if (controller?.isSending == false) {
-                colorScheme.primary to colorScheme.onPrimary
-            } else {
+    controller?.let {
+        val colorScheme = MaterialTheme.colorScheme
+        val isSending by controller.isSending.collectAsStateWithLifecycle()
+
+        val (containerColor, contentColor) = remember(isSending) {
+            if (isSending) {
                 colorScheme.surface.copy(alpha = 0.12f) to
                         colorScheme.onSurface.copy(alpha = 0.32f)
+            } else {
+                colorScheme.primary to colorScheme.onPrimary
             }
         }
 
@@ -351,7 +356,7 @@ private fun SendToDeviceFAB(
 
         CompositionLocalProvider(
             LocalRippleConfiguration provides
-                    if (controller?.isSending == false) LocalRippleConfiguration.current else noRippleTheme
+                    if (isSending) noRippleTheme else LocalRippleConfiguration.current
         ) {
             ExtendedFloatingActionButton(
                 text = {
@@ -362,7 +367,7 @@ private fun SendToDeviceFAB(
                 },
                 contentColor = contentColor,
                 containerColor = containerColor,
-                onClick = { if (controller?.isSending == false) onClick(it) }
+                onClick = { if (!isSending) onClick(currentBarcode) }
             )
         }
     }
@@ -463,6 +468,8 @@ fun BoxScope.CapsLockWarning() {
     val scope = rememberCoroutineScope()
 
     controller?.let {
+        val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
+
         ElevatedWarningCard(
             message = stringResource(R.string.caps_lock_activated),
             subMessage = stringResource(R.string.click_to_turn_off),
@@ -471,7 +478,7 @@ fun BoxScope.CapsLockWarning() {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
             },
-            visible = controller.isCapsLockOn
+            visible = isCaps
         )
     }
 }
