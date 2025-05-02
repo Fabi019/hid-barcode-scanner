@@ -17,7 +17,7 @@
     <string name="dynamic_theme_desc">Benutzt das dynamische Design</string>
     <string name="front_camera">Vorderkamera</string>
     <string name="front_camera_desc">Benutzt die Frontkamera anstatt der Rückkamera falls es vom Gerät unterstützt wird</string>
-    <string name="restrict_area">Scanbereichs einschränken</string>
+    <string name="restrict_area">Scanbereich einschränken</string>
     <string name="restrict_area_desc">Zeigt ein Overlay im Scanner an</string>
     <string name="overlay_type">Overlay-Typ</string>
     <string name="overlay_type_desc">Einstellen der Form des Overlays</string>
@@ -31,7 +31,7 @@
     <string name="extra_keys">Extra Tasten</string>
     <string name="extra_keys_desc">Tasten die jedem Text, der an den PC gesendet wird, angehängt werden sollen</string>
     <string name="play_sound">Scan Ton</string>
-    <string name="play_sound_desc">Spielt einen Ton beim scannen eines Codes ab.</string>
+    <string name="play_sound_desc">Spielt einen Ton beim Scannen eines Codes ab.</string>
     <string name="raw_value">Rohwert</string>
     <string name="raw_value_desc">Verwendet den Rohwert des Codes</string>
     <string name="about">Über</string>
@@ -75,7 +75,7 @@
     <string name="copied_to_clipboard">In Zwischenablage kopiert!</string>
     <string name="devices">Geräte</string>
     <string name="keyboard_layout">Tastatur Layout</string>
-    <string name="keyboard_layout_desc">Stellt das verwentete Tastatus Layout ein. Ändern, falls Sie Sonderzeichen eingeben möchten oder kein QWERTY-Layout verwenden.</string>
+    <string name="keyboard_layout_desc">Stellt das verwendete Tastatus Layout ein. Ändern, falls Sie Sonderzeichen eingeben möchten oder kein QWERTY-Layout verwenden.</string>
     <string name="disconnect">Trennen</string>
     <string name="more">Mehr</string>
     <string name="toggle_flash">Blitz an/aus</string>
@@ -174,8 +174,8 @@
     <string name="fix_exposure">Feste Auslösezeit</string>
     <string name="fix_exposure_desc">Hilft dabei Bewegungsunschärfe im Bild zu reduzieren</string>
     <string name="filter_regex">Filter regex</string>
-    <string name="filter_regex_desc">Erlaubt es codes mit einem regulären Ausdruck zu filtern</string>
-    <string name="filter_desc_long">Unterstützt normale regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen. Falls der regex eine Capture-Gruppe "(…)" enthält, wird der Wert der ersten Gruppe verwendet.</string>
+    <string name="filter_regex_desc">Ermöglicht das Filtern mit regulären Ausdrücken</string>
+    <string name="filter_desc_long">Unterstützt normale Regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen. Falls der Regex eine Capture-Gruppe "(…)" enthält, wird der Wert der ersten Gruppe verwendet.</string>
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">
@@ -271,5 +271,5 @@
     <string name="advanced_options">Erweiterte Optionen</string>
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
     <string name="detection">Erkennung</string>
-    <string name="processing">Bearbeitung</string>
+    <string name="processing">Verarbeitung</string>
 </resources>
