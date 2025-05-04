@@ -87,8 +87,9 @@ import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.rememberPreference
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
+import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import kotlinx.coroutines.launch
 
 
@@ -138,6 +139,8 @@ fun Scanner(
     currentDevice: BluetoothDevice?,
     sendText: (String) -> Unit
 ) {
+    val context = LocalContext.current
+
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
@@ -145,7 +148,7 @@ fun Scanner(
 
     val currentSendText by rememberUpdatedState(sendText)
 
-    val fullScreen by rememberPreference(PreferenceStore.SCANNER_FULL_SCREEN)
+    val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
 
     val navController = LocalNavigation.current
 
@@ -230,7 +233,7 @@ private fun CameraPreviewArea(
         }
     }
 
-    val playSound by rememberPreferenceDefault(PreferenceStore.PLAY_SOUND)
+    val playSound by context.getPreferenceStateDefault(PreferenceStore.PLAY_SOUND)
 
     val toneGenerator = remember {
         runCatching {
@@ -248,8 +251,8 @@ private fun CameraPreviewArea(
         }
     }
 
-    val autoSend by rememberPreferenceDefault(PreferenceStore.AUTO_SEND)
-    val vibrate by rememberPreferenceDefault(PreferenceStore.VIBRATE)
+    val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
+    val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
 
     CameraPreviewContent(onCameraReady = onCameraReady) {
         onBarcodeDetected(it, autoSend)
@@ -275,7 +278,7 @@ private fun CameraPreviewArea(
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-    val privateMode by rememberPreference(PreferenceStore.PRIVATE_MODE)
+    val privateMode by context.getPreferenceStateDefault(PreferenceStore.PRIVATE_MODE)
 
     Column(
         Modifier
@@ -580,13 +583,16 @@ fun DeviceInfoDialog(
 
 @Composable
 fun KeepScreenOn() {
-    val keepScreenOn by rememberPreference(PreferenceStore.KEEP_SCREEN_ON)
     val currentView = LocalView.current
+    val context = LocalContext.current
 
-    DisposableEffect(keepScreenOn) {
-        currentView.keepScreenOn = keepScreenOn
-        onDispose {
-            currentView.keepScreenOn = false
+    val keepScreenOn by context.getPreferenceState(PreferenceStore.KEEP_SCREEN_ON)
+    keepScreenOn?.let {
+        DisposableEffect(keepScreenOn) {
+            currentView.keepScreenOn = it
+            onDispose {
+                currentView.keepScreenOn = false
+            }
         }
     }
 }

@@ -44,8 +44,8 @@ import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
-import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import kotlinx.coroutines.launch
 
 @Composable
@@ -61,26 +61,30 @@ fun CameraPreviewContent(
     val errorDialog = rememberDialogState()
 
     // Camera settings
-    val frontCamera by rememberPreference(PreferenceStore.FRONT_CAMERA)
-    val resolution by rememberPreference(PreferenceStore.SCAN_RESOLUTION)
-    val fixExposure by rememberPreference(PreferenceStore.FIX_EXPOSURE)
-    val focusMode by rememberPreference(PreferenceStore.FOCUS_MODE)
+    val camera by context.getMultiPreferenceState(
+        PreferenceStore.FRONT_CAMERA,
+        PreferenceStore.SCAN_RESOLUTION,
+        PreferenceStore.FIX_EXPOSURE,
+        PreferenceStore.FOCUS_MODE
+    )
 
-    LaunchedEffect(lifecycleOwner, frontCamera, resolution, fixExposure, focusMode) {
-        runCatching {
-            viewModel.bindToCamera(
-                context.applicationContext,
-                lifecycleOwner,
-                frontCamera,
-                resolution,
-                fixExposure,
-                focusMode,
-                onCameraReady = onCameraReady,
-                onBarcode = onBarcodeDetected,
-            )
-        }.onFailure {
-            Log.e("CameraPreview", "Error binding camera!", it)
-            errorDialog.open()
+    camera?.let {
+        LaunchedEffect(lifecycleOwner, camera) {
+            runCatching {
+                viewModel.bindToCamera(
+                    context.applicationContext,
+                    lifecycleOwner,
+                    PreferenceStore.FRONT_CAMERA.extract(it),
+                    PreferenceStore.SCAN_RESOLUTION.extract(it),
+                    PreferenceStore.FIX_EXPOSURE.extract(it),
+                    PreferenceStore.FOCUS_MODE.extract(it),
+                    onCameraReady = onCameraReady,
+                    onBarcode = onBarcodeDetected,
+                )
+            }.onFailure {
+                Log.e("CameraPreview", "Error binding camera!", it)
+                errorDialog.open()
+            }
         }
     }
 
@@ -91,7 +95,7 @@ fun CameraPreviewContent(
         var isFocusing by remember { mutableStateOf(false) }
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
 
-        val previewMode by rememberPreference(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
+        val previewMode by context.getPreferenceStateBlocking(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
 
         val coordinateTransformer = remember { MutableCoordinateTransformer() }
 
@@ -162,55 +166,61 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
     val jsEngineService = LocalJsEngineService.current
 
     // Scanner settings
-    val frequency by context.getPreferenceStateDefault(PreferenceStore.SCAN_FREQUENCY)
-    val fullyInside by context.getPreferenceStateDefault(PreferenceStore.FULL_INSIDE)
-    val scanRegex by context.getPreferenceStateDefault(PreferenceStore.SCAN_REGEX)
-    val jsEnabled by context.getPreferenceStateDefault(PreferenceStore.ENABLE_JS)
-    val jsCode by context.getPreferenceStateDefault(PreferenceStore.JS_CODE)
+    val scanner by context.getMultiPreferenceState(
+        PreferenceStore.SCAN_FREQUENCY,
+        PreferenceStore.FULL_INSIDE,
+        PreferenceStore.SCAN_REGEX,
+        PreferenceStore.ENABLE_JS,
+        PreferenceStore.JS_CODE
+    )
 
-    LaunchedEffect(fullyInside, scanRegex, jsEnabled, jsCode, frequency, jsEngineService) {
-        viewModel.updateScanParameters(
-            fullyInside, runCatching {
-                if (!scanRegex.isBlank()) scanRegex.toRegex() else null
-            }.getOrNull(), if (jsEnabled) jsCode else null, frequency, jsEngineService
-        )
+    scanner?.let {
+        LaunchedEffect(scanner, jsEngineService) {
+            val jsEnabled = PreferenceStore.ENABLE_JS.extract(it)
+            val jsCode = PreferenceStore.JS_CODE.extract(it)
+            val scanRegex = runCatching {
+                val regex = PreferenceStore.SCAN_REGEX.extract(it)
+                if (!regex.isBlank()) regex.toRegex() else null
+            }.getOrNull()
+
+            viewModel.updateScanParameters(
+                PreferenceStore.FULL_INSIDE.extract(it),
+                scanRegex,
+                if (jsEnabled) jsCode else null,
+                PreferenceStore.SCAN_FREQUENCY.extract(it),
+                jsEngineService
+            )
+        }
     }
 
     // Barcode reader options
-    val codeTypes by context.getPreferenceStateDefault(PreferenceStore.CODE_TYPES)
-    val tryHarder by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_HARDER)
-    val tryRotate by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_ROTATE)
-    val tryInvert by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_INVERT)
-    val tryDownscale by context.getPreferenceStateDefault(PreferenceStore.ADV_TRY_DOWNSCALE)
-    val minLines by context.getPreferenceStateDefault(PreferenceStore.ADV_MIN_LINE_COUNT)
-    val binarizer by context.getPreferenceStateDefault(PreferenceStore.ADV_BINARIZER)
-    val downscaleFactor by context.getPreferenceStateDefault(PreferenceStore.ADV_DOWNSCALE_FACTOR)
-    val downscaleThreshold by context.getPreferenceStateDefault(PreferenceStore.ADV_DOWNSCALE_THRESHOLD)
-    val textMode by context.getPreferenceStateDefault(PreferenceStore.ADV_TEXT_MODE)
+    val reader by context.getMultiPreferenceState(
+        PreferenceStore.CODE_TYPES,
+        PreferenceStore.ADV_TRY_HARDER,
+        PreferenceStore.ADV_TRY_ROTATE,
+        PreferenceStore.ADV_TRY_INVERT,
+        PreferenceStore.ADV_TRY_DOWNSCALE,
+        PreferenceStore.ADV_MIN_LINE_COUNT,
+        PreferenceStore.ADV_BINARIZER,
+        PreferenceStore.ADV_DOWNSCALE_FACTOR,
+        PreferenceStore.ADV_DOWNSCALE_THRESHOLD,
+        PreferenceStore.ADV_TEXT_MODE
+    )
 
-    LaunchedEffect(
-        codeTypes,
-        tryHarder,
-        tryRotate,
-        tryInvert,
-        tryDownscale,
-        minLines,
-        binarizer,
-        downscaleFactor,
-        downscaleThreshold,
-        textMode
-    ) {
-        viewModel.updateBarcodeReaderOptions(
-            codeTypes,
-            tryHarder,
-            tryRotate,
-            tryInvert,
-            tryDownscale,
-            minLines,
-            binarizer,
-            downscaleFactor,
-            downscaleThreshold,
-            textMode,
-        )
+    reader?.let {
+        LaunchedEffect(reader) {
+            viewModel.updateBarcodeReaderOptions(
+                PreferenceStore.CODE_TYPES.extract(it),
+                PreferenceStore.ADV_TRY_HARDER.extract(it),
+                PreferenceStore.ADV_TRY_ROTATE.extract(it),
+                PreferenceStore.ADV_TRY_INVERT.extract(it),
+                PreferenceStore.ADV_TRY_DOWNSCALE.extract(it),
+                PreferenceStore.ADV_MIN_LINE_COUNT.extract(it),
+                PreferenceStore.ADV_BINARIZER.extract(it),
+                PreferenceStore.ADV_DOWNSCALE_FACTOR.extract(it),
+                PreferenceStore.ADV_DOWNSCALE_THRESHOLD.extract(it),
+                PreferenceStore.ADV_TEXT_MODE.extract(it),
+            )
+        }
     }
 }

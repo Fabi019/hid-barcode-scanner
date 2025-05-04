@@ -81,7 +81,7 @@ import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
-import dev.fabik.bluetoothhid.utils.rememberPreferenceDefault
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -247,8 +247,9 @@ fun DevicesViewModel.BroadcastListener() {
 fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
-    val showUnnamed by rememberPreferenceDefault(PreferenceStore.SHOW_UNNAMED)
-    val filteredDevices by remember { derivedStateOf { foundDevices.filter { showUnnamed || it.name != null } } }
+    val context = LocalContext.current
+    val showUnnamed by context.getPreferenceState(PreferenceStore.SHOW_UNNAMED)
+    val filteredDevices by remember { derivedStateOf { foundDevices.filter { showUnnamed == true || it.name != null } } }
 
     val currentOnConnect by rememberUpdatedState(onConnect)
 

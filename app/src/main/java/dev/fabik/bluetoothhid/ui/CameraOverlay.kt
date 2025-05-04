@@ -41,7 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
-import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -50,11 +51,13 @@ import kotlin.math.roundToInt
 
 @Composable
 fun OverlayCanvas(viewModel: CameraViewModel) {
-    val overlayType by rememberPreference(PreferenceStore.OVERLAY_TYPE)
-    val restrictArea by rememberPreference(PreferenceStore.RESTRICT_AREA)
-    val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
+    val context = LocalContext.current
+
+    val overlayType by context.getPreferenceStateBlocking(PreferenceStore.OVERLAY_TYPE)
+    val restrictArea by context.getPreferenceStateBlocking(PreferenceStore.RESTRICT_AREA)
+    // val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
-    val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
+    val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
 
     val currentBarcode by viewModel.currentBarcode.collectAsStateWithLifecycle()
 
@@ -144,7 +147,7 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     }
 
     // Draw debug overlay
-    if (developerMode) {
+    if (developerMode == true) {
         DebugOverlay(viewModel)
     }
 }

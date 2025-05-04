@@ -11,7 +11,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -150,12 +149,12 @@ class JsEngineService : Service() {
 
 @Composable
 fun rememberJsEngineService(context: Context): JsEngineService.LocalBinder? {
-    val jsEnabled by rememberPreference(PreferenceStore.ENABLE_JS)
+    val jsEnabled by context.getPreferenceState(PreferenceStore.ENABLE_JS)
 
     val serviceBinder = remember { mutableStateOf<JsEngineService.LocalBinder?>(null) }
     val intent = remember { Intent(context, JsEngineService::class.java) }
 
-    if (jsEnabled) {
+    if (jsEnabled == true) {
         DisposableEffect(Unit) {
             val serviceConnection = object : ServiceConnection {
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -176,21 +175,11 @@ fun rememberJsEngineService(context: Context): JsEngineService.LocalBinder? {
         }
     }
 
-    if (jsEnabled) {
-        ComposableLifecycle { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> context.startService(intent)
-                Lifecycle.Event.ON_DESTROY -> context.stopService(intent)
-                else -> {}
-            }
-        }
-    }
-
-    LaunchedEffect(jsEnabled) {
-        if (!jsEnabled) {
-            // This gets called after the onDispose (called because the DisposableEffect
-            // leaves the scope now) unbinds the service
-            context.stopService(intent)
+    ComposableLifecycle { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_START -> if (jsEnabled == true) context.startService(intent)
+            Lifecycle.Event.ON_DESTROY -> context.stopService(intent)   // always try to stop service
+            else -> {}
         }
     }
 

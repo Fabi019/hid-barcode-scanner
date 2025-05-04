@@ -5,19 +5,20 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.BuildConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -29,14 +30,43 @@ import kotlinx.coroutines.runBlocking
 val Context.dataStore by preferencesDataStore("settings")
 
 open class PreferenceStore {
-    data class Preference<T>(
+    sealed class Preference<T>(
         val key: Preferences.Key<T>,
         val defaultValue: T
-    )
+    ) {
+        fun extract(prefs: Map<Preference<*>, *>): T = prefs[this] as? T ?: defaultValue
+    }
+
+    class StringPref(key: Preferences.Key<String>, defaultValue: String) :
+        Preference<String>(key, defaultValue)
+
+    class IntPref(key: Preferences.Key<Int>, defaultValue: Int) :
+        Preference<Int>(key, defaultValue)
+
+    class BooleanPref(key: Preferences.Key<Boolean>, defaultValue: Boolean) :
+        Preference<Boolean>(key, defaultValue)
+
+    class FloatPref(key: Preferences.Key<Float>, defaultValue: Float) :
+        Preference<Float>(key, defaultValue)
+
+    class SetPref(key: Preferences.Key<Set<String>>, defaultValue: Set<String>) :
+        Preference<Set<String>>(key, defaultValue)
 
     companion object {
-        private infix fun <T> Preferences.Key<T>.defaultsTo(value: T) =
-            Preference(this, value)
+        private infix fun Preferences.Key<String>.defaultsTo(value: String) =
+            StringPref(this, value)
+
+        private infix fun Preferences.Key<Int>.defaultsTo(value: Int) =
+            IntPref(this, value)
+
+        private infix fun Preferences.Key<Boolean>.defaultsTo(value: Boolean) =
+            BooleanPref(this, value)
+
+        private infix fun Preferences.Key<Float>.defaultsTo(value: Float) =
+            FloatPref(this, value)
+
+        private infix fun Preferences.Key<Set<String>>.defaultsTo(value: Set<String>) =
+            SetPref(this, value)
 
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
@@ -64,7 +94,7 @@ open class PreferenceStore {
         val PREVIEW_PERFORMANCE_MODE =
             booleanPreferencesKey("preview_performance_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res") defaultsTo 1 // HD
-        val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false
+        // val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false - Removed
 
         // Scanner
         val SCAN_FREQUENCY = intPreferencesKey("scan_freq") defaultsTo 2 // Normal
@@ -76,8 +106,9 @@ open class PreferenceStore {
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
-        val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false
-        val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false
+
+        // val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false - Removed
+        // val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false - Removed
         // val HIGHLIGHT_TYPE = intPreferencesKey("highlight") defaultsTo 0 // Box - Removed
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
         val PERSIST_HISTORY = booleanPreferencesKey("persist_history") defaultsTo true
@@ -116,23 +147,41 @@ fun <T> Context.getPreference(pref: PreferenceStore.Preference<T>): Flow<T> = da
         it[pref.key] ?: pref.defaultValue
     }
 
+fun Context.getPreferences(vararg prefs: PreferenceStore.Preference<*>): Flow<Map<PreferenceStore.Preference<*>, *>> {
+    return dataStore.data
+        .catch { e ->
+            Log.e("PreferenceStore", "Error reading preferences", e)
+            emit(emptyPreferences())
+        }
+        .map { preferences ->
+            prefs.associate { pref ->
+                pref to preferences[pref.key]
+            }
+        }
+}
+
+@Composable
+fun Context.getMultiPreferenceState(vararg prefs: PreferenceStore.Preference<*>): State<Map<PreferenceStore.Preference<*>, *>?> {
+    return remember { getPreferences(*prefs) }.collectAsStateWithLifecycle(null)
+}
+
 @Composable
 fun <T> Context.getPreferenceStateDefault(
     pref: PreferenceStore.Preference<T>,
     initial: T = pref.defaultValue
 ): State<T> {
-    return remember { getPreference(pref) }.collectAsState(initial)
+    return remember { getPreference(pref) }.collectAsStateWithLifecycle(initial)
 }
 
 @Composable
 fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>): State<T?> {
-    return remember { getPreference(pref) }.collectAsState(null)
+    return remember { getPreference(pref) }.collectAsStateWithLifecycle(null)
 }
 
 @Composable
 fun <T> Context.getPreferenceStateBlocking(pref: PreferenceStore.Preference<T>): State<T> {
     val flow = remember { getPreference(pref) }
-    return flow.collectAsState(runBlocking { flow.first() })
+    return flow.collectAsStateWithLifecycle(runBlocking { flow.first() })
 }
 
 @Composable

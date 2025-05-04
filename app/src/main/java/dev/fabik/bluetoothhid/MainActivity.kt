@@ -19,8 +19,8 @@ import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
-import dev.fabik.bluetoothhid.utils.rememberPreference
 
 val LocalController = staticCompositionLocalOf<BluetoothController?> {
     null
@@ -40,13 +40,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             BluetoothHIDTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    val allowScreenRotation by rememberPreference(PreferenceStore.ALLOW_SCREEN_ROTATION)
+                    val allowScreenRotation by getPreferenceState(PreferenceStore.ALLOW_SCREEN_ROTATION)
 
-                    LaunchedEffect(allowScreenRotation) {
-                        requestedOrientation = if (allowScreenRotation) {
-                            ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-                        } else {
-                            ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
+                    allowScreenRotation?.let {
+                        LaunchedEffect(allowScreenRotation) {
+                            requestedOrientation = if (it) {
+                                ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                            } else {
+                                ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
+                            }
                         }
                     }
 

@@ -1,7 +1,7 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
@@ -27,17 +27,19 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.SettingsActivity
 import dev.fabik.bluetoothhid.bt.BluetoothService
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
 @Composable
 fun Dropdown() {
     val context = LocalContext.current
+    val activity = LocalActivity.current
 
     var showMenu by rememberSaveable {
         mutableStateOf(false)
     }
 
-    val developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
+    val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
 
     Box {
         IconButton(
@@ -51,7 +53,7 @@ fun Dropdown() {
             expanded = showMenu,
             modifier = Modifier.widthIn(min = 150.dp),
             onDismissRequest = { showMenu = false }) {
-            if (developerMode) {
+            if (developerMode == true) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.refresh_proxy)) },
                     onClick = {
@@ -93,7 +95,7 @@ fun Dropdown() {
                 text = { Text(stringResource(R.string.exit)) },
                 leadingIcon = { Icon(Icons.Default.Close, null) },
                 onClick = {
-                    (context as Activity).finishAfterTransition()
+                    activity?.finishAfterTransition()
                 }
             )
         }

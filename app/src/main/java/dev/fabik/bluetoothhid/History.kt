@@ -92,7 +92,7 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -505,27 +505,29 @@ private fun ExportSheetContent(
 fun PersistHistory() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val persistHistory by rememberPreference(PreferenceStore.PERSIST_HISTORY)
+    val persistHistory by context.getPreferenceState(PreferenceStore.PERSIST_HISTORY)
 
-    ComposableLifecycle(lifecycleOwner) { _, event ->
-        when (event) {
-            Lifecycle.Event.ON_CREATE -> {
-                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
-                    HistoryViewModel.restoreHistory(
-                        context
-                    )
+    persistHistory?.let {
+        ComposableLifecycle(lifecycleOwner) { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> {
+                    if (it) CoroutineScope(Dispatchers.IO).launch {
+                        HistoryViewModel.restoreHistory(
+                            context
+                        )
+                    }
                 }
-            }
 
-            Lifecycle.Event.ON_DESTROY -> {
-                if (persistHistory) CoroutineScope(Dispatchers.IO).launch {
-                    HistoryViewModel.saveHistory(
-                        context
-                    )
+                Lifecycle.Event.ON_DESTROY -> {
+                    if (it) CoroutineScope(Dispatchers.IO).launch {
+                        HistoryViewModel.saveHistory(
+                            context
+                        )
+                    }
                 }
-            }
 
-            else -> {}
+                else -> {}
+            }
         }
     }
 }
