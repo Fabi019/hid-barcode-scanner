@@ -141,13 +141,13 @@
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
     <string name="custom_templ_desc_long">
-        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code is required)\n
+        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
         Modifiers can be set by prepending the following chars:\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
             \t@: Meta\n
-        Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1
+        Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1, {WAIT:10} will add a delay of 10 characters
     </string>
     <string name="camera">Camera</string>
     <string name="focus_mode">Focus mode</string>
