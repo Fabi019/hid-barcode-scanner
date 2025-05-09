@@ -6,6 +6,7 @@ import android.util.Base64
 import android.util.Log
 import java.text.DateFormat
 import java.util.Calendar
+import java.util.Collections
 import kotlin.experimental.or
 
 // Represents a key with its modifier and hid scan code
@@ -110,7 +111,7 @@ class KeyTranslator(context: Context) {
     private val keyMaps: MutableMap<String, Keymap> = mutableMapOf()
 
     private val staticTemplates = mutableMapOf<String, Key>()
-    private val dynamicTemplates = mutableMapOf<String, (String) -> List<Key>>()
+    private val dynamicTemplates = mutableMapOf<String, (String, String) -> List<Key>>()
 
     init {
         assetManager.list("keymaps")?.forEach {
@@ -174,18 +175,22 @@ class KeyTranslator(context: Context) {
         val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
         val timeFormat = DateFormat.getTimeInstance()
 
-        dynamicTemplates["DATE"] = { locale ->
+        dynamicTemplates["DATE"] = { locale, args ->
             translateString(
                 dateFormat.format(Calendar.getInstance().time),
                 locale,
             )
         }
 
-        dynamicTemplates["TIME"] = { locale ->
+        dynamicTemplates["TIME"] = { locale, args ->
             translateString(
                 timeFormat.format(Calendar.getInstance().time),
                 locale,
             )
+        }
+
+        dynamicTemplates["WAIT"] = { locale, args ->
+            Collections.nCopies<Key>(args.toIntOrNull() ?: 1, Key(0, 0))
         }
     }
 
@@ -197,7 +202,7 @@ class KeyTranslator(context: Context) {
         expandedCode: List<Key>? = null
     ): List<Key> {
         val keys = mutableListOf<Key>()
-        val templateRegex = Regex("\\{([+^#@]*\\w+)\\}")
+        val templateRegex = Regex("\\{([+^#@]*[\\w:]+)\\}")
 
         var startIdx = 0
         templateRegex.findAll(templateString).forEach {
@@ -239,10 +244,12 @@ class KeyTranslator(context: Context) {
                 } while (wasModifier)
 
                 if (temp.isNotEmpty()) {
+                    Log.d(TAG, "Template $temp modifier $modifiers")
+
                     staticTemplates[temp]?.let { t ->
                         keys.add(t.first or modifiers to t.second)
-                    } ?: dynamicTemplates[temp]?.let { t ->
-                        keys.addAll(t(locale))
+                    } ?: dynamicTemplates[temp.substringBefore(':')]?.let { t ->
+                        keys.addAll(t(locale, temp.substringAfter(':', "")))
                     } ?: translateString(temp, locale).forEach { t ->
                         keys.add(Key(t.first or modifiers, t.second))
                     }

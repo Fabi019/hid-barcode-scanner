@@ -179,13 +179,13 @@
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">
-        Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (code ist erforderlich)\n
+        Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
         Kombinationen können mit den folgenen Zeichen verwendet werden:\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
             \t@: Meta\n
-        Beispiel: {+r} sendet CTRL+R, {^#F1} sendet SHIFT+ALT+F1
+        Beispiel: {+r} sendet CTRL+R, {^#F1} sendet SHIFT+ALT+F1, {WAIT:10} fügt eine Verzögerung von 10 Zeichen hinzu
     </string>
     <string name="camera">Kamera</string>
     <string name="focus_mode">Fokus Modus</string>

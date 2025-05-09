@@ -137,13 +137,13 @@
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
     <string name="custom_templ_desc_long">
-        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN} (znacznik CODE jest wymagany)\n
+        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
         Modyfikatory mogą być ustawione poprzez dodanie następujących znaków:\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
             \t@: Meta\n
-        Przykład: {+r} prześle CTRL+R, {^#F1} prześle SHIFT+ALT+F1
+        Przykład: {+r} prześle CTRL+R, {^#F1} prześle SHIFT+ALT+F1, {WAIT:10} doda opóźnienie równe 10 znakom
     </string>
     <string name="camera">Aparat</string>
     <string name="focus_mode">Tryb ostrości</string>
