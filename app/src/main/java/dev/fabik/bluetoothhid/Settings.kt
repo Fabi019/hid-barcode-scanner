@@ -216,8 +216,8 @@ fun ConnectionSettings() {
     )
 
     SwitchPreference(
-        title = "Send with volume keys",
-        desc = "Use volume up/down to send the barcode",
+        title = stringResource(R.string.send_with_volume_keys),
+        desc = stringResource(R.string.send_vol_keys_desc),
         icon = Icons.AutoMirrored.Filled.VolumeMute,
         preference = PreferenceStore.SEND_WITH_VOLUME
     )
