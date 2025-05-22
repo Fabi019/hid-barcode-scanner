@@ -60,10 +60,7 @@
     <string name="haptic_feedback">Haptic feedback</string>
     <string name="haptic_feedback_desc">Vibrates when scanning a new code</string>
     <string name="connected_with">Connected with: %s</string>
-
-    <string name="no_device_connected">No device connected.</string>
-    <string name="click_to_connect">Click to connect the devices.</string>
-
+    <string name="click_to_connect">Click to go back.</string>
     <string name="info">Info</string>
     <string name="name">Name</string>
     <string name="mac_address">MAC-Address</string>
@@ -232,6 +229,8 @@
     <string name="downscale_threshold">Downscale threshold (px)</string>
     <string name="parser">Parser</string>
     <string name="text_mode">Text mode</string>
+    <string name="send_with_volume_keys">Send with volume keys</string>
+    <string name="send_vol_keys_desc">Use volume up/down to send the barcode</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

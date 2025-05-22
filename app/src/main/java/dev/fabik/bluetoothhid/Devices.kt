@@ -53,7 +53,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,9 +78,7 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
-import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
-import dev.fabik.bluetoothhid.utils.getPreferenceState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -247,10 +244,6 @@ fun DevicesViewModel.BroadcastListener() {
 fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
-    val context = LocalContext.current
-    val showUnnamed by context.getPreferenceState(PreferenceStore.SHOW_UNNAMED)
-    val filteredDevices by remember { derivedStateOf { foundDevices.filter { showUnnamed == true || it.name != null } } }
-
     val currentOnConnect by rememberUpdatedState(onConnect)
 
     LazyColumn(
@@ -273,7 +266,7 @@ fun DevicesViewModel.DeviceList(
         }
 
         // Filter out unnamed devices depending on preference
-        if (filteredDevices.isEmpty()) {
+        if (foundDevices.isEmpty()) {
             item(key = "no_found") {
                 RequireLocationPermission {
                     if (!isScanning) {
@@ -282,7 +275,7 @@ fun DevicesViewModel.DeviceList(
                 }
             }
         } else {
-            items(filteredDevices, key = { d -> "found_" + d.address }) { d ->
+            items(foundDevices, key = { d -> "found_" + d.address }) { d ->
                 runCatching {
                     DeviceCard(d, Modifier.animateItem()) {
                         currentOnConnect(d)

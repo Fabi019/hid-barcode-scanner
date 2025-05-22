@@ -10,6 +10,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
@@ -74,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
@@ -161,6 +163,7 @@ fun Scanner(
             currentDevice?.let {
                 currentBarcode?.let {
                     SendToDeviceFAB(it, currentSendText)
+                    VolumeKeyHandler(it, currentSendText)
                 }
             }
         },
@@ -193,7 +196,7 @@ fun Scanner(
             CapsLockWarning()
 
             ElevatedWarningCard(
-                message = stringResource(R.string.no_device_connected),
+                message = stringResource(R.string.no_device),
                 subMessage = stringResource(R.string.click_to_connect),
                 onClick = {
                     navController.navigate(Routes.Devices)
@@ -323,6 +326,40 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
 }
 
 /**
+ * Registers a KeyEventListener to capture volume up/down button presses.
+ * adapted from: https://stackoverflow.com/a/77875685
+ *
+ * @param currentBarcode the current barcode value
+ * @param onPress callback to send text to the current device
+ */
+@Composable
+private fun VolumeKeyHandler(currentBarcode: String, onPress: (String) -> Unit) {
+    val context = LocalContext.current
+    val sendWithVolume by context.getPreferenceState(PreferenceStore.SEND_WITH_VOLUME)
+
+    if (sendWithVolume == true) {
+        val view = LocalView.current
+
+        DisposableEffect(context) {
+            val keyEventDispatcher = ViewCompat.OnUnhandledKeyEventListenerCompat { _, event ->
+                if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                    onPress(currentBarcode)
+                    true
+                } else {
+                    false
+                }
+            }
+
+            ViewCompat.addOnUnhandledKeyEventListener(view, keyEventDispatcher)
+
+            onDispose {
+                ViewCompat.removeOnUnhandledKeyEventListener(view, keyEventDispatcher)
+            }
+        }
+    }
+}
+
+/**
  * Floating action button to send the current barcode to the connected device.
  * If the currentBarcode is null, the button is hidden.
  *
@@ -413,7 +450,7 @@ private fun ScannerAppBar(
             }
             IconButton(onClick = {
                 navigation.navigate(Routes.History)
-            }, Modifier.tooltip("History")) {
+            }, Modifier.tooltip(stringResource(R.string.history))) {
                 Icon(Icons.Default.History, "History")
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
