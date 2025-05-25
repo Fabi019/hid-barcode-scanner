@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -22,7 +23,6 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CropFree
-import androidx.compose.material.icons.filled.DeviceUnknown
 import androidx.compose.material.icons.filled.Expand
 import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FilterAlt
@@ -144,12 +144,12 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
-    SwitchPreference(
-        title = stringResource(R.string.show_unnamed),
-        desc = stringResource(R.string.show_unnamed_desc),
-        icon = Icons.Default.DeviceUnknown,
-        preference = PreferenceStore.SHOW_UNNAMED
-    )
+    /*    SwitchPreference(
+            title = stringResource(R.string.show_unnamed),
+            desc = stringResource(R.string.show_unnamed_desc),
+            icon = Icons.Default.DeviceUnknown,
+            preference = PreferenceStore.SHOW_UNNAMED
+        )*/
 
     SliderPreference(
         title = stringResource(R.string.send_delay),
@@ -213,6 +213,13 @@ fun ConnectionSettings() {
         desc = stringResource(R.string.auto_send_desc),
         icon = Icons.AutoMirrored.Filled.Send,
         preference = PreferenceStore.AUTO_SEND
+    )
+
+    SwitchPreference(
+        title = stringResource(R.string.send_with_volume_keys),
+        desc = stringResource(R.string.send_vol_keys_desc),
+        icon = Icons.AutoMirrored.Filled.VolumeMute,
+        preference = PreferenceStore.SEND_WITH_VOLUME
     )
 
     val jsDialog = rememberDialogState()

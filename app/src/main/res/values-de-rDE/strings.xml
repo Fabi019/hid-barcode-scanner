@@ -272,4 +272,6 @@
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
     <string name="detection">Erkennung</string>
     <string name="processing">Verarbeitung</string>
+    <string name="send_with_volume_keys">Senden mit Lautstärketasten</string>
+    <string name="send_vol_keys_desc">Verwenden von Lautstärke Hoch/Runter zum senden</string>
 </resources>
