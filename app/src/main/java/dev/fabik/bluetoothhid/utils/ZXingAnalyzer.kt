@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.utils
 
+import android.util.Log
 import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -13,6 +14,8 @@ class ZXingAnalyzer(
 ) : ImageAnalysis.Analyzer {
 
     companion object {
+        private const val TAG = "ZXingAnalyzer"
+
         // Order based on the mlkit order to preserve indexes
         // Needs to be kept in sync with the "code_types_values" string array resource
         private val FORMATS = arrayOf(
@@ -72,10 +75,15 @@ class ZXingAnalyzer(
             image.close()
         } else {
             lastAnalyzedTimeStamp = currentTime
-            val results = image.use {
-                reader.read(image)
+
+            runCatching {
+                val results = image.use {
+                    reader.read(image)
+                }
+                onResult(results, Size(image.width, image.height))
+            }.onFailure {
+                Log.e(TAG, "Error analyzing image!", it)
             }
-            onResult(results, Size(image.width, image.height))
         }
 
         onAnalyze()

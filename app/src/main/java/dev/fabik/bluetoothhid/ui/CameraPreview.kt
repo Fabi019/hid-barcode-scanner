@@ -37,12 +37,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
@@ -68,19 +70,31 @@ fun CameraPreviewContent(
         PreferenceStore.FOCUS_MODE
     )
 
-    camera?.let {
+    var isPaused by remember { mutableStateOf(true) }
+
+    ComposableLifecycle(lifecycleOwner) { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_RESUME -> isPaused = false
+            Lifecycle.Event.ON_PAUSE -> isPaused = true
+            else -> {}
+        }
+    }
+
+    if (!isPaused && camera != null) {
         LaunchedEffect(lifecycleOwner, camera) {
             runCatching {
-                viewModel.bindToCamera(
-                    context.applicationContext,
-                    lifecycleOwner,
-                    PreferenceStore.FRONT_CAMERA.extract(it),
-                    PreferenceStore.SCAN_RESOLUTION.extract(it),
-                    PreferenceStore.FIX_EXPOSURE.extract(it),
-                    PreferenceStore.FOCUS_MODE.extract(it),
-                    onCameraReady = onCameraReady,
-                    onBarcode = onBarcodeDetected,
-                )
+                camera?.let {
+                    viewModel.bindToCamera(
+                        context.applicationContext,
+                        lifecycleOwner,
+                        PreferenceStore.FRONT_CAMERA.extract(it),
+                        PreferenceStore.SCAN_RESOLUTION.extract(it),
+                        PreferenceStore.FIX_EXPOSURE.extract(it),
+                        PreferenceStore.FOCUS_MODE.extract(it),
+                        onCameraReady = onCameraReady,
+                        onBarcode = onBarcodeDetected,
+                    )
+                }
             }.onFailure {
                 Log.e("CameraPreview", "Error binding camera!", it)
                 errorDialog.open()

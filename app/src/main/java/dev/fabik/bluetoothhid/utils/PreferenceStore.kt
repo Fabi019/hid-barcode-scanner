@@ -70,7 +70,9 @@ open class PreferenceStore {
 
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
-        val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false
+
+        //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
+        val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 10f
         val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout") defaultsTo 0
         val EXTRA_KEYS = intPreferencesKey("extra_keys") defaultsTo 0 // None

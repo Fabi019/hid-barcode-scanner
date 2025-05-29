@@ -83,7 +83,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.FilterModal
@@ -504,11 +503,10 @@ private fun ExportSheetContent(
 @Composable
 fun PersistHistory() {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val persistHistory by context.getPreferenceState(PreferenceStore.PERSIST_HISTORY)
 
     persistHistory?.let {
-        ComposableLifecycle(lifecycleOwner) { _, event ->
+        ComposableLifecycle { _, event ->
             when (event) {
                 Lifecycle.Event.ON_CREATE -> {
                     if (it) CoroutineScope(Dispatchers.IO).launch {
