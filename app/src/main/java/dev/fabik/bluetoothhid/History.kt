@@ -407,21 +407,25 @@ fun HistoryViewModel.ExportSheet() {
                         HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
                     }
 
-                    if (saveToFile) {
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                            type = mime
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                            putExtra(Intent.EXTRA_TITLE, name)
+                    runCatching {
+                        if (saveToFile) {
+                            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                type = mime
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                putExtra(Intent.EXTRA_TITLE, name)
+                            }
+                            exportData = data
+                            startForResult.launch(intent)
+                        } else {
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = mime
+                                putExtra(Intent.EXTRA_TEXT, data)
+                            }
+                            val shareIntent = Intent.createChooser(intent, exportString)
+                            context.startActivity(shareIntent)
                         }
-                        exportData = data
-                        startForResult.launch(intent)
-                    } else {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = mime
-                            putExtra(Intent.EXTRA_TEXT, data)
-                        }
-                        val shareIntent = Intent.createChooser(intent, exportString)
-                        context.startActivity(shareIntent)
+                    }.onFailure {
+                        Log.e("History", "Error starting activity!", it)
                     }
                 }
             }
