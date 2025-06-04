@@ -66,6 +66,10 @@ android {
             excludes += "DebugProbesKt.bin"
         }
     }
+
+    lint {
+        disable "NullSafeMutableLiveData"
+    }
 }
 
 configurations {
