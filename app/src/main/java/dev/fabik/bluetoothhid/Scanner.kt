@@ -1,8 +1,10 @@
 package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -12,8 +14,12 @@ import android.os.VibratorManager
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +36,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
@@ -39,6 +46,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
@@ -75,6 +83,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.bt.KeyTranslator
@@ -93,6 +102,9 @@ import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import kotlinx.coroutines.launch
+import org.totschnig.ocr.Text
+import java.io.File
+import java.util.concurrent.Executors
 
 
 @Composable
@@ -144,8 +156,11 @@ fun Scanner(
     val context = LocalContext.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
+
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
+    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentSendText by rememberUpdatedState(sendText)
@@ -175,9 +190,9 @@ fun Scanner(
                 .fillMaxSize()
         ) {
             RequiresCameraPermission {
-                CameraPreviewArea(
-                    onCameraReady = { control, info -> cameraControl = control; cameraInfo = info }
-                ) { value, send ->
+                CameraPreviewArea(onCameraReady = { control, info, capt ->
+                    cameraControl = control; cameraInfo = info; imageCapture = capt
+                }) { value, send ->
                     currentBarcode = value
                     if (send) {
                         currentSendText(value)
@@ -204,6 +219,67 @@ fun Scanner(
                 visible = currentDevice == null
             )
 
+            val startForResult =
+                rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                    Log.d("Scanner", "Activity result $result")
+
+                    if (result.resultCode == Activity.RESULT_OK) {
+                        val text: Text? =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                result.data?.getParcelableExtra("result", Text::class.java)
+                            } else {
+                                result.data?.getParcelableExtra("result")
+                            }
+
+                        text?.let {
+                            Log.d("Scanner", "Scan result: $it")
+                        } ?: {
+                            Log.d("Scanner", "No result")
+                        }
+                    }
+                }
+
+            imageCapture?.let {
+                FloatingActionButton(onClick = {
+                    val file = File(
+                        context.cacheDir,
+                        "capture.jpg"   // override previous capture
+                    )
+
+                    it.takePicture(
+                        ImageCapture.OutputFileOptions.Builder(file).build(),
+                        Executors.newSingleThreadExecutor(),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onError(exc: ImageCaptureException) {
+                                Log.e("Scanner", "Capture failed!", exc)
+                            }
+
+                            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                val photoUri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
+
+                                val intent = Intent("org.totschnig.ocr.action.RECOGNIZE").apply {
+                                    setDataAndType(photoUri, "image/jpeg")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+
+                                runCatching {
+                                    Log.d("Scanner", "Launching intent with $photoUri")
+                                    startForResult.launch(intent)
+                                }.onFailure {
+                                    Log.e("Scanner", "Unable start intent!", it)
+                                }
+                            }
+                        }
+                    )
+                }, modifier = Modifier.align(Alignment.BottomEnd)) {
+                    Icon(Icons.Default.DocumentScanner, null)
+                }
+            }
+
             cameraInfo?.let {
                 ZoomStateInfo(it)
             }
@@ -220,7 +296,7 @@ fun Scanner(
  */
 @Composable
 private fun CameraPreviewArea(
-    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
     onBarcodeDetected: (String, Boolean) -> Unit,
 ) {
     val context = LocalContext.current

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
+import androidx.camera.core.ImageCapture
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
@@ -53,7 +54,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun CameraPreviewContent(
     viewModel: CameraViewModel = viewModel<CameraViewModel>(),
-    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
     onBarcodeDetected: (String) -> Unit,
 ) {
     val context = LocalContext.current

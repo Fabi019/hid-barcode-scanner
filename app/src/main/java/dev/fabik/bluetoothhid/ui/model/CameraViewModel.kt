@@ -14,6 +14,7 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
@@ -67,6 +68,7 @@ class CameraViewModel : ViewModel() {
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
     private var cameraInfo: CameraInfo? = null
+    private var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     private var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
@@ -103,7 +105,7 @@ class CameraViewModel : ViewModel() {
         resolution: Int,
         fixExposure: Boolean,
         focusMode: Int,
-        onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+        onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
         onBarcode: (String) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
@@ -178,9 +180,14 @@ class CameraViewModel : ViewModel() {
         val analysis = analyzerBuilder.build()
         analysis.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
 
+        imageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .build()
+
         val useCaseGroup = UseCaseGroup.Builder()
             .addUseCase(cameraPreviewUseCase)
             .addUseCase(analysis)
+            .addUseCase(imageCapture!!)
             .build()
 
         val camera = processCameraProvider.bindToLifecycle(
@@ -193,7 +200,7 @@ class CameraViewModel : ViewModel() {
         cameraControl = camera.cameraControl
         cameraInfo = camera.cameraInfo
 
-        onCameraReady(camera.cameraControl, camera.cameraInfo)
+        onCameraReady(camera.cameraControl, camera.cameraInfo, imageCapture)
         Log.d(TAG, "Camera is ready!")
 
         // Cancellation signals we're done with the camera
@@ -206,7 +213,8 @@ class CameraViewModel : ViewModel() {
             processCameraProvider.unbindAll()
             cameraControl = null
             cameraInfo = null
-            onCameraReady(null, null)
+            imageCapture = null
+            onCameraReady(null, null, null)
         }
     }
 
