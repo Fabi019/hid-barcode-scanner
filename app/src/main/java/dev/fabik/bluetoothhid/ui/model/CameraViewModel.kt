@@ -68,10 +68,10 @@ class CameraViewModel : ViewModel() {
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
     private var cameraInfo: CameraInfo? = null
-    private var imageCapture: ImageCapture? = null
+    var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    private var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
+    var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -321,7 +321,7 @@ class CameraViewModel : ViewModel() {
     }
 
     private var _lastBarcode: String? = null
-    private val _currentBarcode = MutableStateFlow<Barcode?>(null)
+    val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
 
     data class Barcode(
@@ -336,6 +336,7 @@ class CameraViewModel : ViewModel() {
         source: Size
     ) {
         detectorTrace.trigger()
+        return
 
         val barcode = result.map {
             val cornerPoints = listOf(
