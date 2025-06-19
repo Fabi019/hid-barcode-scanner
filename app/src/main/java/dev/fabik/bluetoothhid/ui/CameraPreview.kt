@@ -2,11 +2,6 @@ package dev.fabik.bluetoothhid.ui
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.Point
 import android.os.Build
 import android.util.Log
 import android.util.Size
@@ -16,8 +11,6 @@ import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
 import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
@@ -62,7 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,14 +66,9 @@ import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.totschnig.ocr.Line
 import org.totschnig.ocr.Text
 import zxingcpp.BarcodeReader
-import java.io.File
-import java.io.FileOutputStream
-import java.util.concurrent.Executors
 
 @Composable
 fun CameraPreviewContent(
@@ -275,12 +262,10 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val resultDialog = rememberDialogState()
 
     var imageSize by remember { mutableStateOf(Size(0, 0)) }
-    var results by remember { mutableStateOf<List<Line>>(emptyList()) }
+    val results by viewModel.ocrResults.collectAsStateWithLifecycle()
 
     val startForResult =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            Log.d("Scanner", "Activity result $result")
-
             if (result.resultCode == Activity.RESULT_OK) {
                 val text: Text? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     result.data?.getParcelableExtra("result", Text::class.java)
@@ -289,44 +274,9 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
                 }
 
                 text?.let {
-                    Log.d("Scanner", "Scan result: $it $imageSize")
-
-                    results = it.textBlocks.flatMap { block ->
-                        block.lines.filter { line ->
-                            line.boundingBox?.let { bb ->
-                                val cornerPoints = listOf(
-                                    Point(bb.left, bb.top),
-                                    Point(bb.right, bb.top),
-                                    Point(bb.right, bb.bottom),
-                                    Point(bb.left, bb.bottom),
-                                ).map {
-                                    viewModel.transformPoint(it, imageSize)
-                                }
-
-                                Log.d("Scanner", "Line: ${line.text} $cornerPoints")
-
-                                if (cornerPoints.any {
-                                        viewModel.scanRect.contains(
-                                            Offset(
-                                                it.x, it.y
-                                            )
-                                        )
-                                    }) {
-                                    return@filter true
-                                }
-                            }
-
-                            false
-                        }
-                    }
-
-                    if (results.size > 1) {
+                    if (viewModel.onOcrResult(it.textBlocks, imageSize)) {
                         resultDialog.open()
-                    } else if (results.isNotEmpty()) {
-                        viewModel.onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE)
                     }
-                } ?: {
-                    Log.d("Scanner", "No result")
                 }
             }
         }
@@ -339,20 +289,6 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
                         .fillMaxWidth()
                         .clickable {
                             viewModel.onBarcodeDetected(it.text, BarcodeReader.Format.NONE)
-                            viewModel._currentBarcode.update { _ ->
-                                val bb = it.boundingBox!!
-                                val cornerPoints = listOf(
-                                    Point(bb.left, bb.top),
-                                    Point(bb.right, bb.top),
-                                    Point(bb.right, bb.bottom),
-                                    Point(bb.left, bb.bottom),
-                                ).map {
-                                    viewModel.transformPoint(it, imageSize)
-                                }
-                                CameraViewModel.Barcode(
-                                    it.text, cornerPoints, Size(0, 0), BarcodeReader.Format.NONE
-                                )
-                            }
                             resultDialog.close()
                         }) {
                     Text(it.text, Modifier.padding(4.dp))
@@ -362,66 +298,22 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     }
 
     FloatingActionButton(onClick = {
-        viewModel.imageCapture?.takePicture(
-            Executors.newSingleThreadExecutor(),
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e("Scanner", "Capture failed!", exc)
-                }
+        viewModel.captureImageOCR(context) { photoUri, size ->
+            imageSize = size
 
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    // Override previous capture
-                    val file = File(context.cacheDir, "capture.jpg")
+            // For debugging use "android.intent.action.VIEW"
+            val intent = Intent("org.totschnig.ocr.action.RECOGNIZE").apply {
+                setDataAndType(photoUri, "image/jpeg")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
 
-                    if (image.format == ImageFormat.JPEG || image.format == ImageFormat.JPEG_R) {
-                        val buffer = image.planes[0].buffer
-                        val bytes = ByteArray(buffer.remaining())
-                        buffer.get(bytes)
-
-                        // Rotate image based on rotationDegrees
-                        var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        val matrix =
-                            Matrix().apply { postRotate(image.imageInfo.rotationDegrees.toFloat()) }
-                        bitmap = Bitmap.createBitmap(
-                            bitmap,
-                            0,
-                            0,
-                            bitmap.width,
-                            bitmap.height,
-                            matrix,
-                            true
-                        )
-
-                        imageSize = Size(bitmap.width, bitmap.height)
-
-                        image.close()
-
-                        FileOutputStream(file).use { output ->
-                            output.write(bytes)
-                        }
-                    } else {
-                        image.close()
-                        return
-                    }
-
-                    val photoUri = FileProvider.getUriForFile(
-                        context, "${context.packageName}.fileprovider", file
-                    )
-
-                    // For debugging use "android.intent.action.VIEW"
-                    val intent = Intent("org.totschnig.ocr.action.RECOGNIZE").apply {
-                        setDataAndType(photoUri, "image/jpeg")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-
-                    runCatching {
-                        Log.d("Scanner", "Launching intent with $photoUri $imageSize")
-                        startForResult.launch(intent)
-                    }.onFailure {
-                        Log.e("Scanner", "Unable start intent!", it)
-                    }
-                }
-            })
+            runCatching {
+                Log.d("Scanner", "Launching intent with $photoUri $imageSize")
+                startForResult.launch(intent)
+            }.onFailure {
+                Log.e("Scanner", "Unable start intent!", it)
+            }
+        }
     }, modifier = Modifier) {
         Icon(Icons.Default.DocumentScanner, null)
     }
