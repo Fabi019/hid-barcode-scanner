@@ -20,8 +20,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -56,7 +58,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.lifecycle.Lifecycle
@@ -69,6 +70,7 @@ import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import kotlinx.coroutines.launch
 import org.totschnig.ocr.Text
@@ -104,8 +106,6 @@ fun CameraPreviewContent(
             else -> {}
         }
     }
-
-    Log.d("CameraViewModel", "Recompose $isPaused $camera")
 
     if (!isPaused && camera != null) {
         LaunchedEffect(configuration, lifecycleOwner, camera) {
@@ -287,7 +287,8 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
 
     var selectedTexts = remember { mutableStateMapOf<Int, String>() }
 
-    ConfirmDialog(resultDialog, "Multiple results",
+    ConfirmDialog(
+        resultDialog, "Scan results",
         enabled = selectedTexts.isNotEmpty(),
         onConfirm = {
             viewModel.onBarcodeDetected(
@@ -299,7 +300,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     ) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             itemsIndexed(results) { i, v ->
-                var editText by remember { mutableStateOf(TextFieldValue(v.text)) }
+                var editText by rememberSaveable { mutableStateOf(v.text) }
                 val checked = selectedTexts.contains(i)
 
                 Row(
@@ -314,37 +315,50 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
                             if (checked) {
                                 selectedTexts.remove(i)
                             } else {
-                                selectedTexts[i] = editText.text
+                                selectedTexts[i] = editText
                             }
                         },
                         modifier = Modifier.padding(end = 2.dp)
                     )
                     TextField(
                         value = editText,
-                        onValueChange = { editText = it; selectedTexts[i] = it.text })
+                        onValueChange = {
+                            editText = it
+                            if (selectedTexts.contains(i))
+                                selectedTexts[i] = it
+                        })
                 }
             }
         }
     }
 
-    FloatingActionButton(onClick = {
-        viewModel.captureImageOCR(context) { photoUri, size ->
-            imageSize = size
+    // For debugging use "android.intent.action.VIEW"
+    val intent = remember { Intent("org.totschnig.ocr.action.RECOGNIZE") }
+    val ocrEnable by context.getPreferenceState(PreferenceStore.OCR_COMPAT)
 
-            // For debugging use "android.intent.action.VIEW"
-            val intent = Intent("org.totschnig.ocr.action.RECOGNIZE").apply {
-                setDataAndType(photoUri, "image/jpeg")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
+    if (ocrEnable == true) {
+        Box(Modifier.fillMaxSize()) {
+            FloatingActionButton(
+                onClick = {
+                    viewModel.captureImageOCR(context) { photoUri, size ->
+                        imageSize = size
 
-            runCatching {
-                Log.d("Scanner", "Launching intent with $photoUri $imageSize")
-                startForResult.launch(intent)
-            }.onFailure {
-                Log.e("Scanner", "Unable start intent!", it)
+                        runCatching {
+                            Log.d("Scanner", "Launching intent with $photoUri $imageSize")
+                            startForResult.launch(intent.apply {
+                                setDataAndType(photoUri, "image/jpeg")
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            })
+                        }.onFailure {
+                            Log.e("Scanner", "Unable start intent!", it)
+                        }
+                    }
+                }, modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.BottomEnd)
+            ) {
+                Icon(Icons.Default.DocumentScanner, null)
             }
         }
-    }, modifier = Modifier) {
-        Icon(Icons.Default.DocumentScanner, null)
     }
 }

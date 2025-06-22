@@ -109,6 +109,7 @@ fun SettingsDropdown() {
     }
 
     var developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
+    var ocrSupport by rememberPreference(PreferenceStore.OCR_COMPAT)
 
     Box {
         IconButton(
@@ -128,11 +129,24 @@ fun SettingsDropdown() {
                 trailingIcon = {
                     Checkbox(
                         checked = developerMode,
-                        onCheckedChange = { developerMode = it }
+                        onCheckedChange = null
                     )
                 },
                 onClick = {
                     developerMode = !developerMode
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text("Ext. OCR support") },
+                trailingIcon = {
+                    Checkbox(
+                        checked = ocrSupport,
+                        onCheckedChange = null
+                    )
+                },
+                onClick = {
+                    ocrSupport = !ocrSupport
                 }
             )
         }
