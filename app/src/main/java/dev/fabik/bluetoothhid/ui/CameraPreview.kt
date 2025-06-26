@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import android.util.Size
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.compose.CameraXViewfinder
@@ -337,6 +338,8 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val ocrEnable by context.getPreferenceState(PreferenceStore.OCR_COMPAT)
 
     if (ocrEnable == true) {
+        val scope = rememberCoroutineScope()
+
         Box(Modifier.fillMaxSize()) {
             FloatingActionButton(
                 onClick = {
@@ -350,6 +353,13 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             })
                         }.onFailure {
+                            scope.launch {
+                                Toast.makeText(
+                                    context,
+                                    "OCR engine not installed!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                             Log.e("Scanner", "Unable start intent!", it)
                         }
                     }
