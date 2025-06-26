@@ -3,9 +3,12 @@ package dev.fabik.bluetoothhid.ui
 import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
@@ -13,14 +16,17 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
@@ -111,6 +117,8 @@ fun SettingsDropdown() {
     var developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
     var ocrSupport by rememberPreference(PreferenceStore.OCR_COMPAT)
 
+    val ocrInfoDialog = rememberDialogState()
+
     Box {
         IconButton(
             onClick = { showMenu = !showMenu },
@@ -146,9 +154,32 @@ fun SettingsDropdown() {
                     )
                 },
                 onClick = {
+                    if (!ocrSupport) {
+                        ocrInfoDialog.open()
+                    }
                     ocrSupport = !ocrSupport
                 }
             )
+        }
+    }
+
+    InfoDialog(ocrInfoDialog, "Note", icon = { Icon(Icons.Default.Info, null) }) {
+        val uriHandler = LocalUriHandler.current
+
+        Column {
+            Text(
+                "The OCR extension requires an external app to provide the detection functionality. " +
+                        "If you want to use this feature, the following app needs to be installed separately on your device.\n" +
+                        "(Note that this is a third-party app over which I don't have any control)"
+            )
+
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                OutlinedButton({
+                    uriHandler.openUri("https://github.com/mtotschnig/OCR")
+                }) { Text("OCR by mtotschnig (GitHub)") }
+            }
+
+            Text("After this, you can use the new button in the bottom right corner of the scanner to trigger the detection.")
         }
     }
 }
