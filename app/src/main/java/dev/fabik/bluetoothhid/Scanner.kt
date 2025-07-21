@@ -14,6 +14,7 @@ import android.view.KeyEvent
 import android.widget.Toast
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -144,8 +145,11 @@ fun Scanner(
     val context = LocalContext.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
+
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
+    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentSendText by rememberUpdatedState(sendText)
@@ -175,9 +179,9 @@ fun Scanner(
                 .fillMaxSize()
         ) {
             RequiresCameraPermission {
-                CameraPreviewArea(
-                    onCameraReady = { control, info -> cameraControl = control; cameraInfo = info }
-                ) { value, send ->
+                CameraPreviewArea(onCameraReady = { control, info, capt ->
+                    cameraControl = control; cameraInfo = info; imageCapture = capt
+                }) { value, send ->
                     currentBarcode = value
                     if (send) {
                         currentSendText(value)
@@ -220,7 +224,7 @@ fun Scanner(
  */
 @Composable
 private fun CameraPreviewArea(
-    onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+    onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
     onBarcodeDetected: (String, Boolean) -> Unit,
 ) {
     val context = LocalContext.current

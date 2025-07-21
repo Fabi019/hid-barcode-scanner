@@ -3,9 +3,12 @@ package dev.fabik.bluetoothhid.ui
 import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
@@ -13,14 +16,17 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
@@ -109,6 +115,9 @@ fun SettingsDropdown() {
     }
 
     var developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
+    var ocrSupport by rememberPreference(PreferenceStore.OCR_COMPAT)
+
+    val ocrInfoDialog = rememberDialogState()
 
     Box {
         IconButton(
@@ -128,13 +137,48 @@ fun SettingsDropdown() {
                 trailingIcon = {
                     Checkbox(
                         checked = developerMode,
-                        onCheckedChange = { developerMode = it }
+                        onCheckedChange = null
                     )
                 },
                 onClick = {
                     developerMode = !developerMode
                 }
             )
+
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.ext_ocr_support)) },
+                trailingIcon = {
+                    Checkbox(
+                        checked = ocrSupport,
+                        onCheckedChange = null
+                    )
+                },
+                onClick = {
+                    if (!ocrSupport) {
+                        ocrInfoDialog.open()
+                    }
+                    ocrSupport = !ocrSupport
+                }
+            )
+        }
+    }
+
+    InfoDialog(
+        ocrInfoDialog, stringResource(R.string.note),
+        icon = { Icon(Icons.Default.Info, null) }
+    ) {
+        val uriHandler = LocalUriHandler.current
+
+        Column {
+            Text(stringResource(R.string.ocr_note_desc))
+
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                OutlinedButton({
+                    uriHandler.openUri("https://github.com/mtotschnig/OCR")
+                }) { Text(stringResource(R.string.ocr_app_github)) }
+            }
+
+            Text(stringResource(R.string.ocr_note_bottom))
         }
     }
 }
