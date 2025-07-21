@@ -289,7 +289,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     var selectedTexts = remember { mutableStateMapOf<Int, String>() }
 
     ConfirmDialog(
-        resultDialog, "Scan results",
+        resultDialog, stringResource(R.string.scan_results),
         enabled = selectedTexts.isNotEmpty(),
         onConfirm = {
             viewModel.onBarcodeDetected(
@@ -300,6 +300,10 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
         }
     ) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            item {
+                Text(stringResource(R.string.ocr_results_selection))
+            }
+
             itemsIndexed(results) { i, v ->
                 var editText by rememberSaveable { mutableStateOf(v.text) }
                 val checked = selectedTexts.contains(i)
@@ -338,9 +342,9 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val ocrEnable by context.getPreferenceState(PreferenceStore.OCR_COMPAT)
 
     if (ocrEnable == true) {
-        val scope = rememberCoroutineScope()
-
         Box(Modifier.fillMaxSize()) {
+            val scope = rememberCoroutineScope()
+
             FloatingActionButton(
                 onClick = {
                     viewModel.captureImageOCR(context) { photoUri, size ->

@@ -146,7 +146,7 @@ fun SettingsDropdown() {
             )
 
             DropdownMenuItem(
-                text = { Text("Ext. OCR support") },
+                text = { Text(stringResource(R.string.ext_ocr_support)) },
                 trailingIcon = {
                     Checkbox(
                         checked = ocrSupport,
@@ -163,23 +163,22 @@ fun SettingsDropdown() {
         }
     }
 
-    InfoDialog(ocrInfoDialog, "Note", icon = { Icon(Icons.Default.Info, null) }) {
+    InfoDialog(
+        ocrInfoDialog, stringResource(R.string.note),
+        icon = { Icon(Icons.Default.Info, null) }
+    ) {
         val uriHandler = LocalUriHandler.current
 
         Column {
-            Text(
-                "The OCR extension requires an external app to provide the detection functionality. " +
-                        "If you want to use this feature, the following app needs to be installed separately on your device.\n" +
-                        "(Note that this is a third-party app over which I don't have any control)"
-            )
+            Text(stringResource(R.string.ocr_note_desc))
 
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 OutlinedButton({
                     uriHandler.openUri("https://github.com/mtotschnig/OCR")
-                }) { Text("OCR by mtotschnig (GitHub)") }
+                }) { Text(stringResource(R.string.ocr_app_github)) }
             }
 
-            Text("After this, you can use the new button in the bottom right corner of the scanner to trigger the detection.")
+            Text(stringResource(R.string.ocr_note_bottom))
         }
     }
 }
