@@ -1,9 +1,14 @@
 package dev.fabik.bluetoothhid.ui.model
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PointF
 import android.hardware.camera2.CaptureRequest
+import android.net.Uri
 import android.util.Log
 import android.util.Size
 import androidx.annotation.OptIn
@@ -14,6 +19,9 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
@@ -29,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
+import androidx.core.content.FileProvider
 import androidx.core.graphics.toPointF
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -44,7 +53,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.totschnig.ocr.Line
+import org.totschnig.ocr.TextBlock
 import zxingcpp.BarcodeReader
+import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -67,9 +80,10 @@ class CameraViewModel : ViewModel() {
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
     private var cameraInfo: CameraInfo? = null
+    var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    private var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
+    var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -103,7 +117,7 @@ class CameraViewModel : ViewModel() {
         resolution: Int,
         fixExposure: Boolean,
         focusMode: Int,
-        onCameraReady: (CameraControl?, CameraInfo?) -> Unit,
+        onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
         onBarcode: (String) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
@@ -178,9 +192,14 @@ class CameraViewModel : ViewModel() {
         val analysis = analyzerBuilder.build()
         analysis.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
 
+        imageCapture = ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .build()
+
         val useCaseGroup = UseCaseGroup.Builder()
             .addUseCase(cameraPreviewUseCase)
             .addUseCase(analysis)
+            .addUseCase(imageCapture!!)
             .build()
 
         val camera = processCameraProvider.bindToLifecycle(
@@ -193,7 +212,7 @@ class CameraViewModel : ViewModel() {
         cameraControl = camera.cameraControl
         cameraInfo = camera.cameraInfo
 
-        onCameraReady(camera.cameraControl, camera.cameraInfo)
+        onCameraReady(camera.cameraControl, camera.cameraInfo, imageCapture)
         Log.d(TAG, "Camera is ready!")
 
         // Cancellation signals we're done with the camera
@@ -206,7 +225,8 @@ class CameraViewModel : ViewModel() {
             processCameraProvider.unbindAll()
             cameraControl = null
             cameraInfo = null
-            onCameraReady(null, null)
+            imageCapture = null
+            onCameraReady(null, null, null)
         }
     }
 
@@ -328,6 +348,7 @@ class CameraViewModel : ViewModel() {
         source: Size
     ) {
         detectorTrace.trigger()
+        return
 
         val barcode = result.map {
             val cornerPoints = listOf(
@@ -374,6 +395,96 @@ class CameraViewModel : ViewModel() {
                 onBarcodeDetected(value, barcode.format)
             }
         }
+    }
+
+    private val _ocrResults = MutableStateFlow<List<Line>>(emptyList())
+    val ocrResults = _ocrResults.asStateFlow()
+
+    fun onOcrResult(result: List<TextBlock>, source: Size): Boolean {
+        val results = result.flatMap { block ->
+            block.lines.filter { line ->
+                line.boundingBox?.let { bb ->
+                    val cornerPoints = listOf(
+                        Point(bb.left, bb.top),
+                        Point(bb.right, bb.top),
+                        Point(bb.right, bb.bottom),
+                        Point(bb.left, bb.bottom),
+                    ).map {
+                        val point = transformPoint(it, source)
+                        Offset(point.x, point.y)
+                    }
+
+                    return@filter when (_fullyInside) {
+                        false -> scanRect.overlaps(Rect(cornerPoints[0], cornerPoints[2]))
+                        true -> cornerPoints.all { scanRect.contains(it) }
+                    }
+                }
+
+                false
+            }
+        }
+
+        Log.d(TAG, "OCR results: $results")
+
+        if (results.size > 1) {
+            _ocrResults.update { _ -> results }
+            return true
+        } else if (results.isNotEmpty()) {
+            onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE)
+        }
+
+        return false
+    }
+
+    fun captureImageOCR(context: Context, onSuccess: (Uri, Size) -> Unit) {
+        imageCapture?.takePicture(
+            Executors.newSingleThreadExecutor(),
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Capture failed!", exc)
+                }
+
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    // Override previous capture
+                    val file = File(context.cacheDir, "capture.jpg")
+
+                    if (image.format == ImageFormat.JPEG || image.format == ImageFormat.JPEG_R) {
+                        val buffer = image.planes[0].buffer
+                        val bytes = ByteArray(buffer.remaining())
+                        buffer.get(bytes)
+
+                        // Rotate image based on rotationDegrees
+                        var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        val matrix =
+                            Matrix().apply { postRotate(image.imageInfo.rotationDegrees.toFloat()) }
+                        bitmap = Bitmap.createBitmap(
+                            bitmap,
+                            0,
+                            0,
+                            bitmap.width,
+                            bitmap.height,
+                            matrix,
+                            true
+                        )
+
+                        // Write image into temporary file
+                        FileOutputStream(file).use { output ->
+                            output.write(bytes)
+                        }
+
+                        val photoUri = FileProvider.getUriForFile(
+                            context, "${context.packageName}.fileprovider", file
+                        )
+
+                        onSuccess(photoUri, Size(bitmap.width, bitmap.height))
+                    } else {
+                        Log.w(TAG, "Unsupported capture format: ${image.format}")
+                    }
+
+                    image.close()
+                }
+            }
+        )
     }
 
     private suspend fun mapJS(

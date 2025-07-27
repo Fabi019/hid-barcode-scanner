@@ -126,6 +126,7 @@ open class PreferenceStore {
         val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode") defaultsTo 2
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
+        val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false
 
         // Utility preferences
         val OVERLAY_POS_X = floatPreferencesKey("overlay_pos_x") defaultsTo 0.0f
