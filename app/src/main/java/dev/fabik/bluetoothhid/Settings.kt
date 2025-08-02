@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Expand
@@ -449,6 +450,13 @@ fun ScannerSettings() {
         icon = Icons.Default.Description,
         preference = PreferenceStore.RAW_VALUE
     )*/
+
+    SwitchPreference(
+        title = "Clear after send",
+        desc = "Clears shown code after sending it manually",
+        icon = Icons.Default.Clear,
+        preference = PreferenceStore.CLEAR_AFTER_SEND
+    )
 
     SwitchPreference(
         title = stringResource(R.string.private_mode),

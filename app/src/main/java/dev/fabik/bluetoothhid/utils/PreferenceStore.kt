@@ -108,6 +108,7 @@ open class PreferenceStore {
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
+        val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
 
         // val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false - Removed
         // val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false - Removed

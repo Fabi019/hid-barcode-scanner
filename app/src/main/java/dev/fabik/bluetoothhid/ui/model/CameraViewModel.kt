@@ -124,13 +124,13 @@ class CameraViewModel : ViewModel() {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         onBarcodeDetected = { value, format ->
-            if (!value.contentEquals(_lastBarcode)) {
+            if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
                 viewModelScope.launch {
                     onBarcode(value)
                 }
-                _lastBarcode = value
+                lastBarcode = value
             }
         }
 
@@ -332,7 +332,7 @@ class CameraViewModel : ViewModel() {
         Log.d(TAG, "Updated scan parameters")
     }
 
-    private var _lastBarcode: String? = null
+    var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
 
