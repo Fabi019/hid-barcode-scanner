@@ -274,4 +274,6 @@
     <string name="processing">Verarbeitung</string>
     <string name="send_with_volume_keys">Senden mit Lautstärketasten</string>
     <string name="send_vol_keys_desc">Verwenden von Lautstärke Hoch/Runter zum senden</string>
+    <string name="clear_after_send">Nach dem Senden löschen</string>
+    <string name="clear_after_send_desc">Löscht den angezeigten Code, nachdem er manuell gesendet wurde</string>
 </resources>
