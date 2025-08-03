@@ -452,8 +452,8 @@ fun ScannerSettings() {
     )*/
 
     SwitchPreference(
-        title = "Clear after send",
-        desc = "Clears shown code after sending it manually",
+        title = stringResource(R.string.clear_after_send),
+        desc = stringResource(R.string.clear_after_send_desc),
         icon = Icons.Default.Clear,
         preference = PreferenceStore.CLEAR_AFTER_SEND
     )
