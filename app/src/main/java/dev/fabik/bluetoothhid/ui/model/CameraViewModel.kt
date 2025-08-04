@@ -190,7 +190,8 @@ class CameraViewModel : ViewModel() {
         }
 
         val analysis = analyzerBuilder.build()
-        analysis.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
+        val executor = Executors.newSingleThreadExecutor()
+        analysis.setAnalyzer(executor, analyzer)
 
         imageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
@@ -223,9 +224,12 @@ class CameraViewModel : ViewModel() {
         } finally {
             Log.d(TAG, "Unbinding camera...")
             processCameraProvider.unbindAll()
+            if (!executor.isShutdown)
+                executor.shutdown()
             cameraControl = null
             cameraInfo = null
             imageCapture = null
+            barcodeAnalyzer = null
             onCameraReady(null, null, null)
         }
     }
@@ -348,7 +352,6 @@ class CameraViewModel : ViewModel() {
         source: Size
     ) {
         detectorTrace.trigger()
-        return
 
         val barcode = result.map {
             val cornerPoints = listOf(
