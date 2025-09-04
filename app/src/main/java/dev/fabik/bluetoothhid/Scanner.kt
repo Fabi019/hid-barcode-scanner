@@ -78,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.DialogState
@@ -86,6 +87,7 @@ import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
@@ -165,8 +167,18 @@ fun Scanner(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             currentDevice?.let {
+                val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
+                val cameraVM = viewModel<CameraViewModel>()
+
                 currentBarcode?.let {
-                    SendToDeviceFAB(it, currentSendText)
+                    SendToDeviceFAB(it) {
+                        currentSendText(it)
+
+                        if (clearAfterSend == true) {
+                            currentBarcode = null
+                            cameraVM.lastBarcode = null
+                        }
+                    }
                     VolumeKeyHandler(it, currentSendText)
                 }
             }

@@ -124,13 +124,13 @@ class CameraViewModel : ViewModel() {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         onBarcodeDetected = { value, format ->
-            if (!value.contentEquals(_lastBarcode)) {
+            if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
                 viewModelScope.launch {
                     onBarcode(value)
                 }
-                _lastBarcode = value
+                lastBarcode = value
             }
         }
 
@@ -190,7 +190,8 @@ class CameraViewModel : ViewModel() {
         }
 
         val analysis = analyzerBuilder.build()
-        analysis.setAnalyzer(Executors.newSingleThreadExecutor(), analyzer)
+        val executor = Executors.newSingleThreadExecutor()
+        analysis.setAnalyzer(executor, analyzer)
 
         imageCapture = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
@@ -223,9 +224,12 @@ class CameraViewModel : ViewModel() {
         } finally {
             Log.d(TAG, "Unbinding camera...")
             processCameraProvider.unbindAll()
+            if (!executor.isShutdown)
+                executor.shutdown()
             cameraControl = null
             cameraInfo = null
             imageCapture = null
+            barcodeAnalyzer = null
             onCameraReady(null, null, null)
         }
     }
@@ -332,7 +336,7 @@ class CameraViewModel : ViewModel() {
         Log.d(TAG, "Updated scan parameters")
     }
 
-    private var _lastBarcode: String? = null
+    var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
 
@@ -348,7 +352,6 @@ class CameraViewModel : ViewModel() {
         source: Size
     ) {
         detectorTrace.trigger()
-        return
 
         val barcode = result.map {
             val cornerPoints = listOf(

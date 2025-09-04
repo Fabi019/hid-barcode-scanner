@@ -238,6 +238,8 @@
     <string name="ext_ocr_support">Ext. OCR support</string>
     <string name="scan_results">Scan results</string>
     <string name="ocr_results_selection">Select all lines that should be sent.</string>
+    <string name="clear_after_send">Clear after send</string>
+    <string name="clear_after_send_desc">Clears shown code after sending it manually</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
