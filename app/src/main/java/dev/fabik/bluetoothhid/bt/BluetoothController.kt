@@ -265,16 +265,18 @@ class BluetoothController(var context: Context) {
         } ?: true
     }
 
-    suspend fun sendString(string: String) = with(context) {
+    suspend fun sendString(string: String, withExtraKeys: Boolean = true) = with(context) {
         if (!_isSending.compareAndSet(false, true)) {
             return@with
         }
 
         val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
-        val extraKeys = getPreference(PreferenceStore.EXTRA_KEYS).first()
+        val extraKeys = if (!withExtraKeys) 0 else getPreference(PreferenceStore.EXTRA_KEYS).first()
         val layout = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
-        val template = getPreference(PreferenceStore.TEMPLATE_TEXT).first()
-        val expand = getPreference(PreferenceStore.EXPAND_CODE).first()
+        val template =
+            if (!withExtraKeys) "" else getPreference(PreferenceStore.TEMPLATE_TEXT).first()
+        val expand =
+            if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
 
         keyboardSender?.sendString(
             string,

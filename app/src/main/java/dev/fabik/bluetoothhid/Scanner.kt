@@ -23,19 +23,25 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.ripple.RippleAlpha
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -44,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -54,6 +61,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -64,11 +72,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -81,6 +92,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
+import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.DialogState
 import dev.fabik.bluetoothhid.ui.Dropdown
 import dev.fabik.bluetoothhid.ui.InfoDialog
@@ -88,6 +100,7 @@ import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
@@ -95,6 +108,7 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -150,7 +164,6 @@ fun Scanner(
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
-    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -192,7 +205,7 @@ fun Scanner(
         ) {
             RequiresCameraPermission {
                 CameraPreviewArea(onCameraReady = { control, info, capt ->
-                    cameraControl = control; cameraInfo = info; imageCapture = capt
+                    cameraControl = control; cameraInfo = info
                 }) { value, send ->
                     currentBarcode = value
                     if (send) {
@@ -464,6 +477,17 @@ private fun ScannerAppBar(
             if (camera != null && info != null && info.hasFlashUnit()) {
                 ToggleFlashButton(camera, info)
             }
+
+            currentDevice?.let {
+                val keyboardDialog = rememberDialogState()
+                IconButton(onClick = {
+                    keyboardDialog.open()
+                }, Modifier.tooltip(stringResource(R.string.manual_input))) {
+                    Icon(Icons.Default.Keyboard, "Keyboard")
+                }
+                KeyboardInputDialog(keyboardDialog)
+            }
+
             IconButton(onClick = {
                 navigation.navigate(Routes.History)
             }, Modifier.tooltip(stringResource(R.string.history))) {
@@ -630,6 +654,57 @@ fun DeviceInfoDialog(
 //                    Text(it.toString())
 //                }
 //            }
+        }
+    }
+}
+
+@Composable
+fun KeyboardInputDialog(dialogState: DialogState) {
+    val controller = LocalController.current
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+
+    var currentText by rememberSaveable(dialogState.openState) { mutableStateOf("") }
+    var enabled by remember(dialogState.openState) { mutableStateOf(true) }
+    val (extraKeys, setExtraKeys) = rememberSaveable { mutableStateOf(false) }
+
+    val focusRequester = remember { FocusRequester() }
+
+    ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
+        scope.launch {
+            enabled = false
+            controller?.sendString(currentText, extraKeys)
+        }.invokeOnCompletion {
+            close()
+        }
+    }) {
+        Column {
+            OutlinedTextField(
+                value = currentText,
+                onValueChange = { currentText = it },
+                modifier = Modifier.focusRequester(focusRequester)
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                Modifier
+                    .toggleable(
+                        value = extraKeys,
+                        role = Role.Checkbox,
+                        onValueChange = setExtraKeys
+                    )
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(checked = extraKeys, onCheckedChange = null)
+                Spacer(Modifier.width(12.dp))
+                Text(stringResource(R.string.include_extra_keys))
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
         }
     }
 }
