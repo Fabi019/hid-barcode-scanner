@@ -38,6 +38,9 @@ class BluetoothController(var context: Context) {
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy { bluetoothManager.adapter }
 
+    // RFCOMM Controller integration
+    private val rfcommController = RfcommController(context, bluetoothAdapter!!)
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile
@@ -63,6 +66,14 @@ class BluetoothController(var context: Context) {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
 
+            // Initialize RFCOMM if needed
+            MainScope().launch {
+                val connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
+                if (connectionMode == 1) {
+                    rfcommController.connectRFCOMM()
+                }
+            }
+
             hostDevice.update { null }
             hidDevice = proxy as? BluetoothHidDevice
 
@@ -87,6 +98,9 @@ class BluetoothController(var context: Context) {
 
         override fun onServiceDisconnected(profile: Int) {
             Log.d(TAG, "onServiceDisconnected")
+
+            // Disconnect RFCOMM
+            rfcommController.disconnectRFCOMM()
 
             hidDevice = null
             hostDevice.update { null }
@@ -191,6 +205,9 @@ class BluetoothController(var context: Context) {
     fun unregister() {
         disconnect()
 
+        // Disconnect RFCOMM
+        rfcommController.disconnectRFCOMM()
+
         hidDevice?.unregisterApp()
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
 
@@ -277,29 +294,36 @@ class BluetoothController(var context: Context) {
             if (!withExtraKeys) "" else getPreference(PreferenceStore.TEMPLATE_TEXT).first()
         val expand =
             if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
+        val connectionMode = getPreference(PreferenceStore.CONNECTION_MODE).first()
 
-        keyboardSender?.sendString(
-            string,
-            sendDelay.toLong(),
-            extraKeys,
-            when (layout) {
-                1 -> "de"
-                2 -> "fr"
-                3 -> "en"
-                4 -> "es"
-                5 -> "it"
-                6 -> "tr"
-                7 -> "pl"
-                8 -> "cz"
-                else -> "us"
-            },
-            template,
-            expand
-        )
+        // Check connection mode - RFCOMM or HID
+        if (connectionMode == 1) {
+            // RFCOMM mode
+            rfcommController.sendDataByRFCOMM(string, template)
+        } else {
+            // HID mode
+            keyboardSender?.sendString(
+                string,
+                sendDelay.toLong(),
+                extraKeys,
+                when (layout) {
+                    1 -> "de"
+                    2 -> "fr" 
+                    3 -> "en"
+                    4 -> "es"
+                    5 -> "it"
+                    6 -> "tr"
+                    7 -> "pl"
+                    8 -> "cz"
+                    else -> "us"
+                },
+                template,
+                expand
+            )
+        }
 
         _isSending.update { false }
     }
-
 }
 
 fun BluetoothDevice.removeBond() {

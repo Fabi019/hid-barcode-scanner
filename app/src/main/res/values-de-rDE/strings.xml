@@ -278,4 +278,10 @@
     <string name="clear_after_send_desc">Löscht den angezeigten Code, nachdem er manuell gesendet wurde</string>
     <string name="manual_input">Manuelle Eingabe</string>
     <string name="include_extra_keys">Extra Tasten verwenden</string>
+    <string name="connection_mode">Verbindungsmodus</string>
+    <string name="connection_mode_desc">Wählen Sie zwischen HID und RFCOMM</string>
+    <string-array name="connection_mode_values">
+        <item>HID-Tastatur</item>
+        <item>RFCOMM (SPP)</item>
+    </string-array>
 </resources>

@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.PhonelinkSetup
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -137,6 +138,15 @@ fun SectionTitle(@StringRes id: Int) {
 @Composable
 fun ConnectionSettings() {
     val context = LocalContext.current
+
+    // HID/RFCOMM
+    ComboBoxPreference(
+        title = stringResource(R.string.connection_mode),
+        desc = stringResource(R.string.connection_mode_desc),
+        icon = Icons.Default.PhonelinkSetup,
+        values = stringArrayResource(R.array.connection_mode_values),
+        preference = PreferenceStore.CONNECTION_MODE
+    )
 
     SwitchPreference(
         title = stringResource(R.string.auto_connect),

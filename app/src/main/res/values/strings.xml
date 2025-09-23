@@ -242,6 +242,8 @@
     <string name="clear_after_send_desc">Clears shown code after sending it manually</string>
     <string name="manual_input">Manual input</string>
     <string name="include_extra_keys">Include extra keys</string>
+    <string name="connection_mode">Connection Mode</string>
+    <string name="connection_mode_desc">Choose between HID and RFCOMM</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -294,6 +296,10 @@
         <item>EDOF</item>
         <item>Fixed (Infinity)</item>
         <item>Continuous (Fast)</item>
+    </string-array>
+    <string-array name="connection_mode_values">
+        <item>HID Keyboard</item>
+        <item>RFCOMM (SPP)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>
