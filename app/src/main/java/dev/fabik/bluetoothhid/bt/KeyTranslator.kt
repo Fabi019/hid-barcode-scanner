@@ -2,10 +2,7 @@ package dev.fabik.bluetoothhid.bt
 
 import android.content.Context
 import android.content.res.AssetManager
-import android.util.Base64
 import android.util.Log
-import java.text.DateFormat
-import java.util.Calendar
 import java.util.Collections
 import kotlin.experimental.or
 
@@ -172,22 +169,7 @@ class KeyTranslator(context: Context) {
         staticTemplates["F23"] = Key(0, 0x72)
         staticTemplates["F24"] = Key(0, 0x73)
 
-        val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
-        val timeFormat = DateFormat.getTimeInstance()
-
-        dynamicTemplates["DATE"] = { locale, args ->
-            translateString(
-                dateFormat.format(Calendar.getInstance().time),
-                locale,
-            )
-        }
-
-        dynamicTemplates["TIME"] = { locale, args ->
-            translateString(
-                timeFormat.format(Calendar.getInstance().time),
-                locale,
-            )
-        }
+        // Note: DATE and TIME templates are now handled by TemplateProcessor
 
         dynamicTemplates["WAIT"] = { locale, args ->
             Collections.nCopies<Key>(args.toIntOrNull() ?: 1, Key(0, 0))
@@ -195,75 +177,77 @@ class KeyTranslator(context: Context) {
     }
 
     // Translates a string into a list of keys using a template string
+    // Note: Basic templates (CODE, DATE, TIME, etc.) should be processed by TemplateProcessor first
     fun translateStringWithTemplate(
-        string: String,
+        processedString: String,
         locale: String,
-        templateString: String,
         expandedCode: List<Key>? = null
     ): List<Key> {
         val keys = mutableListOf<Key>()
         val templateRegex = Regex("\\{([+^#@]*[\\w:]+)\\}")
 
         var startIdx = 0
-        templateRegex.findAll(templateString).forEach {
-            // Adds everything before the first template
-            val before = templateString.substring(startIdx, it.range.first)
+        templateRegex.findAll(processedString).forEach {
+            // Adds everything before the template
+            val before = processedString.substring(startIdx, it.range.first)
             keys.addAll(translateString(before, locale))
 
-            // Adds the template
+            // Process HID-specific template
             val template = it.groupValues[1]
             if (template.startsWith("CODE")) {
-                if (expandedCode == null) {
-                    val text = when (template) {
-                        "CODE_HEX" -> string.toByteArray()
-                            .joinToString("") { b -> "%02x".format(b) }
-
-                        "CODE_B64" -> Base64.encodeToString(string.toByteArray(), Base64.NO_WRAP)
-                        else -> string
-                    }
-                    keys.addAll(translateString(text, locale))
-                } else {
+                // Handle expandedCode mechanism (for complex template processing)
+                if (expandedCode != null) {
                     keys.addAll(expandedCode)
+                } else {
+                    // This shouldn't happen if TemplateProcessor handled basic templates
+                    Log.w(TAG, "CODE template found in processed string: $template")
+                    keys.addAll(translateString(template, locale))
                 }
             } else {
-                var modifiers = 0.toByte()
-                var temp = template
-                var wasModifier = true
-
-                do {
-                    when (temp.firstOrNull()) {
-                        '+' -> modifiers = modifiers or LCTRL
-                        '^' -> modifiers = modifiers or LSHIFT
-                        '#' -> modifiers = modifiers or LALT
-                        '@' -> modifiers = modifiers or LMETA
-                        else -> wasModifier = false
-                    }
-                    if (wasModifier) {
-                        temp = temp.substring(1)
-                    }
-                } while (wasModifier)
-
-                if (temp.isNotEmpty()) {
-                    Log.d(TAG, "Template $temp modifier $modifiers")
-
-                    staticTemplates[temp]?.let { t ->
-                        keys.add(t.first or modifiers to t.second)
-                    } ?: dynamicTemplates[temp.substringBefore(':')]?.let { t ->
-                        keys.addAll(t(locale, temp.substringAfter(':', "")))
-                    } ?: translateString(temp, locale).forEach { t ->
-                        keys.add(Key(t.first or modifiers, t.second))
-                    }
-                }
+                processHidSpecificTemplate(template, locale, keys)
             }
 
             startIdx = it.range.last + 1
         }
 
         // Adds the rest of the template
-        val after = templateString.substring(startIdx)
+        val after = processedString.substring(startIdx)
         keys.addAll(translateString(after, locale))
 
         return keys
+    }
+
+    // Process HID-specific templates (modifiers, F-keys, arrows, etc.)
+    private fun processHidSpecificTemplate(template: String, locale: String, keys: MutableList<Key>) {
+        var modifiers = 0.toByte()
+        var temp = template
+        var wasModifier = true
+
+        // Parse modifiers: +^#@
+        do {
+            when (temp.firstOrNull()) {
+                '+' -> modifiers = modifiers or LCTRL
+                '^' -> modifiers = modifiers or LSHIFT
+                '#' -> modifiers = modifiers or LALT
+                '@' -> modifiers = modifiers or LMETA
+                else -> wasModifier = false
+            }
+            if (wasModifier) {
+                temp = temp.substring(1)
+            }
+        } while (wasModifier)
+
+        if (temp.isNotEmpty()) {
+            Log.d(TAG, "HID template: $temp, modifiers: $modifiers")
+
+            staticTemplates[temp]?.let { t ->
+                keys.add(t.first or modifiers to t.second)
+            } ?: dynamicTemplates[temp.substringBefore(':')]?.let { t ->
+                keys.addAll(t(locale, temp.substringAfter(':', "")))
+            } ?: translateString(temp, locale).forEach { t ->
+                keys.add(Key(t.first or modifiers, t.second))
+            }
+        }
     }
 
     // Converts a normal string into a list of keys

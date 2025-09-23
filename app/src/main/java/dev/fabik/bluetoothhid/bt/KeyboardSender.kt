@@ -24,35 +24,36 @@ open class KeyboardSender(
         }
     }
 
-    suspend fun sendString(
-        string: String,
+    suspend fun sendProcessedString(
+        processedString: String,
         sendDelay: Long,
         appendKey: Int,
         locale: String,
-        template: String,
         expandCode: Boolean,
     ) {
-        when (appendKey) {
-            1 -> keyboardTranslator.translateString("$string\n", locale)
-            2 -> keyboardTranslator.translateString("$string\t", locale)
-            3 -> keyboardTranslator.translateString("$string ", locale)
+        val finalString = when (appendKey) {
+            1 -> "$processedString\n"
+            2 -> "$processedString\t"
+            3 -> "$processedString "
+            else -> processedString
+        }
+
+        val keys = when (appendKey) {
             4 -> {
                 if (expandCode) {
-                    val expandedCode =
-                        keyboardTranslator.translateStringWithTemplate(string, locale, string)
-                    keyboardTranslator.translateStringWithTemplate(
-                        "",
-                        locale,
-                        template,
-                        expandedCode
-                    )
+                    // Complex expandCode mechanism - treat processed string as template for expansion
+                    val expandedCode = keyboardTranslator.translateStringWithTemplate(finalString, locale)
+                    keyboardTranslator.translateStringWithTemplate("", locale, expandedCode)
                 } else {
-                    keyboardTranslator.translateStringWithTemplate(string, locale, template)
+                    // Simple template processing on the already processed string
+                    keyboardTranslator.translateStringWithTemplate(finalString, locale)
                 }
             }
-            else -> keyboardTranslator.translateString(string, locale)
-        }.forEach { key ->
-            Log.d(TAG, "sendString: $key")
+            else -> keyboardTranslator.translateString(finalString, locale)
+        }
+
+        keys.forEach { key ->
+            Log.d(TAG, "sendProcessedString: $key")
             sendKey(key, sendDelay / 2)
             delay(sendDelay / 2)
         }

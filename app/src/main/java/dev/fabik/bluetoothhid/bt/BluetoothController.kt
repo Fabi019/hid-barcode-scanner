@@ -12,6 +12,7 @@ import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -298,26 +299,36 @@ class BluetoothController(var context: Context) {
 
         // Check connection mode - RFCOMM or HID
         if (connectionMode == 1) {
-            // RFCOMM mode
-            rfcommController.sendDataByRFCOMM(string, template)
-        } else {
-            // HID mode
-            keyboardSender?.sendString(
+            // RFCOMM mode - process template for text output
+            val processedString = TemplateProcessor.processTemplate(
                 string,
+                template,
+                TemplateProcessor.TemplateMode.RFCOMM
+            )
+            rfcommController.sendProcessedData(processedString)
+        } else {
+            // HID mode - process template for HID conversion
+            val processedString = TemplateProcessor.processTemplate(
+                string,
+                template,
+                TemplateProcessor.TemplateMode.HID
+            )
+            val locale = when (layout) {
+                1 -> "de"
+                2 -> "fr"
+                3 -> "en"
+                4 -> "es"
+                5 -> "it"
+                6 -> "tr"
+                7 -> "pl"
+                8 -> "cz"
+                else -> "us"
+            }
+            keyboardSender?.sendProcessedString(
+                processedString,
                 sendDelay.toLong(),
                 extraKeys,
-                when (layout) {
-                    1 -> "de"
-                    2 -> "fr" 
-                    3 -> "en"
-                    4 -> "es"
-                    5 -> "it"
-                    6 -> "tr"
-                    7 -> "pl"
-                    8 -> "cz"
-                    else -> "us"
-                },
-                template,
+                locale,
                 expand
             )
         }

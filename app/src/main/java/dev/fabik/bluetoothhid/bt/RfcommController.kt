@@ -16,10 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
-import android.util.Base64
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @SuppressLint("MissingPermission")
 class RfcommController(private val context: Context, private val bluetoothAdapter: BluetoothAdapter) {
@@ -150,62 +146,14 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
         }
     }
 
-    fun sendDataByRFCOMM(data: String, template: String) {
-        // Define the current date and time
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-
-        // Define the placeholders and their replacements
-        val placeholders = mapOf(
-            "{SPACE}" to " ",
-            "{TAB}" to "\t",
-            "{CR}" to "\r",
-            "{LF}" to "\n",
-            "{ENTER}" to "\r\n",
-            "{DATE}" to currentDate,
-            "{TIME}" to currentTime
-        )
-
-        // Start processing the template
-        var processedTemplate = template
-
-        // Check if the template contains at least one of {CODE}, {CODE_B64}, or {CODE_HEX}
-        val codeRegex = Regex("\\{CODE(_B64|_HEX)?\\}")
-        if (!codeRegex.containsMatchIn(template)) {
-            // This is checked by GUI, but just in case
-            Log.e(TAG, "Template must contain {CODE}, {CODE_B64}, or {CODE_HEX}")
-            processedTemplate = data
-        }
-
-        // Replace {CODE_B64} if present
-        if (processedTemplate.contains("{CODE_B64}")) {
-            val encodedB64 = Base64.encodeToString(data.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
-            processedTemplate = processedTemplate.replace("{CODE_B64}", encodedB64)
-        }
-
-        // Replace {CODE_HEX} if present
-        if (processedTemplate.contains("{CODE_HEX}")) {
-            val encodedHex = data.toByteArray(Charsets.UTF_8).joinToString("") { String.format("%02X", it) }
-            processedTemplate = processedTemplate.replace("{CODE_HEX}", encodedHex)
-        }
-
-        // Replace {CODE} if present
-        if (processedTemplate.contains("{CODE}")) {
-            processedTemplate = processedTemplate.replace("{CODE}", data)
-        }
-
-        // Replace other placeholders
-        for ((placeholder, replacement) in placeholders) {
-            processedTemplate = processedTemplate.replace(placeholder, replacement)
-        }
-
-        // Convert the final message to UTF-8 byte array
-        val messageBytes = processedTemplate.toByteArray(Charsets.UTF_8)
+    fun sendProcessedData(processedString: String) {
+        // Convert the processed string to UTF-8 byte array
+        val messageBytes = processedString.toByteArray(Charsets.UTF_8)
 
         // Send data via RFCOMM
         rfcSocket?.let { socket ->
             try {
-                Log.i(TAG, "Socket - Data Sent to Client: $processedTemplate")
+                Log.i(TAG, "Socket - Data Sent to Client: $processedString")
                 socket.outputStream.write(messageBytes)
             } catch (e: Exception) {
                 Log.e(TAG, "Socket: Error sending data", e)
