@@ -284,4 +284,6 @@
         <item>HID-Tastatur</item>
         <item>RFCOMM (SPP)</item>
     </string-array>
+    <string name="insecure_rfcomm">Unsicherem RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Für Geräte aktivieren, die keine sicheren RFCOMM-Verbindungen unterstützen</string>
 </resources>

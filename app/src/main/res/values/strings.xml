@@ -305,4 +305,6 @@
         <item quantity="one">Export %1$d item</item>
         <item quantity="other">Export %1$d items</item>
     </plurals>
+    <string name="insecure_rfcomm">Use insecure RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Enable for devices that don\'t support secure RFCOMM connections</string>
 </resources>

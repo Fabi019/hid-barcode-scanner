@@ -303,5 +303,7 @@
     <string name="clear_after_send">Czyść bufor po wysłaniu</string>
     <string name="clear_after_send_desc">Kasuje wyświetlany kod po ręcznym wysłaniu</string>
     <string name="manual_input">Ręczne wprowadzanie</string>
-    <string name="include_extra_keys">Dołącz ekstra klawisze</string>
+    <string name="include_extra_keys">Użyj ekstra klawiszy</string>
+    <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Zezwalaj na niebezpieczne połączenia RFCOMM</string>
 </resources>
