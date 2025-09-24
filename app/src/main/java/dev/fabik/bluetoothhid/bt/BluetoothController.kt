@@ -8,6 +8,8 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
@@ -15,10 +17,17 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -62,6 +71,11 @@ class BluetoothController(var context: Context) {
 
     private var _isCapsLockOn: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isCapsLockOn = _isCapsLockOn.asStateFlow()
+
+    private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var modeObserverJob: Job? = null
+    private var autoConnectObserverJob: Job? = null
+    private var bluetoothStateReceiver: BroadcastReceiver? = null
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -170,6 +184,95 @@ class BluetoothController(var context: Context) {
 
     }
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun startModeObserver() {
+        if (modeObserverJob?.isActive == true) {
+            Log.d(TAG, "Mode observer already running")
+            return
+        }
+
+        Log.d(TAG, "Starting CONNECTION_MODE observer")
+        modeObserverJob = controllerScope.launch {
+            context.getPreference(PreferenceStore.CONNECTION_MODE)
+                .distinctUntilChanged()
+                .debounce(200)
+                .collect { mode ->
+                    Log.d(TAG, "Connection mode changed to: $mode")
+                    when (mode) {
+                        1 -> {
+                            Log.d(TAG, "Switching to RFCOMM mode")
+                            rfcommController.connectRFCOMM()
+                        }
+                        else -> {
+                            Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
+                            rfcommController.disconnectRFCOMM()
+                        }
+                    }
+                }
+        }
+    }
+
+    fun startBluetoothStateMonitoring() {
+        if (bluetoothStateReceiver != null) {
+            Log.d(TAG, "Bluetooth state monitoring already started")
+            return
+        }
+
+        Log.d(TAG, "Starting Bluetooth state monitoring")
+        bluetoothStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val action = intent?.action
+                if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    when (state) {
+                        BluetoothAdapter.STATE_TURNING_OFF -> {
+                            Log.d(TAG, "Bluetooth turning OFF - force disconnect all connections")
+                            disconnect()
+                            rfcommController.disconnectRFCOMM()
+                        }
+                        BluetoothAdapter.STATE_ON -> {
+                            Log.d(TAG, "Bluetooth turned ON - restarting services if needed")
+                            controllerScope.launch {
+                                val connectionMode = context?.getPreference(PreferenceStore.CONNECTION_MODE)?.first() ?: 0
+                                if (connectionMode == 1) {
+                                    rfcommController.connectRFCOMM()
+                                }
+                            }
+                        }
+                        BluetoothAdapter.STATE_OFF -> {
+                            Log.d(TAG, "Bluetooth turned OFF")
+                        }
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        context.registerReceiver(bluetoothStateReceiver, filter)
+    }
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun startAutoConnectObserver() {
+        if (autoConnectObserverJob?.isActive == true) {
+            Log.d(TAG, "AutoConnect observer already running")
+            return
+        }
+
+        Log.d(TAG, "Starting AUTO_CONNECT observer")
+        autoConnectObserverJob = controllerScope.launch {
+            context.getPreference(PreferenceStore.AUTO_CONNECT)
+                .distinctUntilChanged()
+                .debounce(150)
+                .collect { autoConnect ->
+                    Log.d(TAG, "AutoConnect setting changed to: $autoConnect")
+                    autoConnectEnabled = autoConnect
+
+                    // Propagate to RFCOMM
+                    rfcommController.setAutoConnectEnabled(autoConnect)
+                }
+        }
+    }
+
     val bluetoothEnabled: Boolean
         get() = bluetoothAdapter?.isEnabled ?: false
 
@@ -206,6 +309,18 @@ class BluetoothController(var context: Context) {
     fun unregister() {
         disconnect()
 
+        // Stop observing connection mode and auto-connect changes
+        modeObserverJob?.cancel()
+        modeObserverJob = null
+        autoConnectObserverJob?.cancel()
+        autoConnectObserverJob = null
+
+        // Stop Bluetooth state monitoring
+        bluetoothStateReceiver?.let {
+            context.unregisterReceiver(it)
+            bluetoothStateReceiver = null
+        }
+
         // Disconnect RFCOMM
         rfcommController.disconnectRFCOMM()
 
@@ -235,6 +350,9 @@ class BluetoothController(var context: Context) {
         cancelScan()
 
         Log.d(TAG, "connecting to $device")
+
+        // Set expected device for RFCOMM filtering
+        rfcommController.setExpectedDeviceAddress(device.address)
 
         val success = hidDevice?.connect(device) ?: false
 

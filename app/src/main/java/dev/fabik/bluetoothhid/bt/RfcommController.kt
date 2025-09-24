@@ -12,16 +12,47 @@ import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import java.util.UUID
+import kotlin.random.Random
 
 @SuppressLint("MissingPermission")
 class RfcommController(private val context: Context, private val bluetoothAdapter: BluetoothAdapter) {
     companion object {
         private const val TAG = "RfcommController"
         private val RFCOMM_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    }
+
+    private fun L(msg: String) = Log.i("$TAG[$sessionId]", msg)
+    private fun LE(msg: String, t: Throwable? = null) = Log.e("$TAG[$sessionId]", msg, t)
+
+    fun setExpectedDeviceAddress(addr: String?) {
+        expectedDeviceAddress = addr
+        L("Expected device address set to: ${addr ?: "any"}")
+    }
+
+    fun setAutoConnectEnabled(enabled: Boolean) {
+        autoConnectEnabled = enabled
+        L("AutoConnect ${if (enabled) "enabled" else "disabled"}")
+
+        if (enabled && !isRFCOMMconnected && !isRFCOMMServerStarted) {
+            // Try to auto-connect to last known device
+            lastConnectedDeviceAddress?.let { addr ->
+                L("Attempting auto-connect to last device: $addr")
+                expectedDeviceAddress = addr
+                controllerScope.launch {
+                    connectRFCOMM()
+                }
+            }
+        }
     }
 
     // ****************************************
@@ -31,76 +62,186 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
     var connectionMode: Int = 0
     private var rfcSocket: BluetoothSocket? = null // RFCOMM Client
     private var serverSocket: BluetoothServerSocket? = null  // RFCOMM Server
-    private var isRFCOMMconnected: Boolean = false
-    private var isRFCOMMServerStarted: Boolean = false
+    @Volatile private var isRFCOMMconnected: Boolean = false
+    @Volatile private var isRFCOMMServerStarted: Boolean = false
+    private var acceptJob: Job? = null
+    @Volatile private var expectedDeviceAddress: String? = null
+    @Volatile private var autoConnectEnabled: Boolean = false
+    @Volatile private var lastConnectedDeviceAddress: String? = null
+    private val reconnectMutex = Mutex()
+    private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val sessionId = System.currentTimeMillis().toString(16)
 
     fun connectRFCOMM(){
-        CoroutineScope(Dispatchers.IO).launch {
+        controllerScope.launch {
             connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
 
             if (connectionMode == 1) {
-                Log.i(TAG, "Connection Mode: RFCOMM")
+                L("Connection Mode: RFCOMM")
                 startRFCOMMServer()
             }
             else
             {
-                Log.i(TAG, "Connection Mode: HID")
+                L("Connection Mode: HID")
             }
         }
     }
 
-    fun disconnectRFCOMM()
-    {
-        if (connectionMode == 1)
-        {
-            // closing client and server sockets if they are not null
-            rfcSocket?.close()
-            isRFCOMMconnected = false
+    fun disconnectRFCOMM() {
+        L("Disconnecting RFCOMM - cleaning up all resources")
 
-            serverSocket?.close()
-            isRFCOMMServerStarted = false
-        }
+        // Always cleanup regardless of connection mode to prevent zombie servers
+        runCatching { rfcSocket?.close() }.onFailure { LE("Error closing client socket", it) }
+        rfcSocket = null
+        isRFCOMMconnected = false
+
+        runCatching { serverSocket?.close() }.onFailure { LE("Error closing server socket", it) }
+        serverSocket = null
+        isRFCOMMServerStarted = false
+
+        acceptJob?.cancel()
+        acceptJob = null
+
+        L("RFCOMM cleanup completed")
     }
 
-    private fun reconnectRFCOMM() {
-        Log.i(TAG, "Reconnecting...")
+    private suspend fun reconnectRFCOMM() = reconnectMutex.withLock {
+        L("Attempting RFCOMM reconnection")
+        if (isRFCOMMconnected) {
+            L("Already connected - skipping reconnect")
+            return@withLock
+        }
 
         disconnectRFCOMM()
+        delay(100) // Brief pause before reconnecting
         connectRFCOMM()
     }
 
+    @Synchronized
     private fun startRFCOMMServer() {
-        // Run RFCOMM server in background with coroutine
-        CoroutineScope(Dispatchers.IO).launch {
+        if (acceptJob?.isActive == true) {
+            L("Server already accepting connections - skipping")
+            return
+        }
 
-            if (!isRFCOMMServerStarted)
-            {
-                // Open BluetoothServerSocket for RFCOMM connections (SPP)
-                serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord("Barcode Scanner", RFCOMM_UUID)
-                Log.i(TAG, "Server: Server Started! Waiting for connections...")
+        L("Starting RFCOMM server with accept loop")
+        acceptJob = controllerScope.launch {
+            var errorCount = 0
+            while (isActive) {
+                try {
+                    // Create server socket if needed
+                    if (!isRFCOMMServerStarted || serverSocket == null) {
+                        val useInsecure = context.getPreference(PreferenceStore.INSECURE_RFCOMM).first()
 
-                isRFCOMMServerStarted = true
-            }
-            else
-            {
-                Log.i(TAG, "Server: Server already running! Waiting for connections...")
-            }
+                        try {
+                            serverSocket = if (useInsecure) {
+                                L("Creating insecure RFCOMM server socket")
+                                bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(
+                                    "Barcode Scanner", RFCOMM_UUID
+                                )
+                            } else {
+                                L("Creating secure RFCOMM server socket")
+                                bluetoothAdapter.listenUsingRfcommWithServiceRecord(
+                                    "Barcode Scanner", RFCOMM_UUID
+                                )
+                            }
+                            isRFCOMMServerStarted = true
+                            L("Server listening for connections (${if (useInsecure) "insecure" else "secure"})...")
+                            errorCount = 0 // Reset error count on successful socket creation
+                        } catch (e: IOException) {
+                            if (!useInsecure) {
+                                L("Secure RFCOMM failed, trying insecure fallback")
+                                try {
+                                    serverSocket = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(
+                                        "Barcode Scanner", RFCOMM_UUID
+                                    )
+                                    isRFCOMMServerStarted = true
+                                    L("Server listening for connections (insecure fallback)...")
+                                    errorCount = 0
+                                } catch (fallbackException: IOException) {
+                                    LE("Both secure and insecure RFCOMM failed", fallbackException)
+                                    throw fallbackException
+                                }
+                            } else {
+                                LE("Insecure RFCOMM creation failed", e)
+                                throw e
+                            }
+                        }
+                    }
 
-            try {
-                // Accept connections - blocks to the moment of connection
-                rfcSocket = serverSocket?.accept()
-                Log.i(TAG, "Server: Client connected via RFCOMM")
+                    // Accept client connection (blocking call)
+                    val socket = serverSocket?.accept() ?: continue
+                    val clientAddress = socket.remoteDevice?.address
 
-                // Check if rfcSocket is not null
-                rfcSocket?.let { socket ->
+                    L("Client connection attempt from: $clientAddress")
+
+                    // Check if we already have an active client
+                    if (isRFCOMMconnected) {
+                        L("Rejecting connection - already serving client")
+                        runCatching { socket.close() }
+                        continue
+                    }
+
+                    // Filter by expected device address if set
+                    val expectedAddr = expectedDeviceAddress
+                    if (expectedAddr != null && clientAddress != expectedAddr) {
+                        L("Rejecting unexpected client $clientAddress (expected $expectedAddr)")
+                        runCatching { socket.close() }
+                        continue
+                    }
+
+                    L("Accepting client connection from $clientAddress")
+
+                    // Remember this device for auto-connect
+                    lastConnectedDeviceAddress = clientAddress
+
+                    // Pause listening while serving this client
+                    runCatching { serverSocket?.close() }
+                    serverSocket = null
+                    isRFCOMMServerStarted = false
+
+                    // Set up connection state
+                    rfcSocket = socket
+                    isRFCOMMconnected = true
+
+                    // Handle the connection (blocking until disconnect)
                     withContext(Dispatchers.IO) {
-                        isRFCOMMconnected = true
                         manageRFCOMMConnection(socket)
                     }
-                } ?: Log.e(TAG, "Socket: Client socket is null")
-            } catch (e: IOException) {
-                Log.e(TAG, "Server: Error starting server", e)
+
+                } catch (e: IOException) {
+                    errorCount++
+                    LE("Server accept failed (attempt $errorCount)", e)
+
+                    // Clean up server socket on error
+                    runCatching { serverSocket?.close() }
+                    serverSocket = null
+                    isRFCOMMServerStarted = false
+
+                    // Progressive backoff with jitter
+                    val baseDelay = minOf(250L * errorCount, 5000L)
+                    val jitter = Random.nextLong(0, 200)
+                    delay(baseDelay + jitter)
+
+                } finally {
+                    // Always clean up client state after connection ends
+                    isRFCOMMconnected = false
+                    runCatching { rfcSocket?.close() }
+                    rfcSocket = null
+
+                    // Auto-reconnect if enabled and we were connected to a specific device
+                    if (autoConnectEnabled && lastConnectedDeviceAddress != null) {
+                        L("Connection ended - scheduling auto-reconnect in 2 seconds")
+                        delay(2000) // Brief delay before attempting reconnect
+                        if (!isRFCOMMconnected) {
+                            L("Attempting auto-reconnect to ${lastConnectedDeviceAddress}")
+                            expectedDeviceAddress = lastConnectedDeviceAddress
+                            // Server will restart in next loop iteration
+                        }
+                    }
+                }
             }
+            L("Accept loop terminated")
         }
     }
 
@@ -108,7 +249,7 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
         val inputStream = socket.inputStream
         val outputStream = socket.outputStream
 
-        Log.i(TAG, "Socket: Opened!")
+        L("Socket opened for client connection")
 
         try {
             // Welcome message to the client
@@ -121,18 +262,17 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
             while (true) {
                 bytes = inputStream.read(buffer)
                 val readMessage = String(buffer, 0, bytes)
-                Log.d(TAG, "Socket - Data Received from Client: $readMessage")
+                L("Data received from client: $readMessage")
                 showReceivedMessage(readMessage)
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Socket: Disconnected or communication error", e)
+            LE("Socket disconnected or communication error", e)
         } finally {
-            try {
-                socket.close()
-                Log.i(TAG, "Socket: Closed! -> Client disconnected")
-            } catch (closeException: IOException) {
-                Log.e(TAG, "Socket: Error closing socket!", closeException)
+            runCatching { socket.close() }.onFailure {
+                LE("Error closing client socket", it)
             }
+            // State cleanup is handled in startRFCOMMServer finally block
+            L("Client connection terminated")
         }
     }
 
@@ -147,22 +287,34 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
     }
 
     fun sendProcessedData(processedString: String) {
-        // Convert the processed string to UTF-8 byte array
         val messageBytes = processedString.toByteArray(Charsets.UTF_8)
+        val socket = rfcSocket
 
-        // Send data via RFCOMM
-        rfcSocket?.let { socket ->
-            try {
-                Log.i(TAG, "Socket - Data Sent to Client: $processedString")
-                socket.outputStream.write(messageBytes)
-            } catch (e: Exception) {
-                Log.e(TAG, "Socket: Error sending data", e)
+        if (socket == null || !isRFCOMMconnected) {
+            L("No active connection - triggering reconnect")
+            controllerScope.launch {
                 reconnectRFCOMM()
+                delay(200) // Wait for reconnection
+
+                // Single retry attempt
+                rfcSocket?.let { retrySocket ->
+                    runCatching {
+                        retrySocket.outputStream.write(messageBytes)
+                        L("Data sent after reconnect: $processedString")
+                    }.onFailure {
+                        LE("Retry send failed", it)
+                    }
+                } ?: L("Reconnection failed - no socket available")
             }
-        } ?: run {
-            Log.e(TAG, "Socket: socket is null!")
-            // Trigger reconnection if the socket is null
-            reconnectRFCOMM()
+            return
+        }
+
+        runCatching {
+            socket.outputStream.write(messageBytes)
+            L("Data sent: $processedString")
+        }.onFailure { e ->
+            LE("Send failed", e)
+            controllerScope.launch { reconnectRFCOMM() }
         }
     }
 }

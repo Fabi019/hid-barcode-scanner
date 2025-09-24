@@ -53,6 +53,15 @@ class BluetoothService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             controller?.register()
         }
+
+        // Start observing connection mode changes for auto RFCOMM switching
+        controller?.startModeObserver()
+
+        // Start observing auto-connect changes
+        controller?.startAutoConnectObserver()
+
+        // Start Bluetooth state monitoring
+        controller?.startBluetoothStateMonitoring()
     }
 
     override fun onDestroy() {

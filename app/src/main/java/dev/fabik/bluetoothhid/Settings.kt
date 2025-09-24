@@ -155,6 +155,13 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
+    SwitchPreference(
+        title = "Use insecure RFCOMM",
+        desc = "Enable for devices that don't support secure RFCOMM connections",
+        icon = Icons.Default.Link,
+        preference = PreferenceStore.INSECURE_RFCOMM
+    )
+
     /*    SwitchPreference(
             title = stringResource(R.string.show_unnamed),
             desc = stringResource(R.string.show_unnamed_desc),

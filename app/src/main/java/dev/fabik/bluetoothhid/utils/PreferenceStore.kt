@@ -71,6 +71,7 @@ open class PreferenceStore {
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
         val CONNECTION_MODE = intPreferencesKey("connection_mode") defaultsTo 0
+        val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
         //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
         val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 10f
