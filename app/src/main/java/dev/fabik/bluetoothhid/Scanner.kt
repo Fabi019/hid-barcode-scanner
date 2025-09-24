@@ -184,15 +184,19 @@ fun Scanner(
                 val cameraVM = viewModel<CameraViewModel>()
 
                 currentBarcode?.let {
-                    SendToDeviceFAB(it) {
-                        currentSendText(it)
+                    val barcode by rememberUpdatedState(it)
+
+                    SendToDeviceFAB {
+                        currentSendText(barcode)
 
                         if (clearAfterSend == true) {
                             currentBarcode = null
                             cameraVM.lastBarcode = null
                         }
                     }
-                    VolumeKeyHandler(it, currentSendText)
+                    VolumeKeyHandler {
+                        currentSendText(barcode)
+                    }
                 }
             }
         },
@@ -358,11 +362,10 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
  * Registers a KeyEventListener to capture volume up/down button presses.
  * adapted from: https://stackoverflow.com/a/77875685
  *
- * @param currentBarcode the current barcode value
- * @param onPress callback to send text to the current device
+ * @param onPress called when the user presses vol up/down
  */
 @Composable
-private fun VolumeKeyHandler(currentBarcode: String, onPress: (String) -> Unit) {
+private fun VolumeKeyHandler(onPress: () -> Unit) {
     val context = LocalContext.current
     val sendWithVolume by context.getPreferenceState(PreferenceStore.SEND_WITH_VOLUME)
 
@@ -372,7 +375,7 @@ private fun VolumeKeyHandler(currentBarcode: String, onPress: (String) -> Unit) 
         DisposableEffect(context) {
             val keyEventDispatcher = ViewCompat.OnUnhandledKeyEventListenerCompat { _, event ->
                 if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                    onPress(currentBarcode)
+                    onPress()
                     true
                 } else {
                     false
@@ -392,15 +395,11 @@ private fun VolumeKeyHandler(currentBarcode: String, onPress: (String) -> Unit) 
  * Floating action button to send the current barcode to the connected device.
  * If the currentBarcode is null, the button is hidden.
  *
- * @param currentBarcode the current barcode value
  * @param onClick callback to send text to the current device
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SendToDeviceFAB(
-    currentBarcode: String,
-    onClick: (String) -> Unit
-) {
+private fun SendToDeviceFAB(onClick: () -> Unit) {
     val controller = LocalController.current
 
     controller?.let {
@@ -436,7 +435,7 @@ private fun SendToDeviceFAB(
                 },
                 contentColor = contentColor,
                 containerColor = containerColor,
-                onClick = { if (!isSending) onClick(currentBarcode) }
+                onClick = { if (!isSending) onClick() }
             )
         }
     }
