@@ -545,9 +545,15 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
 fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     controller?.let {
         val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
+        val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+
+        // Only show Caps Lock warning in HID mode (connectionMode != 1)
+        // In RFCOMM mode it's not relevant since we're not simulating keyboard
+        val shouldShowWarning = isCaps && (connectionMode != 1)
 
         ElevatedWarningCard(
             message = stringResource(R.string.caps_lock_activated),
@@ -557,7 +563,7 @@ fun BoxScope.CapsLockWarning() {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
             },
-            visible = isCaps
+            visible = shouldShowWarning
         )
     }
 }
