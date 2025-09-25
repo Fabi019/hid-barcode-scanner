@@ -81,14 +81,6 @@ class BluetoothController(var context: Context) {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
             Log.d(TAG, "onServiceConnected")
 
-            // Initialize RFCOMM if needed
-            MainScope().launch {
-                val connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
-                if (connectionMode == 1) {
-                    rfcommController.connectRFCOMM()
-                }
-            }
-
             hostDevice.update { null }
             hidDevice = proxy as? BluetoothHidDevice
 
@@ -113,9 +105,6 @@ class BluetoothController(var context: Context) {
 
         override fun onServiceDisconnected(profile: Int) {
             Log.d(TAG, "onServiceDisconnected")
-
-            // Disconnect RFCOMM
-            rfcommController.disconnectRFCOMM()
 
             hidDevice = null
             hostDevice.update { null }
@@ -289,8 +278,10 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
-    suspend fun register(): Boolean =
-        register(context.getPreference(PreferenceStore.AUTO_CONNECT).first())
+    suspend fun register(): Boolean {
+        val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
+        return register(autoConnect)
+    }
 
     private fun register(autoConnect: Boolean): Boolean {
         autoConnectEnabled = autoConnect
@@ -298,6 +289,11 @@ class BluetoothController(var context: Context) {
         if (hidDevice != null) {
             unregister()
         }
+
+        // Start observers when registering
+        startModeObserver()
+        startAutoConnectObserver()
+        startBluetoothStateMonitoring()
 
         return bluetoothAdapter?.getProfileProxy(
             context,
@@ -351,9 +347,18 @@ class BluetoothController(var context: Context) {
 
         Log.d(TAG, "connecting to $device")
 
-        // Set expected device for RFCOMM filtering
-        rfcommController.setExpectedDeviceAddress(device.address)
+        // Check connection mode first
+        val connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
 
+        if (connectionMode == 1) {
+            // RFCOMM mode - just set expected device and update currentDevice for UI
+            rfcommController.setExpectedDeviceAddress(device.address)
+            hostDevice.update { device }
+            Log.d(TAG, "RFCOMM mode: Set expected device to $device")
+            return
+        }
+
+        // HID mode - proceed with normal HID connection logic
         val success = hidDevice?.connect(device) ?: false
 
         if (!success) {

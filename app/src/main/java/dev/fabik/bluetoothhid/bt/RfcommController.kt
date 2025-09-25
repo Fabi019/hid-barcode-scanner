@@ -59,7 +59,6 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
     // RFCOMM implementation code
     // ****************************************
 
-    var connectionMode: Int = 0
     private var rfcSocket: BluetoothSocket? = null // RFCOMM Client
     private var serverSocket: BluetoothServerSocket? = null  // RFCOMM Server
     @Volatile private var isRFCOMMconnected: Boolean = false
@@ -74,16 +73,8 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
 
     fun connectRFCOMM(){
         controllerScope.launch {
-            connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
-
-            if (connectionMode == 1) {
-                L("Connection Mode: RFCOMM")
-                startRFCOMMServer()
-            }
-            else
-            {
-                L("Connection Mode: HID")
-            }
+            L("Starting RFCOMM connection")
+            startRFCOMMServer()
         }
     }
 
