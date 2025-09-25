@@ -550,11 +550,10 @@ fun BoxScope.CapsLockWarning() {
 
     controller?.let {
         val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
-        val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
 
-        // Only show Caps Lock warning in HID mode (connectionMode != 1)
-        // In RFCOMM mode it's not relevant since we're not simulating keyboard
-        val shouldShowWarning = isCaps && (connectionMode != 1)
+        // Only show Caps Lock warning when we have an active HID connection
+        // keyboardSender is only available when HID device is connected
+        val shouldShowWarning = isCaps && (controller.keyboardSender != null)
 
         ElevatedWarningCard(
             message = stringResource(R.string.caps_lock_activated),

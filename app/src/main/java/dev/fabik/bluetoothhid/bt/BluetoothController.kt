@@ -381,9 +381,11 @@ class BluetoothController(var context: Context) {
 
         // Check connection mode first using cached value
         if (currentConnectionMode == 1) {
-            // RFCOMM mode - just set expected device and update currentDevice for UI
+            // RFCOMM mode - set expected device and update currentDevice for UI
             rfcommController.setExpectedDeviceAddress(device.address)
             hostDevice.update { device }
+            // Ensure RFCOMM server is running (in case it was stopped by disconnect)
+            rfcommController.connectRFCOMM()
             Log.d(TAG, "RFCOMM mode: Set expected device to $device")
             return
         }
@@ -431,6 +433,14 @@ class BluetoothController(var context: Context) {
             return false
         }
 
+        // In RFCOMM mode, disconnect server and clear currentDevice
+        if (currentConnectionMode == 1) {
+            rfcommController.disconnectRFCOMM()
+            hostDevice.update { null }
+            return true
+        }
+
+        // In HID mode, disconnect the device
         return hostDevice.value?.let {
             hidDevice?.disconnect(it)
         } ?: true
