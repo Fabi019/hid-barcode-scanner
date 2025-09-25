@@ -227,6 +227,7 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
+            RFCOMMStatusIndicator()
 
             ElevatedWarningCard(
                 message = stringResource(R.string.no_device),
@@ -564,6 +565,40 @@ fun BoxScope.CapsLockWarning() {
                 }
             },
             visible = shouldShowWarning
+        )
+    }
+}
+
+/**
+ * Component that shows connection status in RFCOMM mode.
+ * Displays "Listening for connection" when in RFCOMM mode and no device is connected,
+ * or "Waiting for connection from [device]" when a target device is set.
+ */
+@Composable
+fun BoxScope.RFCOMMStatusIndicator() {
+    val controller = LocalController.current
+    val context = LocalContext.current
+    val navigation = LocalNavigation.current
+
+    controller?.let {
+        val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
+        val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+        val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+
+        // Show indicator in RFCOMM mode when:
+        // - Target device is selected (currentDevice != null)
+        // - Server is listening for connections (not actively connected to a client)
+        val shouldShowIndicator = (connectionMode == 1) && (currentDevice != null) && isRFCOMMListening
+
+        ElevatedWarningCard(
+            message = stringResource(R.string.rfcomm_listening),
+            subMessage = stringResource(R.string.rfcomm_listening_from_device,
+                currentDevice?.name ?: currentDevice?.address ?: ""),
+            onClick = {
+                // Navigate to devices to select target device
+                navigation.navigate(Routes.Devices)
+            },
+            visible = shouldShowIndicator
         )
     }
 }

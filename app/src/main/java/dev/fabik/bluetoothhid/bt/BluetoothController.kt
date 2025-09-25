@@ -63,6 +63,10 @@ class BluetoothController(var context: Context) {
 
     private var autoConnectEnabled: Boolean = false
 
+    // Cache connection mode to avoid repeated preference calls
+    @Volatile
+    private var currentConnectionMode: Int = 0
+
     var keyboardSender: KeyboardSender? = null
         private set
 
@@ -71,6 +75,9 @@ class BluetoothController(var context: Context) {
 
     private var _isCapsLockOn: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isCapsLockOn = _isCapsLockOn.asStateFlow()
+
+    private var _isRFCOMMListening: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isRFCOMMListeningFlow = _isRFCOMMListening.asStateFlow()
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var modeObserverJob: Job? = null
@@ -187,14 +194,17 @@ class BluetoothController(var context: Context) {
                 .debounce(200)
                 .collect { mode ->
                     Log.d(TAG, "Connection mode changed to: $mode")
+                    currentConnectionMode = mode // Cache the mode
                     when (mode) {
                         1 -> {
                             Log.d(TAG, "Switching to RFCOMM mode")
                             rfcommController.connectRFCOMM()
+                            // Note: HID remains registered but inactive in RFCOMM mode
                         }
                         else -> {
                             Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
                             rfcommController.disconnectRFCOMM()
+                            // HID profile is already registered and will become active
                         }
                     }
                 }
@@ -221,11 +231,8 @@ class BluetoothController(var context: Context) {
                         }
                         BluetoothAdapter.STATE_ON -> {
                             Log.d(TAG, "Bluetooth turned ON - restarting services if needed")
-                            controllerScope.launch {
-                                val connectionMode = context?.getPreference(PreferenceStore.CONNECTION_MODE)?.first() ?: 0
-                                if (connectionMode == 1) {
-                                    rfcommController.connectRFCOMM()
-                                }
+                            if (currentConnectionMode == 1) {
+                                rfcommController.connectRFCOMM()
                             }
                         }
                         BluetoothAdapter.STATE_OFF -> {
@@ -271,6 +278,13 @@ class BluetoothController(var context: Context) {
     val isScanning: Boolean
         get() = bluetoothAdapter?.isDiscovering ?: false
 
+    /**
+     * Returns true if RFCOMM server is actively listening for connections.
+     * Used by UI to show/hide connection status indicators.
+     */
+    val isRFCOMMListening: Boolean
+        get() = rfcommController.isListening()
+
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)
         return listener
@@ -280,6 +294,8 @@ class BluetoothController(var context: Context) {
 
     suspend fun register(): Boolean {
         val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
+        // Initialize cached connection mode
+        currentConnectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
         return register(autoConnect)
     }
 
@@ -295,11 +311,30 @@ class BluetoothController(var context: Context) {
         startAutoConnectObserver()
         startBluetoothStateMonitoring()
 
+        // Setup RFCOMM listening state callback
+        rfcommController.setListeningStateCallback { isListening ->
+            _isRFCOMMListening.update { isListening }
+        }
+
         return bluetoothAdapter?.getProfileProxy(
             context,
             serviceListener,
             BluetoothProfile.HID_DEVICE
         ) ?: false
+    }
+
+    private fun registerHid() {
+        Log.d(TAG, "Registering HID profile")
+        // HID registration is handled by the serviceListener in getProfileProxy
+        // Additional HID-specific setup could go here if needed
+    }
+
+    private fun unregisterHid() {
+        Log.d(TAG, "Unregistering HID profile")
+        hidDevice?.unregisterApp()
+        bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
+        hidDevice = null
+        hostDevice.update { null }
     }
 
     fun unregister() {
@@ -320,11 +355,8 @@ class BluetoothController(var context: Context) {
         // Disconnect RFCOMM
         rfcommController.disconnectRFCOMM()
 
-        hidDevice?.unregisterApp()
-        bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
-
-        hidDevice = null
-        hostDevice.update { null }
+        // Unregister HID profile
+        unregisterHid()
 
         // Notify listeners that proxy is disconnected.
         deviceListener.forEach { it.invoke(null, -1) }
@@ -347,10 +379,8 @@ class BluetoothController(var context: Context) {
 
         Log.d(TAG, "connecting to $device")
 
-        // Check connection mode first
-        val connectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
-
-        if (connectionMode == 1) {
+        // Check connection mode first using cached value
+        if (currentConnectionMode == 1) {
             // RFCOMM mode - just set expected device and update currentDevice for UI
             rfcommController.setExpectedDeviceAddress(device.address)
             hostDevice.update { device }
@@ -418,10 +448,9 @@ class BluetoothController(var context: Context) {
             if (!withExtraKeys) "" else getPreference(PreferenceStore.TEMPLATE_TEXT).first()
         val expand =
             if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
-        val connectionMode = getPreference(PreferenceStore.CONNECTION_MODE).first()
 
-        // Check connection mode - RFCOMM or HID
-        if (connectionMode == 1) {
+        // Check connection mode - RFCOMM or HID using cached value
+        if (currentConnectionMode == 1) {
             // RFCOMM mode - process template for text output
             val processedString = TemplateProcessor.processTemplate(
                 string,

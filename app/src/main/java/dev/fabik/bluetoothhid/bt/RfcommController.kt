@@ -31,6 +31,8 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
         private val RFCOMM_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
 
+    private var listeningStateCallback: ((Boolean) -> Unit)? = null
+
     private fun L(msg: String) = Log.i("$TAG[$sessionId]", msg)
     private fun LE(msg: String, t: Throwable? = null) = Log.e("$TAG[$sessionId]", msg, t)
 
@@ -71,6 +73,22 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val sessionId = System.currentTimeMillis().toString(16)
 
+    fun setListeningStateCallback(callback: (Boolean) -> Unit) {
+        listeningStateCallback = callback
+    }
+
+    /**
+     * Returns true if the RFCOMM server is actively listening for new connections.
+     * This means the server is started but no client is currently connected.
+     * When a client connects, the server pauses listening and this returns false.
+     */
+    fun isListening(): Boolean = isRFCOMMServerStarted && !isRFCOMMconnected
+
+    private fun notifyListeningState() {
+        val listening = isListening()
+        listeningStateCallback?.invoke(listening)
+    }
+
     fun connectRFCOMM(){
         controllerScope.launch {
             L("Starting RFCOMM connection")
@@ -92,6 +110,8 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
 
         acceptJob?.cancel()
         acceptJob = null
+
+        notifyListeningState() // Notify that we're no longer listening
 
         L("RFCOMM cleanup completed")
     }
@@ -138,6 +158,7 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
                             }
                             isRFCOMMServerStarted = true
                             L("Server listening for connections (${if (useInsecure) "insecure" else "secure"})...")
+                            notifyListeningState()
                             errorCount = 0 // Reset error count on successful socket creation
                         } catch (e: IOException) {
                             if (!useInsecure) {
@@ -148,6 +169,7 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
                                     )
                                     isRFCOMMServerStarted = true
                                     L("Server listening for connections (insecure fallback)...")
+                                    notifyListeningState()
                                     errorCount = 0
                                 } catch (fallbackException: IOException) {
                                     LE("Both secure and insecure RFCOMM failed", fallbackException)
@@ -194,6 +216,7 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
                     // Set up connection state
                     rfcSocket = socket
                     isRFCOMMconnected = true
+                    notifyListeningState() // Notify that we're no longer listening
 
                     // Handle the connection (blocking until disconnect)
                     withContext(Dispatchers.IO) {
@@ -219,6 +242,7 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
                     isRFCOMMconnected = false
                     runCatching { rfcSocket?.close() }
                     rfcSocket = null
+                    notifyListeningState() // Notify state change
 
                     // Auto-reconnect if enabled and we were connected to a specific device
                     if (autoConnectEnabled && lastConnectedDeviceAddress != null) {

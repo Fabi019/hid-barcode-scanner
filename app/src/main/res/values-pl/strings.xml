@@ -163,6 +163,7 @@
     <string name="highlights_possible_codes">Wyróżnia możliwe kody kropkami</string>
     <string name="caps_lock_activated">Caps Lock jest włączony</string>
     <string name="click_to_turn_off">Kliknij tutaj, aby wyłączyć</string>
+    <string name="rfcomm_listening">Nasłuchiwanie</string>
     <string name="keep_screen_on">Nie wyłączaj podświetlenia</string>
     <string name="keep_screen_on_desc">Zapobiega wyłączaniu ekranu podczas skanowania</string>
     <string name="private_mode">Tryb prywatności</string>
@@ -306,4 +307,5 @@
     <string name="include_extra_keys">Użyj ekstra klawiszy</string>
     <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
     <string name="insecure_rfcomm_desc">Zezwalaj na niebezpieczne połączenia RFCOMM</string>
+    <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
 </resources>

@@ -164,6 +164,8 @@
     <string name="highlights_possible_codes">Highlights possible codes with dots</string>
     <string name="caps_lock_activated">Caps Lock is activated</string>
     <string name="click_to_turn_off">Click here to turn it off</string>
+    <string name="rfcomm_listening">Listening for connection</string>
+    <string name="rfcomm_listening_from_device">Waiting for connection from %s</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="keep_screen_on_desc">Prevents screen from turning off while scanning</string>
     <string name="private_mode">Privacy mode</string>
