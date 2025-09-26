@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.PhonelinkSetup
+import androidx.compose.material.icons.filled.PrivateConnectivity
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -158,7 +159,7 @@ fun ConnectionSettings() {
     SwitchPreference(
         title = stringResource(R.string.insecure_rfcomm),
         desc = stringResource(R.string.insecure_rfcomm_desc),
-        icon = Icons.Default.Link,
+        icon = Icons.Default.PrivateConnectivity,
         preference = PreferenceStore.INSECURE_RFCOMM
     )
 
