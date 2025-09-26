@@ -77,6 +77,7 @@ import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.launch
@@ -139,6 +140,7 @@ fun SectionTitle(@StringRes id: Int) {
 @Composable
 fun ConnectionSettings() {
     val context = LocalContext.current
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
 
     // HID/RFCOMM
     ComboBoxPreference(
@@ -156,12 +158,15 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
-    SwitchPreference(
-        title = stringResource(R.string.insecure_rfcomm),
-        desc = stringResource(R.string.insecure_rfcomm_desc),
-        icon = Icons.Default.PrivateConnectivity,
-        preference = PreferenceStore.INSECURE_RFCOMM
-    )
+    // Insecure RFCOMM - only visible when RFCOMM mode is selected
+    if (connectionMode == 1) {
+        SwitchPreference(
+            title = stringResource(R.string.insecure_rfcomm),
+            desc = stringResource(R.string.insecure_rfcomm_desc),
+            icon = Icons.Default.PrivateConnectivity,
+            preference = PreferenceStore.INSECURE_RFCOMM
+        )
+    }
 
     /*    SwitchPreference(
             title = stringResource(R.string.show_unnamed),
