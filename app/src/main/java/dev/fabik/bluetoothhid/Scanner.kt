@@ -227,16 +227,7 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
-            RFCOMMStatusIndicator()
-
-            ElevatedWarningCard(
-                message = stringResource(R.string.no_device),
-                subMessage = stringResource(R.string.click_to_connect),
-                onClick = {
-                    navController.navigate(Routes.Devices)
-                },
-                visible = currentDevice == null
-            )
+            DeviceStatusIndicator()
 
             cameraInfo?.let {
                 ZoomStateInfo(it)
@@ -569,12 +560,12 @@ fun BoxScope.CapsLockWarning() {
 }
 
 /**
- * Component that shows connection status in RFCOMM mode.
- * Displays "Listening for connection" when in RFCOMM mode and no device is connected,
- * or "Waiting for connection from [device]" when a target device is set.
+ * Component that shows device connection status for both HID and RFCOMM modes.
+ * Priority: if no device selected (currentDevice == null) => always show "No device connected"
+ * Otherwise in RFCOMM mode: show "Listening for connection from [device]" when server is listening
  */
 @Composable
-fun BoxScope.RFCOMMStatusIndicator() {
+fun BoxScope.DeviceStatusIndicator() {
     val controller = LocalController.current
     val context = LocalContext.current
     val navigation = LocalNavigation.current
@@ -584,21 +575,32 @@ fun BoxScope.RFCOMMStatusIndicator() {
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
 
-        // Show indicator in RFCOMM mode when:
-        // - Target device is selected (currentDevice != null)
-        // - Server is listening for connections (not actively connected to a client)
-        val shouldShowIndicator = (connectionMode == 1) && (currentDevice != null) && isRFCOMMListening
-
-        ElevatedWarningCard(
-            message = stringResource(R.string.rfcomm_listening),
-            subMessage = stringResource(R.string.rfcomm_listening_from_device,
-                currentDevice?.name ?: currentDevice?.address ?: ""),
-            onClick = {
-                // Navigate to devices to select target device
-                navigation.navigate(Routes.Devices)
-            },
-            visible = shouldShowIndicator
-        )
+        when {
+            currentDevice == null -> {
+                // No device selected - show "No device connected" regardless of mode
+                ElevatedWarningCard(
+                    message = stringResource(R.string.no_device),
+                    subMessage = stringResource(R.string.click_to_connect),
+                    onClick = {
+                        navigation.navigate(Routes.Devices)
+                    },
+                    visible = true
+                )
+            }
+            connectionMode == 1 && isRFCOMMListening -> {
+                // RFCOMM mode with device selected and server listening
+                ElevatedWarningCard(
+                    message = stringResource(R.string.rfcomm_listening),
+                    subMessage = stringResource(R.string.rfcomm_listening_from_device,
+                        currentDevice?.name ?: currentDevice?.address ?: ""),
+                    onClick = {
+                        // Do nothing - this is just an informational message
+                        // User has already selected a device and server is listening
+                    },
+                    visible = true
+                )
+            }
+        }
     }
 }
 

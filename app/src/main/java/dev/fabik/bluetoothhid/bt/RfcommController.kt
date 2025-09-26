@@ -47,9 +47,10 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
         L("AutoConnect ${if (enabled) "enabled" else "disabled"}")
 
         if (enabled && !isRFCOMMconnected && !isRFCOMMServerStarted) {
-            // Try to auto-connect to last known device
+            // Note: This "auto-connect" starts the server to listen for connections from the last known device
+            // It does not actively connect to the device - it waits for the PC/device to connect to us
             lastConnectedDeviceAddress?.let { addr ->
-                L("Attempting auto-connect to last device: $addr")
+                L("Starting server to listen for auto-reconnection from last device: $addr")
                 expectedDeviceAddress = addr
                 controllerScope.launch {
                     connectRFCOMM()
@@ -246,13 +247,15 @@ class RfcommController(private val context: Context, private val bluetoothAdapte
                     notifyListeningState() // Notify state change
 
                     // Auto-reconnect if enabled and we were connected to a specific device
+                    // Note: This also only restarts the server to listen for the device to reconnect
+                    // It does not actively connect - it waits for the PC/device to reconnect to us
                     if (autoConnectEnabled && lastConnectedDeviceAddress != null) {
-                        L("Connection ended - scheduling auto-reconnect in 2 seconds")
-                        delay(2000) // Brief delay before attempting reconnect
+                        L("Connection ended - scheduling server restart for auto-reconnect in 2 seconds")
+                        delay(2000) // Brief delay before restarting server
                         if (!isRFCOMMconnected) {
-                            L("Attempting auto-reconnect to ${lastConnectedDeviceAddress}")
+                            L("Restarting server to listen for reconnection from ${lastConnectedDeviceAddress}")
                             expectedDeviceAddress = lastConnectedDeviceAddress
-                            // Server will restart in next loop iteration
+                            // Server will restart in next loop iteration to listen for connections
                         }
                     }
                 }
