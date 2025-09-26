@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Translated by: Marcin Golesz (WinLin97) @ 10.10.2024 -->
 <resources>
     <string name="app_name">BT Scanner</string>
@@ -268,8 +269,8 @@
     <string name="add_custom_key_desc">Umożliwia zdefiniowanie niestandardowych przypisań znaków do kodów HID, które zastąpią wszelkie definicje z wybranego układu klawiatury.</string>
     <string name="define_custom_keys">Zdefiniuj klawisze niestandardowe</string>
     <string name="add">Dodaj</string>
-    <string name="persistent_history">Historia skanowania</string>
-    <string name="persistent_history_desc">Zapamiętuje skanowane kody</string>
+    <string name="persistent_history">Trwała historia skanowania</string>
+    <string name="persistent_history_desc">Pamiętaj skanowane kody pomiędzy sesjami</string>
     <string name="filter">Filtr</string>
     <string name="date_range">Zakres dat</string>
     <string name="select_types">Wybierz typy</string>
