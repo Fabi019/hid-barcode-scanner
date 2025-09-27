@@ -280,12 +280,12 @@
     <string name="manual_input">Manuelle Eingabe</string>
     <string name="include_extra_keys">Extra Tasten verwenden</string>
     <string name="connection_mode">Verbindungsmodus</string>
-    <string name="connection_mode_desc">Wählen Sie zwischen HID und RFCOMM</string>
+    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port (kann zusätzliche Software erfordern)</string>
     <string-array name="connection_mode_values">
         <item>HID-Tastatur</item>
         <item>RFCOMM (SPP)</item>
     </string-array>
-    <string name="insecure_rfcomm">Unsicherem RFCOMM</string>
-    <string name="insecure_rfcomm_desc">Für Geräte aktivieren, die keine sicheren RFCOMM-Verbindungen unterstützen</string>
+    <string name="insecure_rfcomm">Unsichere RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
 </resources>

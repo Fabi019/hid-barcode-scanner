@@ -158,15 +158,6 @@ fun ConnectionSettings() {
         preference = PreferenceStore.AUTO_CONNECT
     )
 
-    // Insecure RFCOMM - only visible when RFCOMM mode is selected
-    if (connectionMode == 1) {
-        SwitchPreference(
-            title = stringResource(R.string.insecure_rfcomm),
-            desc = stringResource(R.string.insecure_rfcomm_desc),
-            icon = Icons.Default.PrivateConnectivity,
-            preference = PreferenceStore.INSECURE_RFCOMM
-        )
-    }
 
     /*    SwitchPreference(
             title = stringResource(R.string.show_unnamed),

@@ -245,7 +245,7 @@
     <string name="manual_input">Manual input</string>
     <string name="include_extra_keys">Include extra keys</string>
     <string name="connection_mode">Connection Mode</string>
-    <string name="connection_mode_desc">Choose between HID and RFCOMM</string>
+    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software)</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -307,6 +307,6 @@
         <item quantity="one">Export %1$d item</item>
         <item quantity="other">Export %1$d items</item>
     </plurals>
-    <string name="insecure_rfcomm">Use insecure RFCOMM</string>
-    <string name="insecure_rfcomm_desc">Enable for devices that don\'t support secure RFCOMM connections</string>
+    <string name="insecure_rfcomm">Insecure RFCOMM</string>
+    <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
 </resources>
