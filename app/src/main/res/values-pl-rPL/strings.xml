@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Translated by: Marcin Golesz (WinLin97) @ 10.10.2024 -->
 <resources>
     <string name="app_name">BT Scanner</string>
@@ -163,6 +164,7 @@
     <string name="highlights_possible_codes">Wyróżnia możliwe kody kropkami</string>
     <string name="caps_lock_activated">Caps Lock jest włączony</string>
     <string name="click_to_turn_off">Kliknij tutaj, aby wyłączyć</string>
+    <string name="rfcomm_listening">Nasłuchiwanie</string>
     <string name="keep_screen_on">Nie wyłączaj podświetlenia</string>
     <string name="keep_screen_on_desc">Zapobiega wyłączaniu ekranu podczas skanowania</string>
     <string name="private_mode">Tryb prywatności</string>
@@ -192,6 +194,8 @@
     <string name="template_in_value_desc">Rozwiń szablony w wartości kodu (wymaga opcji "Własny szablon")</string>
     <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
     <string name="developer_mode">Tryb dewelopera</string>
+    <string name="connection_mode">Tryb połączenia</string>
+    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania)</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Jasny</item>
@@ -245,8 +249,64 @@
         <item>Stałe (Nieskończoność)</item>
         <item>Ciągły (Szybki)</item>
     </string-array>
+    <string-array name="connection_mode_values">
+        <item>Klawiatura HID</item>
+        <item>RFCOMM (SPP)</item>
+    </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>
         <item quantity="other">Eksport %1$d elementów</item>
     </plurals>
+    <string name="click_to_connect">Kliknij, aby powrócić.</string>
+    <string name="custom_keys">Klawisze niestandardowe</string>
+    <string name="add_custom_key">Dodaj niestandardowy klawisz</string>
+    <string name="add_custom_key_desc_long">Wprowadź znak i odpowiadający mu kod HID (nie kod skanowania) wraz z wszelkimi modyfikatorami. Kod HID klawisza ENTER to na przykład 28 (szesnastkowy).</string>
+    <string name="character">Znak</string>
+    <string name="hid_code_hex">Kod HID (HEX)</string>
+    <string name="modifier">Modyfikator</string>
+    <string name="test">Test</string>
+    <string name="test_key">* Aby przetestować klawisz, musisz być podłączony do urządzenia.</string>
+    <string name="add_custom_key_desc">Umożliwia zdefiniowanie niestandardowych przypisań znaków do kodów HID, które zastąpią wszelkie definicje z wybranego układu klawiatury.</string>
+    <string name="define_custom_keys">Zdefiniuj klawisze niestandardowe</string>
+    <string name="add">Dodaj</string>
+    <string name="persistent_history">Trwała historia skanowania</string>
+    <string name="persistent_history_desc">Pamiętaj skanowane kody pomiędzy sesjami</string>
+    <string name="filter">Filtr</string>
+    <string name="date_range">Zakres dat</string>
+    <string name="select_types">Wybierz typy</string>
+    <string name="clear">Wyczyść</string>
+    <string name="apply">Zastosuj</string>
+    <string name="exclude_duplicates">Wyklucz duplikaty</string>
+    <string name="save_to_file">Zapisz do pliku</string>
+    <string name="invalid_regex">Błędny Regex</string>
+    <string name="template_error">Szablon musi zawierać {CODE}, {CODE_B64} lub {CODE_HEX}</string>
+    <string name="advanced_options">Zaawansowane</string>
+    <string name="advanced_opts_desc">Dostosuj parametry skanowania</string>
+    <string name="detection">Detekcja</string>
+    <string name="try_harder">Spróbuj mocniej</string>
+    <string name="try_rotate_image">Spróbuj obrócić obraz</string>
+    <string name="try_inverted">Spróbuj w odbiciu lustrzanym</string>
+    <string name="try_downscale">Spróbuj downscalingu</string>
+    <string name="minimum_scan_lines">Minmalna liczba linii skanowania</string>
+    <string name="processing">Przetwarzanie</string>
+    <string name="binarizer">Binaryzator</string>
+    <string name="downscale_factor">Współczynnik downscalingu</string>
+    <string name="downscale_threshold">Próg downscalingu (px)</string>
+    <string name="parser">Parser</string>
+    <string name="text_mode">Tryb tekstowy</string>
+    <string name="send_with_volume_keys">Wyślij za pomocą klawiszy głośności</string>
+    <string name="send_vol_keys_desc">Użyj przycisków zwiększania/zmniejszania głośności, aby wysłać kod kreskowy.</string>
+    <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
+    <string name="ocr_note_bottom">Następnie można użyć nowego przycisku w prawym dolnym rogu skanera, aby uruchomić wykrywanie.</string>
+    <string name="note">Uwaga</string>
+    <string name="ext_ocr_support">Zewn. wsparcie OCR</string>
+    <string name="scan_results">Rezultat skanowania</string>
+    <string name="ocr_results_selection">Zaznacz wszystkie wiersze, które mają zostać wysłane.</string>
+    <string name="clear_after_send">Czyść bufor po wysłaniu</string>
+    <string name="clear_after_send_desc">Kasuje wyświetlany kod po ręcznym wysłaniu</string>
+    <string name="manual_input">Ręczne wprowadzanie</string>
+    <string name="include_extra_keys">Użyj ekstra klawiszy</string>
+    <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Ta opcja umożliwia akceptowanie niebezpiecznych połączeń RFCOMM. Używaj tylko dla starszych urządzeń, które nie obsługują bezpiecznych połączeń Bluetooth Serial Port Profile.</string>
+    <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
 </resources>

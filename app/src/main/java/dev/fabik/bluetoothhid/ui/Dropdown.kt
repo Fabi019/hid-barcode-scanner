@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -114,10 +115,14 @@ fun SettingsDropdown() {
         mutableStateOf(false)
     }
 
+    val context = LocalContext.current
     var developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
     var ocrSupport by rememberPreference(PreferenceStore.OCR_COMPAT)
+    var insecureRfcomm by rememberPreference(PreferenceStore.INSECURE_RFCOMM)
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
 
     val ocrInfoDialog = rememberDialogState()
+    val insecureRfcommDialog = rememberDialogState()
 
     Box {
         IconButton(
@@ -160,6 +165,25 @@ fun SettingsDropdown() {
                     ocrSupport = !ocrSupport
                 }
             )
+
+            if (connectionMode == 1) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.insecure_rfcomm)) },
+                    leadingIcon = { Icon(Icons.Default.Shield, null) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = insecureRfcomm,
+                            onCheckedChange = null
+                        )
+                    },
+                    onClick = {
+                        if (!insecureRfcomm) {
+                            insecureRfcommDialog.open()
+                        }
+                        insecureRfcomm = !insecureRfcomm
+                    }
+                )
+            }
         }
     }
 
@@ -179,6 +203,15 @@ fun SettingsDropdown() {
             }
 
             Text(stringResource(R.string.ocr_note_bottom))
+        }
+    }
+
+    InfoDialog(
+        insecureRfcommDialog, stringResource(R.string.note),
+        icon = { Icon(Icons.Default.Shield, null) }
+    ) {
+        Column {
+            Text(stringResource(R.string.insecure_rfcomm_desc))
         }
     }
 }

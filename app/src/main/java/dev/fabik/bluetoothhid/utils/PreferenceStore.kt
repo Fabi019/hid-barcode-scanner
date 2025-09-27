@@ -70,7 +70,7 @@ open class PreferenceStore {
 
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
-
+        val CONNECTION_MODE = intPreferencesKey("connection_mode") defaultsTo 0
         //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
         val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 10f
@@ -80,6 +80,7 @@ open class PreferenceStore {
         val ENABLE_JS = booleanPreferencesKey("enable_js") defaultsTo false
         val JS_CODE = stringPreferencesKey("js_code") defaultsTo ""
         val EXPAND_CODE = booleanPreferencesKey("expand_code") defaultsTo false
+        val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
 
         // Appearance
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on") defaultsTo false

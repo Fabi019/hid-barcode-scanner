@@ -8,16 +8,26 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -38,6 +48,9 @@ class BluetoothController(var context: Context) {
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy { bluetoothManager.adapter }
 
+    // RFCOMM Controller integration
+    private val rfcommController = RfcommController(context, bluetoothAdapter!!)
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile
@@ -50,6 +63,10 @@ class BluetoothController(var context: Context) {
 
     private var autoConnectEnabled: Boolean = false
 
+    // Cache connection mode to avoid repeated preference calls
+    @Volatile
+    private var currentConnectionMode: Int = 0
+
     var keyboardSender: KeyboardSender? = null
         private set
 
@@ -58,6 +75,14 @@ class BluetoothController(var context: Context) {
 
     private var _isCapsLockOn: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isCapsLockOn = _isCapsLockOn.asStateFlow()
+
+    private var _isRFCOMMListening: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isRFCOMMListeningFlow = _isRFCOMMListening.asStateFlow()
+
+    private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var modeObserverJob: Job? = null
+    private var autoConnectObserverJob: Job? = null
+    private var bluetoothStateReceiver: BroadcastReceiver? = null
 
     private val serviceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -155,6 +180,95 @@ class BluetoothController(var context: Context) {
 
     }
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun startModeObserver() {
+        if (modeObserverJob?.isActive == true) {
+            Log.d(TAG, "Mode observer already running")
+            return
+        }
+
+        Log.d(TAG, "Starting CONNECTION_MODE observer")
+        modeObserverJob = controllerScope.launch {
+            context.getPreference(PreferenceStore.CONNECTION_MODE)
+                .distinctUntilChanged()
+                .debounce(200)
+                .collect { mode ->
+                    Log.d(TAG, "Connection mode changed to: $mode")
+                    currentConnectionMode = mode // Cache the mode
+                    when (mode) {
+                        1 -> {
+                            Log.d(TAG, "Switching to RFCOMM mode")
+                            rfcommController.connectRFCOMM()
+                            // Note: HID remains registered but inactive in RFCOMM mode
+                        }
+                        else -> {
+                            Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
+                            rfcommController.disconnectRFCOMM()
+                            // HID profile is already registered and will become active
+                        }
+                    }
+                }
+        }
+    }
+
+    fun startBluetoothStateMonitoring() {
+        if (bluetoothStateReceiver != null) {
+            Log.d(TAG, "Bluetooth state monitoring already started")
+            return
+        }
+
+        Log.d(TAG, "Starting Bluetooth state monitoring")
+        bluetoothStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val action = intent?.action
+                if (action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                    val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                    when (state) {
+                        BluetoothAdapter.STATE_TURNING_OFF -> {
+                            Log.d(TAG, "Bluetooth turning OFF - force disconnect all connections")
+                            disconnect()
+                            rfcommController.disconnectRFCOMM()
+                        }
+                        BluetoothAdapter.STATE_ON -> {
+                            Log.d(TAG, "Bluetooth turned ON - restarting services if needed")
+                            if (currentConnectionMode == 1) {
+                                rfcommController.connectRFCOMM()
+                            }
+                        }
+                        BluetoothAdapter.STATE_OFF -> {
+                            Log.d(TAG, "Bluetooth turned OFF")
+                        }
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        context.registerReceiver(bluetoothStateReceiver, filter)
+    }
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun startAutoConnectObserver() {
+        if (autoConnectObserverJob?.isActive == true) {
+            Log.d(TAG, "AutoConnect observer already running")
+            return
+        }
+
+        Log.d(TAG, "Starting AUTO_CONNECT observer")
+        autoConnectObserverJob = controllerScope.launch {
+            context.getPreference(PreferenceStore.AUTO_CONNECT)
+                .distinctUntilChanged()
+                .debounce(150)
+                .collect { autoConnect ->
+                    Log.d(TAG, "AutoConnect setting changed to: $autoConnect")
+                    autoConnectEnabled = autoConnect
+
+                    // Propagate to RFCOMM
+                    rfcommController.setAutoConnectEnabled(autoConnect)
+                }
+        }
+    }
+
     val bluetoothEnabled: Boolean
         get() = bluetoothAdapter?.isEnabled ?: false
 
@@ -164,6 +278,13 @@ class BluetoothController(var context: Context) {
     val isScanning: Boolean
         get() = bluetoothAdapter?.isDiscovering ?: false
 
+    /**
+     * Returns true if RFCOMM server is actively listening for connections.
+     * Used by UI to show/hide connection status indicators.
+     */
+    val isRFCOMMListening: Boolean
+        get() = rfcommController.isListening()
+
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)
         return listener
@@ -171,14 +292,28 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
-    suspend fun register(): Boolean =
-        register(context.getPreference(PreferenceStore.AUTO_CONNECT).first())
+    suspend fun register(): Boolean {
+        val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
+        // Initialize cached connection mode
+        currentConnectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
+        return register(autoConnect)
+    }
 
     private fun register(autoConnect: Boolean): Boolean {
         autoConnectEnabled = autoConnect
 
         if (hidDevice != null) {
             unregister()
+        }
+
+        // Start observers when registering
+        startModeObserver()
+        startAutoConnectObserver()
+        startBluetoothStateMonitoring()
+
+        // Setup RFCOMM listening state callback
+        rfcommController.setListeningStateCallback { isListening ->
+            _isRFCOMMListening.update { isListening }
         }
 
         return bluetoothAdapter?.getProfileProxy(
@@ -188,14 +323,40 @@ class BluetoothController(var context: Context) {
         ) ?: false
     }
 
+    private fun registerHid() {
+        Log.d(TAG, "Registering HID profile")
+        // HID registration is handled by the serviceListener in getProfileProxy
+        // Additional HID-specific setup could go here if needed
+    }
+
+    private fun unregisterHid() {
+        Log.d(TAG, "Unregistering HID profile")
+        hidDevice?.unregisterApp()
+        bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
+        hidDevice = null
+        hostDevice.update { null }
+    }
+
     fun unregister() {
         disconnect()
 
-        hidDevice?.unregisterApp()
-        bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
+        // Stop observing connection mode and auto-connect changes
+        modeObserverJob?.cancel()
+        modeObserverJob = null
+        autoConnectObserverJob?.cancel()
+        autoConnectObserverJob = null
 
-        hidDevice = null
-        hostDevice.update { null }
+        // Stop Bluetooth state monitoring
+        bluetoothStateReceiver?.let {
+            context.unregisterReceiver(it)
+            bluetoothStateReceiver = null
+        }
+
+        // Disconnect RFCOMM
+        rfcommController.disconnectRFCOMM()
+
+        // Unregister HID profile
+        unregisterHid()
 
         // Notify listeners that proxy is disconnected.
         deviceListener.forEach { it.invoke(null, -1) }
@@ -218,6 +379,18 @@ class BluetoothController(var context: Context) {
 
         Log.d(TAG, "connecting to $device")
 
+        // Check connection mode first using cached value
+        if (currentConnectionMode == 1) {
+            // RFCOMM mode - set expected device and update currentDevice for UI
+            rfcommController.setExpectedDeviceAddress(device.address)
+            hostDevice.update { device }
+            // Ensure RFCOMM server is running (in case it was stopped by disconnect)
+            rfcommController.connectRFCOMM()
+            Log.d(TAG, "RFCOMM mode: Set expected device to $device")
+            return
+        }
+
+        // HID mode - proceed with normal HID connection logic
         val success = hidDevice?.connect(device) ?: false
 
         if (!success) {
@@ -260,6 +433,14 @@ class BluetoothController(var context: Context) {
             return false
         }
 
+        // In RFCOMM mode, disconnect server and clear currentDevice
+        if (currentConnectionMode == 1) {
+            rfcommController.disconnectRFCOMM()
+            hostDevice.update { null }
+            return true
+        }
+
+        // In HID mode, disconnect the device
         return hostDevice.value?.let {
             hidDevice?.disconnect(it)
         } ?: true
@@ -278,11 +459,23 @@ class BluetoothController(var context: Context) {
         val expand =
             if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
 
-        keyboardSender?.sendString(
-            string,
-            sendDelay.toLong(),
-            extraKeys,
-            when (layout) {
+        // Check connection mode - RFCOMM or HID using cached value
+        if (currentConnectionMode == 1) {
+            // RFCOMM mode - process template for text output
+            val processedString = TemplateProcessor.processTemplate(
+                string,
+                template,
+                TemplateProcessor.TemplateMode.RFCOMM
+            )
+            rfcommController.sendProcessedData(processedString)
+        } else {
+            // HID mode - process template for HID conversion
+            val processedString = TemplateProcessor.processTemplate(
+                string,
+                template,
+                TemplateProcessor.TemplateMode.HID
+            )
+            val locale = when (layout) {
                 1 -> "de"
                 2 -> "fr"
                 3 -> "en"
@@ -292,14 +485,18 @@ class BluetoothController(var context: Context) {
                 7 -> "pl"
                 8 -> "cz"
                 else -> "us"
-            },
-            template,
-            expand
-        )
+            }
+            keyboardSender?.sendProcessedString(
+                processedString,
+                sendDelay.toLong(),
+                extraKeys,
+                locale,
+                expand
+            )
+        }
 
         _isSending.update { false }
     }
-
 }
 
 fun BluetoothDevice.removeBond() {

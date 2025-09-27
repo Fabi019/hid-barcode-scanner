@@ -227,15 +227,7 @@ fun Scanner(
         ) {
             BarcodeValue(currentBarcode)
             CapsLockWarning()
-
-            ElevatedWarningCard(
-                message = stringResource(R.string.no_device),
-                subMessage = stringResource(R.string.click_to_connect),
-                onClick = {
-                    navController.navigate(Routes.Devices)
-                },
-                visible = currentDevice == null
-            )
+            DeviceStatusIndicator()
 
             cameraInfo?.let {
                 ZoomStateInfo(it)
@@ -545,9 +537,14 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
 fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     controller?.let {
         val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
+
+        // Only show Caps Lock warning when we have an active HID connection
+        // keyboardSender is only available when HID device is connected
+        val shouldShowWarning = isCaps && (controller.keyboardSender != null)
 
         ElevatedWarningCard(
             message = stringResource(R.string.caps_lock_activated),
@@ -557,8 +554,53 @@ fun BoxScope.CapsLockWarning() {
                     controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
                 }
             },
-            visible = isCaps
+            visible = shouldShowWarning
         )
+    }
+}
+
+/**
+ * Component that shows device connection status for both HID and RFCOMM modes.
+ * Priority: if no device selected (currentDevice == null) => always show "No device connected"
+ * Otherwise in RFCOMM mode: show "Listening for connection from [device]" when server is listening
+ */
+@Composable
+fun BoxScope.DeviceStatusIndicator() {
+    val controller = LocalController.current
+    val context = LocalContext.current
+    val navigation = LocalNavigation.current
+
+    controller?.let {
+        val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
+        val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+        val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+
+        when {
+            currentDevice == null -> {
+                // No device selected - show "No device connected" regardless of mode
+                ElevatedWarningCard(
+                    message = stringResource(R.string.no_device),
+                    subMessage = stringResource(R.string.click_to_connect),
+                    onClick = {
+                        navigation.navigate(Routes.Devices)
+                    },
+                    visible = true
+                )
+            }
+            connectionMode == 1 && isRFCOMMListening -> {
+                // RFCOMM mode with device selected and server listening
+                ElevatedWarningCard(
+                    message = stringResource(R.string.rfcomm_listening),
+                    subMessage = stringResource(R.string.rfcomm_listening_from_device,
+                        currentDevice?.name ?: currentDevice?.address ?: ""),
+                    onClick = {
+                        // Do nothing - this is just an informational message
+                        // User has already selected a device and server is listening
+                    },
+                    visible = true
+                )
+            }
+        }
     }
 }
 

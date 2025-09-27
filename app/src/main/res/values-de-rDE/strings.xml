@@ -214,6 +214,7 @@
     <string name="highlights_possible_codes">Hebt mögliche Codes mit Punkten hervor</string>
     <string name="caps_lock_activated">Caps Lock ist aktiviert</string>
     <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
+    <string name="rfcomm_listening">Auf Verbindung hören</string>
     <string name="keep_screen_on">Bildschirm immer an</string>
     <string name="keep_screen_on_desc">Verhindert, dass der Bildschirm während dem Scannen ausgeht</string>
     <string name="private_mode">Datenschutzmodus</string>
@@ -278,4 +279,13 @@
     <string name="clear_after_send_desc">Löscht den angezeigten Code, nachdem er manuell gesendet wurde</string>
     <string name="manual_input">Manuelle Eingabe</string>
     <string name="include_extra_keys">Extra Tasten verwenden</string>
+    <string name="connection_mode">Verbindungsmodus</string>
+    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port (kann zusätzliche Software erfordern)</string>
+    <string-array name="connection_mode_values">
+        <item>HID-Tastatur</item>
+        <item>RFCOMM (SPP)</item>
+    </string-array>
+    <string name="insecure_rfcomm">Unsichere RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
+    <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
 </resources>

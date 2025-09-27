@@ -147,6 +147,89 @@ If you want to add a new keyboard layout the following steps might help you:
    The number is the index of the entry in the `keyboard_layout_values` and the value is the name of
    the layout file without extension (usually two letters)
 
+## Connection Modes
+
+The app supports two connection modes: **HID** (default) and **RFCOMM** (Serial Port Profile). While HID mode works immediately by emulating a keyboard, RFCOMM mode requires additional setup and may need software on your PC to receive data.
+
+### When to use RFCOMM mode
+
+- **Non-intrusive operation:** RFCOMM sends data invisibly in the background without interfering with the user's current work, while HID mode simulates keyboard input that can disrupt typing or active applications
+- When you need raw text data instead of keyboard input simulation
+- For integration with custom applications that read from COM ports
+- When HID mode doesn't work due to compatibility issues
+- **Professional barcode scanner replacement:** Many commercial barcode scanners use COM port mode to avoid interrupting the user's workflow
+
+### Setting up RFCOMM mode
+
+1. **Enable RFCOMM mode:**
+   - Open the app settings
+   - Change "Connection Mode" from "HID Keyboard" to "RFCOMM (SPP)"
+
+2. **Pair your devices:**
+   - Unpair your phone from PC (both sides) if previously connected
+   - Remove phone from PC Bluetooth device list
+   - In the app, search for devices and connect to your PC
+   - Confirm pairing on both devices
+
+3. **Verify COM port creation:**
+   - On Windows: Go to Device Manager → Ports (COM & LPT)
+   - You should see "Standard Serial over Bluetooth link" with a COM port number
+   - If not visible, try unpairing and re-pairing using the app
+
+4. **Receiving data on PC:**
+   - **Option A:** Use terminal software (PuTTY, RealTerm, Arduino IDE Serial Monitor)
+   - **Option B:** Write custom software to read from the COM port
+   - **Option C:** Use PowerShell: `[System.IO.Ports.SerialPort]::GetPortNames()` to list ports
+
+### Troubleshooting RFCOMM
+
+**No COM port appears:**
+- Unpair devices completely and re-pair using the app (not Windows settings)
+- Ensure "RFCOMM (SPP)" mode is selected before pairing
+- **Manual COM port management:** If automatic port creation fails:
+  1. Go to Windows Bluetooth settings → More Bluetooth options → COM Ports tab
+  2. Click "Add" → Select "Outgoing" port type
+  3. Choose your phone from device list → Select "Barcode Scanner" service
+  4. Click OK to create the COM port
+
+**Can't read data from COM port:**
+- Verify the correct COM port number in Device Manager
+- Check if another application is already using the port
+- For Bluetooth SPP, baud rate setting is usually ignored, but some software may require any value
+
+**Technical details:**
+- **Protocol:** Bluetooth SPP (Serial Port Profile)
+- **UUID:** `00001101-0000-1000-8000-00805F9B34FB`
+- **Data encoding:** UTF-8
+- **Connection:** Bidirectional (app can send and receive data)
+- **Baud rate:** Not applicable (Bluetooth protocol handles data transfer)
+
+**For developers:**
+Sample Python code to read from RFCOMM:
+```python
+import serial
+port = serial.Serial('COM3')  # Baud rate not needed for Bluetooth SPP
+while True:
+    data = port.readline().decode('utf-8').strip()
+    print(f"Received: {data}")
+```
+
+Sample C# code using System.IO.Ports:
+```csharp
+using System.IO.Ports;
+
+SerialPort port = new SerialPort("COM3");
+port.Open();
+while (true) {
+    string data = port.ReadLine();
+    Console.WriteLine($"Received: {data}");
+}
+```
+
+**Recommended for C# developers:** [InTheHand.Net.Bluetooth](https://github.com/inthehand/32feet) library provides better Bluetooth support that allows You more robust connection handling compared to System.IO.Ports.
+
+**Custom RFCOMM implementations:** If you need to adapt the RFCOMM data transmission to simulate specific physical COM scanner behavior (custom protocols, special formatting, etc.), we're open to implementing these features. Please open an issue describing your use case.
+
 ## License
 
 Copyright (C) 2023-2025 Fabi019

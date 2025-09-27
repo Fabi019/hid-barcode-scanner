@@ -47,6 +47,8 @@ import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.PhonelinkSetup
+import androidx.compose.material.icons.filled.PrivateConnectivity
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -75,6 +77,7 @@ import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.launch
@@ -137,6 +140,16 @@ fun SectionTitle(@StringRes id: Int) {
 @Composable
 fun ConnectionSettings() {
     val context = LocalContext.current
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+
+    // HID/RFCOMM
+    ComboBoxPreference(
+        title = stringResource(R.string.connection_mode),
+        desc = stringResource(R.string.connection_mode_desc),
+        icon = Icons.Default.PhonelinkSetup,
+        values = stringArrayResource(R.array.connection_mode_values),
+        preference = PreferenceStore.CONNECTION_MODE
+    )
 
     SwitchPreference(
         title = stringResource(R.string.auto_connect),
@@ -144,6 +157,7 @@ fun ConnectionSettings() {
         icon = Icons.Default.Link,
         preference = PreferenceStore.AUTO_CONNECT
     )
+
 
     /*    SwitchPreference(
             title = stringResource(R.string.show_unnamed),
