@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,7 +24,9 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -85,9 +88,12 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
+                val cameraVM = viewModel<CameraViewModel>()
+
                 Scanner(currentDevice) { text ->
                     scope.launch {
-                        controller?.sendString(text, true, "SCAN")
+                        val barcodeType = cameraVM.lastBarcodeFormat?.let { ZXingAnalyzer.format2String(it) }
+                        controller?.sendString(text, true, "SCAN", null, barcodeType)
                     }
                 }
 
@@ -112,9 +118,10 @@ fun NavGraph() {
 
                 History(onBack) { historyValue ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        // Find the history entry to get original scan timestamp
+                        // Find the history entry to get original scan timestamp and barcode type
                         val historyEntry = HistoryViewModel.historyEntries.find { it.value == historyValue }
-                        controller?.sendString(historyValue, true, "HISTORY", historyEntry?.timestamp)
+                        val barcodeType = historyEntry?.format?.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(historyValue, true, "HISTORY", historyEntry?.timestamp, barcodeType)
                     }
                 }
 

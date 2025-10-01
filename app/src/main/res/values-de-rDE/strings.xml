@@ -178,14 +178,20 @@
     <string name="filter_desc_long">Unterstützt normale Regex Syntax. Benutze eine leere Zeichenkette oder .* um alles zu erfassen. Falls der Regex eine Capture-Gruppe "(…)" enthält, wird der Wert der ersten Gruppe verwendet.</string>
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
-    <string name="custom_templ_desc_long">
-        Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist. Spezielle Platzhalter: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
-        Kombinationen können mit den folgenen Zeichen verwendet werden:\n
+    <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist.\n\n
+        CODE Platzhalter (flexibles Format):\n
+        • {CODE} - einfacher Barcode\n
+        • {CODE_XML} / {CODE_JSON} - optionale Serialisierung zu XML/JSON\n
+        • {CODE_HEX} / {CODE_B64} - optionale hex/base64 Kodierung\n
+        • Komponenten können in beliebiger Reihenfolge kombiniert werden, z.B.: {CODE_XML_HEX_B64}, {JSON_B64_HEX_CODE}, {CODE_XML}\n
+        • CODE Verarbeitungsreihenfolge: 1. Serialisierung (JSON/XML), 2. Kodierung (HEX/B64).\n\n
+        Andere Platzhalter: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
+        Modifikatoren (vor Platzhalter):\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
-            \t@: Meta\n
-        Beispiel: {+r} sendet CTRL+R, {^#F1} sendet SHIFT+ALT+F1, {WAIT:10} fügt eine Verzögerung von 10 Zeichen hinzu
+            \t@: Meta\n\n
+        Beispiele: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 Zeichen Verzögerung
     </string>
     <string name="camera">Kamera</string>
     <string name="focus_mode">Fokus Modus</string>
@@ -268,7 +274,9 @@
     <string name="exclude_duplicates">Duplikate ausschließen</string>
     <string name="save_to_file">Als Datei speichern</string>
     <string name="invalid_regex">Fehler in Regex</string>
-    <string name="template_error">Template muss entweder {CODE}, {CODE_B64} oder {CODE_HEX} enthalten</string>
+    <string name="template_error">Template muss mindestens eine CODE-Komponente enthalten.</string>
+    <string name="template_error_xml_json_conflict">XML und JSON schließen sich gegenseitig aus.</string>
+    <string name="template_error_duplicates">Doppelte Komponenten nicht erlaubt: %1$s</string>
     <string name="advanced_options">Erweiterte Optionen</string>
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
     <string name="detection">Erkennung</string>

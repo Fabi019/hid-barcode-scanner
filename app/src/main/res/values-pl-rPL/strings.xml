@@ -137,14 +137,20 @@
     <string name="filter_desc_long">Obsługuje typową składnię regex. Użyj pustego ciągu lub .*, aby dopasować wszystko. Jeśli wyrażenie regularne zawiera grupę przechwytywania „(...)”, zostanie użyta wartość grupy.</string>
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
-    <string name="custom_templ_desc_long">
-        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
-        Modyfikatory mogą być ustawione poprzez dodanie następujących znaków:\n
+    <string name="custom_templ_desc_long">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
+        Placeholdery CODE (elastyczny format):\n
+        • {CODE} - zwykły kod kreskowy\n
+        • {CODE_XML} / {CODE_JSON} - opcjonalna serializacja do XML/JSON\n
+        • {CODE_HEX} / {CODE_B64} - opcjonalne kodowanie hex/base64\n
+        • Komponenty mogą być łączone w dowolnej kolejności, np.: {CODE_XML_HEX_B64}, {JSON_B64_HEX_CODE}, {CODE_XML}\n
+        • Kolejność przetwarzania CODE: 1. serializacja (JSON/XML), 2. kodowanie (HEX/B64).\n\n
+        Inne placeholdery: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
+        Modyfikatory (przed placeholderem):\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
-            \t@: Meta\n
-        Przykład: {+r} prześle CTRL+R, {^#F1} prześle SHIFT+ALT+F1, {WAIT:10} doda opóźnienie równe 10 znakom
+            \t@: Meta\n\n
+        Przykłady: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = opóźnienie 10 znaków
     </string>
     <string name="camera">Aparat</string>
     <string name="focus_mode">Tryb ostrości</string>
@@ -279,7 +285,9 @@
     <string name="exclude_duplicates">Wyklucz duplikaty</string>
     <string name="save_to_file">Zapisz do pliku</string>
     <string name="invalid_regex">Błędny Regex</string>
-    <string name="template_error">Szablon musi zawierać {CODE}, {CODE_B64} lub {CODE_HEX}</string>
+    <string name="template_error">Szablon musi zawierać co najmniej jeden komponent CODE.</string>
+    <string name="template_error_xml_json_conflict">XML i JSON wzajemnie się wykluczają.</string>
+    <string name="template_error_duplicates">Duplikaty komponentów niedozwolone: %1$s</string>
     <string name="advanced_options">Zaawansowane</string>
     <string name="advanced_opts_desc">Dostosuj parametry skanowania</string>
     <string name="detection">Detekcja</string>

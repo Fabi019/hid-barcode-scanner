@@ -192,6 +192,7 @@ fun Scanner(
                         if (clearAfterSend == true) {
                             currentBarcode = null
                             cameraVM.lastBarcode = null
+                            cameraVM.lastBarcodeFormat = null
                         }
                     }
                     VolumeKeyHandler {
@@ -710,44 +711,12 @@ fun KeyboardInputDialog(dialogState: DialogState) {
 
     val focusRequester = remember { FocusRequester() }
 
-    // Template validation function
-    fun validateTemplate(template: String): String? {
-        val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
-        val matches = codeRegex.findAll(template)
-
-        for (match in matches) {
-            val content = match.value.removePrefix("{").removeSuffix("}")
-            val parts = content.split("_")
-
-            // Check if CODE is present
-            if (!parts.contains("CODE")) {
-                return "CODE component is required in template"
-            }
-
-            // Check for XML and JSON conflict
-            val hasXml = parts.contains("XML")
-            val hasJson = parts.contains("JSON")
-            if (hasXml && hasJson) {
-                return "XML and JSON are mutually exclusive in template"
-            }
-
-            // Check for duplicate components
-            val uniqueParts = parts.toSet()
-            if (uniqueParts.size != parts.size) {
-                val duplicates = parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
-                return "Duplicate components not allowed: ${duplicates.joinToString(", ")}"
-            }
-        }
-        return null
-    }
-
-    val validationError = validateTemplate(currentText)
-    val enabled = !sendingInProgress && validationError == null && currentText.isNotBlank()
+    val enabled = !sendingInProgress && currentText.isNotBlank()
 
     ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
         scope.launch {
             sendingInProgress = true
-            controller?.sendString(currentText, extraKeys, "MANUAL")
+            controller?.sendString(currentText, extraKeys, "MANUAL", null, null)
         }.invokeOnCompletion {
             close()
         }
@@ -756,11 +725,7 @@ fun KeyboardInputDialog(dialogState: DialogState) {
             OutlinedTextField(
                 value = currentText,
                 onValueChange = { currentText = it },
-                modifier = Modifier.focusRequester(focusRequester),
-                isError = validationError != null,
-                supportingText = validationError?.let {
-                    { Text(it, color = MaterialTheme.colorScheme.error) }
-                }
+                modifier = Modifier.focusRequester(focusRequester)
             )
 
             Spacer(Modifier.height(8.dp))

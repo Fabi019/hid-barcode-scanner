@@ -57,6 +57,10 @@ class ZXingAnalyzer(
                 it.first == format
             }?.second ?: "UNKNOWN"
         }
+
+        fun index2String(formatIndex: Int): String {
+            return FORMATS.getOrNull(formatIndex)?.second ?: "UNKNOWN"
+        }
     }
 
     private val reader = BarcodeReader(initialOptions)

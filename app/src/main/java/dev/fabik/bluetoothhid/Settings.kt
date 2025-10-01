@@ -202,16 +202,39 @@ fun ConnectionSettings() {
     )
 
     val errorString = remember { context.getString(R.string.template_error) }
+    val xmlJsonConflictError = remember { context.getString(R.string.template_error_xml_json_conflict) }
 
     TextBoxPreference(
         title = stringResource(R.string.custom_template),
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
-        validator = {
+        validator = { template ->
             // Check if template contains at least one CODE placeholder (flexible format)
             val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
-            if (!codeRegex.containsMatchIn(it))
+            if (!codeRegex.containsMatchIn(template))
                 return@TextBoxPreference errorString
+
+            // Check each CODE placeholder for conflicts
+            val matches = codeRegex.findAll(template)
+            for (match in matches) {
+                val content = match.value.removePrefix("{").removeSuffix("}")
+                val parts = content.split("_")
+
+                // Check for XML and JSON conflict
+                val hasXml = parts.contains("XML")
+                val hasJson = parts.contains("JSON")
+                if (hasXml && hasJson) {
+                    return@TextBoxPreference xmlJsonConflictError
+                }
+
+                // Check for duplicate components
+                val uniqueParts = parts.toSet()
+                if (uniqueParts.size != parts.size) {
+                    val duplicates = parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+                    return@TextBoxPreference context.getString(R.string.template_error_duplicates, duplicates.joinToString(", "))
+                }
+            }
+
             null
         },
         icon = Icons.Default.LibraryAdd,

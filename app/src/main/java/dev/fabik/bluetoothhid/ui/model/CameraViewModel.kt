@@ -85,6 +85,7 @@ class CameraViewModel : ViewModel() {
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
+    var lastBarcodeFormat: BarcodeReader.Format? = null
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -129,8 +130,8 @@ class CameraViewModel : ViewModel() {
                 Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
 
-                // Cache the barcode type for template processing
-                TemplateProcessor.cacheBarcodeType(value, ZXingAnalyzer.format2String(format))
+                // Store the format for later use
+                lastBarcodeFormat = format
 
                 viewModelScope.launch {
                     onBarcode(value)

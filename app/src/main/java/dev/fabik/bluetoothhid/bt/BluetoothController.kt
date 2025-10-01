@@ -479,7 +479,7 @@ class BluetoothController(var context: Context) {
         } ?: true
     }
 
-    suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null) = with(context) {
+    suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null, barcodeType: String? = null) = with(context) {
         if (!_isSending.compareAndSet(false, true)) {
             return@with
         }
@@ -504,7 +504,8 @@ class BluetoothController(var context: Context) {
                 TemplateProcessor.TemplateMode.RFCOMM,
                 from,
                 scanTimestamp,
-                scannerID
+                scannerID,
+                barcodeType
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -515,7 +516,8 @@ class BluetoothController(var context: Context) {
                 TemplateProcessor.TemplateMode.HID,
                 from,
                 scanTimestamp,
-                scannerID
+                scannerID,
+                barcodeType
             )
             val locale = when (layout) {
                 1 -> "de"

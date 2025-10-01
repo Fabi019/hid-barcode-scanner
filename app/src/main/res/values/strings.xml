@@ -137,14 +137,20 @@
     <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything. If the regex contains a capture group "(…)", the value of the group will be used.</string>
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
-    <string name="custom_templ_desc_long">
-        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
-        Modifiers can be set by prepending the following chars:\n
+    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'.\n\n
+        CODE placeholders (flexible format):\n
+        • {CODE} - plain barcode\n
+        • {CODE_XML} / {CODE_JSON} - optional serialization to XML/JSON\n
+        • {CODE_HEX} / {CODE_B64} - optional hex/base64 encoding\n
+        • Components can be combined in any order, e.g.: {CODE_XML_HEX_B64}, {JSON_B64_HEX_CODE}, {CODE_XML}\n
+        • CODE processing order: 1. serialization (JSON/XML), 2. encoding (HEX/B64).\n\n
+        Other placeholders: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
+        Modifiers (prepend to placeholder):\n
             \t^: Shift\n
             \t+: Ctrl\n
             \t#: Alt\n
-            \t@: Meta\n
-        Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1, {WAIT:10} will add a delay of 10 characters
+            \t@: Meta\n\n
+        Examples: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 char delay
     </string>
     <string name="camera">Camera</string>
     <string name="focus_mode">Focus mode</string>
@@ -216,7 +222,9 @@
     <string name="exclude_duplicates">Exclude duplicates</string>
     <string name="save_to_file">Save to file</string>
     <string name="invalid_regex">Invalid regex</string>
-    <string name="template_error">Template must contain either {CODE}, {CODE_B64} or {CODE_HEX}</string>
+    <string name="template_error">Template must contain at least one CODE component.</string>
+    <string name="template_error_xml_json_conflict">XML and JSON are mutually exclusive.</string>
+    <string name="template_error_duplicates">Duplicate components not allowed: %1$s</string>
     <string name="advanced_options">Advanced options</string>
     <string name="advanced_opts_desc">Adjust further scan parameters</string>
     <string name="detection">Detection</string>
