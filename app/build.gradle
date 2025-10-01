@@ -41,9 +41,12 @@ android {
         }
     }
 
+    final def isBuildingBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains("bundle") }
+
     splits {
         abi {
-            enable true
+            // split abi not supported for bundles
+            enable !isBuildingBundle
 
             reset()
             include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
