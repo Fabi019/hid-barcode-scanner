@@ -40,7 +40,6 @@ class BluetoothController(var context: Context) {
     companion object {
         private const val TAG = "BluetoothController"
     }
-
     private val keyTranslator: KeyTranslator = KeyTranslator(context)
 
     private val bluetoothManager: BluetoothManager =
@@ -67,6 +66,10 @@ class BluetoothController(var context: Context) {
     @Volatile
     private var currentConnectionMode: Int = 0
 
+    // Cache scanner ID to avoid repeated Bluetooth calls
+    @Volatile
+    private var cachedScannerName: String? = null
+
     var keyboardSender: KeyboardSender? = null
         private set
 
@@ -90,6 +93,9 @@ class BluetoothController(var context: Context) {
 
             hostDevice.update { null }
             hidDevice = proxy as? BluetoothHidDevice
+
+            // Update scanner info cache when Bluetooth service connects
+            updateScannerCache()
 
             hidDevice?.registerApp(
                 Descriptor.SDP_RECORD,
@@ -231,12 +237,16 @@ class BluetoothController(var context: Context) {
                         }
                         BluetoothAdapter.STATE_ON -> {
                             Log.d(TAG, "Bluetooth turned ON - restarting services if needed")
+                            // Update scanner info cache when Bluetooth turns on
+                            updateScannerCache()
                             if (currentConnectionMode == 1) {
                                 rfcommController.connectRFCOMM()
                             }
                         }
                         BluetoothAdapter.STATE_OFF -> {
                             Log.d(TAG, "Bluetooth turned OFF")
+                            // Clear scanner ID cache when Bluetooth turns off
+                            cachedScannerName = null
                         }
                     }
                 }
@@ -291,6 +301,29 @@ class BluetoothController(var context: Context) {
     }
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
+
+    /**
+     * Get scanner ID from Bluetooth adapter
+     * Uses cache to avoid repeated Bluetooth calls
+     * @return scanner ID
+     */
+    fun getScannerID(): String? {
+        // Return cached value if available
+        if (cachedScannerName != null) {
+            return cachedScannerName
+        }
+
+        // Update cache from Bluetooth adapter
+        updateScannerCache()
+        return cachedScannerName
+    }
+
+    /**
+     * Updates the scanner ID cache from Bluetooth adapter
+     */
+    private fun updateScannerCache() {
+        cachedScannerName = bluetoothAdapter?.name
+    }
 
     suspend fun register(): Boolean {
         val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
@@ -446,7 +479,7 @@ class BluetoothController(var context: Context) {
         } ?: true
     }
 
-    suspend fun sendString(string: String, withExtraKeys: Boolean = true) = with(context) {
+    suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null) = with(context) {
         if (!_isSending.compareAndSet(false, true)) {
             return@with
         }
@@ -459,13 +492,19 @@ class BluetoothController(var context: Context) {
         val expand =
             if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
 
+        // Get scanner ID
+        val scannerID = getScannerID()
+
         // Check connection mode - RFCOMM or HID using cached value
         if (currentConnectionMode == 1) {
             // RFCOMM mode - process template for text output
             val processedString = TemplateProcessor.processTemplate(
                 string,
                 template,
-                TemplateProcessor.TemplateMode.RFCOMM
+                TemplateProcessor.TemplateMode.RFCOMM,
+                from,
+                scanTimestamp,
+                scannerID
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -473,7 +512,10 @@ class BluetoothController(var context: Context) {
             val processedString = TemplateProcessor.processTemplate(
                 string,
                 template,
-                TemplateProcessor.TemplateMode.HID
+                TemplateProcessor.TemplateMode.HID,
+                from,
+                scanTimestamp,
+                scannerID
             )
             val locale = when (layout) {
                 1 -> "de"

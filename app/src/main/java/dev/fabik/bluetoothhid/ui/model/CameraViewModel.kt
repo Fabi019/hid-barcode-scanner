@@ -44,6 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
@@ -127,6 +128,10 @@ class CameraViewModel : ViewModel() {
             if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
+
+                // Cache the barcode type for template processing
+                TemplateProcessor.cacheBarcodeType(value, ZXingAnalyzer.format2String(format))
+
                 viewModelScope.launch {
                     onBarcode(value)
                 }

@@ -282,8 +282,8 @@ private fun CameraPreviewArea(
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
 
-    CameraPreviewContent(onCameraReady = onCameraReady) {
-        onBarcodeDetected(it, autoSend)
+    CameraPreviewContent(onCameraReady = onCameraReady) { value ->
+        onBarcodeDetected(value, autoSend)
 
         if (playSound) {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
@@ -705,15 +705,49 @@ fun KeyboardInputDialog(dialogState: DialogState) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
     var currentText by rememberSaveable(dialogState.openState) { mutableStateOf("") }
-    var enabled by remember(dialogState.openState) { mutableStateOf(true) }
+    var sendingInProgress by remember(dialogState.openState) { mutableStateOf(false) }
     val (extraKeys, setExtraKeys) = rememberSaveable { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
+    // Template validation function
+    fun validateTemplate(template: String): String? {
+        val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
+        val matches = codeRegex.findAll(template)
+
+        for (match in matches) {
+            val content = match.value.removePrefix("{").removeSuffix("}")
+            val parts = content.split("_")
+
+            // Check if CODE is present
+            if (!parts.contains("CODE")) {
+                return "CODE component is required in template"
+            }
+
+            // Check for XML and JSON conflict
+            val hasXml = parts.contains("XML")
+            val hasJson = parts.contains("JSON")
+            if (hasXml && hasJson) {
+                return "XML and JSON are mutually exclusive in template"
+            }
+
+            // Check for duplicate components
+            val uniqueParts = parts.toSet()
+            if (uniqueParts.size != parts.size) {
+                val duplicates = parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+                return "Duplicate components not allowed: ${duplicates.joinToString(", ")}"
+            }
+        }
+        return null
+    }
+
+    val validationError = validateTemplate(currentText)
+    val enabled = !sendingInProgress && validationError == null && currentText.isNotBlank()
+
     ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
         scope.launch {
-            enabled = false
-            controller?.sendString(currentText, extraKeys)
+            sendingInProgress = true
+            controller?.sendString(currentText, extraKeys, "MANUAL")
         }.invokeOnCompletion {
             close()
         }
@@ -722,7 +756,11 @@ fun KeyboardInputDialog(dialogState: DialogState) {
             OutlinedTextField(
                 value = currentText,
                 onValueChange = { currentText = it },
-                modifier = Modifier.focusRequester(focusRequester)
+                modifier = Modifier.focusRequester(focusRequester),
+                isError = validationError != null,
+                supportingText = validationError?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                }
             )
 
             Spacer(Modifier.height(8.dp))

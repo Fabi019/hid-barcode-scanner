@@ -23,6 +23,7 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -84,9 +85,9 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(currentDevice) {
+                Scanner(currentDevice) { text ->
                     scope.launch {
-                        controller?.sendString(it)
+                        controller?.sendString(text, true, "SCAN")
                     }
                 }
 
@@ -109,9 +110,11 @@ fun NavGraph() {
                     }
                 }
 
-                History(onBack) {
+                History(onBack) { historyValue ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        controller?.sendString(it)
+                        // Find the history entry to get original scan timestamp
+                        val historyEntry = HistoryViewModel.historyEntries.find { it.value == historyValue }
+                        controller?.sendString(historyValue, true, "HISTORY", historyEntry?.timestamp)
                     }
                 }
 

@@ -208,7 +208,9 @@ fun ConnectionSettings() {
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
         validator = {
-            if (!it.contains("{CODE}") && !it.contains("{CODE_B64}") && !it.contains("{CODE_HEX}"))
+            // Check if template contains at least one CODE placeholder (flexible format)
+            val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
+            if (!codeRegex.containsMatchIn(it))
                 return@TextBoxPreference errorString
             null
         },
