@@ -286,7 +286,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
             }
         }
 
-    var selectedTexts = remember { mutableStateMapOf<Int, String>() }
+    val selectedTexts = remember { mutableStateMapOf<Int, String>() }
 
     ConfirmDialog(
         resultDialog, stringResource(R.string.scan_results),
