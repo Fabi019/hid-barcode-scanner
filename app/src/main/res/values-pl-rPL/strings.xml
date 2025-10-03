@@ -222,6 +222,8 @@
     <string name="export_fields" translatable="false">tekst, sygnatura czasowa, typ</string>
     <string name="export_lines_description">tekst z podziałami wierszy</string>
     <string name="export_as">Eksportuj jako</string>
+    <string name="import_text">Import</string>
+    <string name="import_from">Importuj z</string>
     <string name="delete_selection">Usunąć zaznaczenie?</string>
     <string name="delete_selection_desc">Czy na pewno chcesz usunąć wybrane elementy?</string>
     <string name="templates_in_value">Szablony w wartości</string>

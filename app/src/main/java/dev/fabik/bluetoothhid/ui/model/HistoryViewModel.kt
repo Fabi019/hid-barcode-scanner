@@ -67,7 +67,11 @@ class HistoryViewModel : ViewModel() {
                 Log.d(TAG, "Saving history to: $file")
 
                 file.bufferedWriter().use {
-                    it.write(exportEntries(historyEntries, ExportType.CSV, numericType = true))
+                    // Internal format: numeric type for efficiency
+                    val entries = historyEntries.map {
+                        Serializer.BarcodeEntry(it.value, it.timestamp, it.format.toString())
+                    }
+                    it.write(Serializer.toCsv(entries))
                 }
             }.onFailure {
                 Log.e(TAG, "Failed to store history:", it)
@@ -92,33 +96,22 @@ class HistoryViewModel : ViewModel() {
 
                 Log.d(TAG, "Loading history from: $file")
 
-                val regex = "^\"(.*)\",([0-9]+),([0-9]+)$".toRegex()
-                val history = mutableListOf<HistoryEntry>()
+                val csvContent = file.readText()
+                val parsedEntries = Serializer.fromCsv(csvContent)
 
-                file.useLines {
-                    val lines = it.iterator()
+                // Check if old barcode format used (for migration)
+                val migrate = csvContent.lines().firstOrNull() == "text,timestamp,type"
 
-                    // Check if old barcode format used
-                    val migrate = lines.next() == "text,timestamp,type"
-
-                    for (line in lines) {
-                        regex.matchEntire(line)?.let {
-                            val text = it.groupValues[1]
-                            val timestamp = it.groupValues[2].toLongOrNull() ?: 0
-
-                            var type = it.groupValues[3].toIntOrNull() ?: -1
-                            if (migrate) {
-                                type = log2(type.toFloat()).toInt()
-                            }
-
-                            history.add(HistoryEntry(text, timestamp, type))
-                        }
+                parsedEntries.forEach { entry ->
+                    var type = entry.type.toIntOrNull() ?: -1
+                    if (migrate) {
+                        type = log2(type.toFloat()).toInt()
                     }
-                }
 
-                historyEntries.addAll(history)
+                    historyEntries.add(HistoryEntry(entry.text, entry.timestamp, type))
+                }
             }.onFailure {
-                Log.e(TAG, "Error loading custom keymap:", it)
+                Log.e(TAG, "Error loading history:", it)
             }
         }
 
@@ -131,63 +124,57 @@ class HistoryViewModel : ViewModel() {
             historyEntries.clear()
         }
 
-        /**
-         * Converts history entries to Serializer format.
-         * Helper function to avoid code duplication between JSON and XML export.
-         */
-        private fun toSerializerEntries(
-            entries: List<HistoryEntry>,
-            numericType: Boolean,
-            formatNames: Array<String>?
-        ): List<Serializer.BarcodeEntry> {
-            return entries.map {
-                val typeString = if (numericType) {
-                    it.format.toString()
-                } else {
-                    formatNames?.elementAtOrNull(it.format) ?: "UNKNOWN"
-                }
-                Serializer.BarcodeEntry(
-                    text = it.value,
-                    timestamp = it.timestamp,
-                    type = typeString
-                )
-            }
-        }
-
         fun exportEntries(
             dataToExport: List<HistoryEntry>,
             exportType: ExportType,
-            numericType: Boolean = false,
-            formatNames: Array<String>? = null,
-        ) = when (exportType) {
-            ExportType.LINES -> {
-                dataToExport.map {
-                    it.value
-                }.fastJoinToString(System.lineSeparator())
+            formatNames: Array<String>
+        ): String {
+            val entries = dataToExport.map { entry ->
+                Serializer.BarcodeEntry(
+                    text = entry.value,
+                    timestamp = entry.timestamp,
+                    type = formatNames.getOrNull(entry.format) ?: "UNKNOWN"
+                )
             }
 
-            ExportType.CSV -> {
-                val header = if (numericType) "text,timestamp,format" else "text,timestamp,type"
-                val rows = dataToExport.map {
-                    val text = it.value
-                    val timestamp = it.timestamp
-                    val type =
-                        if (numericType) it.format else formatNames?.elementAtOrNull(it.format)
-                            ?: "UNKNOWN"
-                    "\"$text\",$timestamp,$type"
-                }
-                header + System.lineSeparator() + rows.fastJoinToString(System.lineSeparator())
+            return when (exportType) {
+                ExportType.LINES -> Serializer.toLines(entries)
+                ExportType.CSV -> Serializer.toCsv(entries)
+                ExportType.JSON -> Serializer.toJson(entries)
+                ExportType.XML -> Serializer.toXml(entries)
+            }
+        }
+
+        /**
+         * Imports barcode entries from various formats.
+         *
+         * @param content File content to parse
+         * @param format Import format (CSV, JSON, or XML)
+         * @param formatNames Array mapping format names to indices
+         * @return Number of successfully imported entries
+         */
+        fun importHistory(
+            content: String,
+            format: ImportFormat,
+            formatNames: Array<String>
+        ): Int {
+            val parsedEntries = when (format) {
+                ImportFormat.CSV -> Serializer.fromCsv(content)
+                ImportFormat.JSON -> Serializer.fromJson(content)
+                ImportFormat.XML -> Serializer.fromXml(content)
             }
 
-            ExportType.JSON -> {
-                val entries = toSerializerEntries(dataToExport, numericType, formatNames)
-                Serializer.toJson(entries)
+            // Convert Serializer.BarcodeEntry to HistoryEntry
+            parsedEntries.forEach { entry ->
+                // Parse type: either numeric string or name string
+                val formatIndex = entry.type.toIntOrNull()
+                    ?: formatNames.indexOf(entry.type).takeIf { it >= 0 }
+                    ?: -1
+
+                historyEntries.add(HistoryEntry(entry.text, entry.timestamp, formatIndex))
             }
 
-            ExportType.XML -> {
-                val entries = toSerializerEntries(dataToExport, numericType, formatNames)
-                Serializer.toXml(entries)
-            }
+            return parsedEntries.size
         }
     }
 
@@ -228,7 +215,7 @@ class HistoryViewModel : ViewModel() {
         if (deduplicate) {
             history = history.fastDistinctBy { it.value }
         }
-        return exportEntries(history, exportType, formatNames = formatNames)
+        return exportEntries(history, exportType, formatNames)
     }
 
     data class HistoryEntry(val value: String, val timestamp: Long, val format: Int)
@@ -242,5 +229,16 @@ class HistoryViewModel : ViewModel() {
         JSON(R.string.export_json, R.string.export_fields, Icons.Default.DataObject),
         XML(R.string.export_xml, R.string.export_fields, Icons.Filled.Code),
         LINES(R.string.export_lines, R.string.export_lines_description, Icons.Default.TableRows)
+    }
+
+    enum class ImportFormat(
+        @StringRes val label: Int,
+        @StringRes val description: Int,
+        val icon: ImageVector,
+        val mimeType: String
+    ) {
+        CSV(R.string.export_csv, R.string.export_fields, Icons.Default.TableView, "*/*"),
+        JSON(R.string.export_json, R.string.export_fields, Icons.Default.DataObject, "*/*"),
+        XML(R.string.export_xml, R.string.export_fields, Icons.Filled.Code, "*/*")
     }
 }

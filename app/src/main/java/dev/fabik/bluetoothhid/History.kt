@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid
 import android.app.Activity
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Checkbox
@@ -114,7 +116,10 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
             }
         },
         floatingActionButton = {
-            ExportSheet()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ImportSheet()
+                ExportSheet()
+            }
         }
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -356,7 +361,7 @@ fun HistoryViewModel.ExportSheet() {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var showSheet by rememberSaveable { mutableStateOf(false) }
-    var exportData = remember { "" }
+    var exportData by rememberSaveable { mutableStateOf("") }
 
     ExtendedFloatingActionButton(
         text = {
@@ -377,9 +382,9 @@ fun HistoryViewModel.ExportSheet() {
                 val fileUri = result.data?.data
                 fileUri?.let {
                     runCatching {
-                        context.contentResolver.openOutputStream(it, "w").use {
-                            it?.bufferedWriter().use {
-                                it?.write(exportData)
+                        context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                            outputStream.bufferedWriter().use { writer ->
+                                writer.write(exportData)
                             }
                         }
                     }.onFailure {
@@ -402,10 +407,10 @@ fun HistoryViewModel.ExportSheet() {
                     val data = exportHistory(typ, dedup, types)
 
                     val (mime, name) = when (typ) {
-                        HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
-                        HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
-                        HistoryViewModel.ExportType.XML -> "text/xml" to "export.xml"
-                        HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
+                        HistoryViewModel.ExportType.CSV -> "*/*" to "export.csv"
+                        HistoryViewModel.ExportType.JSON -> "*/*" to "export.json"
+                        HistoryViewModel.ExportType.XML -> "*/*" to "export.xml"
+                        HistoryViewModel.ExportType.LINES -> "*/*" to "export.txt"
                     }
 
                     runCatching {
@@ -496,6 +501,116 @@ private fun ExportSheetContent(
                     leadingContent = { Icon(type.icon, null) },
                     modifier = Modifier
                         .clickable { onSelect(type, deduplicateChecked, saveIntoFileChecked) }
+                        .clip(MaterialTheme.shapes.medium)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+@ExperimentalMaterial3Api
+fun HistoryViewModel.ImportSheet() {
+    val context = LocalContext.current
+    val types = stringArrayResource(R.array.code_types_values)
+
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedFormat by remember { mutableStateOf<HistoryViewModel.ImportFormat?>(null) }
+
+    ExtendedFloatingActionButton(
+        text = { Text(stringResource(R.string.import_text)) },
+        icon = { Icon(Icons.Default.FileUpload, stringResource(R.string.import_text)) },
+        onClick = { showSheet = true }
+    )
+
+    val filePickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val fileUri = result.data?.data
+                val format = selectedFormat
+
+                if (fileUri != null && format != null) {
+                    runCatching {
+                        val content = context.contentResolver.openInputStream(fileUri)?.use {
+                            it.bufferedReader().readText()
+                        } ?: ""
+
+                        val count = HistoryViewModel.importHistory(content, format, types)
+                        Toast.makeText(
+                            context,
+                            "Imported $count entries",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }.onFailure {
+                        Log.e("History", "Error importing file!", it)
+                        Toast.makeText(
+                            context,
+                            "Error: ${it.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            selectedFormat = null
+        }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            sheetState = state,
+            onDismissRequest = { showSheet = false },
+            content = {
+                ImportSheetContent { format ->
+                    scope.launch { state.hide() }.invokeOnCompletion { showSheet = state.isVisible }
+
+                    selectedFormat = format
+
+                    // Launch file picker with appropriate MIME type
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        type = format.mimeType
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                    }
+
+                    runCatching {
+                        filePickerLauncher.launch(intent)
+                    }.onFailure {
+                        Log.e("History", "Error starting file picker!", it)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ImportSheetContent(
+    onSelect: (HistoryViewModel.ImportFormat) -> Unit = {},
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Text(
+            stringResource(R.string.import_from),
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(HistoryViewModel.ImportFormat.entries) { format ->
+                ListItem(
+                    headlineContent = { Text(stringResource(id = format.label)) },
+                    supportingContent = { Text(stringResource(id = format.description)) },
+                    leadingContent = { Icon(format.icon, null) },
+                    modifier = Modifier
+                        .clickable { onSelect(format) }
                         .clip(MaterialTheme.shapes.medium)
                 )
             }

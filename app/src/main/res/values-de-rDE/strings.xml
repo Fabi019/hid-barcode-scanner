@@ -275,6 +275,8 @@
         <item quantity="other">%1$d Elemente exportieren</item>
     </plurals>
     <string name="export_as">Exportieren als</string>
+    <string name="import_text">Import</string>
+    <string name="import_from">Importieren aus</string>
     <string name="delete_selection">Auswahl löschen?</string>
     <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
     <string name="templates_in_value">Templates im Code</string>

@@ -223,6 +223,8 @@
     <string name="export_fields" translatable="false">text, timestamp, type</string>
     <string name="export_lines_description">text with line breaks</string>
     <string name="export_as">Export as</string>
+    <string name="import_text">Import</string>
+    <string name="import_from">Import from</string>
     <string name="delete_selection">Delete selection?</string>
     <string name="delete_selection_desc">Are you sure you want to delete the selected item(s)?</string>
     <string name="templates_in_value">Templates in value</string>
