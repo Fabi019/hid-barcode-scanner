@@ -404,6 +404,7 @@ fun HistoryViewModel.ExportSheet() {
                     val (mime, name) = when (typ) {
                         HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
                         HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
+                        HistoryViewModel.ExportType.XML -> "text/xml" to "export.xml"
                         HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
                     }
 

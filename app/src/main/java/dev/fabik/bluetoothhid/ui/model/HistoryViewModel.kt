@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material.icons.filled.TableView
@@ -20,6 +21,7 @@ import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
+import dev.fabik.bluetoothhid.utils.Serializer
 import kotlin.math.log2
 
 class HistoryViewModel : ViewModel() {
@@ -129,6 +131,29 @@ class HistoryViewModel : ViewModel() {
             historyEntries.clear()
         }
 
+        /**
+         * Converts history entries to Serializer format.
+         * Helper function to avoid code duplication between JSON and XML export.
+         */
+        private fun toSerializerEntries(
+            entries: List<HistoryEntry>,
+            numericType: Boolean,
+            formatNames: Array<String>?
+        ): List<Serializer.BarcodeEntry> {
+            return entries.map {
+                val typeString = if (numericType) {
+                    it.format.toString()
+                } else {
+                    formatNames?.elementAtOrNull(it.format) ?: "UNKNOWN"
+                }
+                Serializer.BarcodeEntry(
+                    text = it.value,
+                    timestamp = it.timestamp,
+                    type = typeString
+                )
+            }
+        }
+
         fun exportEntries(
             dataToExport: List<HistoryEntry>,
             exportType: ExportType,
@@ -155,15 +180,13 @@ class HistoryViewModel : ViewModel() {
             }
 
             ExportType.JSON -> {
-                val entries = dataToExport.map {
-                    val text = it.value
-                    val timestamp = it.timestamp
-                    val type =
-                        if (numericType) it.format else formatNames?.elementAtOrNull(it.format)
-                            ?: "UNKNOWN"
-                    """{"text":"$text","timestamp":$timestamp,"type":"$type"}"""
-                }
-                "[" + entries.fastJoinToString("," + System.lineSeparator()) + "]"
+                val entries = toSerializerEntries(dataToExport, numericType, formatNames)
+                Serializer.toJson(entries)
+            }
+
+            ExportType.XML -> {
+                val entries = toSerializerEntries(dataToExport, numericType, formatNames)
+                Serializer.toXml(entries)
             }
         }
     }
@@ -217,6 +240,7 @@ class HistoryViewModel : ViewModel() {
     ) {
         CSV(R.string.export_csv, R.string.export_fields, Icons.Default.TableView),
         JSON(R.string.export_json, R.string.export_fields, Icons.Default.DataObject),
+        XML(R.string.export_xml, R.string.export_fields, Icons.Filled.Code),
         LINES(R.string.export_lines, R.string.export_lines_description, Icons.Default.TableRows)
     }
 }

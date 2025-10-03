@@ -140,10 +140,17 @@
     <string name="custom_templ_desc_long">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
         Placeholdery CODE (elastyczny format):\n
         • {CODE} - zwykły kod kreskowy\n
-        • {CODE_XML} / {CODE_JSON} - opcjonalna serializacja do XML/JSON\n
         • {CODE_HEX} / {CODE_B64} - opcjonalne kodowanie hex/base64\n
-        • Komponenty mogą być łączone w dowolnej kolejności, np.: {CODE_XML_HEX_B64}, {JSON_B64_HEX_CODE}, {CODE_XML}\n
-        • Kolejność przetwarzania CODE: 1. serializacja (JSON/XML), 2. kodowanie (HEX/B64).\n\n
+        • Komponenty mogą być łączone w dowolnej kolejności, np.: {CODE_HEX_B64}, {B64_HEX_CODE}, {HEX_CODE}\n
+        • Kolejność przetwarzania CODE: kodowanie (HEX/B64) w kolejności występowania\n\n
+        Placeholdery metadanych:\n
+        • {CODE_TYPE} - typ kodu kreskowego (QR_CODE, CODE_128, itp.)\n
+        • {SCAN_TIME} - znacznik czasu skanowania (format ISO)\n
+        • {SCAN_SOURCE} - źródło danych (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - identyfikator skanera\n\n
+        Globalne kodowanie (stosowane do całego wyniku):\n
+        • {GLOBAL_HEX} - koduj cały wynik do szesnastkowego\n
+        • {GLOBAL_B64} - koduj cały wynik do base64\n\n
         Inne placeholdery: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
         Modyfikatory (przed placeholderem):\n
             \t^: Shift\n
@@ -190,6 +197,7 @@
     <string name="export">Eksport</string>
     <string name="export_csv">CSV</string>
     <string name="export_json">JSON</string>
+    <string name="export_xml">XML</string>
     <string name="export_lines">Linie</string>
     <string name="export_fields" translatable="false">tekst, sygnatura czasowa, typ</string>
     <string name="export_lines_description">tekst z podziałami wierszy</string>

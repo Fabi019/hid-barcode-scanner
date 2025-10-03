@@ -12,25 +12,11 @@ import java.util.Locale
  *
  * This processor handles dynamic template replacement with support for:
  * - Basic placeholders: {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {TAB}, {ENTER}
- * - Advanced CODE placeholders with flexible component ordering: {CODE}, {CODE_XML}, {JSON_CODE_HEX}, etc.
- * - XML/JSON serialization with timestamps, barcode types, and scanner identification
- * - Base64 and hexadecimal encoding transformations
+ * - Metadata placeholders: {CODE_TYPE}, {SCAN_TIME}, {SCAN_SOURCE}, {SCANNER_ID}
+ * - Advanced CODE placeholders with flexible component ordering: {CODE}, {CODE_HEX}, {CODE_B64}, etc.
+ * - Base64 and hexadecimal encoding transformations (per-CODE and global)
+ * - Global encoding placeholders: {GLOBAL_HEX}, {GLOBAL_B64} for encoding entire output
  * - Mode-specific formatting for RFCOMM vs HID output
- *
- * The processor uses a unified data structure approach where XML and JSON formats
- * are generated from the same data definition, ensuring consistency and reducing
- * maintenance overhead.
- *
- * Data Structure Design:
- * The serialization system is designed to support both single barcode transmission
- * and batch operations (e.g., history export, multiple barcode sending):
- * - Single mode: SerializationData with 1 BarcodeEntry (current real-time usage)
- * - Batch mode: SerializationData with multiple BarcodeEntry items (future feature? or for history entries export using RFCOMM)
- *
- * This architecture enables future enhancements such as:
- * - Exporting entire scan history as structured XML/JSON files
- * - Sending multiple selected barcodes from history in one transmission
- * - Batch processing for analytics or external system integration
  */
 object TemplateProcessor {
     private const val TAG = "TemplateProcessor"
@@ -47,33 +33,22 @@ object TemplateProcessor {
     /**
      * Parses and processes CODE template components with flexible ordering support.
      *
-     * Template Format: {CODE[_XML|_JSON][_HEX|_B64]...}
-     * Components can appear in any order: {XML_CODE_HEX} = {CODE_XML_HEX} = {HEX_XML_CODE}
+     * Template Format: {CODE[_HEX|_B64]...}
+     * Components can appear in any order: {CODE_HEX} = {HEX_CODE} = {CODE_B64_HEX}
      *
      * Processing Rules:
      * - CODE component is mandatory
-     * - XML and JSON are mutually exclusive (validation error if both present)
      * - HEX and B64 encoding can be combined, processed in order of appearance
-     * - Raw data → XML/JSON serialization → encoding transformations
+     * - Processing order: Raw data → encoding transformations
      *
      * @param data The barcode content to process
-     * @param codeTemplate The template string (e.g., "{CODE_XML_HEX}")
+     * @param codeTemplate The template string (e.g., "{CODE_HEX}")
      * @param hexFormat Hex formatting string ("%02X" or "%02x")
-     * @param timestamp Current timestamp for serialization
-     * @param from Data source identifier
-     * @param scanTimestamp Original scan timestamp (optional)
-     * @param scannerId Scanner hardware identifier (optional)
-     * @param barcodeType Barcode type string (e.g., "QR_CODE", "CODE_128")
      * @return Processed string according to template specification
      */
     private fun parseAndProcessCode(data: String,
                                     codeTemplate: String,
-                                    hexFormat: String,
-                                    timestamp: String,
-                                    from: String = "SCAN",
-                                    scanTimestamp: String? = null,
-                                    scannerId: String? = null,
-                                    barcodeType: String? = null): String {
+                                    hexFormat: String): String {
         // Extract the content between { and }
         val content = codeTemplate.removePrefix("{").removeSuffix("}")
         val parts = content.split("_")
@@ -84,39 +59,10 @@ object TemplateProcessor {
             return data
         }
 
-        // Check for mutually exclusive format specifications
-        val hasXml = parts.contains("XML")
-        val hasJson = parts.contains("JSON")
-        if (hasXml && hasJson) {
-            Log.e(TAG, "XML and JSON are mutually exclusive in template: $codeTemplate")
-            return data
-        }
-
         // Start processing pipeline
         var result = data
 
-        // Use provided barcode type or fallback to UNKNOWN
-        val typeValue = barcodeType ?: "UNKNOWN"
-
-        // Step 1: Apply format transformation (XML/JSON serialization or keep plain text)
-        if (hasXml || hasJson) {
-            val serializationData = Serializer.buildSingleBarcodeData(
-                barcodeValue = result,
-                currentTimestamp = timestamp,
-                barcodeType = typeValue,
-                protocolVersion = "1.0",
-                dataSource = from,
-                originalScanTimestamp = scanTimestamp,
-                hardwareID = scannerId
-            )
-            result = if (hasXml) {
-                Serializer.toXml(serializationData)
-            } else {
-                Serializer.toJson(serializationData)
-            }
-        }
-
-        // Step 2: Apply encoding transformations in order of appearance
+        // Apply encoding transformations in order of appearance
         val encodingParts = parts.filter { it == "HEX" || it == "B64" }
         for (encoding in encodingParts) {
             when (encoding) {
@@ -137,9 +83,11 @@ object TemplateProcessor {
     /**
      * Processes template string by replacing placeholders with actual data.
      *
-     * This is the main entry point for template processing. It handles two types of placeholders:
+     * This is the main entry point for template processing. It handles multiple types of placeholders:
      * 1. Basic placeholders: {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {TAB}, {ENTER}
-     * 2. Dynamic CODE placeholders: {CODE}, {CODE_XML}, {JSON_B64_CODE}, etc.
+     * 2. Metadata placeholders: {CODE_TYPE}, {SCAN_TIME}, {SCAN_SOURCE}, {SCANNER_ID}
+     * 3. Dynamic CODE placeholders: {CODE}, {CODE_HEX}, {CODE_B64}, {HEX_CODE}, etc.
+     * 4. Global encoding: {GLOBAL_HEX}, {GLOBAL_B64} (applied to entire output at the end)
      *
      * The processing mode determines formatting differences:
      * - RFCOMM: All placeholders supported, ISO date format, uppercase hex
@@ -196,13 +144,13 @@ object TemplateProcessor {
             TemplateMode.HID -> "%02x"    // Lowercase for HID (KeyTranslator compatibility)
         }
 
-        // Generate high-precision timestamp for XML/JSON serialization
+        // Generate high-precision timestamp for SCAN_TIME placeholder
         val isoTimestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(now)
 
         // Convert scanTimestamp to string format if provided
         val scanTimestampString = scanTimestamp?.let {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date(it))
-        }
+        } ?: isoTimestamp
 
         // Define basic placeholder mappings (common to both modes)
         val basicPlaceholders = mutableMapOf(
@@ -211,6 +159,14 @@ object TemplateProcessor {
             "{SPACE}" to " ",
             "{CR}" to "\r",
             "{LF}" to "\n"
+        )
+
+        // Add metadata placeholders
+        val metadataPlaceholders = mapOf(
+            "{CODE_TYPE}" to (barcodeType ?: "UNKNOWN"),
+            "{SCAN_TIME}" to scanTimestampString,
+            "{SCAN_SOURCE}" to from,
+            "{SCANNER_ID}" to (scannerId ?: "")
         )
 
         // Add mode-specific placeholders (handle mode conflicts)
@@ -225,10 +181,18 @@ object TemplateProcessor {
         }
 
         // Combine all static placeholders
-        val allPlaceholders = basicPlaceholders + modeSpecificPlaceholders
+        val allPlaceholders = basicPlaceholders + metadataPlaceholders + modeSpecificPlaceholders
+
+        // Check for global encoding flags
+        val hasGlobalHex = template.contains("{GLOBAL_HEX}")
+        val hasGlobalB64 = template.contains("{GLOBAL_B64}")
 
         // Begin template processing
         var processedTemplate = template
+
+        // Remove global encoding placeholders (they are applied at the end)
+        processedTemplate = processedTemplate.replace("{GLOBAL_HEX}", "")
+        processedTemplate = processedTemplate.replace("{GLOBAL_B64}", "")
 
         // Phase 1: Replace all basic (static) placeholders
         allPlaceholders.forEach { (placeholder, replacement) ->
@@ -239,7 +203,15 @@ object TemplateProcessor {
         val dynamicCodeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
         processedTemplate = dynamicCodeRegex.replace(processedTemplate) { matchResult ->
             val codeTemplate = matchResult.value
-            parseAndProcessCode(data, codeTemplate, hexFormat, isoTimestamp, from, scanTimestampString, scannerId, barcodeType)
+            parseAndProcessCode(data, codeTemplate, hexFormat)
+        }
+
+        // Phase 3: Apply global encoding if requested (in order: HEX then B64)
+        if (hasGlobalHex) {
+            processedTemplate = processedTemplate.toByteArray(Charsets.UTF_8).joinToString("") { hexFormat.format(it) }
+        }
+        if (hasGlobalB64) {
+            processedTemplate = Base64.encodeToString(processedTemplate.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
         }
 
         Log.d(TAG, "Processed template for $mode: '$template' -> '$processedTemplate'")

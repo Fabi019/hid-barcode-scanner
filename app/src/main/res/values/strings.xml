@@ -140,10 +140,17 @@
     <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'.\n\n
         CODE placeholders (flexible format):\n
         • {CODE} - plain barcode\n
-        • {CODE_XML} / {CODE_JSON} - optional serialization to XML/JSON\n
         • {CODE_HEX} / {CODE_B64} - optional hex/base64 encoding\n
-        • Components can be combined in any order, e.g.: {CODE_XML_HEX_B64}, {JSON_B64_HEX_CODE}, {CODE_XML}\n
-        • CODE processing order: 1. serialization (JSON/XML), 2. encoding (HEX/B64).\n\n
+        • Components can be combined in any order, e.g.: {CODE_HEX_B64}, {B64_HEX_CODE}, {HEX_CODE}\n
+        • CODE processing order: encoding (HEX/B64) in order of appearance\n\n
+        Metadata placeholders:\n
+        • {CODE_TYPE} - barcode type (QR_CODE, CODE_128, etc.)\n
+        • {SCAN_TIME} - scan timestamp (ISO format)\n
+        • {SCAN_SOURCE} - data source (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - scanner hardware identifier\n\n
+        Global encoding (applied to entire output):\n
+        • {GLOBAL_HEX} - encode entire result to hexadecimal\n
+        • {GLOBAL_B64} - encode entire result to base64\n\n
         Other placeholders: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
         Modifiers (prepend to placeholder):\n
             \t^: Shift\n
@@ -191,6 +198,7 @@
     <string name="export">Export</string>
     <string name="export_csv">CSV data</string>
     <string name="export_json">JSON data</string>
+    <string name="export_xml">XML data</string>
     <string name="export_lines">Lines</string>
     <string name="export_fields" translatable="false">text, timestamp, type</string>
     <string name="export_lines_description">text with line breaks</string>
