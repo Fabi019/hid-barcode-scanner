@@ -179,26 +179,46 @@
     <string name="custom_template">Eigenes Template</string>
     <string name="custom_templ_desc">Erlaubt ein eigenes Template festzulegen</string>
     <string name="custom_templ_desc_long">Stellen Sie sicher, dass \'Extra Tasten\' auf \'Benutzerdefiniert\' eingestellt ist.\n\n
-        CODE Platzhalter (flexibles Format):\n
+        CODE Platzhalter:\n
         • {CODE} - einfacher Barcode\n
-        • {CODE_HEX} / {CODE_B64} - optionale hex/base64 Kodierung\n
-        • Komponenten können in beliebiger Reihenfolge kombiniert werden, z.B.: {CODE_HEX_B64}, {B64_HEX_CODE}, {HEX_CODE}\n
-        • CODE Verarbeitungsreihenfolge: Kodierung (HEX/B64) in Reihenfolge des Auftretens\n\n
+        • Kodierung: _HEX, _B64 können in beliebiger Reihenfolge kombiniert werden\n
+        • Beispiele: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Datum/Zeit Platzhalter mit optionaler Formatierung:\n
+        • {DATE} - aktuelles Datum (Standard: yyyy-MM-dd)\n
+        • {TIME} - aktuelle Uhrzeit (Standard: HH:mm:ss)\n
+        • {DATETIME} - Datum und Uhrzeit (Standard: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - Scan-Zeitstempel (Standard: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • Eigenes Format: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
+        Formatmuster:\n
+        • EEEE - Wochentag (voller Name), EEE - Wochentag (kurz)\n
+        • MMMM - Monat (voller Name), MMM - Monat (kurz), MM - Monat (numerisch)\n
+        • yyyy - Jahr (vollständig), yy - Jahr (letzte zwei Ziffern), dd - Tag\n
+        • HH - Stunde (24h), hh - Stunde (12h), mm - Minute, ss - Sekunde, SSS - Millisekunden, a - AM/PM\n
+        • Hinweis: Text in Anführungszeichen (\'Text\') wird wörtlich angezeigt\n\n
+        Formatbeispiele:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, dd. MMMM yyyy]} → Freitag, 03. Oktober 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
         Metadaten Platzhalter:\n
         • {CODE_TYPE} - Barcode-Typ (QR_CODE, CODE_128, usw.)\n
-        • {SCAN_TIME} - Scan-Zeitstempel (ISO-Format)\n
         • {SCAN_SOURCE} - Datenquelle (SCAN, HISTORY, MANUAL)\n
         • {SCANNER_ID} - Scanner-Hardware-ID\n\n
+        Universelle Kodierung (funktioniert mit JEDEM Daten-Platzhalter):\n
+        • Fügen Sie _HEX oder _B64 zu jedem Platzhalter in beliebiger Reihenfolge hinzu\n
+        • Beispiele: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • Kombinationen: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
         Globale Kodierung (auf gesamte Ausgabe angewendet):\n
         • {GLOBAL_HEX} - Gesamtergebnis hexadezimal kodieren\n
-        • {GLOBAL_B64} - Gesamtergebnis base64 kodieren\n\n
-        Andere Platzhalter: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
+        • {GLOBAL_B64} - Gesamtergebnis base64 kodieren\n
+        • Kombinationen: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n\n
+        Andere Platzhalter:\n
+        • Tasten: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • Spezial: {SPACE}, {CR}, {LF}, {WAIT:n}\n\n
         Modifikatoren (vor Platzhalter):\n
-            \t^: Shift\n
-            \t+: Ctrl\n
-            \t#: Alt\n
-            \t@: Meta\n\n
-        Beispiele: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 Zeichen Verzögerung
+        • ^: Shift, +: Ctrl, #: Alt, @: Meta\n
+        • Beispiele: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 Zeichen Verzögerung
     </string>
     <string name="camera">Kamera</string>
     <string name="focus_mode">Fokus Modus</string>
@@ -303,5 +323,7 @@
     </string-array>
     <string name="insecure_rfcomm">Unsichere RFCOMM</string>
     <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
+    <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
+    <string name="preserve_unsupported_placeholders_desc">HID-spezifische Platzhalter (z.B. {F1}, {ESC}) als Text behalten, anstatt sie im RFCOMM-Modus zu entfernen</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
 </resources>

@@ -138,26 +138,46 @@
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
     <string name="custom_templ_desc_long">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
-        Placeholdery CODE (elastyczny format):\n
+        Placeholdery CODE:\n
         • {CODE} - zwykły kod kreskowy\n
-        • {CODE_HEX} / {CODE_B64} - opcjonalne kodowanie hex/base64\n
-        • Komponenty mogą być łączone w dowolnej kolejności, np.: {CODE_HEX_B64}, {B64_HEX_CODE}, {HEX_CODE}\n
-        • Kolejność przetwarzania CODE: kodowanie (HEX/B64) w kolejności występowania\n\n
+        • Kodowanie: _HEX, _B64 można łączyć w dowolnej kolejności\n
+        • Przykłady: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Placeholdery daty/czasu z opcjonalnym formatowaniem:\n
+        • {DATE} - aktualna data (domyślnie: yyyy-MM-dd)\n
+        • {TIME} - aktualny czas (domyślnie: HH:mm:ss)\n
+        • {DATETIME} - data i czas (domyślnie: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - znacznik czasu skanu (domyślnie: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • Własny format: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
+        Wzorce formatowania:\n
+        • EEEE - dzień tygodnia (pełna nazwa), EEE - dzień tygodnia (skrót)\n
+        • MMMM - miesiąc (pełna nazwa), MMM - miesiąc (skrót), MM - miesiąc (liczbowo)\n
+        • yyyy - rok (pełny), yy - rok (dwie ostatnie cyfry), dd - dzień\n
+        • HH - godzina (24h), hh - godzina (12h), mm - minuta, ss - sekunda, SSS - milisekundy, a - AM/PM\n
+        • Uwaga: Tekst w apostrofach (\'tekst\') będzie wyświetlony dosłownie\n\n
+        Przykłady formatowania:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, dd MMMM yyyy]} → Piątek, 03 Października 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
         Placeholdery metadanych:\n
         • {CODE_TYPE} - typ kodu kreskowego (QR_CODE, CODE_128, itp.)\n
-        • {SCAN_TIME} - znacznik czasu skanowania (format ISO)\n
         • {SCAN_SOURCE} - źródło danych (SCAN, HISTORY, MANUAL)\n
         • {SCANNER_ID} - identyfikator skanera\n\n
+        Uniwersalne kodowanie (działa z DOWOLNYM placeholderem danych):\n
+        • Dodaj _HEX lub _B64 do dowolnego placeholdera w dowolnej kolejności\n
+        • Przykłady: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • Kombinacje: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
         Globalne kodowanie (stosowane do całego wyniku):\n
         • {GLOBAL_HEX} - koduj cały wynik do szesnastkowego\n
-        • {GLOBAL_B64} - koduj cały wynik do base64\n\n
-        Inne placeholdery: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {SPACE}, {CR}, {LF}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n\n
+        • {GLOBAL_B64} - koduj cały wynik do base64\n
+        • Kombinacje: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n\n
+        Inne placeholdery:\n
+        • Klawisze: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • Specjalne: {SPACE}, {CR}, {LF}, {WAIT:n}\n\n
         Modyfikatory (przed placeholderem):\n
-            \t^: Shift\n
-            \t+: Ctrl\n
-            \t#: Alt\n
-            \t@: Meta\n\n
-        Przykłady: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = opóźnienie 10 znaków
+        • ^: Shift, +: Ctrl, #: Alt, @: Meta\n
+        • Przykłady: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = opóźnienie 10 znaków
     </string>
     <string name="camera">Aparat</string>
     <string name="focus_mode">Tryb ostrości</string>
@@ -324,5 +344,7 @@
     <string name="include_extra_keys">Użyj ekstra klawiszy</string>
     <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
     <string name="insecure_rfcomm_desc">Ta opcja umożliwia akceptowanie niebezpiecznych połączeń RFCOMM. Używaj tylko dla starszych urządzeń, które nie obsługują bezpiecznych połączeń Bluetooth Serial Port Profile.</string>
+    <string name="preserve_unsupported_placeholders">Zachowaj nieobsługiwane placeholdery</string>
+    <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
     <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
 </resources>

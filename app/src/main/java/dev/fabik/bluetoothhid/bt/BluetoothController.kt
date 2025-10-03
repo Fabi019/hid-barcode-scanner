@@ -495,6 +495,9 @@ class BluetoothController(var context: Context) {
         // Get scanner ID
         val scannerID = getScannerID()
 
+        // Get preserve unsupported placeholders preference (RFCOMM only)
+        val preserveUnsupported = getPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS).first()
+
         // Check connection mode - RFCOMM or HID using cached value
         if (currentConnectionMode == 1) {
             // RFCOMM mode - process template for text output
@@ -505,7 +508,8 @@ class BluetoothController(var context: Context) {
                 from,
                 scanTimestamp,
                 scannerID,
-                barcodeType
+                barcodeType,
+                preserveUnsupported  // Pass preference
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -517,7 +521,8 @@ class BluetoothController(var context: Context) {
                 from,
                 scanTimestamp,
                 scannerID,
-                barcodeType
+                barcodeType,
+                false  // HID always false - placeholders needed for KeyTranslator
             )
             val locale = when (layout) {
                 1 -> "de"
