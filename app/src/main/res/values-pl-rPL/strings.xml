@@ -171,13 +171,18 @@
         Globalne kodowanie (stosowane do całego wyniku):\n
         • {GLOBAL_HEX} - koduj cały wynik do szesnastkowego\n
         • {GLOBAL_B64} - koduj cały wynik do base64\n
-        • Kombinacje: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n\n
-        Inne placeholdery:\n
+        • Kombinacje: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Uwaga: W trybie RFCOMM nieobsługiwane placeholdery HID będą usunięte lub zachowane jako tekst zgodnie z ustawieniami w menu rozwijalnym.\n\n
+        Placeholdery specyficzne dla HID:\n
         • Klawisze: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
-        • Specjalne: {SPACE}, {CR}, {LF}, {WAIT:n}\n\n
-        Modyfikatory (przed placeholderem):\n
-        • ^: Shift, +: Ctrl, #: Alt, @: Meta\n
-        • Przykłady: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = opóźnienie 10 znaków
+        • Specjalne: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Uwaga: W trybie RFCOMM obsługiwane są tylko {TAB} i {ENTER}. Możesz kontrolować widoczność nieobsługiwanych placeholderów w menu rozwijalnym.\n\n
+        Modyfikatory można ustawić poprzedzając następującymi znakami:\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        Przykład: {+r} wyśle CTRL+R, {^#F1} wyśle SHIFT+ALT+F1, {WAIT:10} doda opóźnienie 10 znaków
     </string>
     <string name="camera">Aparat</string>
     <string name="focus_mode">Tryb ostrości</string>
@@ -316,7 +321,6 @@
     <string name="save_to_file">Zapisz do pliku</string>
     <string name="invalid_regex">Błędny Regex</string>
     <string name="template_error">Szablon musi zawierać co najmniej jeden komponent CODE.</string>
-    <string name="template_error_xml_json_conflict">XML i JSON wzajemnie się wykluczają.</string>
     <string name="template_error_duplicates">Duplikaty komponentów niedozwolone: %1$s</string>
     <string name="advanced_options">Zaawansowane</string>
     <string name="advanced_opts_desc">Dostosuj parametry skanowania</string>

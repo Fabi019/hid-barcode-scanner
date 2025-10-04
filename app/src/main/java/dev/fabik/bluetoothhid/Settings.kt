@@ -48,7 +48,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.PhonelinkSetup
-import androidx.compose.material.icons.filled.PrivateConnectivity
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -202,7 +201,6 @@ fun ConnectionSettings() {
     )
 
     val errorString = remember { context.getString(R.string.template_error) }
-    val xmlJsonConflictError = remember { context.getString(R.string.template_error_xml_json_conflict) }
 
     TextBoxPreference(
         title = stringResource(R.string.custom_template),
@@ -219,13 +217,6 @@ fun ConnectionSettings() {
             for (match in matches) {
                 val content = match.value.removePrefix("{").removeSuffix("}")
                 val parts = content.split("_")
-
-                // Check for XML and JSON conflict
-                val hasXml = parts.contains("XML")
-                val hasJson = parts.contains("JSON")
-                if (hasXml && hasJson) {
-                    return@TextBoxPreference xmlJsonConflictError
-                }
 
                 // Check for duplicate components
                 val uniqueParts = parts.toSet()

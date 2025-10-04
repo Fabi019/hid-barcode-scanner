@@ -212,13 +212,18 @@
         Globale Kodierung (auf gesamte Ausgabe angewendet):\n
         • {GLOBAL_HEX} - Gesamtergebnis hexadezimal kodieren\n
         • {GLOBAL_B64} - Gesamtergebnis base64 kodieren\n
-        • Kombinationen: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n\n
-        Andere Platzhalter:\n
+        • Kombinationen: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Hinweis: Im RFCOMM-Modus werden nicht unterstützte HID-Platzhalter entfernt oder als Text beibehalten, je nach Dropdown-Einstellungen.\n\n
+        HID-spezifische Platzhalter:\n
         • Tasten: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
-        • Spezial: {SPACE}, {CR}, {LF}, {WAIT:n}\n\n
-        Modifikatoren (vor Platzhalter):\n
-        • ^: Shift, +: Ctrl, #: Alt, @: Meta\n
-        • Beispiele: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 Zeichen Verzögerung
+        • Spezial: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Hinweis: Im RFCOMM-Modus werden nur {TAB} und {ENTER} unterstützt. Sie können die Sichtbarkeit nicht unterstützter Platzhalter im Dropdown-Menü steuern.\n\n
+        Modifikatoren können durch Voranstellen der folgenden Zeichen gesetzt werden:\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        Beispiel: {+r} sendet CTRL+R, {^#F1} sendet SHIFT+ALT+F1, {WAIT:10} fügt eine Verzögerung von 10 Zeichen hinzu
     </string>
     <string name="camera">Kamera</string>
     <string name="focus_mode">Fokus Modus</string>
@@ -305,7 +310,6 @@
     <string name="save_to_file">Als Datei speichern</string>
     <string name="invalid_regex">Fehler in Regex</string>
     <string name="template_error">Template muss mindestens eine CODE-Komponente enthalten.</string>
-    <string name="template_error_xml_json_conflict">XML und JSON schließen sich gegenseitig aus.</string>
     <string name="template_error_duplicates">Doppelte Komponenten nicht erlaubt: %1$s</string>
     <string name="advanced_options">Erweiterte Optionen</string>
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>

@@ -171,13 +171,18 @@
         Global encoding (applied to entire output):\n
         • {GLOBAL_HEX} - encode entire result to hexadecimal\n
         • {GLOBAL_B64} - encode entire result to base64\n
-        • Combinations: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n\n
-        Other placeholders:\n
+        • Combinations: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Note: In RFCOMM mode, unsupported HID placeholders will be removed or kept as literal text based on dropdown settings.\n\n
+        HID-specific placeholders:\n
         • Keys: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
-        • Special: {SPACE}, {CR}, {LF}, {WAIT:n}\n\n
-        Modifiers (prepend to placeholder):\n
-        • ^: Shift, +: Ctrl, #: Alt, @: Meta\n
-        • Examples: {+r} = CTRL+R, {^#F1} = SHIFT+ALT+F1, {WAIT:10} = 10 char delay
+        • Special: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Note: In RFCOMM mode, only {TAB} and {ENTER} are supported. You can control the visibility of unsupported placeholders in the dropdown menu.\n\n
+        Modifiers can be set by prepending the following chars:\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1, {WAIT:10} will add a delay of 10 characters
     </string>
     <string name="camera">Camera</string>
     <string name="focus_mode">Focus mode</string>
@@ -253,7 +258,6 @@
     <string name="save_to_file">Save to file</string>
     <string name="invalid_regex">Invalid regex</string>
     <string name="template_error">Template must contain at least one CODE component.</string>
-    <string name="template_error_xml_json_conflict">XML and JSON are mutually exclusive.</string>
     <string name="template_error_duplicates">Duplicate components not allowed: %1$s</string>
     <string name="advanced_options">Advanced options</string>
     <string name="advanced_opts_desc">Adjust further scan parameters</string>

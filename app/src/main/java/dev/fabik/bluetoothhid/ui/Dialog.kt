@@ -131,6 +131,8 @@ fun TextBoxDialog(
                         )
                     }
                 },
+                minLines = 1,
+                maxLines = 20,
                 modifier = Modifier.fillMaxWidth()
             )
         }
