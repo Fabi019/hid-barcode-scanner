@@ -228,10 +228,37 @@ class HistoryViewModel : ViewModel() {
         @StringRes val label: Int,
         @StringRes val description: Int,
         val icon: ImageVector,
-        val mimeType: String
+        val baseMime: String,                 // było: mimeType: String
+        val extraMimeTypes: Array<String>? = null
     ) {
-        CSV(R.string.export_csv, R.string.export_fields, Icons.Default.TableView, "*/*"),
-        JSON(R.string.export_json, R.string.export_fields, Icons.Default.DataObject, "*/*"),
-        XML(R.string.export_xml, R.string.export_fields, Icons.Filled.Code, "*/*")
+        CSV(
+            R.string.export_csv,
+            R.string.export_fields,
+            Icons.Default.TableView,
+            baseMime = "*/*",
+            extraMimeTypes = arrayOf(
+                "text/csv",
+                "application/csv",
+                "text/comma-separated-values",
+                "application/vnd.ms-excel",
+                "application/vnd.msexcel"
+            )
+        ),
+        JSON(
+            R.string.export_json,
+            R.string.export_fields,
+            Icons.Default.DataObject,
+            baseMime = "application/json"
+        ),
+        XML(
+            R.string.export_xml,
+            R.string.export_fields,
+            Icons.Filled.Code,
+            baseMime = "text/xml",
+            extraMimeTypes = arrayOf(
+                "text/xml",
+                "application/xml"
+            )
+        )
     }
 }

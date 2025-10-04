@@ -363,6 +363,15 @@ fun HistoryViewModel.ExportSheet() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
     var exportData by rememberSaveable { mutableStateOf("") }
 
+    // Additional MIME aliases for CSV (in many providers)
+    val CSV_MIME_CANDIDATES = arrayOf(
+        "text/csv",
+        "application/csv",
+        "text/comma-separated-values",
+        "application/vnd.ms-excel",
+        "application/vnd.msexcel"
+    )
+
     ExtendedFloatingActionButton(
         text = {
             Text(
@@ -392,7 +401,6 @@ fun HistoryViewModel.ExportSheet() {
                     }
                 }
             }
-
             exportData = ""
         }
 
@@ -406,25 +414,35 @@ fun HistoryViewModel.ExportSheet() {
 
                     val data = exportHistory(typ, dedup, types)
 
-                    val (mime, name) = when (typ) {
-                        HistoryViewModel.ExportType.CSV -> "*/*" to "export.csv"
-                        HistoryViewModel.ExportType.JSON -> "*/*" to "export.json"
-                        HistoryViewModel.ExportType.XML -> "*/*" to "export.xml"
-                        HistoryViewModel.ExportType.LINES -> "*/*" to "export.txt"
+                    // (baseMime for picker, filename, extraMimeTypes [for CSV])
+                    val params: Triple<String, String, Array<String>?> = when (typ) {
+                        HistoryViewModel.ExportType.CSV   -> Triple("*/*",            "export.csv", CSV_MIME_CANDIDATES)
+                        HistoryViewModel.ExportType.JSON  -> Triple("application/json","export.json", null)
+                        HistoryViewModel.ExportType.XML   -> Triple("text/xml",        "export.xml",  null)
+                        HistoryViewModel.ExportType.LINES -> Triple("text/plain",      "export.txt",  null)
                     }
+                    val (baseMime, fileName, extraMimes) = params
 
                     runCatching {
                         if (saveToFile) {
                             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                                type = mime
                                 addCategory(Intent.CATEGORY_OPENABLE)
-                                putExtra(Intent.EXTRA_TITLE, name)
+                                type = baseMime
+                                putExtra(Intent.EXTRA_TITLE, fileName)
+                                extraMimes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it) }
                             }
                             exportData = data
                             startForResult.launch(intent)
                         } else {
+                            // For share use cannonical MIME
+                            val shareMime = when (typ) {
+                                HistoryViewModel.ExportType.CSV   -> "*/*"
+                                HistoryViewModel.ExportType.JSON  -> "application/json"
+                                HistoryViewModel.ExportType.XML   -> "text/xml"
+                                HistoryViewModel.ExportType.LINES -> "text/plain"
+                            }
                             val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = mime
+                                type = shareMime
                                 putExtra(Intent.EXTRA_TEXT, data)
                             }
                             val shareIntent = Intent.createChooser(intent, exportString)
@@ -571,8 +589,9 @@ fun HistoryViewModel.ImportSheet() {
 
                     // Launch file picker with appropriate MIME type
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                        type = format.mimeType
                         addCategory(Intent.CATEGORY_OPENABLE)
+                        type = format.baseMime
+                        format.extraMimeTypes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it) }
                     }
 
                     runCatching {
