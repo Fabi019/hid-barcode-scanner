@@ -268,51 +268,45 @@ object TemplateProcessor {
             val optionalFormat = matchResult.groupValues[2]   // e.g., "dd.MM.yyyy" or empty
             val encodingSuffix = matchResult.groupValues[3]   // e.g., "HEX_B64" or empty
 
-            // Extract base placeholder and encodings
-            val (basePlaceholder, baseEncodings) = extractBaseAndEncodings(fullPlaceholder)
-            val suffixEncodings = if (encodingSuffix.isNotEmpty()) {
-                encodingSuffix.split("_").filter { it == "HEX" || it == "B64" }
-            } else emptyList()
-            val allEncodings = baseEncodings + suffixEncodings
+            // Prepare encodings list
+            var allEncodings: List<String> = emptyList()
 
-            // Get raw value for the base placeholder
+            // Get raw value for the placeholder
             val rawValue = try {
-                when (basePlaceholder) {
-                    "DATE" -> {
-                        val format = optionalFormat.ifEmpty { defaultDateFormat }
-                        SimpleDateFormat(format, Locale.getDefault()).format(now)
+                // FIRST: Check composite placeholders (CODE_TYPE, SCAN_SOURCE, SCANNER_ID, SCAN_TIME)
+                when (fullPlaceholder) {
+                    "CODE_TYPE" -> barcodeType ?: "UNKNOWN"
+                    "SCAN_SOURCE" -> from
+                    "SCANNER_ID" -> scannerId ?: ""
+                    "SCAN_TIME" -> {
+                        val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss.SSS" }
+                        SimpleDateFormat(format, Locale.getDefault()).format(scanDate)
                     }
-                    "TIME" -> {
-                        val format = optionalFormat.ifEmpty { defaultTimeFormat }
-                        SimpleDateFormat(format, Locale.getDefault()).format(now)
-                    }
-                    "DATETIME" -> {
-                        val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss" }
-                        SimpleDateFormat(format, Locale.getDefault()).format(now)
-                    }
-                    "SCAN" -> {
-                        // Handle {SCAN_TIME} with optional format
-                        if (fullPlaceholder == "SCAN_TIME" || basePlaceholder == "SCAN") {
-                            val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss.SSS" }
-                            SimpleDateFormat(format, Locale.getDefault()).format(scanDate)
-                        } else {
-                            matchResult.value
-                        }
-                    }
-                    "CODE" -> data
-                    "SPACE" -> " "
-                    "CR" -> "\r"
-                    "LF" -> "\n"
                     else -> {
-                        // Handle composite placeholders like CODE_TYPE, SCAN_SOURCE, etc.
-                        when (fullPlaceholder) {
-                            "CODE_TYPE" -> barcodeType ?: "UNKNOWN"
-                            "SCAN_TIME" -> {
-                                val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss.SSS" }
-                                SimpleDateFormat(format, Locale.getDefault()).format(scanDate)
+                        // SECOND: Extract base placeholder and encodings for simple placeholders
+                        val (basePlaceholder, baseEncodings) = extractBaseAndEncodings(fullPlaceholder)
+                        val suffixEncodings = if (encodingSuffix.isNotEmpty()) {
+                            encodingSuffix.split("_").filter { it == "HEX" || it == "B64" }
+                        } else emptyList()
+                        allEncodings = baseEncodings + suffixEncodings
+
+                        when (basePlaceholder) {
+                            "DATE" -> {
+                                val format = optionalFormat.ifEmpty { defaultDateFormat }
+                                SimpleDateFormat(format, Locale.getDefault()).format(now)
                             }
-                            "SCAN_SOURCE" -> from
-                            "SCANNER_ID" -> scannerId ?: ""
+                            "TIME" -> {
+                                val format = optionalFormat.ifEmpty { defaultTimeFormat }
+                                SimpleDateFormat(format, Locale.getDefault()).format(now)
+                            }
+                            "DATETIME" -> {
+                                val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss" }
+                                SimpleDateFormat(format, Locale.getDefault()).format(now)
+                            }
+                            "CODE" -> data
+                            "SPACE" -> " "
+                            "CR" -> "\r"
+                            "LF" -> "\n"
                             else -> matchResult.value  // Unknown placeholder, keep as-is
                         }
                     }
@@ -344,6 +338,13 @@ object TemplateProcessor {
                 // HID: encode only text parts, preserve key placeholders for KeyTranslator
                 applyGlobalEncodingHID(processedTemplate, globalEncodings, hexFormat)
             }
+        }
+
+        // Phase 5: Mark unsupported placeholders in HID mode
+        if (mode == TemplateMode.HID && !preserveUnsupportedPlaceholders) {
+            // Replace unsupported HID placeholders (TAB, ENTER) with marker
+            processedTemplate = processedTemplate.replace("{TAB}", "\uFFFD{TAB}")
+            processedTemplate = processedTemplate.replace("{ENTER}", "\uFFFD{ENTER}")
         }
 
         Log.d(TAG, "Processed template for $mode: '$template' -> '$processedTemplate'")

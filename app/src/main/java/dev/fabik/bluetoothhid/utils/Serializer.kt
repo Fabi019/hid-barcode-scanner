@@ -21,6 +21,13 @@ object Serializer {
     data class BarcodeEntry(
         val text: String,
         val timestamp: Long,
+        val format: String
+    )
+
+    // Legacy model for backward compatibility (old CSV exports with "type" column)
+    internal data class LegacyBarcodeEntry(
+        val text: String,
+        val timestamp: Long,
         val type: String
     )
 
@@ -210,7 +217,13 @@ object Serializer {
         val rows = entries.map { e ->
             fields.joinToString(";") { f ->
                 val raw = f.prop.get(e)?.toString() ?: ""
-                "\"" + raw.replace("\"", "\"\"") + "\""
+                // Escape newlines first (CRLF before individual CR/LF), then quotes
+                val escaped = raw
+                    .replace("\r\n", "{__CSV_CR__}{__CSV_LF__}")
+                    .replace("\r", "{__CSV_CR__}")
+                    .replace("\n", "{__CSV_LF__}")
+                    .replace("\"", "\"\"")
+                "\"$escaped\""
             }
         }
         return header + System.lineSeparator() + rows.joinToString(System.lineSeparator())
@@ -222,6 +235,18 @@ object Serializer {
 
         val delimiter = detectCsvDelimiter(csv)
         val header = parseCsvLine(lines.first(), delimiter)
+
+        // Auto-detect format: legacy uses "type", new format uses "format"
+        val isLegacy = header.contains("type") && !header.contains("format")
+
+        return if (isLegacy) {
+            fromLegacyCsv(csv, delimiter, lines, header)
+        } else {
+            fromModernCsv(delimiter, lines, header)
+        }
+    }
+
+    private fun fromModernCsv(delimiter: Char, lines: List<String>, header: List<String>): List<BarcodeEntry> {
         val nameToIndex = header.withIndex().associate { it.value to it.index }
         val fields = modelFields<BarcodeEntry>()
 
@@ -233,6 +258,25 @@ object Serializer {
                 map[f.name] = cols.getOrNull(pos)
             }
             runCatching { constructFromMap<BarcodeEntry>(map) }.getOrNull()
+        }
+    }
+
+    private fun fromLegacyCsv(csv: String, delimiter: Char, lines: List<String>, header: List<String>): List<BarcodeEntry> {
+        val nameToIndex = header.withIndex().associate { it.value to it.index }
+        val fields = modelFields<LegacyBarcodeEntry>()
+
+        return lines.drop(1).mapNotNull { line ->
+            val cols = parseCsvLine(line, delimiter)
+            val map = mutableMapOf<String, Any?>()
+            fields.forEach { f ->
+                val pos = nameToIndex[f.name] ?: return@forEach
+                map[f.name] = cols.getOrNull(pos)
+            }
+            runCatching {
+                val legacy = constructFromMap<LegacyBarcodeEntry>(map)
+                // Convert legacy to modern format
+                BarcodeEntry(legacy.text, legacy.timestamp, legacy.type)
+            }.getOrNull()
         }
     }
 
@@ -252,12 +296,31 @@ object Serializer {
             i++
         }
         out.add(sb.toString())
-        return out
+
+        // Unescape newline placeholders (CRLF first, then individual CR/LF)
+        return out.map { value ->
+            value
+                .replace("{__CSV_CR__}{__CSV_LF__}", "\r\n")
+                .replace("{__CSV_LF__}", "\n")
+                .replace("{__CSV_CR__}", "\r")
+        }
     }
 
     private fun detectCsvDelimiter(csv: String): Char {
         val firstLine = csv.lineSequence().firstOrNull() ?: return ';'
-        return if (';' in firstLine) ';' else ','
+        var inQuotes = false
+        var semicolonCount = 0
+        var commaCount = 0
+
+        for (c in firstLine) {
+            when {
+                c == '"' -> inQuotes = !inQuotes
+                !inQuotes && c == ';' -> semicolonCount++
+                !inQuotes && c == ',' -> commaCount++
+            }
+        }
+
+        return if (semicolonCount > 0) ';' else ','
     }
 
 

@@ -106,6 +106,7 @@ import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
@@ -152,16 +153,17 @@ fun BoxScope.ElevatedWarningCard(
  * Scanner screen with camera preview.
  *
  * @param currentDevice the device that is currently connected, can be null if no device is connected
- * @param sendText callback to send text to the current device
+ * @param sendText callback to send text and format to the current device
  */
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
-    sendText: (String) -> Unit
+    sendText: (String, Int?) -> Unit
 ) {
     val context = LocalContext.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentBarcodeFormat by rememberSaveable { mutableStateOf<Int?>(null) }
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
@@ -186,18 +188,19 @@ fun Scanner(
 
                 currentBarcode?.let {
                     val barcode by rememberUpdatedState(it)
+                    val format by rememberUpdatedState(currentBarcodeFormat)
 
                     SendToDeviceFAB {
-                        currentSendText(barcode)
+                        currentSendText(barcode, format)
 
                         if (clearAfterSend == true) {
                             currentBarcode = null
+                            currentBarcodeFormat = null
                             cameraVM.lastBarcode = null
-                            cameraVM.lastBarcodeFormat = null
                         }
                     }
                     VolumeKeyHandler {
-                        currentSendText(barcode)
+                        currentSendText(barcode, format)
                     }
                 }
             }
@@ -212,10 +215,11 @@ fun Scanner(
             RequiresCameraPermission {
                 CameraPreviewArea(onCameraReady = { control, info, capt ->
                     cameraControl = control; cameraInfo = info
-                }) { value, send ->
+                }) { value, format, send ->
                     currentBarcode = value
+                    currentBarcodeFormat = format
                     if (send) {
-                        currentSendText(value)
+                        currentSendText(value, format)
                     }
                 }
             }
@@ -243,12 +247,12 @@ fun Scanner(
  * Area for the camera preview.
  *
  * @param onCameraReady callback to be called when the camera is ready
- * @param onBarcodeDetected callback to be called when a barcode is detected
+ * @param onBarcodeDetected callback to be called when a barcode is detected (value, format, autoSend)
  */
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String, Boolean) -> Unit,
+    onBarcodeDetected: (String, Int?, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -283,22 +287,21 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
+    val cameraVM = viewModel<CameraViewModel>()
 
-    Log.d("Scanner", "Scanner initialized - vibrate preference: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}")
+    Log.d("Scanner", "Scanner initialized - vibrate: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}")
 
     CameraPreviewContent(onCameraReady = onCameraReady) { value ->
         Log.d("Scanner", "Barcode detected: $value")
-        onBarcodeDetected(value, autoSend)
+        val format = cameraVM.lastBarcodeFormat?.let { ZXingAnalyzer.format2Index(it) }
+        onBarcodeDetected(value, format, autoSend)
 
         if (playSound) {
-            Log.d("Scanner", "Playing sound")
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
 
-        Log.d("Scanner", "Vibrate check - setting: $vibrate, hasVibrator: ${vibrator.hasVibrator()}")
         if (vibrate && vibrator.hasVibrator()) {
             runCatching {
-                Log.d("Scanner", "Attempting vibration, SDK: ${Build.VERSION.SDK_INT}")
                 val effect = VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     // Use USAGE_NOTIFICATION instead of USAGE_TOUCH to bypass system

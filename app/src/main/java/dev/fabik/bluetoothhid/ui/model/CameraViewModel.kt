@@ -85,7 +85,7 @@ class CameraViewModel : ViewModel() {
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
-    var lastBarcodeFormat: BarcodeReader.Format? = null
+    var lastBarcodeFormat: BarcodeReader.Format? = null // Still used internally by Scanner.kt
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)

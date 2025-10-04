@@ -88,11 +88,9 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                val cameraVM = viewModel<CameraViewModel>()
-
-                Scanner(currentDevice) { text ->
+                Scanner(currentDevice) { text, format ->
                     scope.launch {
-                        val barcodeType = cameraVM.lastBarcodeFormat?.let { ZXingAnalyzer.format2String(it) }
+                        val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
                         controller?.sendString(text, true, "SCAN", null, barcodeType)
                     }
                 }
@@ -116,12 +114,10 @@ fun NavGraph() {
                     }
                 }
 
-                History(onBack) { historyValue ->
+                History(onBack) { historyEntry ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        // Find the history entry to get original scan timestamp and barcode type
-                        val historyEntry = HistoryViewModel.historyEntries.find { it.value == historyValue }
-                        val barcodeType = historyEntry?.format?.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(historyValue, true, "HISTORY", historyEntry?.timestamp, barcodeType)
+                        val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
                     }
                 }
 

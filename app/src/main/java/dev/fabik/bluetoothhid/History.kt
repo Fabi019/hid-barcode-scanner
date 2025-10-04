@@ -105,7 +105,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
+fun History(onBack: () -> Unit, onClick: (HistoryViewModel.HistoryEntry) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
@@ -130,7 +130,7 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
+fun HistoryViewModel.HistoryContent(onClick: (HistoryViewModel.HistoryEntry) -> Unit) {
     BackHandler(enabled = isSelecting) {
         clearSelection()
     }
@@ -162,7 +162,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     .combinedClickable(onLongClick = {
                         setItemSelected(barcode, true)
                     }, onClick = {
-                        onClick(barcode.value)
+                        onClick(barcode)
                     })
                     .then(
                         if (isSelecting) {

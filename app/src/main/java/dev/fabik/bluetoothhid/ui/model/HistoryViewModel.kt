@@ -67,7 +67,7 @@ class HistoryViewModel : ViewModel() {
                 Log.d(TAG, "Saving history to: $file")
 
                 file.bufferedWriter().use {
-                    // Internal format: numeric type for efficiency
+                    // Internal format: numeric format for efficiency
                     val entries = historyEntries.map {
                         Serializer.BarcodeEntry(it.value, it.timestamp, it.format.toString())
                     }
@@ -99,16 +99,9 @@ class HistoryViewModel : ViewModel() {
                 val csvContent = file.readText()
                 val parsedEntries = Serializer.fromCsv(csvContent)
 
-                // Check if old barcode format used (for migration)
-                val migrate = csvContent.lines().firstOrNull() == "text,timestamp,type"
-
                 parsedEntries.forEach { entry ->
-                    var type = entry.type.toIntOrNull() ?: -1
-                    if (migrate) {
-                        type = log2(type.toFloat()).toInt()
-                    }
-
-                    historyEntries.add(HistoryEntry(entry.text, entry.timestamp, type))
+                    val formatIndex = entry.format.toIntOrNull() ?: -1
+                    historyEntries.add(HistoryEntry(entry.text, entry.timestamp, formatIndex))
                 }
             }.onFailure {
                 Log.e(TAG, "Error loading history:", it)
@@ -133,7 +126,7 @@ class HistoryViewModel : ViewModel() {
                 Serializer.BarcodeEntry(
                     text = entry.value,
                     timestamp = entry.timestamp,
-                    type = formatNames.getOrNull(entry.format) ?: "UNKNOWN"
+                    format = formatNames.getOrNull(entry.format) ?: "UNKNOWN"
                 )
             }
 
@@ -166,9 +159,9 @@ class HistoryViewModel : ViewModel() {
 
             // Convert Serializer.BarcodeEntry to HistoryEntry
             parsedEntries.forEach { entry ->
-                // Parse type: either numeric string or name string
-                val formatIndex = entry.type.toIntOrNull()
-                    ?: formatNames.indexOf(entry.type).takeIf { it >= 0 }
+                // Parse format: either numeric string or name string
+                val formatIndex = entry.format.toIntOrNull()
+                    ?: formatNames.indexOf(entry.format).takeIf { it >= 0 }
                     ?: -1
 
                 historyEntries.add(HistoryEntry(entry.text, entry.timestamp, formatIndex))
