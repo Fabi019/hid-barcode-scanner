@@ -6,6 +6,7 @@ import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -283,17 +284,39 @@ private fun CameraPreviewArea(
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
 
+    Log.d("Scanner", "Scanner initialized - vibrate preference: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}")
+
     CameraPreviewContent(onCameraReady = onCameraReady) { value ->
+        Log.d("Scanner", "Barcode detected: $value")
         onBarcodeDetected(value, autoSend)
 
         if (playSound) {
+            Log.d("Scanner", "Playing sound")
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
         }
 
+        Log.d("Scanner", "Vibrate check - setting: $vibrate, hasVibrator: ${vibrator.hasVibrator()}")
         if (vibrate && vibrator.hasVibrator()) {
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
-            )
+            runCatching {
+                Log.d("Scanner", "Attempting vibration, SDK: ${Build.VERSION.SDK_INT}")
+                val effect = VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Use USAGE_NOTIFICATION instead of USAGE_TOUCH to bypass system
+                    // "Haptic feedback" setting. USAGE_TOUCH respects that setting and may
+                    // not vibrate if user disabled haptic feedback in system settings.
+                    // USAGE_NOTIFICATION is for notifications and ignores haptic Android settings.
+                    val attributes = VibrationAttributes.Builder()
+                        .setUsage(VibrationAttributes.USAGE_NOTIFICATION)
+                        .build()
+                    vibrator.vibrate(effect, attributes)
+                    Log.d("Scanner", "Vibration triggered (new API - USAGE_NOTIFICATION)")
+                } else {
+                    vibrator.vibrate(effect)
+                    Log.d("Scanner", "Vibration triggered (old API)")
+                }
+            }.onFailure {
+                Log.w("Scanner", "Vibration failed", it)
+            }
         }
     }
 }
