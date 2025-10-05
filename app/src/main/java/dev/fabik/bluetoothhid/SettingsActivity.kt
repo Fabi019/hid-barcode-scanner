@@ -37,6 +37,26 @@ class SettingsActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Enable high refresh rate (90/120 Hz)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            @Suppress("DEPRECATION")
+            val display = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                display
+            } else {
+                windowManager.defaultDisplay
+            }
+
+            display?.let {
+                val modes = it.supportedModes
+                val highRefreshMode = modes.maxByOrNull { mode -> mode.refreshRate }
+                highRefreshMode?.let { mode ->
+                    window.attributes = window.attributes.apply {
+                        preferredDisplayModeId = mode.modeId
+                    }
+                }
+            }
+        }
+
         setContent {
             BluetoothHIDTheme {
                 // Set system bars appearance based on theme
