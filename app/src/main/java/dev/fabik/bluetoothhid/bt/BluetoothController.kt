@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -204,6 +203,9 @@ class BluetoothController(var context: Context) {
                             Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
                             rfcommController.disconnectRFCOMM()
                             // HID profile is already registered and will become active
+                            // Note: HID registration is handled by the serviceListener in getProfileProxy
+                            // Additional HID-specific setup could go in registerHid() if needed
+                            registerHid()
                         }
                     }
                 }
@@ -276,13 +278,6 @@ class BluetoothController(var context: Context) {
 
     val isScanning: Boolean
         get() = bluetoothAdapter?.isDiscovering ?: false
-
-    /**
-     * Returns true if RFCOMM server is actively listening for connections.
-     * Used by UI to show/hide connection status indicators.
-     */
-    val isRFCOMMListening: Boolean
-        get() = rfcommController.isListening()
 
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)

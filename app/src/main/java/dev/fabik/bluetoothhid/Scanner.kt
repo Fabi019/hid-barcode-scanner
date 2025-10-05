@@ -25,12 +25,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.ClickableText
@@ -50,6 +55,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RippleConfiguration
@@ -59,6 +65,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -71,11 +78,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -88,7 +101,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.KeyTranslator
@@ -112,7 +128,6 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun BoxScope.ElevatedWarningCard(
@@ -161,6 +176,7 @@ fun Scanner(
     sendText: (String, Int?) -> Unit
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
     var currentBarcodeFormat by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -175,6 +191,32 @@ fun Scanner(
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
 
     val navController = LocalNavigation.current
+
+    // Calculate light theme the same way MainActivity does
+    val colorScheme = MaterialTheme.colorScheme
+    val isLightTheme = colorScheme.background.luminance() > 0.5f
+
+    // Manage system bars appearance only in fullscreen mode
+    // In non-fullscreen mode, MainActivity handles system bars based on theme
+    // Use isLightTheme as key to react to theme changes
+    DisposableEffect(fullScreen, isLightTheme) {
+        val window = (context as? android.app.Activity)?.window
+        val insetsController = window?.let { WindowCompat.getInsetsController(it, view) }
+
+        if (fullScreen && insetsController != null) {
+            // In fullscreen mode, use white icons for better visibility on camera background
+            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightNavigationBars = false
+
+            onDispose {
+                // Restore proper system bars appearance based on current theme
+                insetsController.isAppearanceLightStatusBars = isLightTheme
+                insetsController.isAppearanceLightNavigationBars = isLightTheme
+            }
+        } else {
+            onDispose { }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -223,6 +265,43 @@ fun Scanner(
                     }
                 }
             }
+
+            // Gradients for better system bars visibility in fullscreen mode
+            if (fullScreen) {
+                // Gradient at top (under status bar) - more concentrated
+                Box(
+                    Modifier
+                        .windowInsetsTopHeight(WindowInsets.statusBars)
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.85f),
+                                    Color.Black.copy(alpha = 0.6f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // Gradient at bottom (under navigation bar)
+                Box(
+                    Modifier
+                        .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.6f),
+                                    Color.Black.copy(alpha = 0.85f)
+                                )
+                            )
+                        )
+                )
+            }
         }
 
         Box(
@@ -231,6 +310,7 @@ fun Scanner(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+
             BarcodeValue(currentBarcode)
             CapsLockWarning()
             DeviceStatusIndicator()
@@ -339,7 +419,8 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
         Modifier
             .fillMaxHeight(0.3f)
             .fillMaxWidth()
-            .align(Alignment.TopStart),
+            .align(Alignment.TopStart)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -348,10 +429,21 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
             mutableStateOf(privateMode)
         }
 
+        // Strong shadow for better visibility on any background
+        val textShadow = Shadow(
+            color = Color.Black,
+            offset = Offset(0f, 0f),
+            blurRadius = 8f
+        )
+
         currentBarcode?.let {
             val text = AnnotatedString(
                 if (hideText) "*".repeat(it.length) else it,
-                SpanStyle(Neutral95),
+                SpanStyle(
+                    color = Color.White,
+                    shadow = textShadow,
+                    fontSize = 18.sp
+                ),
                 ParagraphStyle(TextAlign.Center)
             )
 
@@ -370,8 +462,11 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
         } ?: run {
             Text(
                 stringResource(R.string.scan_code_to_start),
-                color = Neutral95,
-                textAlign = TextAlign.Center
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    shadow = textShadow
+                )
             )
         }
     }
@@ -479,21 +574,45 @@ private fun ScannerAppBar(
 ) {
     val navigation = LocalNavigation.current
 
+    // Shadow for text in fullscreen mode
+    val textShadow = Shadow(
+        color = Color.Black,
+        offset = Offset(0f, 0f),
+        blurRadius = 8f
+    )
+
     TopAppBar(
         title = {
             Column {
-                Text(stringResource(R.string.scanner))
+                Text(
+                    stringResource(R.string.scanner),
+                    style = if (transparent) {
+                        MaterialTheme.typography.titleLarge.copy(
+                            color = Color.White,
+                            shadow = textShadow
+                        )
+                    } else {
+                        MaterialTheme.typography.titleLarge
+                    }
+                )
                 currentDevice?.let {
                     Text(
                         stringResource(R.string.connected_with, it.name ?: it.address),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = if (transparent) {
+                            MaterialTheme.typography.bodySmall.copy(
+                                color = Color.White,
+                                shadow = textShadow
+                            )
+                        } else {
+                            MaterialTheme.typography.bodySmall
+                        }
                     )
                 }
             }
         },
         actions = {
             if (camera != null && info != null && info.hasFlashUnit()) {
-                ToggleFlashButton(camera, info)
+                ToggleFlashButton(camera, info, transparent)
             }
 
             currentDevice?.let {
@@ -501,7 +620,19 @@ private fun ScannerAppBar(
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
-                    Icon(Icons.Default.Keyboard, "Keyboard")
+                    Icon(
+                        Icons.Default.Keyboard,
+                        "Keyboard",
+                        tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
+                        modifier = if (transparent) {
+                            Modifier.drawBehind {
+                                drawCircle(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    radius = size.maxDimension
+                                )
+                            }
+                        } else Modifier
+                    )
                 }
                 KeyboardInputDialog(keyboardDialog)
             }
@@ -509,16 +640,30 @@ private fun ScannerAppBar(
             IconButton(onClick = {
                 navigation.navigate(Routes.History)
             }, Modifier.tooltip(stringResource(R.string.history))) {
-                Icon(Icons.Default.History, "History")
+                Icon(
+                    Icons.Default.History,
+                    "History",
+                    tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
+                    modifier = if (transparent) {
+                        Modifier.drawBehind {
+                            drawCircle(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                radius = size.maxDimension
+                            )
+                        }
+                    } else Modifier
+                )
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
 //                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
 //            }
-            Dropdown()
+            Dropdown(transparent)
         },
         colors = if (transparent) {
             TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent
+                containerColor = Color.Transparent,
+                titleContentColor = Color.White,
+                actionIconContentColor = Color.White
             )
         } else {
             TopAppBarDefaults.topAppBarColors()
@@ -530,9 +675,10 @@ private fun ScannerAppBar(
  * Toggle flash button to toggle the flash on the camera.
  *
  * @param camera the camera to toggle the flash on
+ * @param transparent whether to use transparent mode styling
  */
 @Composable
-fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
+fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boolean = false) {
     val torchState by info.torchState.observeAsState()
 
     IconButton(
@@ -550,7 +696,17 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo) {
             when (torchState) {
                 TorchState.OFF -> Icons.Default.FlashOn
                 else -> Icons.Default.FlashOff
-            }, "Flash"
+            },
+            "Flash",
+            tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
+            modifier = if (transparent) {
+                Modifier.drawBehind {
+                    drawCircle(
+                        color = Color.Black.copy(alpha = 0.5f),
+                        radius = size.maxDimension
+                    )
+                }
+            } else Modifier
         )
     }
 }
@@ -647,6 +803,14 @@ fun BoxScope.ZoomStateInfo(camera: CameraInfo) {
                 Modifier
                     .align(Alignment.TopStart)
                     .padding(8.dp),
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    shadow = Shadow(
+                        color = Color.Black,
+                        offset = Offset(0f, 0f),
+                        blurRadius = 8f
+                    )
+                )
             )
         }
     }

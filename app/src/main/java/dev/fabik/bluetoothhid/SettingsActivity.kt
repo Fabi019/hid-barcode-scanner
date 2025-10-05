@@ -12,14 +12,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.ui.SettingsDropdown
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
@@ -34,6 +39,17 @@ class SettingsActivity : ComponentActivity() {
 
         setContent {
             BluetoothHIDTheme {
+                // Set system bars appearance based on theme
+                val view = LocalView.current
+                val colorScheme = MaterialTheme.colorScheme
+                val isLightTheme = colorScheme.background.luminance() > 0.5f
+
+                SideEffect {
+                    val insetsController = WindowCompat.getInsetsController(window, view)
+                    insetsController.isAppearanceLightStatusBars = isLightTheme
+                    insetsController.isAppearanceLightNavigationBars = isLightTheme
+                }
+
                 Surface(Modifier.fillMaxSize()) {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -53,6 +69,10 @@ class SettingsActivity : ComponentActivity() {
                                 actions = {
                                     SettingsDropdown()
                                 },
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                                ),
                                 scrollBehavior = scrollBehavior
                             )
                         }

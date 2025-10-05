@@ -17,12 +17,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastFilter
-import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.ViewModel
 import dev.fabik.bluetoothhid.R
-import dev.fabik.bluetoothhid.ui.model.HistoryViewModel.HistoryEntry
 import dev.fabik.bluetoothhid.utils.Serializer
-import kotlin.math.log2
 
 class HistoryViewModel : ViewModel() {
     private var selectedHistory: SnapshotStateList<Int> = mutableStateListOf<Int>()
@@ -228,7 +225,7 @@ class HistoryViewModel : ViewModel() {
         @StringRes val label: Int,
         @StringRes val description: Int,
         val icon: ImageVector,
-        val baseMime: String,                 // było: mimeType: String
+        val baseMime: String,                 // was: mimeType: String
         val extraMimeTypes: Array<String>? = null
     ) {
         CSV(

@@ -7,12 +7,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import dev.fabik.bluetoothhid.ui.NavGraph
@@ -45,6 +50,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BluetoothHIDTheme {
+                // Set system bars appearance based on theme
+                val view = LocalView.current
+                val colorScheme = MaterialTheme.colorScheme
+                val isLightTheme = colorScheme.background.luminance() > 0.5f
+
+                SideEffect {
+                    val insetsController = WindowCompat.getInsetsController(window, view)
+                    insetsController.isAppearanceLightStatusBars = isLightTheme
+                    insetsController.isAppearanceLightNavigationBars = isLightTheme
+                }
+
                 Surface(Modifier.fillMaxSize()) {
                     val allowScreenRotation by getPreferenceState(PreferenceStore.ALLOW_SCREEN_ROTATION)
 

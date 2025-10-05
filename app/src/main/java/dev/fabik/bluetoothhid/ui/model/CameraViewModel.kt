@@ -44,7 +44,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
-import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
