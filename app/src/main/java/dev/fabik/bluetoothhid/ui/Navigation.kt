@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +24,9 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -84,9 +88,10 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(currentDevice) {
+                Scanner(currentDevice) { text, format ->
                     scope.launch {
-                        controller?.sendString(it)
+                        val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(text, true, "SCAN", null, barcodeType)
                     }
                 }
 
@@ -109,9 +114,10 @@ fun NavGraph() {
                     }
                 }
 
-                History(onBack) {
+                History(onBack) { historyEntry ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        controller?.sendString(it)
+                        val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
                     }
                 }
 

@@ -137,13 +137,51 @@
     <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything. If the regex contains a capture group "(…)", the value of the group will be used.</string>
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
-    <string name="custom_templ_desc_long">
-        Make sure to set \'Extra keys\' to \'Custom\'. Special placeholders: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
+    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'.\n\n
+        CODE placeholders:\n
+        • {CODE} - plain barcode\n
+        • Encoding: _HEX, _B64 can be combined in any order\n
+        • Examples: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Date/Time placeholders with optional formatting:\n
+        • {DATE} - current date (default: yyyy-MM-dd)\n
+        • {TIME} - current time (default: HH:mm:ss)\n
+        • {DATETIME} - date and time (default: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - scan timestamp (default: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • Custom format: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
+        Format patterns:\n
+        • EEEE - day of week (full name), EEE - day of week (short)\n
+        • MMMM - month (full name), MMM - month (short), MM - month (numeric)\n
+        • yyyy - year (full), yy - year (last two digits), dd - day\n
+        • HH - hour (24h), hh - hour (12h), mm - minute, ss - second, SSS - milliseconds, a - AM/PM\n
+        • Note: Text in quotes (\'text\') will be displayed literally\n\n
+        Format examples:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, MMMM dd yyyy]} → Friday, October 03 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
+        Metadata placeholders:\n
+        • {CODE_TYPE} - barcode type (QR_CODE, CODE_128, etc.)\n
+        • {SCAN_SOURCE} - data source (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - scanner hardware identifier\n\n
+        Universal encoding (works with ANY data placeholder):\n
+        • Add _HEX or _B64 to any placeholder in any order\n
+        • Examples: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • Combination: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
+        Global encoding (applied to entire output):\n
+        • {GLOBAL_HEX} - encode entire result to hexadecimal\n
+        • {GLOBAL_B64} - encode entire result to base64\n
+        • Combinations: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Note: In RFCOMM mode, unsupported HID placeholders will be removed or kept as literal text based on dropdown settings.\n\n
+        HID-specific placeholders:\n
+        • Keys: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • Special: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Note: In RFCOMM mode, only {TAB} and {ENTER} are supported. You can control the visibility of unsupported placeholders in the dropdown menu.\n\n
         Modifiers can be set by prepending the following chars:\n
-            \t^: Shift\n
-            \t+: Ctrl\n
-            \t#: Alt\n
-            \t@: Meta\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
         Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1, {WAIT:10} will add a delay of 10 characters
     </string>
     <string name="camera">Camera</string>
@@ -185,10 +223,13 @@
     <string name="export">Export</string>
     <string name="export_csv">CSV data</string>
     <string name="export_json">JSON data</string>
+    <string name="export_xml">XML data</string>
     <string name="export_lines">Lines</string>
     <string name="export_fields" translatable="false">text, timestamp, type</string>
     <string name="export_lines_description">text with line breaks</string>
     <string name="export_as">Export as</string>
+    <string name="import_text">Import</string>
+    <string name="import_from">Import from</string>
     <string name="delete_selection">Delete selection?</string>
     <string name="delete_selection_desc">Are you sure you want to delete the selected item(s)?</string>
     <string name="templates_in_value">Templates in value</string>
@@ -216,7 +257,8 @@
     <string name="exclude_duplicates">Exclude duplicates</string>
     <string name="save_to_file">Save to file</string>
     <string name="invalid_regex">Invalid regex</string>
-    <string name="template_error">Template must contain either {CODE}, {CODE_B64} or {CODE_HEX}</string>
+    <string name="template_error">Template must contain at least one CODE component.</string>
+    <string name="template_error_duplicates">Duplicate components not allowed: %1$s</string>
     <string name="advanced_options">Advanced options</string>
     <string name="advanced_opts_desc">Adjust further scan parameters</string>
     <string name="detection">Detection</string>
@@ -309,4 +351,6 @@
     </plurals>
     <string name="insecure_rfcomm">Insecure RFCOMM</string>
     <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
+    <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>
+    <string name="preserve_unsupported_placeholders_desc">Keep HID-specific placeholders (e.g., {F1}, {ESC}) as text instead of removing them in RFCOMM mode</string>
 </resources>

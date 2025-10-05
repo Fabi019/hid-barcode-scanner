@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Shield
@@ -181,6 +182,21 @@ fun SettingsDropdown() {
                             insecureRfcommDialog.open()
                         }
                         insecureRfcomm = !insecureRfcomm
+                    }
+                )
+
+                var preserveUnsupportedPlaceholders by rememberPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS)
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.preserve_unsupported_placeholders)) },
+                    leadingIcon = { Icon(Icons.Default.DataObject, null) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = preserveUnsupportedPlaceholders,
+                            onCheckedChange = null
+                        )
+                    },
+                    onClick = {
+                        preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
                     }
                 )
             }

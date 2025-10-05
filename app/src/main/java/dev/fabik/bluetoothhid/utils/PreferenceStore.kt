@@ -81,6 +81,7 @@ open class PreferenceStore {
         val JS_CODE = stringPreferencesKey("js_code") defaultsTo ""
         val EXPAND_CODE = booleanPreferencesKey("expand_code") defaultsTo false
         val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
+        val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
 
         // Appearance
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on") defaultsTo false

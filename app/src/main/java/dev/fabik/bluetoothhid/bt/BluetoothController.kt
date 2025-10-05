@@ -40,7 +40,6 @@ class BluetoothController(var context: Context) {
     companion object {
         private const val TAG = "BluetoothController"
     }
-
     private val keyTranslator: KeyTranslator = KeyTranslator(context)
 
     private val bluetoothManager: BluetoothManager =
@@ -292,6 +291,14 @@ class BluetoothController(var context: Context) {
 
     fun unregisterListener(listener: Listener) = deviceListener.remove(listener)
 
+    /**
+     * Get scanner ID from Bluetooth adapter
+     * @return scanner ID
+     */
+    fun getScannerID(): String? {
+        return bluetoothAdapter?.name
+    }
+
     suspend fun register(): Boolean {
         val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
         // Initialize cached connection mode
@@ -446,7 +453,7 @@ class BluetoothController(var context: Context) {
         } ?: true
     }
 
-    suspend fun sendString(string: String, withExtraKeys: Boolean = true) = with(context) {
+    suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null, barcodeType: String? = null) = with(context) {
         if (!_isSending.compareAndSet(false, true)) {
             return@with
         }
@@ -459,13 +466,24 @@ class BluetoothController(var context: Context) {
         val expand =
             if (!withExtraKeys) false else getPreference(PreferenceStore.EXPAND_CODE).first()
 
+        // Get scanner ID
+        val scannerID = getScannerID()
+
+        // Get preserve unsupported placeholders preference (RFCOMM only)
+        val preserveUnsupported = getPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS).first()
+
         // Check connection mode - RFCOMM or HID using cached value
         if (currentConnectionMode == 1) {
             // RFCOMM mode - process template for text output
             val processedString = TemplateProcessor.processTemplate(
                 string,
                 template,
-                TemplateProcessor.TemplateMode.RFCOMM
+                TemplateProcessor.TemplateMode.RFCOMM,
+                from,
+                scanTimestamp,
+                scannerID,
+                barcodeType,
+                preserveUnsupported  // Pass preference
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -473,7 +491,12 @@ class BluetoothController(var context: Context) {
             val processedString = TemplateProcessor.processTemplate(
                 string,
                 template,
-                TemplateProcessor.TemplateMode.HID
+                TemplateProcessor.TemplateMode.HID,
+                from,
+                scanTimestamp,
+                scannerID,
+                barcodeType,
+                false  // HID always false - placeholders needed for KeyTranslator
             )
             val locale = when (layout) {
                 1 -> "de"

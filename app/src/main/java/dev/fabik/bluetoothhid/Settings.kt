@@ -48,7 +48,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.PhonelinkSetup
-import androidx.compose.material.icons.filled.PrivateConnectivity
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -207,9 +206,26 @@ fun ConnectionSettings() {
         title = stringResource(R.string.custom_template),
         desc = stringResource(R.string.custom_templ_desc),
         descLong = stringResource(R.string.custom_templ_desc_long),
-        validator = {
-            if (!it.contains("{CODE}") && !it.contains("{CODE_B64}") && !it.contains("{CODE_HEX}"))
+        validator = { template ->
+            // Check if template contains at least one CODE placeholder (flexible format)
+            val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
+            if (!codeRegex.containsMatchIn(template))
                 return@TextBoxPreference errorString
+
+            // Check each CODE placeholder for conflicts
+            val matches = codeRegex.findAll(template)
+            for (match in matches) {
+                val content = match.value.removePrefix("{").removeSuffix("}")
+                val parts = content.split("_")
+
+                // Check for duplicate components
+                val uniqueParts = parts.toSet()
+                if (uniqueParts.size != parts.size) {
+                    val duplicates = parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+                    return@TextBoxPreference context.getString(R.string.template_error_duplicates, duplicates.joinToString(", "))
+                }
+            }
+
             null
         },
         icon = Icons.Default.LibraryAdd,

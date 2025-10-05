@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid
 import android.app.Activity
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Checkbox
@@ -103,7 +105,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<HistoryViewModel>()) {
+fun History(onBack: () -> Unit, onClick: (HistoryViewModel.HistoryEntry) -> Unit) = with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
@@ -114,7 +116,10 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
             }
         },
         floatingActionButton = {
-            ExportSheet()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ImportSheet()
+                ExportSheet()
+            }
         }
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -125,7 +130,7 @@ fun History(onBack: () -> Unit, onClick: (String) -> Unit) = with(viewModel<Hist
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
+fun HistoryViewModel.HistoryContent(onClick: (HistoryViewModel.HistoryEntry) -> Unit) {
     BackHandler(enabled = isSelecting) {
         clearSelection()
     }
@@ -157,7 +162,7 @@ fun HistoryViewModel.HistoryContent(onClick: (String) -> Unit) {
                     .combinedClickable(onLongClick = {
                         setItemSelected(barcode, true)
                     }, onClick = {
-                        onClick(barcode.value)
+                        onClick(barcode)
                     })
                     .then(
                         if (isSelecting) {
@@ -356,7 +361,16 @@ fun HistoryViewModel.ExportSheet() {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var showSheet by rememberSaveable { mutableStateOf(false) }
-    var exportData = remember { "" }
+    var exportData by rememberSaveable { mutableStateOf("") }
+
+    // Additional MIME aliases for CSV (in many providers)
+    val CSV_MIME_CANDIDATES = arrayOf(
+        "text/csv",
+        "application/csv",
+        "text/comma-separated-values",
+        "application/vnd.ms-excel",
+        "application/vnd.msexcel"
+    )
 
     ExtendedFloatingActionButton(
         text = {
@@ -377,9 +391,9 @@ fun HistoryViewModel.ExportSheet() {
                 val fileUri = result.data?.data
                 fileUri?.let {
                     runCatching {
-                        context.contentResolver.openOutputStream(it, "w").use {
-                            it?.bufferedWriter().use {
-                                it?.write(exportData)
+                        context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                            outputStream.bufferedWriter().use { writer ->
+                                writer.write(exportData)
                             }
                         }
                     }.onFailure {
@@ -387,7 +401,6 @@ fun HistoryViewModel.ExportSheet() {
                     }
                 }
             }
-
             exportData = ""
         }
 
@@ -401,24 +414,35 @@ fun HistoryViewModel.ExportSheet() {
 
                     val data = exportHistory(typ, dedup, types)
 
-                    val (mime, name) = when (typ) {
-                        HistoryViewModel.ExportType.CSV -> "text/csv" to "export.csv"
-                        HistoryViewModel.ExportType.JSON -> "application/json" to "export.json"
-                        HistoryViewModel.ExportType.LINES -> "text/plain" to "export.txt"
+                    // (baseMime for picker, filename, extraMimeTypes [for CSV])
+                    val params: Triple<String, String, Array<String>?> = when (typ) {
+                        HistoryViewModel.ExportType.CSV   -> Triple("*/*",            "export.csv", CSV_MIME_CANDIDATES)
+                        HistoryViewModel.ExportType.JSON  -> Triple("application/json","export.json", null)
+                        HistoryViewModel.ExportType.XML   -> Triple("text/xml",        "export.xml",  null)
+                        HistoryViewModel.ExportType.LINES -> Triple("text/plain",      "export.txt",  null)
                     }
+                    val (baseMime, fileName, extraMimes) = params
 
                     runCatching {
                         if (saveToFile) {
                             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                                type = mime
                                 addCategory(Intent.CATEGORY_OPENABLE)
-                                putExtra(Intent.EXTRA_TITLE, name)
+                                type = baseMime
+                                putExtra(Intent.EXTRA_TITLE, fileName)
+                                extraMimes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it) }
                             }
                             exportData = data
                             startForResult.launch(intent)
                         } else {
+                            // For share use cannonical MIME
+                            val shareMime = when (typ) {
+                                HistoryViewModel.ExportType.CSV   -> "*/*"
+                                HistoryViewModel.ExportType.JSON  -> "application/json"
+                                HistoryViewModel.ExportType.XML   -> "text/xml"
+                                HistoryViewModel.ExportType.LINES -> "text/plain"
+                            }
                             val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = mime
+                                type = shareMime
                                 putExtra(Intent.EXTRA_TEXT, data)
                             }
                             val shareIntent = Intent.createChooser(intent, exportString)
@@ -495,6 +519,117 @@ private fun ExportSheetContent(
                     leadingContent = { Icon(type.icon, null) },
                     modifier = Modifier
                         .clickable { onSelect(type, deduplicateChecked, saveIntoFileChecked) }
+                        .clip(MaterialTheme.shapes.medium)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+@ExperimentalMaterial3Api
+fun HistoryViewModel.ImportSheet() {
+    val context = LocalContext.current
+    val types = stringArrayResource(R.array.code_types_values)
+
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedFormat by remember { mutableStateOf<HistoryViewModel.ImportFormat?>(null) }
+
+    ExtendedFloatingActionButton(
+        text = { Text(stringResource(R.string.import_text)) },
+        icon = { Icon(Icons.Default.FileUpload, stringResource(R.string.import_text)) },
+        onClick = { showSheet = true }
+    )
+
+    val filePickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val fileUri = result.data?.data
+                val format = selectedFormat
+
+                if (fileUri != null && format != null) {
+                    runCatching {
+                        val content = context.contentResolver.openInputStream(fileUri)?.use {
+                            it.bufferedReader().readText()
+                        } ?: ""
+
+                        val count = HistoryViewModel.importHistory(content, format, types)
+                        Toast.makeText(
+                            context,
+                            "Imported $count entries",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }.onFailure {
+                        Log.e("History", "Error importing file!", it)
+                        Toast.makeText(
+                            context,
+                            "Error: ${it.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            selectedFormat = null
+        }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            sheetState = state,
+            onDismissRequest = { showSheet = false },
+            content = {
+                ImportSheetContent { format ->
+                    scope.launch { state.hide() }.invokeOnCompletion { showSheet = state.isVisible }
+
+                    selectedFormat = format
+
+                    // Launch file picker with appropriate MIME type
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = format.baseMime
+                        format.extraMimeTypes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it) }
+                    }
+
+                    runCatching {
+                        filePickerLauncher.launch(intent)
+                    }.onFailure {
+                        Log.e("History", "Error starting file picker!", it)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun ImportSheetContent(
+    onSelect: (HistoryViewModel.ImportFormat) -> Unit = {},
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Text(
+            stringResource(R.string.import_from),
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            items(HistoryViewModel.ImportFormat.entries) { format ->
+                ListItem(
+                    headlineContent = { Text(stringResource(id = format.label)) },
+                    supportingContent = { Text(stringResource(id = format.description)) },
+                    leadingContent = { Icon(format.icon, null) },
+                    modifier = Modifier
+                        .clickable { onSelect(format) }
                         .clip(MaterialTheme.shapes.medium)
                 )
             }

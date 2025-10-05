@@ -44,6 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
@@ -84,6 +85,7 @@ class CameraViewModel : ViewModel() {
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
+    var lastBarcodeFormat: BarcodeReader.Format? = null // Still used internally by Scanner.kt
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -127,6 +129,10 @@ class CameraViewModel : ViewModel() {
             if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
                 HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
+
+                // Store the format for later use
+                lastBarcodeFormat = format
+
                 viewModelScope.launch {
                     onBarcode(value)
                 }
