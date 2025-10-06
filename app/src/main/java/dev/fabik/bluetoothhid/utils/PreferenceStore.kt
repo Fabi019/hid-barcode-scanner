@@ -234,7 +234,8 @@ fun Context.getPreferences(vararg prefs: PreferenceStore.Preference<*>): Flow<Ma
 
 @Composable
 fun Context.getMultiPreferenceState(vararg prefs: PreferenceStore.Preference<*>): State<Map<PreferenceStore.Preference<*>, *>?> {
-    return remember { getPreferences(*prefs) }.collectAsStateWithLifecycle(null)
+    // Use prefs array as key to ensure stable flow across recompositions
+    return remember(*prefs) { getPreferences(*prefs) }.collectAsStateWithLifecycle(null)
 }
 
 @Composable
@@ -242,20 +243,23 @@ fun <T> Context.getPreferenceStateDefault(
     pref: PreferenceStore.Preference<T>,
     initial: T = pref.defaultValue
 ): State<T> {
-    val flow = remember { getPreference(pref) }
+    // Use pref.key to ensure stable flow across recompositions
+    val flow = remember(pref.key) { getPreference(pref) }
     return flow.collectAsState(initial)
 }
 
 @Composable
 fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>): State<T?> {
-    val flow = remember { getPreference(pref) }
+    // Use pref.key to ensure stable flow across recompositions
+    val flow = remember(pref.key) { getPreference(pref) }
     return flow.collectAsState(null)
 }
 
 @Composable
 fun <T> Context.getPreferenceStateBlocking(pref: PreferenceStore.Preference<T>): State<T> {
-    val flow = remember { getPreference(pref) }
-    val initial = remember { runBlocking { flow.first() } }
+    // Use pref.key to ensure stable flow and initial value across recompositions
+    val flow = remember(pref.key) { getPreference(pref) }
+    val initial = remember(pref.key) { runBlocking { flow.first() } }
     return flow.collectAsState(initial)
 }
 
@@ -267,7 +271,8 @@ fun <T> rememberPreference(
     val scope = rememberCoroutineScope()
     val state = context.getPreferenceStateBlocking(pref)
 
-    return remember {
+    // Use pref.key as remember key to ensure stable MutableState instance
+    return remember(pref.key) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value
@@ -291,7 +296,8 @@ fun <T> rememberPreferenceNull(
     val scope = rememberCoroutineScope()
     val state = context.getPreferenceState(pref)
 
-    return remember {
+    // Use pref.key as remember key to ensure stable MutableState instance
+    return remember(pref.key) {
         object : MutableState<T?> {
             override var value: T?
                 get() = state.value
@@ -315,7 +321,9 @@ fun <E : Enum<E>> rememberEnumPreference(
     val scope = rememberCoroutineScope()
     val intState = context.getPreferenceStateBlocking(pref)
 
-    return remember(intState.value) {
+    // Use pref.key as remember key to ensure stable MutableState instance
+    // Using intState.value would recreate the object on every value change (race condition bug)
+    return remember(pref.key) {
         object : MutableState<E> {
             override var value: E
                 get() = pref.fromOrdinal(intState.value)
