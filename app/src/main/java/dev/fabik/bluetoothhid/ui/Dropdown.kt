@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.SettingsActivity
 import dev.fabik.bluetoothhid.bt.BluetoothService
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
@@ -183,7 +184,7 @@ fun SettingsDropdown() {
                 }
             )
 
-            if (connectionMode == 1) {
+            if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.insecure_rfcomm)) },
                     leadingIcon = { Icon(Icons.Default.Shield, null) },

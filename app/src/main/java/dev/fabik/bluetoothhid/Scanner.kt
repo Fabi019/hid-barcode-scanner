@@ -55,7 +55,6 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RippleConfiguration
@@ -78,7 +77,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -87,7 +85,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -118,8 +115,8 @@ import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
-import dev.fabik.bluetoothhid.ui.theme.Neutral95
 import dev.fabik.bluetoothhid.ui.tooltip
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
@@ -189,8 +186,6 @@ fun Scanner(
     val currentSendText by rememberUpdatedState(sendText)
 
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
-
-    val navController = LocalNavigation.current
 
     // Calculate light theme the same way MainActivity does
     val colorScheme = MaterialTheme.colorScheme
@@ -720,7 +715,6 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
 fun BoxScope.CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     controller?.let {
         val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
@@ -745,7 +739,7 @@ fun BoxScope.CapsLockWarning() {
 /**
  * Component that shows device connection status for both HID and RFCOMM modes.
  * Priority: if no device selected (currentDevice == null) => always show "No device connected"
- * Otherwise in RFCOMM mode: show "Listening for connection from [device]" when server is listening
+ * Otherwise in RFCOMM mode: show "Listening for connection from [ device ] when server is listening"
  */
 @Composable
 fun BoxScope.DeviceStatusIndicator() {
@@ -770,7 +764,7 @@ fun BoxScope.DeviceStatusIndicator() {
                     visible = true
                 )
             }
-            connectionMode == 1 && isRFCOMMListening -> {
+            connectionMode == ConnectionMode.RFCOMM.ordinal && isRFCOMMListening -> {
                 // RFCOMM mode with device selected and server listening
                 ElevatedWarningCard(
                     message = stringResource(R.string.rfcomm_listening),

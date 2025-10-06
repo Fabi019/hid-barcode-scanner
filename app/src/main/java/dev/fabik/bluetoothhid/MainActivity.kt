@@ -25,8 +25,13 @@ import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.Theme
+import dev.fabik.bluetoothhid.utils.dataStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 val LocalController = staticCompositionLocalOf<BluetoothController?> {
     null
@@ -42,6 +47,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+
+        // Read theme synchronously to pass to BluetoothHIDTheme (prevents async recomposition flash)
+        val (themeMode, useDynamicColors) = runBlocking {
+            dataStore.data.map { prefs ->
+                val themeOrdinal = prefs[PreferenceStore.THEME.key]
+                    ?: PreferenceStore.THEME.defaultValue
+                val dynamicTheme = prefs[PreferenceStore.DYNAMIC_THEME.key]
+                    ?: PreferenceStore.DYNAMIC_THEME.defaultValue
+                Pair(Theme.entries[themeOrdinal], dynamicTheme)
+            }.first()
+        }
 
         // Disable navigation bar contrast enforcement to allow true transparency
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -69,7 +85,10 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            BluetoothHIDTheme {
+            BluetoothHIDTheme(
+                darkTheme = themeMode,
+                dynamicColor = useDynamicColors
+            ) {
                 // Set system bars appearance based on theme
                 val view = LocalView.current
                 val colorScheme = MaterialTheme.colorScheme

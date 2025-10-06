@@ -116,9 +116,9 @@ fun CameraPreviewContent(
                         context.applicationContext,
                         lifecycleOwner,
                         PreferenceStore.FRONT_CAMERA.extract(it),
-                        PreferenceStore.SCAN_RESOLUTION.extract(it),
+                        PreferenceStore.SCAN_RESOLUTION.extractEnum(it),
                         PreferenceStore.FIX_EXPOSURE.extract(it),
-                        PreferenceStore.FOCUS_MODE.extract(it),
+                        PreferenceStore.FOCUS_MODE.extractEnum(it),
                         onCameraReady = onCameraReady,
                         onBarcode = onBarcodeDetected,
                     )
@@ -223,7 +223,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.FULL_INSIDE.extract(it),
                 scanRegex,
                 if (jsEnabled) jsCode else null,
-                PreferenceStore.SCAN_FREQUENCY.extract(it),
+                PreferenceStore.SCAN_FREQUENCY.extractEnum(it),
                 jsEngineService
             )
         }
@@ -252,10 +252,10 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.ADV_TRY_INVERT.extract(it),
                 PreferenceStore.ADV_TRY_DOWNSCALE.extract(it),
                 PreferenceStore.ADV_MIN_LINE_COUNT.extract(it),
-                PreferenceStore.ADV_BINARIZER.extract(it),
+                PreferenceStore.ADV_BINARIZER.extractEnum(it),
                 PreferenceStore.ADV_DOWNSCALE_FACTOR.extract(it),
                 PreferenceStore.ADV_DOWNSCALE_THRESHOLD.extract(it),
-                PreferenceStore.ADV_TEXT_MODE.extract(it),
+                PreferenceStore.ADV_TEXT_MODE.extractEnum(it),
             )
         }
     }
@@ -289,8 +289,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val selectedTexts = remember { mutableStateMapOf<Int, String>() }
 
     ConfirmDialog(
-        resultDialog, stringResource(R.string.scan_results),
-        enabled = selectedTexts.isNotEmpty(),
+        resultDialog, stringResource(R.string.scan_results), enabled = selectedTexts.isNotEmpty(),
         onConfirm = {
             viewModel.onBarcodeDetected(
                 selectedTexts.map { e -> e.value }.joinToString("\n"),

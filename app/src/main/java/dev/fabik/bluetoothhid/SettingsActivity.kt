@@ -28,6 +28,12 @@ import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.ui.SettingsDropdown
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.tooltip
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.Theme
+import dev.fabik.bluetoothhid.utils.dataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 class SettingsActivity : ComponentActivity() {
 
@@ -36,6 +42,17 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+
+        // Read theme synchronously to pass to BluetoothHIDTheme (prevents async recomposition flash)
+        val (themeMode, useDynamicColors) = runBlocking {
+            dataStore.data.map { prefs ->
+                val themeOrdinal = prefs[PreferenceStore.THEME.key]
+                    ?: PreferenceStore.THEME.defaultValue
+                val dynamicTheme = prefs[PreferenceStore.DYNAMIC_THEME.key]
+                    ?: PreferenceStore.DYNAMIC_THEME.defaultValue
+                Pair(Theme.entries[themeOrdinal], dynamicTheme)
+            }.first()
+        }
 
         // Enable high refresh rate (90/120 Hz)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
@@ -58,7 +75,10 @@ class SettingsActivity : ComponentActivity() {
         }
 
         setContent {
-            BluetoothHIDTheme {
+            BluetoothHIDTheme(
+                darkTheme = themeMode,
+                dynamicColor = useDynamicColors
+            ) {
                 // Set system bars appearance based on theme
                 val view = LocalView.current
                 val colorScheme = MaterialTheme.colorScheme
