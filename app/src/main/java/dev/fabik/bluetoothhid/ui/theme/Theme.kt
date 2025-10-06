@@ -1,21 +1,20 @@
 package dev.fabik.bluetoothhid.ui.theme
 
 import android.os.Build
+import android.view.Window
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.Theme
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
@@ -43,36 +42,76 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+/**
+ * Configures window properties for better performance and transparency.
+ * - Disables navigation bar contrast enforcement for true transparency
+ * - Enables high refresh rate (90/120 Hz) if supported
+ *
+ * @param window The activity window to configure
+ */
+fun configureWindow(window: Window) {
+    // Disable navigation bar contrast enforcement to allow true transparency
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+    }
+
+    // Enable high refresh rate (90/120 Hz)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        @Suppress("DEPRECATION")
+        val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.context.display
+        } else {
+            window.windowManager.defaultDisplay
+        }
+
+        display?.let {
+            val modes = it.supportedModes
+            val highRefreshMode = modes.maxByOrNull { mode -> mode.refreshRate }
+            highRefreshMode?.let { mode ->
+                window.attributes = window.attributes.apply {
+                    preferredDisplayModeId = mode.modeId
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Controls the appearance of system bars (status bar and navigation bar) based on theme.
+ * Adjusts icon colors to be light or dark depending on background luminance.
+ *
+ * @param window The activity window to control
+ */
+@Composable
+fun SystemBarsController(window: Window) {
+    val view = LocalView.current
+    val colorScheme = MaterialTheme.colorScheme
+    val isLightTheme = colorScheme.background.luminance() > 0.5f
+
+    SideEffect {
+        val insetsController = WindowCompat.getInsetsController(window, view)
+        insetsController.isAppearanceLightStatusBars = isLightTheme
+        insetsController.isAppearanceLightNavigationBars = isLightTheme
+    }
+}
+
 @Composable
 fun BluetoothHIDTheme(
-    darkTheme: Theme? = null,  // Initial value from Activity (prevents flash on transition)
-    dynamicColor: Boolean? = null,  // Initial value from Activity (prevents flash on transition)
+    window: Window? = null,  // Activity window for system bars control
     content: @Composable () -> Unit
 ) {
-    // Async preferences - will load after first composition
+    // Use blocking preferences to prevent theme flash on startup
     val prefDarkTheme by rememberEnumPreference(PreferenceStore.THEME)
     val prefDynamicColor by rememberPreference(PreferenceStore.DYNAMIC_THEME)
 
-    // Track if we should use initial values (only on first render to prevent flash)
-    var useInitialValues by remember { mutableStateOf(darkTheme != null || dynamicColor != null) }
-
-    // Once async preferences load, switch to using them (enables live changes)
-    LaunchedEffect(prefDarkTheme, prefDynamicColor) {
-        useInitialValues = false
-    }
-
-    // Hybrid approach: initial values prevent flash, then switch to reactive preferences
-    val actualDarkTheme = if (useInitialValues && darkTheme != null) darkTheme else prefDarkTheme
-    val actualDynamicColor = if (useInitialValues && dynamicColor != null) dynamicColor else prefDynamicColor
-
-    val dark = when (actualDarkTheme) {
+    val dark = when (prefDarkTheme) {
         Theme.LIGHT -> false
         Theme.DARK -> true
         Theme.SYSTEM -> isSystemInDarkTheme()
     }
 
     val colorScheme = when {
-        actualDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        prefDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (dark) dynamicDarkColorScheme(context)
             else dynamicLightColorScheme(context)
@@ -81,12 +120,13 @@ fun BluetoothHIDTheme(
         else -> LightColorScheme
     }
 
-    // Disable ripple effects for better scroll performance on 120Hz screens
-    CompositionLocalProvider(LocalRippleConfiguration provides null) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = Typography,
-            content = content
-        )
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = Typography
+    ) {
+        // Control system bars appearance if window is provided
+        window?.let { SystemBarsController(it) }
+
+        content()
     }
 }

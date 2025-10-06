@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,10 +53,8 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -66,7 +63,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,6 +95,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -125,6 +122,19 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+/**
+ * Helper function to create a circular background modifier for icons in fullscreen mode.
+ * Provides better visibility by adding a semi-transparent black circle behind the icon.
+ */
+private fun iconBackgroundModifier(): Modifier {
+    return Modifier.drawBehind {
+        drawCircle(
+            color = Color.Black.copy(alpha = 0.5f),
+            radius = size.maxDimension
+        )
+    }
+}
 
 @Composable
 fun BoxScope.ElevatedWarningCard(
@@ -524,29 +534,17 @@ private fun SendToDeviceFAB(onClick: () -> Unit) {
             }
         }
 
-        val noRippleTheme = remember {
-            RippleConfiguration(
-                color = Color.Transparent,
-                rippleAlpha = RippleAlpha(0.0f, 0.0f, 0.0f, 0.0f)
-            )
-        }
-
-        CompositionLocalProvider(
-            LocalRippleConfiguration provides
-                    if (isSending) noRippleTheme else LocalRippleConfiguration.current
-        ) {
-            ExtendedFloatingActionButton(
-                text = {
-                    Text(stringResource(R.string.send_to_device))
-                },
-                icon = {
-                    Icon(Icons.AutoMirrored.Filled.Send, "Send")
-                },
-                contentColor = contentColor,
-                containerColor = containerColor,
-                onClick = { if (!isSending) onClick() }
-            )
-        }
+        ExtendedFloatingActionButton(
+            text = {
+                Text(stringResource(R.string.send_to_device))
+            },
+            icon = {
+                Icon(Icons.AutoMirrored.Filled.Send, "Send")
+            },
+            contentColor = contentColor,
+            containerColor = containerColor,
+            onClick = { if (!isSending) onClick() }
+        )
     }
 }
 
@@ -619,14 +617,7 @@ private fun ScannerAppBar(
                         Icons.Default.Keyboard,
                         "Keyboard",
                         tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                        modifier = if (transparent) {
-                            Modifier.drawBehind {
-                                drawCircle(
-                                    color = Color.Black.copy(alpha = 0.5f),
-                                    radius = size.maxDimension
-                                )
-                            }
-                        } else Modifier
+                        modifier = if (transparent) iconBackgroundModifier() else Modifier
                     )
                 }
                 KeyboardInputDialog(keyboardDialog)
@@ -639,14 +630,7 @@ private fun ScannerAppBar(
                     Icons.Default.History,
                     "History",
                     tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                    modifier = if (transparent) {
-                        Modifier.drawBehind {
-                            drawCircle(
-                                color = Color.Black.copy(alpha = 0.5f),
-                                radius = size.maxDimension
-                            )
-                        }
-                    } else Modifier
+                    modifier = if (transparent) iconBackgroundModifier() else Modifier
                 )
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
@@ -694,14 +678,7 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
             },
             "Flash",
             tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-            modifier = if (transparent) {
-                Modifier.drawBehind {
-                    drawCircle(
-                        color = Color.Black.copy(alpha = 0.5f),
-                        radius = size.maxDimension
-                    )
-                }
-            } else Modifier
+            modifier = if (transparent) iconBackgroundModifier() else Modifier
         )
     }
 }

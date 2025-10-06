@@ -194,7 +194,7 @@ class BluetoothController(var context: Context) {
                 .distinctUntilChanged()
                 .debounce(200)
                 .collect { modeOrdinal ->
-                    val mode = ConnectionMode.entries[modeOrdinal]
+                    val mode = ConnectionMode.fromIndex(modeOrdinal)
                     Log.d(TAG, "Connection mode changed to: $mode")
                     currentConnectionMode = mode // Cache the mode
                     when (mode) {
@@ -302,7 +302,7 @@ class BluetoothController(var context: Context) {
         val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
         // Initialize cached connection mode
         val modeOrdinal = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
-        currentConnectionMode = ConnectionMode.entries[modeOrdinal]
+        currentConnectionMode = ConnectionMode.fromIndex(modeOrdinal)
         return register(autoConnect)
     }
 
@@ -388,6 +388,12 @@ class BluetoothController(var context: Context) {
 
         // Check connection mode first using cached value
         if (currentConnectionMode == ConnectionMode.RFCOMM) {
+            // Check if device needs pairing first
+            if (device.bondState != BluetoothDevice.BOND_BONDED) {
+                Log.d(TAG, "RFCOMM mode: Device not paired, initiating pairing")
+                device.createBond()  // Triggers Android pairing dialog
+            }
+
             // RFCOMM mode - set expected device and update currentDevice for UI
             rfcommController.setExpectedDeviceAddress(device.address)
             hostDevice.update { device }
@@ -514,7 +520,7 @@ class BluetoothController(var context: Context) {
             keyboardSender?.sendProcessedString(
                 processedString,
                 sendDelay.toLong(),
-                extraKeys.index,
+                extraKeys.ordinal,
                 locale,
                 expand
             )

@@ -242,10 +242,6 @@ private fun HistoryViewModel.HistoryTopBar(
                 Icon(Icons.Default.Delete, "Clear history")
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
         scrollBehavior = scrollBehavior
     )
 

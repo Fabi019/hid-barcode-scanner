@@ -11,27 +11,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
+import dev.fabik.bluetoothhid.ui.theme.configureWindow
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.Theme
-import dev.fabik.bluetoothhid.utils.dataStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 
 val LocalController = staticCompositionLocalOf<BluetoothController?> {
     null
@@ -48,58 +40,11 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // Read theme synchronously to pass to BluetoothHIDTheme (prevents async recomposition flash)
-        val (themeMode, useDynamicColors) = runBlocking {
-            dataStore.data.map { prefs ->
-                val themeOrdinal = prefs[PreferenceStore.THEME.key]
-                    ?: PreferenceStore.THEME.defaultValue
-                val dynamicTheme = prefs[PreferenceStore.DYNAMIC_THEME.key]
-                    ?: PreferenceStore.DYNAMIC_THEME.defaultValue
-                Pair(Theme.entries[themeOrdinal], dynamicTheme)
-            }.first()
-        }
-
-        // Disable navigation bar contrast enforcement to allow true transparency
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isNavigationBarContrastEnforced = false
-        }
-
-        // Enable high refresh rate (90/120 Hz)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            @Suppress("DEPRECATION")
-            val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                display
-            } else {
-                windowManager.defaultDisplay
-            }
-
-            display?.let {
-                val modes = it.supportedModes
-                val highRefreshMode = modes.maxByOrNull { mode -> mode.refreshRate }
-                highRefreshMode?.let { mode ->
-                    window.attributes = window.attributes.apply {
-                        preferredDisplayModeId = mode.modeId
-                    }
-                }
-            }
-        }
+        // Configure window for high refresh rate and transparency
+        configureWindow(window)
 
         setContent {
-            BluetoothHIDTheme(
-                darkTheme = themeMode,
-                dynamicColor = useDynamicColors
-            ) {
-                // Set system bars appearance based on theme
-                val view = LocalView.current
-                val colorScheme = MaterialTheme.colorScheme
-                val isLightTheme = colorScheme.background.luminance() > 0.5f
-
-                SideEffect {
-                    val insetsController = WindowCompat.getInsetsController(window, view)
-                    insetsController.isAppearanceLightStatusBars = isLightTheme
-                    insetsController.isAppearanceLightNavigationBars = isLightTheme
-                }
-
+            BluetoothHIDTheme(window = window) {
                 Surface(Modifier.fillMaxSize()) {
                     val allowScreenRotation by getPreferenceState(PreferenceStore.ALLOW_SCREEN_ROTATION)
 

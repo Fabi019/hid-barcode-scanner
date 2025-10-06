@@ -89,9 +89,9 @@ fun <E : Enum<E>> ComboBoxEnumPreference(
         selectedEnum.ordinal,
         values,
         icon,
-        onReset = { selectedEnum = preference.defaultEnum; onReset() }
+        onReset = { selectedEnum = preference.getDefaultEnum(); onReset() }
     ) {
-        selectedEnum = preference.toEnum(it)
+        selectedEnum = preference.fromOrdinal(it)
     }
 }
 

@@ -207,7 +207,7 @@ fun <E : Enum<E>> AdvancedEnumSelectionOption(
                 DropdownMenuItem(
                     text = { Text(text = selectionOption) },
                     onClick = {
-                        selectedEnum = preference.toEnum(i)
+                        selectedEnum = preference.fromOrdinal(i)
                         expanded = false
                     }
                 )

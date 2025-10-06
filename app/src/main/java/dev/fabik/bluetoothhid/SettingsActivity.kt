@@ -18,22 +18,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.core.view.WindowCompat
 import dev.fabik.bluetoothhid.ui.SettingsDropdown
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
+import dev.fabik.bluetoothhid.ui.theme.configureWindow
 import dev.fabik.bluetoothhid.ui.tooltip
-import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.Theme
-import dev.fabik.bluetoothhid.utils.dataStore
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 
 class SettingsActivity : ComponentActivity() {
 
@@ -43,53 +34,11 @@ class SettingsActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // Read theme synchronously to pass to BluetoothHIDTheme (prevents async recomposition flash)
-        val (themeMode, useDynamicColors) = runBlocking {
-            dataStore.data.map { prefs ->
-                val themeOrdinal = prefs[PreferenceStore.THEME.key]
-                    ?: PreferenceStore.THEME.defaultValue
-                val dynamicTheme = prefs[PreferenceStore.DYNAMIC_THEME.key]
-                    ?: PreferenceStore.DYNAMIC_THEME.defaultValue
-                Pair(Theme.entries[themeOrdinal], dynamicTheme)
-            }.first()
-        }
-
-        // Enable high refresh rate (90/120 Hz)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            @Suppress("DEPRECATION")
-            val display = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                display
-            } else {
-                windowManager.defaultDisplay
-            }
-
-            display?.let {
-                val modes = it.supportedModes
-                val highRefreshMode = modes.maxByOrNull { mode -> mode.refreshRate }
-                highRefreshMode?.let { mode ->
-                    window.attributes = window.attributes.apply {
-                        preferredDisplayModeId = mode.modeId
-                    }
-                }
-            }
-        }
+        // Configure window for high refresh rate and transparency
+        configureWindow(window)
 
         setContent {
-            BluetoothHIDTheme(
-                darkTheme = themeMode,
-                dynamicColor = useDynamicColors
-            ) {
-                // Set system bars appearance based on theme
-                val view = LocalView.current
-                val colorScheme = MaterialTheme.colorScheme
-                val isLightTheme = colorScheme.background.luminance() > 0.5f
-
-                SideEffect {
-                    val insetsController = WindowCompat.getInsetsController(window, view)
-                    insetsController.isAppearanceLightStatusBars = isLightTheme
-                    insetsController.isAppearanceLightNavigationBars = isLightTheme
-                }
-
+            BluetoothHIDTheme(window = window) {
                 Surface(Modifier.fillMaxSize()) {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -109,10 +58,6 @@ class SettingsActivity : ComponentActivity() {
                                 actions = {
                                     SettingsDropdown()
                                 },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                                ),
                                 scrollBehavior = scrollBehavior
                             )
                         }
