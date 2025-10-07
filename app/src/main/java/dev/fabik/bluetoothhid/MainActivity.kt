@@ -1,11 +1,13 @@
 package dev.fabik.bluetoothhid
 
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +19,7 @@ import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
+import dev.fabik.bluetoothhid.ui.theme.configureWindow
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
@@ -37,8 +40,11 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Configure window for high refresh rate and transparency
+        configureWindow(window)
+
         setContent {
-            BluetoothHIDTheme {
+            BluetoothHIDTheme(window = window) {
                 Surface(Modifier.fillMaxSize()) {
                     val allowScreenRotation by getPreferenceState(PreferenceStore.ALLOW_SCREEN_ROTATION)
 

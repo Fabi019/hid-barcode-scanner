@@ -42,9 +42,13 @@ import androidx.core.graphics.toPointF
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fabik.bluetoothhid.utils.Binarizer
+import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
-import dev.fabik.bluetoothhid.utils.TemplateProcessor
+import dev.fabik.bluetoothhid.utils.ScanFrequency
+import dev.fabik.bluetoothhid.utils.ScanResolution
+import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
@@ -116,9 +120,9 @@ class CameraViewModel : ViewModel() {
         appContext: Context,
         lifecycleOwner: LifecycleOwner,
         frontCamera: Boolean,
-        resolution: Int,
+        resolution: ScanResolution,
         fixExposure: Boolean,
-        focusMode: Int,
+        focusMode: FocusMode,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
         onBarcode: (String) -> Unit,
     ) {
@@ -151,10 +155,10 @@ class CameraViewModel : ViewModel() {
         val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
             ResolutionStrategy(
                 when (resolution) {
-                    3 -> UHD_2160P
-                    2 -> FHD_1080P
-                    1 -> HD_720P
-                    else -> SD_480P
+                    ScanResolution.UHD_2160P -> UHD_2160P
+                    ScanResolution.FHD_1080P -> FHD_1080P
+                    ScanResolution.HD_720P -> HD_720P
+                    ScanResolution.SD_480P -> SD_480P
                 },
                 ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
             )
@@ -176,20 +180,20 @@ class CameraViewModel : ViewModel() {
                 setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, -8)
             }
 
-            if (focusMode > 0) {
+            if (focusMode != FocusMode.AUTO) {
                 setCaptureRequestOption(
                     CaptureRequest.CONTROL_AF_MODE, when (focusMode) {
-                        1 -> CaptureRequest.CONTROL_AF_MODE_AUTO // Manual mode
-                        2 -> CaptureRequest.CONTROL_AF_MODE_MACRO // Macro mode
-                        3 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO // Continuous mode
-                        4 -> CaptureRequest.CONTROL_AF_MODE_EDOF // EDOF mode
-                        5 -> CaptureRequest.CONTROL_AF_MODE_OFF // Infinity
-                        6 -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE // Continuous mode faster
+                        FocusMode.MANUAL -> CaptureRequest.CONTROL_AF_MODE_AUTO
+                        FocusMode.MACRO -> CaptureRequest.CONTROL_AF_MODE_MACRO
+                        FocusMode.CONTINUOUS -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+                        FocusMode.EDOF -> CaptureRequest.CONTROL_AF_MODE_EDOF
+                        FocusMode.INFINITY -> CaptureRequest.CONTROL_AF_MODE_OFF
+                        FocusMode.CONTINUOUS_PICTURE -> CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
                         else -> CaptureRequest.CONTROL_AF_MODE_OFF
                     }
                 )
 
-                if (focusMode == 5) {
+                if (focusMode == FocusMode.INFINITY) {
                     setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f)
                 }
             }
@@ -282,10 +286,10 @@ class CameraViewModel : ViewModel() {
         tryInvert: Boolean,
         tryDownscale: Boolean,
         minLines: Int,
-        binarizer: Int,
+        binarizer: Binarizer,
         downscaleFactor: Int,
         downscaleThreshold: Int,
-        textMode: Int
+        textMode: TextMode
     ) {
         _readerOptions.formats = codeTypes.mapNotNull { it.toIntOrNull() }
             .map { ZXingAnalyzer.index2Format(it) }.toSet()
@@ -295,19 +299,19 @@ class CameraViewModel : ViewModel() {
         _readerOptions.tryDownscale = tryDownscale
         _readerOptions.minLineCount = minLines
         _readerOptions.binarizer = when (binarizer) {
-            0 -> BarcodeReader.Binarizer.LOCAL_AVERAGE
-            1 -> BarcodeReader.Binarizer.GLOBAL_HISTOGRAM
-            2 -> BarcodeReader.Binarizer.FIXED_THRESHOLD
-            else -> BarcodeReader.Binarizer.BOOL_CAST
+            Binarizer.LOCAL_AVERAGE -> BarcodeReader.Binarizer.LOCAL_AVERAGE
+            Binarizer.GLOBAL_HISTOGRAM -> BarcodeReader.Binarizer.GLOBAL_HISTOGRAM
+            Binarizer.FIXED_THRESHOLD -> BarcodeReader.Binarizer.FIXED_THRESHOLD
+            Binarizer.BOOL_CAST -> BarcodeReader.Binarizer.BOOL_CAST
         }
         _readerOptions.downscaleFactor = downscaleFactor
         _readerOptions.downscaleThreshold = downscaleThreshold
         _readerOptions.textMode = when (textMode) {
-            0 -> BarcodeReader.TextMode.PLAIN
-            1 -> BarcodeReader.TextMode.ECI
-            2 -> BarcodeReader.TextMode.HRI
-            3 -> BarcodeReader.TextMode.HEX
-            else -> BarcodeReader.TextMode.ESCAPED
+            TextMode.PLAIN -> BarcodeReader.TextMode.PLAIN
+            TextMode.ECI -> BarcodeReader.TextMode.ECI
+            TextMode.HRI -> BarcodeReader.TextMode.HRI
+            TextMode.HEX -> BarcodeReader.TextMode.HEX
+            TextMode.ESCAPED -> BarcodeReader.TextMode.ESCAPED
         }
 
         Log.d(TAG, "Updating reader options: $_readerOptions")
@@ -324,14 +328,14 @@ class CameraViewModel : ViewModel() {
         fullyInside: Boolean,
         scanRegex: Regex?,
         jsCode: String?,
-        frequency: Int,
+        frequency: ScanFrequency,
         jsEngineService: JsEngineService.LocalBinder?
     ) {
         _scanDelay = when (frequency) {
-            0 -> 0
-            1 -> 100
-            3 -> 1000
-            else -> 500
+            ScanFrequency.FASTEST -> 0
+            ScanFrequency.FAST -> 100
+            ScanFrequency.NORMAL -> 500
+            ScanFrequency.SLOW -> 1000
         }
         barcodeAnalyzer?.scanDelay = _scanDelay
         _fullyInside = fullyInside

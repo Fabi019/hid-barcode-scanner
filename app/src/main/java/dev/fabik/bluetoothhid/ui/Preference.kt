@@ -10,9 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 
 
@@ -26,9 +25,7 @@ fun ButtonPreference(
 ) {
     ListItem(
         headlineContent = { Text(title) },
-        modifier = Modifier
-            .semantics { stateDescription = desc }
-            .clickable(onClick = onClick),
+        modifier = Modifier.clickable(onClick = onClick),
         supportingContent = { Text(desc) },
         leadingContent = icon?.let {
             { Icon(icon, null) }
@@ -63,11 +60,9 @@ fun SwitchPreference(
         title, desc, icon, {
             checked?.let { c ->
                 Switch(
-                    c,
-                    onCheckedChange = null,
-                    modifier = Modifier.semantics(mergeDescendants = true) {
-                    stateDescription = "$title is ${if (c) "On" else "Off"}"
-                })
+                    checked = c,
+                    onCheckedChange = null
+                )
             }
         }
     ) {
@@ -78,25 +73,25 @@ fun SwitchPreference(
 }
 
 @Composable
-fun ComboBoxPreference(
+fun <E : Enum<E>> ComboBoxEnumPreference(
     title: String,
     desc: String,
     values: Array<String>,
     icon: ImageVector? = null,
-    preference: PreferenceStore.Preference<Int>,
+    preference: PreferenceStore.EnumPref<E>,
     onReset: () -> Unit = {},
 ) {
-    var selectedItem by rememberPreferenceNull(preference)
+    var selectedEnum by rememberEnumPreference(preference)
 
     ComboBoxPreference(
         title,
         desc,
-        selectedItem,
+        selectedEnum.ordinal,
         values,
         icon,
-        onReset = { selectedItem = preference.defaultValue; onReset() }
+        onReset = { selectedEnum = preference.getDefaultEnum(); onReset() }
     ) {
-        selectedItem = it
+        selectedEnum = preference.fromOrdinal(it)
     }
 }
 

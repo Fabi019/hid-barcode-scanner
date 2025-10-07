@@ -13,6 +13,9 @@ import android.content.BroadcastReceiver
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.ExtraKeys
+import dev.fabik.bluetoothhid.utils.KeyboardLayout
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
@@ -25,7 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -64,7 +66,7 @@ class BluetoothController(var context: Context) {
 
     // Cache connection mode to avoid repeated preference calls
     @Volatile
-    private var currentConnectionMode: Int = 0
+    private var currentConnectionMode: ConnectionMode = ConnectionMode.HID
 
     var keyboardSender: KeyboardSender? = null
         private set
@@ -191,19 +193,23 @@ class BluetoothController(var context: Context) {
             context.getPreference(PreferenceStore.CONNECTION_MODE)
                 .distinctUntilChanged()
                 .debounce(200)
-                .collect { mode ->
+                .collect { modeOrdinal ->
+                    val mode = ConnectionMode.fromIndex(modeOrdinal)
                     Log.d(TAG, "Connection mode changed to: $mode")
                     currentConnectionMode = mode // Cache the mode
                     when (mode) {
-                        1 -> {
+                        ConnectionMode.RFCOMM -> {
                             Log.d(TAG, "Switching to RFCOMM mode")
                             rfcommController.connectRFCOMM()
                             // Note: HID remains registered but inactive in RFCOMM mode
                         }
-                        else -> {
+                        ConnectionMode.HID -> {
                             Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
                             rfcommController.disconnectRFCOMM()
                             // HID profile is already registered and will become active
+                            // Note: HID registration is handled by the serviceListener in getProfileProxy
+                            // Additional HID-specific setup could go in registerHid() if needed
+                            registerHid()
                         }
                     }
                 }
@@ -230,7 +236,7 @@ class BluetoothController(var context: Context) {
                         }
                         BluetoothAdapter.STATE_ON -> {
                             Log.d(TAG, "Bluetooth turned ON - restarting services if needed")
-                            if (currentConnectionMode == 1) {
+                            if (currentConnectionMode == ConnectionMode.RFCOMM) {
                                 rfcommController.connectRFCOMM()
                             }
                         }
@@ -277,13 +283,6 @@ class BluetoothController(var context: Context) {
     val isScanning: Boolean
         get() = bluetoothAdapter?.isDiscovering ?: false
 
-    /**
-     * Returns true if RFCOMM server is actively listening for connections.
-     * Used by UI to show/hide connection status indicators.
-     */
-    val isRFCOMMListening: Boolean
-        get() = rfcommController.isListening()
-
     fun registerListener(listener: Listener): Listener {
         deviceListener.add(listener)
         return listener
@@ -302,7 +301,8 @@ class BluetoothController(var context: Context) {
     suspend fun register(): Boolean {
         val autoConnect = context.getPreference(PreferenceStore.AUTO_CONNECT).first()
         // Initialize cached connection mode
-        currentConnectionMode = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
+        val modeOrdinal = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
+        currentConnectionMode = ConnectionMode.fromIndex(modeOrdinal)
         return register(autoConnect)
     }
 
@@ -387,7 +387,13 @@ class BluetoothController(var context: Context) {
         Log.d(TAG, "connecting to $device")
 
         // Check connection mode first using cached value
-        if (currentConnectionMode == 1) {
+        if (currentConnectionMode == ConnectionMode.RFCOMM) {
+            // Check if device needs pairing first
+            if (device.bondState != BluetoothDevice.BOND_BONDED) {
+                Log.d(TAG, "RFCOMM mode: Device not paired, initiating pairing")
+                device.createBond()  // Triggers Android pairing dialog
+            }
+
             // RFCOMM mode - set expected device and update currentDevice for UI
             rfcommController.setExpectedDeviceAddress(device.address)
             hostDevice.update { device }
@@ -441,7 +447,7 @@ class BluetoothController(var context: Context) {
         }
 
         // In RFCOMM mode, disconnect server and clear currentDevice
-        if (currentConnectionMode == 1) {
+        if (currentConnectionMode == ConnectionMode.RFCOMM) {
             rfcommController.disconnectRFCOMM()
             hostDevice.update { null }
             return true
@@ -454,13 +460,15 @@ class BluetoothController(var context: Context) {
     }
 
     suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null, barcodeType: String? = null) = with(context) {
-        if (!_isSending.compareAndSet(false, true)) {
+        if (!_isSending.compareAndSet(expect = false, update = true)) {
             return@with
         }
 
         val sendDelay = getPreference(PreferenceStore.SEND_DELAY).first()
-        val extraKeys = if (!withExtraKeys) 0 else getPreference(PreferenceStore.EXTRA_KEYS).first()
-        val layout = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
+        val extraKeysOrdinal = if (!withExtraKeys) 0 else getPreference(PreferenceStore.EXTRA_KEYS).first()
+        val extraKeys = ExtraKeys.fromIndex(extraKeysOrdinal)
+        val layoutOrdinal = getPreference(PreferenceStore.KEYBOARD_LAYOUT).first()
+        val layout = KeyboardLayout.fromIndex(layoutOrdinal)
         val template =
             if (!withExtraKeys) "" else getPreference(PreferenceStore.TEMPLATE_TEXT).first()
         val expand =
@@ -473,7 +481,7 @@ class BluetoothController(var context: Context) {
         val preserveUnsupported = getPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS).first()
 
         // Check connection mode - RFCOMM or HID using cached value
-        if (currentConnectionMode == 1) {
+        if (currentConnectionMode == ConnectionMode.RFCOMM) {
             // RFCOMM mode - process template for text output
             val processedString = TemplateProcessor.processTemplate(
                 string,
@@ -499,20 +507,20 @@ class BluetoothController(var context: Context) {
                 false  // HID always false - placeholders needed for KeyTranslator
             )
             val locale = when (layout) {
-                1 -> "de"
-                2 -> "fr"
-                3 -> "en"
-                4 -> "es"
-                5 -> "it"
-                6 -> "tr"
-                7 -> "pl"
-                8 -> "cz"
-                else -> "us"
+                KeyboardLayout.US -> "us"
+                KeyboardLayout.DE -> "de"
+                KeyboardLayout.FR -> "fr"
+                KeyboardLayout.GB -> "en"
+                KeyboardLayout.ES -> "es"
+                KeyboardLayout.IT -> "it"
+                KeyboardLayout.TR -> "tr"
+                KeyboardLayout.PL -> "pl"
+                KeyboardLayout.CZ -> "cz"
             }
             keyboardSender?.sendProcessedString(
                 processedString,
                 sendDelay.toLong(),
-                extraKeys,
+                extraKeys.ordinal,
                 locale,
                 expand
             )

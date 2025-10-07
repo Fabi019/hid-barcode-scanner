@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlin.math.roundToInt
 
@@ -111,7 +112,7 @@ fun AdvancedOptionsModalContent() {
             style = MaterialTheme.typography.titleSmall
         )
 
-        AdvancedSelectionOption(
+        AdvancedEnumSelectionOption(
             stringResource(R.string.binarizer),
             arrayOf("LOCAL_AVERAGE", "GLOBAL_HISTOGRAM", "FIXED_THRESHOLD", "BOOL_CAST"),
             PreferenceStore.ADV_BINARIZER
@@ -133,7 +134,7 @@ fun AdvancedOptionsModalContent() {
             style = MaterialTheme.typography.titleSmall
         )
 
-        AdvancedSelectionOption(
+        AdvancedEnumSelectionOption(
             stringResource(R.string.text_mode),
             arrayOf("PLAIN", "ECI", "HRI", "HEX", "ESCAPED"),
             PreferenceStore.ADV_TEXT_MODE
@@ -165,13 +166,13 @@ fun AdvancedToggleOption(text: String, preference: PreferenceStore.Preference<Bo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdvancedSelectionOption(
+fun <E : Enum<E>> AdvancedEnumSelectionOption(
     text: String,
     values: Array<String>,
-    preference: PreferenceStore.Preference<Int>
+    preference: PreferenceStore.EnumPref<E>
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    var selectedIndex by rememberPreference(preference)
+    var selectedEnum by rememberEnumPreference(preference)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -182,7 +183,7 @@ fun AdvancedSelectionOption(
         OutlinedTextField(
             readOnly = true,
             singleLine = true,
-            value = values.getOrNull(selectedIndex) ?: "",
+            value = values.getOrNull(selectedEnum.ordinal) ?: "",
             onValueChange = { },
             label = { Text(text) },
             trailingIcon = {
@@ -206,7 +207,7 @@ fun AdvancedSelectionOption(
                 DropdownMenuItem(
                     text = { Text(text = selectionOption) },
                     onClick = {
-                        selectedIndex = i
+                        selectedEnum = preference.fromOrdinal(i)
                         expanded = false
                     }
                 )
