@@ -8,6 +8,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import androidx.annotation.Keep
 
 /**
  * Barcode data serialization utilities.
@@ -16,8 +17,21 @@ import kotlin.reflect.full.primaryConstructor
  */
 object Serializer {
 
-    // -------- Data Model --------
+    // -----------------------------
+    // -------- Data Models --------
+    // -----------------------------
 
+        // winlin97: These data model classes are used via Kotlin reflection (primaryConstructor/memberProperties).
+        // In RELEASE builds, R8 can strip Kotlin metadata and/or obfuscate names, which breaks reflection.
+        // @Keep prevents shrinking/obfuscation and keeps the primary constructor + metadata intact.
+        // Without it you may hit:
+        //  - tapping Export in History -> app crashes
+        //  - importing history -> Hint "Error: p0 must have primary constructor", comes from IllegalStateException
+        //
+        // Requires: import androidx.annotation.Keep
+
+    // Current data model
+    @Keep
     data class BarcodeEntry(
         val text: String,
         val timestamp: Long,
@@ -25,6 +39,7 @@ object Serializer {
     )
 
     // Legacy model for backward compatibility (old CSV exports with "type" column)
+    @Keep
     internal data class LegacyBarcodeEntry(
         val text: String,
         val timestamp: Long,
@@ -37,8 +52,9 @@ object Serializer {
         const val ITEM = "barcode"
     }
 
-
+    // ------------------------------------
     // -------- Reflection helpers --------
+    // ------------------------------------
 
     private data class Field<T : Any>(
         val name: String,
@@ -99,8 +115,9 @@ object Serializer {
 
 
 
-
+    // -----------------------------
     // -------- Format: XML --------
+    // -----------------------------
 
     fun toXml(entries: List<BarcodeEntry>): String {
         val fields = modelFields<BarcodeEntry>()
@@ -162,8 +179,9 @@ object Serializer {
         .replace("&amp;", "&") // last
 
 
-
+    // ------------------------------
     // -------- Format: JSON --------
+    // ------------------------------
 
     fun toJson(entries: List<BarcodeEntry>): String {
         val fields = modelFields<BarcodeEntry>()
@@ -208,8 +226,9 @@ object Serializer {
         }
     }
 
-
+    // ------------------------------
     // -------- Format: CSV --------
+    // ------------------------------
 
     fun toCsv(entries: List<BarcodeEntry>): String {
         val fields = modelFields<BarcodeEntry>()
@@ -323,8 +342,9 @@ object Serializer {
         return if (semicolonCount > 0) ';' else ','
     }
 
-
+    // -------------------------------------------
     // -------- Format: Lines (Plaintext) --------
+    // -------------------------------------------
 
     fun toLines(entries: List<BarcodeEntry>): String =
         entries.joinToString(System.lineSeparator()) { it.text }
