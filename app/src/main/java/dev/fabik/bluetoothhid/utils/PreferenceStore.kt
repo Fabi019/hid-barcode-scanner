@@ -189,6 +189,9 @@ open class PreferenceStore {
         val ADV_DOWNSCALE_THRESHOLD = intPreferencesKey("adv_downscale_threshold") defaultsTo 500
         val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode").enumDefaultsTo(TextMode::fromIndex)
 
+        val SAVE_SCAN = booleanPreferencesKey("save_scan") defaultsTo false
+        val SCAN_PATH = stringPreferencesKey("scan_path") defaultsTo ""
+
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false
 
