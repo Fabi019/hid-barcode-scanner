@@ -99,11 +99,13 @@ fun SaveToImageOptionsContent() {
             style = MaterialTheme.typography.titleLarge,
         )
 
-        // target folder, (file name pattern), crop image?
-
         Spacer(Modifier.height(4.dp))
 
         FolderPicker()
+
+        Spacer(Modifier.height(4.dp))
+
+        AdvancedToggleOption("Crop image", PreferenceStore.SAVE_SCAN_CROP)
 
         Spacer(Modifier.height(16.dp))
     }
@@ -113,7 +115,7 @@ fun SaveToImageOptionsContent() {
 fun FolderPicker() {
     val context = LocalContext.current
 
-    var scanPath by rememberPreference(PreferenceStore.SCAN_PATH)
+    var scanPath by rememberPreference(PreferenceStore.SAVE_SCAN_PATH)
     val currentUri by remember { derivedStateOf { if (scanPath.isNotBlank()) scanPath.toUri() else null } }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(

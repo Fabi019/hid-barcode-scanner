@@ -190,7 +190,8 @@ open class PreferenceStore {
         val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode").enumDefaultsTo(TextMode::fromIndex)
 
         val SAVE_SCAN = booleanPreferencesKey("save_scan") defaultsTo false
-        val SCAN_PATH = stringPreferencesKey("scan_path") defaultsTo ""
+        val SAVE_SCAN_PATH = stringPreferencesKey("save_scan_path") defaultsTo ""
+        val SAVE_SCAN_CROP = booleanPreferencesKey("save_scan_crop") defaultsTo true
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false
