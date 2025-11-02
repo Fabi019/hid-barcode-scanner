@@ -207,7 +207,10 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.FULL_INSIDE,
         PreferenceStore.SCAN_REGEX,
         PreferenceStore.ENABLE_JS,
-        PreferenceStore.JS_CODE
+        PreferenceStore.JS_CODE,
+        PreferenceStore.SAVE_SCAN,
+        PreferenceStore.SAVE_SCAN_PATH,
+        PreferenceStore.SAVE_SCAN_CROP
     )
 
     scanner?.let {
@@ -218,13 +221,18 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 val regex = PreferenceStore.SCAN_REGEX.extract(it)
                 if (!regex.isBlank()) regex.toRegex() else null
             }.getOrNull()
+            val saveScan = PreferenceStore.SAVE_SCAN.extract(it)
+            val saveScanPath = PreferenceStore.SAVE_SCAN_PATH.extract(it)
+            val saveScanCrop = PreferenceStore.SAVE_SCAN_CROP.extract(it)
 
             viewModel.updateScanParameters(
                 PreferenceStore.FULL_INSIDE.extract(it),
                 scanRegex,
                 if (jsEnabled) jsCode else null,
                 PreferenceStore.SCAN_FREQUENCY.extractEnum(it),
-                jsEngineService
+                jsEngineService,
+                if (saveScan && saveScanPath.isNotBlank()) saveScanPath else null,
+                saveScanCrop
             )
         }
     }
@@ -293,7 +301,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
         onConfirm = {
             viewModel.onBarcodeDetected(
                 selectedTexts.map { e -> e.value }.joinToString("\n"),
-                BarcodeReader.Format.NONE
+                BarcodeReader.Format.NONE, null
             )
             close()
         }

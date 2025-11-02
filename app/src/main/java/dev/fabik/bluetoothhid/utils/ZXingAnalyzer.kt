@@ -1,7 +1,6 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.util.Log
-import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import zxingcpp.BarcodeReader
@@ -10,7 +9,7 @@ class ZXingAnalyzer(
     initialOptions: BarcodeReader.Options = BarcodeReader.Options(),
     var scanDelay: Int,
     private val onAnalyze: () -> Unit,
-    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: Size) -> Unit,
+    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     companion object {
@@ -81,10 +80,10 @@ class ZXingAnalyzer(
             lastAnalyzedTimeStamp = currentTime
 
             runCatching {
-                val results = image.use {
-                    reader.read(image)
+                image.use {
+                    val results = reader.read(image)
+                    onResult(results, image)
                 }
-                onResult(results, Size(image.width, image.height))
             }.onFailure {
                 Log.e(TAG, "Error analyzing image!", it)
             }
