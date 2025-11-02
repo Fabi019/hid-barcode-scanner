@@ -210,7 +210,8 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.JS_CODE,
         PreferenceStore.SAVE_SCAN,
         PreferenceStore.SAVE_SCAN_PATH,
-        PreferenceStore.SAVE_SCAN_CROP
+        PreferenceStore.SAVE_SCAN_CROP,
+        PreferenceStore.SAVE_SCAN_QUALITY
     )
 
     scanner?.let {
@@ -223,7 +224,6 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
             }.getOrNull()
             val saveScan = PreferenceStore.SAVE_SCAN.extract(it)
             val saveScanPath = PreferenceStore.SAVE_SCAN_PATH.extract(it)
-            val saveScanCrop = PreferenceStore.SAVE_SCAN_CROP.extract(it)
 
             viewModel.updateScanParameters(
                 PreferenceStore.FULL_INSIDE.extract(it),
@@ -232,7 +232,8 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.SCAN_FREQUENCY.extractEnum(it),
                 jsEngineService,
                 if (saveScan && saveScanPath.isNotBlank()) saveScanPath else null,
-                saveScanCrop
+                PreferenceStore.SAVE_SCAN_CROP.extract(it),
+                PreferenceStore.SAVE_SCAN_QUALITY.extract(it)
             )
         }
     }

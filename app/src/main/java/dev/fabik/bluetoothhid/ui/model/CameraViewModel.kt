@@ -140,40 +140,7 @@ class CameraViewModel : ViewModel() {
 
                 _saveScanPath?.let { path ->
                     image?.let { image ->
-                        val yBuffer = image.planes[0].buffer
-                        val uBuffer = image.planes[1].buffer
-                        val vBuffer = image.planes[2].buffer
-
-                        val ySize = yBuffer.remaining()
-                        val uSize = uBuffer.remaining()
-                        val vSize = vBuffer.remaining()
-
-                        val yuv = ByteArray(ySize + uSize + vSize)
-                        yBuffer.get(yuv, 0, ySize)
-                        vBuffer.get(yuv, ySize, vSize)
-                        uBuffer.get(yuv, ySize + vSize, uSize)
-
-                        val nv21 =
-                            YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
-
-                        val newFileUri = DocumentsContract.createDocument(
-                            appContext.contentResolver,
-                            path,
-                            "image/jpeg",
-                            "scan.jpg"
-                        )
-
-                        appContext.contentResolver.openOutputStream(newFileUri!!).use {
-                            val success = nv21.compressToJpeg(
-                                android.graphics.Rect(
-                                    0,
-                                    0,
-                                    image.width,
-                                    image.height
-                                ), 70, it
-                            )
-                            Log.d(TAG, "Wrote scan image to $path: $success")
-                        }
+                        saveScanImage(appContext, image, path)
                     }
                 }
 
@@ -368,6 +335,7 @@ class CameraViewModel : ViewModel() {
     private var _jsEngineService: JsEngineService.LocalBinder? = null
     private var _saveScanPath: Uri? = null
     private var _saveScanCrop: Boolean = false
+    private var _saveScanQuality: Int = 100
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -376,7 +344,8 @@ class CameraViewModel : ViewModel() {
         frequency: ScanFrequency,
         jsEngineService: JsEngineService.LocalBinder?,
         saveScanPath: String?,
-        saveScanCrop: Boolean
+        saveScanCrop: Boolean,
+        scanSaveQuality: Int
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -397,6 +366,7 @@ class CameraViewModel : ViewModel() {
             _saveScanPath = DocumentsContract.buildDocumentUriUsingTree(pathUri, docId)
         }
         _saveScanCrop = saveScanCrop
+        _saveScanQuality = scanSaveQuality
 
         Log.d(TAG, "Updated scan parameters")
     }
@@ -554,6 +524,43 @@ class CameraViewModel : ViewModel() {
                 }
             }
         )
+    }
+
+    fun saveScanImage(context: Context, image: ImageProxy, path: Uri) {
+        val yBuffer = image.planes[0].buffer
+        val uBuffer = image.planes[1].buffer
+        val vBuffer = image.planes[2].buffer
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val yuv = ByteArray(ySize + uSize + vSize)
+        yBuffer.get(yuv, 0, ySize)
+        vBuffer.get(yuv, ySize, vSize)
+        uBuffer.get(yuv, ySize + vSize, uSize)
+
+        val nv21 =
+            YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
+
+        val newFileUri = DocumentsContract.createDocument(
+            context.contentResolver,
+            path,
+            "image/jpeg",
+            "scan.jpg"
+        )
+
+        context.contentResolver.openOutputStream(newFileUri!!).use {
+            val success = nv21.compressToJpeg(
+                android.graphics.Rect(
+                    0,
+                    0,
+                    image.width,
+                    image.height
+                ), _saveScanQuality, it
+            )
+            Log.d(TAG, "Wrote scan image to $path: $success")
+        }
     }
 
     private suspend fun mapJS(

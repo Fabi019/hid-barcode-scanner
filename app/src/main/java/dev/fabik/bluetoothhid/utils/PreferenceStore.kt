@@ -192,6 +192,7 @@ open class PreferenceStore {
         val SAVE_SCAN = booleanPreferencesKey("save_scan") defaultsTo false
         val SAVE_SCAN_PATH = stringPreferencesKey("save_scan_path") defaultsTo ""
         val SAVE_SCAN_CROP = booleanPreferencesKey("save_scan_crop") defaultsTo true
+        val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false

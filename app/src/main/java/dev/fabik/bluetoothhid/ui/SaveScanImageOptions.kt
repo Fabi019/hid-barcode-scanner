@@ -106,6 +106,7 @@ fun SaveToImageOptionsContent() {
         Spacer(Modifier.height(4.dp))
 
         AdvancedToggleOption("Crop image", PreferenceStore.SAVE_SCAN_CROP)
+        AdvancedSliderOption("Quality", 1 to 100, PreferenceStore.SAVE_SCAN_QUALITY)
 
         Spacer(Modifier.height(16.dp))
     }
