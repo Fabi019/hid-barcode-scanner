@@ -40,12 +40,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.FileProvider
+import androidx.core.graphics.toPoint
 import androidx.core.graphics.toPointF
 import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.Binarizer
+import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
@@ -263,7 +265,7 @@ class CameraViewModel : ViewModel() {
     private var scale = 1.0f
     private var translation = Offset(0.0f, 0.0f)
 
-    fun transformPoint(point: Point, scanSize: Size): PointF {
+    fun transformPoint(point: Point, scanSize: Size, reverse: Boolean = false): PointF {
         if (scanSize != lastScanSize) {
             val vw = viewSize?.width ?: return point.toPointF()
             val vh = viewSize?.height ?: return point.toPointF()
@@ -284,7 +286,11 @@ class CameraViewModel : ViewModel() {
 
             lastScanSize = scanSize
         }
-        return PointF(point.x * scale - translation.x, point.y * scale - translation.y)
+        return if (reverse) {
+            PointF((point.x + translation.x) / scale, (point.y + translation.y) / scale)
+        } else {
+            PointF(point.x * scale - translation.x, point.y * scale - translation.y)
+        }
     }
 
     private var _readerOptions = BarcodeReader.Options()
@@ -334,7 +340,7 @@ class CameraViewModel : ViewModel() {
     private var _scanDelay: Int = 0
     private var _jsEngineService: JsEngineService.LocalBinder? = null
     private var _saveScanPath: Uri? = null
-    private var _saveScanCrop: Boolean = false
+    private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
 
     fun updateScanParameters(
@@ -344,7 +350,7 @@ class CameraViewModel : ViewModel() {
         frequency: ScanFrequency,
         jsEngineService: JsEngineService.LocalBinder?,
         saveScanPath: String?,
-        saveScanCrop: Boolean,
+        saveScanCropMode: CropMode,
         scanSaveQuality: Int
     ) {
         _scanDelay = when (frequency) {
@@ -365,7 +371,7 @@ class CameraViewModel : ViewModel() {
             val docId = DocumentsContract.getTreeDocumentId(pathUri)
             _saveScanPath = DocumentsContract.buildDocumentUriUsingTree(pathUri, docId)
         }
-        _saveScanCrop = saveScanCrop
+        _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
 
         Log.d(TAG, "Updated scan parameters")
@@ -543,6 +549,24 @@ class CameraViewModel : ViewModel() {
         val nv21 =
             YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
 
+        val rect = when (_saveScanCropMode) {
+            CropMode.NONE -> android.graphics.Rect(0, 0, image.width, image.height)
+            CropMode.SCAN_AREA, CropMode.BARCODE -> {
+                var (topLeft, bottomRight) = if (_saveScanCropMode == CropMode.SCAN_AREA) {
+                    scanRect.topLeft.let { Point(it.x.toInt(), it.y.toInt()) } to
+                            scanRect.bottomRight.let { Point(it.x.toInt(), it.y.toInt()) }
+                } else {
+                    currentBarcode.value!!.cornerPoints[0].toPoint() to
+                            currentBarcode.value!!.cornerPoints[2].toPoint()
+                }
+
+                topLeft = transformPoint(topLeft, lastScanSize!!, true).toPoint()
+                bottomRight = transformPoint(bottomRight, lastScanSize!!, true).toPoint()
+
+                android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+            }
+        }
+
         val newFileUri = DocumentsContract.createDocument(
             context.contentResolver,
             path,
@@ -550,16 +574,13 @@ class CameraViewModel : ViewModel() {
             "scan.jpg"
         )
 
-        context.contentResolver.openOutputStream(newFileUri!!).use {
-            val success = nv21.compressToJpeg(
-                android.graphics.Rect(
-                    0,
-                    0,
-                    image.width,
-                    image.height
-                ), _saveScanQuality, it
-            )
-            Log.d(TAG, "Wrote scan image to $path: $success")
+        newFileUri?.let { file ->
+            context.contentResolver.openOutputStream(file).use {
+                val success = nv21.compressToJpeg(
+                    rect, _saveScanQuality, it
+                )
+                Log.d(TAG, "Wrote scan image to $path: $success")
+            }
         }
     }
 

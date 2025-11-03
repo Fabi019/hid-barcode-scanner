@@ -95,6 +95,13 @@ enum class TextMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HRI
     }
 }
+enum class CropMode {
+    NONE, SCAN_AREA, BARCODE;
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
+    }
+}
 
 open class PreferenceStore {
     // Simple generic preference class - no need for type-specific wrappers
@@ -126,7 +133,7 @@ open class PreferenceStore {
         private infix fun <T> Preferences.Key<T>.defaultsTo(value: T) =
             Preference(this, value)
 
-        private fun <E : Enum<E>> Preferences.Key<Int>.enumDefaultsTo(
+        private infix fun <E : Enum<E>> Preferences.Key<Int>.enumDefaultsTo(
             fromOrdinal: (Int) -> E
         ) = EnumPref(this, fromOrdinal)
 
@@ -191,7 +198,8 @@ open class PreferenceStore {
 
         val SAVE_SCAN = booleanPreferencesKey("save_scan") defaultsTo false
         val SAVE_SCAN_PATH = stringPreferencesKey("save_scan_path") defaultsTo ""
-        val SAVE_SCAN_CROP = booleanPreferencesKey("save_scan_crop") defaultsTo true
+        val SAVE_SCAN_CROP_MODE =
+            intPreferencesKey("save_scan_crop_mode") enumDefaultsTo CropMode::fromIndex
         val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
