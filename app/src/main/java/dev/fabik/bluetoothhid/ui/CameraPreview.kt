@@ -211,7 +211,8 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.SAVE_SCAN,
         PreferenceStore.SAVE_SCAN_PATH,
         PreferenceStore.SAVE_SCAN_CROP_MODE,
-        PreferenceStore.SAVE_SCAN_QUALITY
+        PreferenceStore.SAVE_SCAN_QUALITY,
+        PreferenceStore.SAVE_SCAN_FILE_PATTERN
     )
 
     scanner?.let {
@@ -233,7 +234,8 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 jsEngineService,
                 if (saveScan && saveScanPath.isNotBlank()) saveScanPath else null,
                 PreferenceStore.SAVE_SCAN_CROP_MODE.extractEnum(it),
-                PreferenceStore.SAVE_SCAN_QUALITY.extract(it)
+                PreferenceStore.SAVE_SCAN_QUALITY.extract(it),
+                PreferenceStore.SAVE_SCAN_FILE_PATTERN.extract(it)
             )
         }
     }

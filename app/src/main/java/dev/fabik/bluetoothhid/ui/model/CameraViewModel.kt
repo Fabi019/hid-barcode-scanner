@@ -71,6 +71,8 @@ import java.io.FileOutputStream
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.max
+import kotlin.math.min
 
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class CameraViewModel : ViewModel() {
@@ -342,6 +344,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanPath: Uri? = null
     private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
+    private var _saveScanFileName: String = "scan"
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -351,7 +354,8 @@ class CameraViewModel : ViewModel() {
         jsEngineService: JsEngineService.LocalBinder?,
         saveScanPath: String?,
         saveScanCropMode: CropMode,
-        scanSaveQuality: Int
+        scanSaveQuality: Int,
+        saveScanFileName: String
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -365,14 +369,16 @@ class CameraViewModel : ViewModel() {
         _jsCode = jsCode
         _jsEngineService = jsEngineService
 
-        saveScanPath?.let {
+        _saveScanPath = saveScanPath?.let {
             val pathUri = it.toUri()
             // Get the document ID for the directory
             val docId = DocumentsContract.getTreeDocumentId(pathUri)
-            _saveScanPath = DocumentsContract.buildDocumentUriUsingTree(pathUri, docId)
+            DocumentsContract.buildDocumentUriUsingTree(pathUri, docId)
         }
+
         _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
+        _saveScanFileName = saveScanFileName
 
         Log.d(TAG, "Updated scan parameters")
     }
@@ -549,6 +555,7 @@ class CameraViewModel : ViewModel() {
         val nv21 =
             YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
 
+        val barcode = currentBarcode.value ?: return
         val rect = when (_saveScanCropMode) {
             CropMode.NONE -> android.graphics.Rect(0, 0, image.width, image.height)
             CropMode.SCAN_AREA, CropMode.BARCODE -> {
@@ -556,22 +563,40 @@ class CameraViewModel : ViewModel() {
                     scanRect.topLeft.let { Point(it.x.toInt(), it.y.toInt()) } to
                             scanRect.bottomRight.let { Point(it.x.toInt(), it.y.toInt()) }
                 } else {
-                    currentBarcode.value!!.cornerPoints[0].toPoint() to
-                            currentBarcode.value!!.cornerPoints[2].toPoint()
+                    val minX = barcode.cornerPoints.minOf { it.x } - 5
+                    val maxX = barcode.cornerPoints.maxOf { it.x } + 5
+                    val minY = barcode.cornerPoints.minOf { it.y } - 5
+                    val maxY = barcode.cornerPoints.maxOf { it.y } + 5
+
+                    Point(max(0f, minX).toInt(), max(0f, minY).toInt()) to
+                            Point(
+                                min(maxX, image.width.toFloat()).toInt(),
+                                min(maxY, image.height.toFloat()).toInt()
+                            )
                 }
 
-                topLeft = transformPoint(topLeft, lastScanSize!!, true).toPoint()
-                bottomRight = transformPoint(bottomRight, lastScanSize!!, true).toPoint()
+                val size = Size(image.width, image.height)
+                topLeft = transformPoint(topLeft, size, true).toPoint()
+                bottomRight = transformPoint(bottomRight, size, true).toPoint()
 
                 android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
             }
         }
 
+        // Determine filename
+        var fileName = "${_saveScanFileName}.jpg"
+        fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
+        fileName = fileName.replace(
+            "{FORMAT}",
+            ZXingAnalyzer.format2String(barcode.format)
+        )
+        fileName = fileName.replace("{CODE}", barcode.value?.replace("/", "") ?: "")
+
         val newFileUri = DocumentsContract.createDocument(
             context.contentResolver,
             path,
             "image/jpeg",
-            "scan.jpg"
+            fileName
         )
 
         newFileUri?.let { file ->
@@ -581,6 +606,8 @@ class CameraViewModel : ViewModel() {
                 )
                 Log.d(TAG, "Wrote scan image to $path: $success")
             }
+        } ?: run {
+            Log.e(TAG, "Failed to create file at $path")
         }
     }
 

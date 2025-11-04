@@ -201,6 +201,8 @@ open class PreferenceStore {
         val SAVE_SCAN_CROP_MODE =
             intPreferencesKey("save_scan_crop_mode") enumDefaultsTo CropMode::fromIndex
         val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
+        val SAVE_SCAN_FILE_PATTERN =
+            stringPreferencesKey("save_scan_file_pattern") defaultsTo "scan_{TIMESTAMP}"
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false

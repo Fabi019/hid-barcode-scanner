@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.byValue
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
@@ -25,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,8 +47,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
+import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +95,12 @@ fun SaveScanImageOptionsModal() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview(showBackground = true)
 fun SaveToImageOptionsContent() {
     Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
             .verticalScroll(rememberScrollState())
             .fillMaxWidth()
@@ -99,12 +111,7 @@ fun SaveToImageOptionsContent() {
             style = MaterialTheme.typography.titleLarge,
         )
 
-        Spacer(Modifier.height(4.dp))
-
         FolderPicker()
-
-        Spacer(Modifier.height(4.dp))
-
         AdvancedEnumSelectionOption(
             "Crop mode",
             arrayOf("None", "Scan area", "Barcode"),
@@ -112,7 +119,42 @@ fun SaveToImageOptionsContent() {
         )
         AdvancedSliderOption("Image quality", 1 to 100, PreferenceStore.SAVE_SCAN_QUALITY)
 
-        Spacer(Modifier.height(16.dp))
+        val context = LocalContext.current
+        val storedFileName by context.getPreferenceState(PreferenceStore.SAVE_SCAN_FILE_PATTERN)
+        val localFileName = rememberTextFieldState()
+
+        storedFileName?.let {
+            DisposableEffect(it) {
+                localFileName.setTextAndPlaceCursorAtEnd(it)
+                onDispose {
+                    runBlocking {
+                        context.setPreference(
+                            PreferenceStore.SAVE_SCAN_FILE_PATTERN,
+                            localFileName.text.toString()
+                        )
+                    }
+                }
+            }
+        }
+
+        OutlinedTextField(
+            state = localFileName,
+            supportingText = { Text("Placeholder: {TIMESTAMP}, {CODE}, {FORMAT}") },
+            label = { Text("File name pattern") },
+            inputTransformation = InputTransformation.byValue { current, proposed ->
+                if (proposed.contains("/")) {
+                    current
+                } else {
+                    proposed
+                }
+            },
+            lineLimits = TextFieldLineLimits.SingleLine,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(2.dp),
+        )
+
+        Spacer(Modifier.height(12.dp))
     }
 }
 
