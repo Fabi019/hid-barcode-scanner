@@ -81,7 +81,7 @@ import zxingcpp.BarcodeReader
 fun CameraPreviewContent(
     viewModel: CameraViewModel = viewModel<CameraViewModel>(),
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String) -> Unit,
+    onBarcodeDetected: (String, Int, String?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

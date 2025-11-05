@@ -96,7 +96,6 @@ class CameraViewModel : ViewModel() {
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     var onBarcodeDetected: (String, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
-    var lastBarcodeFormat: BarcodeReader.Format? = null // Still used internally by Scanner.kt
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -131,7 +130,7 @@ class CameraViewModel : ViewModel() {
         fixExposure: Boolean,
         focusMode: FocusMode,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-        onBarcode: (String) -> Unit,
+        onBarcode: (String, Int, String?) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
@@ -140,19 +139,17 @@ class CameraViewModel : ViewModel() {
             if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
 
-                HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
+                val formatIdx = ZXingAnalyzer.format2Index(format)
+                HistoryViewModel.addHistoryItem(value, formatIdx)
 
-                _saveScanPath?.let { path ->
+                val scanImageName = _saveScanPath?.let { path ->
                     image?.let { image ->
                         saveScanImage(appContext, image, path)
                     }
                 }
 
-                // Store the format for later use
-                lastBarcodeFormat = format
-
                 viewModelScope.launch {
-                    onBarcode(value)
+                    onBarcode(value, formatIdx, scanImageName)
                 }
                 lastBarcode = value
             }
@@ -538,7 +535,7 @@ class CameraViewModel : ViewModel() {
         )
     }
 
-    fun saveScanImage(context: Context, image: ImageProxy, path: Uri) {
+    fun saveScanImage(context: Context, image: ImageProxy, path: Uri): String? {
         val yBuffer = image.planes[0].buffer
         val uBuffer = image.planes[1].buffer
         val vBuffer = image.planes[2].buffer
@@ -555,7 +552,8 @@ class CameraViewModel : ViewModel() {
         val nv21 =
             YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
 
-        val barcode = currentBarcode.value ?: return
+        val barcode = currentBarcode.value ?: return null
+
         val rect = when (_saveScanCropMode) {
             CropMode.NONE -> android.graphics.Rect(0, 0, image.width, image.height)
             CropMode.SCAN_AREA, CropMode.BARCODE -> {
@@ -601,14 +599,15 @@ class CameraViewModel : ViewModel() {
 
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
-                val success = nv21.compressToJpeg(
-                    rect, _saveScanQuality, it
-                )
-                Log.d(TAG, "Wrote scan image to $path: $success")
+                if (nv21.compressToJpeg(rect, _saveScanQuality, it)) {
+                    Log.d(TAG, "Saved scan image to ${file.path}")
+                    return fileName
+                }
             }
-        } ?: run {
-            Log.e(TAG, "Failed to create file at $path")
         }
+
+        Log.e(TAG, "Failed to create file at $path")
+        return null
     }
 
     private suspend fun mapJS(

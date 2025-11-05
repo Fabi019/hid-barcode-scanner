@@ -85,10 +85,17 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(currentDevice) { text, format ->
+                Scanner(currentDevice) { text, format, imageName ->
                     scope.launch {
                         val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(text, true, "SCAN", null, barcodeType)
+                        controller?.sendString(
+                            text,
+                            true,
+                            "SCAN",
+                            null,
+                            barcodeType,
+                            imageName = imageName
+                        )
                     }
                 }
 
