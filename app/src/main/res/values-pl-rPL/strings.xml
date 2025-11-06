@@ -163,7 +163,8 @@
         Placeholdery metadanych:\n
         • {CODE_TYPE} - typ kodu kreskowego (QR_CODE, CODE_128, itp.)\n
         • {SCAN_SOURCE} - źródło danych (SCAN, HISTORY, MANUAL)\n
-        • {SCANNER_ID} - identyfikator skanera\n\n
+        • {SCANNER_ID} - identyfikator skanera\n
+        • {SCAN_IMAGE_NAME} - name of the stored scan image\n\n
         Uniwersalne kodowanie (działa z DOWOLNYM placeholderem danych):\n
         • Dodaj _HEX lub _B64 do dowolnego placeholdera w dowolnej kolejności\n
         • Przykłady: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n

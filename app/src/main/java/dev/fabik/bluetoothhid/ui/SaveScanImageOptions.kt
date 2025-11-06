@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -41,11 +42,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
@@ -62,8 +65,8 @@ fun SaveScanImageOptionsModal() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     ButtonPreference(
-        title = "Save scan image",
-        desc = "Stores the scan to the gallery",
+        title = stringResource(R.string.save_scan_image),
+        desc = stringResource(R.string.save_scan_desc),
         icon = Icons.Default.Photo,
         onClick = { showSheet = true },
         extra = {
@@ -107,17 +110,21 @@ fun SaveToImageOptionsContent() {
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            "Save scan image",
+            stringResource(R.string.save_scan_image),
             style = MaterialTheme.typography.titleLarge,
         )
 
         FolderPicker()
         AdvancedEnumSelectionOption(
-            "Crop mode",
-            arrayOf("None", "Scan area", "Barcode"),
+            stringResource(R.string.crop_mode),
+            arrayOf("NONE", "SCAN_AREA", "BARCODE"),
             PreferenceStore.SAVE_SCAN_CROP_MODE
         )
-        AdvancedSliderOption("Image quality", 1 to 100, PreferenceStore.SAVE_SCAN_QUALITY)
+        AdvancedSliderOption(
+            stringResource(R.string.image_quality),
+            1 to 100,
+            PreferenceStore.SAVE_SCAN_QUALITY
+        )
 
         val context = LocalContext.current
         val storedFileName by context.getPreferenceState(PreferenceStore.SAVE_SCAN_FILE_PATTERN)
@@ -139,8 +146,8 @@ fun SaveToImageOptionsContent() {
 
         OutlinedTextField(
             state = localFileName,
-            supportingText = { Text("Placeholder: {TIMESTAMP}, {CODE}, {FORMAT}") },
-            label = { Text("File name pattern") },
+            supportingText = { Text(stringResource(R.string.file_name_pattern_placeholder)) },
+            label = { Text(stringResource(R.string.file_name_pattern)) },
             inputTransformation = InputTransformation.byValue { current, proposed ->
                 if (proposed.contains("/")) {
                     current
@@ -152,6 +159,11 @@ fun SaveToImageOptionsContent() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(2.dp),
+        )
+
+        Text(
+            stringResource(R.string.save_scan_image_hint),
+            style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(Modifier.height(12.dp))
@@ -170,7 +182,6 @@ fun FolderPicker() {
     ) { uri ->
         uri?.let {
             val contentResolver = context.contentResolver
-            // Persist permission (so you keep access after app restart)
             val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
@@ -189,10 +200,14 @@ fun FolderPicker() {
             currentUri?.toString() ?: "No path selected",
             onValueChange = {},
             readOnly = true,
-            label = { Text("Output folder") },
+            label = { Text(stringResource(R.string.output_folder)) },
             trailingIcon = {
                 IconButton(onClick = {
-                    folderPickerLauncher.launch(currentUri)
+                    runCatching {
+                        folderPickerLauncher.launch(currentUri)
+                    }.onFailure {
+                        Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
+                    }
                 }) {
                     Icon(Icons.Default.Folder, null)
                 }

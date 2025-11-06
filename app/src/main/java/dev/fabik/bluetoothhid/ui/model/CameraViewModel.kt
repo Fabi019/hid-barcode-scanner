@@ -590,18 +590,20 @@ class CameraViewModel : ViewModel() {
         )
         fileName = fileName.replace("{CODE}", barcode.value?.replace("/", "") ?: "")
 
-        val newFileUri = DocumentsContract.createDocument(
-            context.contentResolver,
-            path,
-            "image/jpeg",
-            fileName
-        )
+        val newFileUri = runCatching {
+            DocumentsContract.createDocument(
+                context.contentResolver,
+                path,
+                "image/jpeg",
+                fileName
+            )
+        }.getOrNull()
 
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
                 if (nv21.compressToJpeg(rect, _saveScanQuality, it)) {
                     Log.d(TAG, "Saved scan image to ${file.path}")
-                    return fileName
+                    return file.lastPathSegment?.substringAfterLast("/")
                 }
             }
         }
