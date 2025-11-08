@@ -81,7 +81,7 @@ import zxingcpp.BarcodeReader
 fun CameraPreviewContent(
     viewModel: CameraViewModel = viewModel<CameraViewModel>(),
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String) -> Unit,
+    onBarcodeDetected: (String, Int, String?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -207,7 +207,12 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.FULL_INSIDE,
         PreferenceStore.SCAN_REGEX,
         PreferenceStore.ENABLE_JS,
-        PreferenceStore.JS_CODE
+        PreferenceStore.JS_CODE,
+        PreferenceStore.SAVE_SCAN,
+        PreferenceStore.SAVE_SCAN_PATH,
+        PreferenceStore.SAVE_SCAN_CROP_MODE,
+        PreferenceStore.SAVE_SCAN_QUALITY,
+        PreferenceStore.SAVE_SCAN_FILE_PATTERN
     )
 
     scanner?.let {
@@ -218,13 +223,19 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 val regex = PreferenceStore.SCAN_REGEX.extract(it)
                 if (!regex.isBlank()) regex.toRegex() else null
             }.getOrNull()
+            val saveScan = PreferenceStore.SAVE_SCAN.extract(it)
+            val saveScanPath = PreferenceStore.SAVE_SCAN_PATH.extract(it)
 
             viewModel.updateScanParameters(
                 PreferenceStore.FULL_INSIDE.extract(it),
                 scanRegex,
                 if (jsEnabled) jsCode else null,
                 PreferenceStore.SCAN_FREQUENCY.extractEnum(it),
-                jsEngineService
+                jsEngineService,
+                if (saveScan && saveScanPath.isNotBlank()) saveScanPath else null,
+                PreferenceStore.SAVE_SCAN_CROP_MODE.extractEnum(it),
+                PreferenceStore.SAVE_SCAN_QUALITY.extract(it),
+                PreferenceStore.SAVE_SCAN_FILE_PATTERN.extract(it)
             )
         }
     }
@@ -293,7 +304,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
         onConfirm = {
             viewModel.onBarcodeDetected(
                 selectedTexts.map { e -> e.value }.joinToString("\n"),
-                BarcodeReader.Format.NONE
+                BarcodeReader.Format.NONE, null
             )
             close()
         }

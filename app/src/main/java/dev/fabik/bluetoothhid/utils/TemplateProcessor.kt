@@ -212,7 +212,8 @@ object TemplateProcessor {
         scanTimestamp: Long? = null,
         scannerId: String? = null,
         barcodeType: String? = null,
-        preserveUnsupportedPlaceholders: Boolean = false
+        preserveUnsupportedPlaceholders: Boolean = false,
+        scanImageFileName: String? = null
     ): String {
         // Validation - ensure template contains at least one CODE placeholder
         val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
@@ -278,6 +279,7 @@ object TemplateProcessor {
                     "CODE_TYPE" -> barcodeType ?: "UNKNOWN"
                     "SCAN_SOURCE" -> from
                     "SCANNER_ID" -> scannerId ?: ""
+                    "SCAN_IMAGE_NAME" -> scanImageFileName ?: ""
                     "SCAN_TIME" -> {
                         val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss.SSS" }
                         SimpleDateFormat(format, Locale.getDefault()).format(scanDate)

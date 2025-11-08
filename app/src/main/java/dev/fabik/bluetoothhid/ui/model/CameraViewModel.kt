@@ -7,8 +7,10 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PointF
+import android.graphics.YuvImage
 import android.hardware.camera2.CaptureRequest
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.util.Log
 import android.util.Size
 import androidx.annotation.OptIn
@@ -38,11 +40,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.IntSize
 import androidx.core.content.FileProvider
+import androidx.core.graphics.toPoint
 import androidx.core.graphics.toPointF
+import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.Binarizer
+import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
@@ -66,6 +71,8 @@ import java.io.FileOutputStream
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import kotlin.math.max
+import kotlin.math.min
 
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class CameraViewModel : ViewModel() {
@@ -88,8 +95,7 @@ class CameraViewModel : ViewModel() {
     var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    var onBarcodeDetected: (String, BarcodeReader.Format) -> Unit = { _, _ -> }
-    var lastBarcodeFormat: BarcodeReader.Format? = null // Still used internally by Scanner.kt
+    var onBarcodeDetected: (String, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -124,21 +130,26 @@ class CameraViewModel : ViewModel() {
         fixExposure: Boolean,
         focusMode: FocusMode,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-        onBarcode: (String) -> Unit,
+        onBarcode: (String, Int, String?) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
-        onBarcodeDetected = { value, format ->
+        onBarcodeDetected = { value, format, image ->
             if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
-                HistoryViewModel.addHistoryItem(value, ZXingAnalyzer.format2Index(format))
 
-                // Store the format for later use
-                lastBarcodeFormat = format
+                val formatIdx = ZXingAnalyzer.format2Index(format)
+                HistoryViewModel.addHistoryItem(value, formatIdx)
+
+                val scanImageName = _saveScanPath?.let { path ->
+                    image?.let { image ->
+                        saveScanImage(appContext, image, path)
+                    }
+                }
 
                 viewModelScope.launch {
-                    onBarcode(value)
+                    onBarcode(value, formatIdx, scanImageName)
                 }
                 lastBarcode = value
             }
@@ -253,7 +264,7 @@ class CameraViewModel : ViewModel() {
     private var scale = 1.0f
     private var translation = Offset(0.0f, 0.0f)
 
-    fun transformPoint(point: Point, scanSize: Size): PointF {
+    fun transformPoint(point: Point, scanSize: Size, reverse: Boolean = false): PointF {
         if (scanSize != lastScanSize) {
             val vw = viewSize?.width ?: return point.toPointF()
             val vh = viewSize?.height ?: return point.toPointF()
@@ -274,7 +285,11 @@ class CameraViewModel : ViewModel() {
 
             lastScanSize = scanSize
         }
-        return PointF(point.x * scale - translation.x, point.y * scale - translation.y)
+        return if (reverse) {
+            PointF((point.x + translation.x) / scale, (point.y + translation.y) / scale)
+        } else {
+            PointF(point.x * scale - translation.x, point.y * scale - translation.y)
+        }
     }
 
     private var _readerOptions = BarcodeReader.Options()
@@ -323,13 +338,21 @@ class CameraViewModel : ViewModel() {
     private var _jsCode: String? = null
     private var _scanDelay: Int = 0
     private var _jsEngineService: JsEngineService.LocalBinder? = null
+    private var _saveScanPath: Uri? = null
+    private var _saveScanCropMode: CropMode = CropMode.NONE
+    private var _saveScanQuality: Int = 100
+    private var _saveScanFileName: String = "scan"
 
     fun updateScanParameters(
         fullyInside: Boolean,
         scanRegex: Regex?,
         jsCode: String?,
         frequency: ScanFrequency,
-        jsEngineService: JsEngineService.LocalBinder?
+        jsEngineService: JsEngineService.LocalBinder?,
+        saveScanPath: String?,
+        saveScanCropMode: CropMode,
+        scanSaveQuality: Int,
+        saveScanFileName: String
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -342,6 +365,17 @@ class CameraViewModel : ViewModel() {
         _scanRegex = scanRegex
         _jsCode = jsCode
         _jsEngineService = jsEngineService
+
+        _saveScanPath = saveScanPath?.let {
+            val pathUri = it.toUri()
+            // Get the document ID for the directory
+            val docId = DocumentsContract.getTreeDocumentId(pathUri)
+            DocumentsContract.buildDocumentUriUsingTree(pathUri, docId)
+        }
+
+        _saveScanCropMode = saveScanCropMode
+        _saveScanQuality = scanSaveQuality
+        _saveScanFileName = saveScanFileName
 
         Log.d(TAG, "Updated scan parameters")
     }
@@ -359,10 +393,11 @@ class CameraViewModel : ViewModel() {
 
     fun onBarcodeResult(
         result: List<BarcodeReader.Result>,
-        source: Size
+        sourceImage: ImageProxy
     ) {
         detectorTrace.trigger()
 
+        val source = Size(sourceImage.width, sourceImage.height)
         val barcode = result.map {
             val cornerPoints = listOf(
                 it.position.topLeft,
@@ -402,10 +437,10 @@ class CameraViewModel : ViewModel() {
                 runBlocking {
                     value =
                         mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, barcode.format)
+                    onBarcodeDetected(value, barcode.format, sourceImage)
                 }
             } ?: run {
-                onBarcodeDetected(value, barcode.format)
+                onBarcodeDetected(value, barcode.format, sourceImage)
             }
         }
     }
@@ -443,7 +478,7 @@ class CameraViewModel : ViewModel() {
             _ocrResults.update { _ -> results }
             return true
         } else if (results.isNotEmpty()) {
-            onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE)
+            onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE, null)
         }
 
         return false
@@ -498,6 +533,83 @@ class CameraViewModel : ViewModel() {
                 }
             }
         )
+    }
+
+    fun saveScanImage(context: Context, image: ImageProxy, path: Uri): String? {
+        val yBuffer = image.planes[0].buffer
+        val uBuffer = image.planes[1].buffer
+        val vBuffer = image.planes[2].buffer
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val yuv = ByteArray(ySize + uSize + vSize)
+        yBuffer.get(yuv, 0, ySize)
+        vBuffer.get(yuv, ySize, vSize)
+        uBuffer.get(yuv, ySize + vSize, uSize)
+
+        val nv21 =
+            YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
+
+        val barcode = currentBarcode.value ?: return null
+
+        val rect = when (_saveScanCropMode) {
+            CropMode.NONE -> android.graphics.Rect(0, 0, image.width, image.height)
+            CropMode.SCAN_AREA, CropMode.BARCODE -> {
+                var (topLeft, bottomRight) = if (_saveScanCropMode == CropMode.SCAN_AREA) {
+                    scanRect.topLeft.let { Point(it.x.toInt(), it.y.toInt()) } to
+                            scanRect.bottomRight.let { Point(it.x.toInt(), it.y.toInt()) }
+                } else {
+                    val minX = barcode.cornerPoints.minOf { it.x } - 5
+                    val maxX = barcode.cornerPoints.maxOf { it.x } + 5
+                    val minY = barcode.cornerPoints.minOf { it.y } - 5
+                    val maxY = barcode.cornerPoints.maxOf { it.y } + 5
+
+                    Point(max(0f, minX).toInt(), max(0f, minY).toInt()) to
+                            Point(
+                                min(maxX, image.width.toFloat()).toInt(),
+                                min(maxY, image.height.toFloat()).toInt()
+                            )
+                }
+
+                val size = Size(image.width, image.height)
+                topLeft = transformPoint(topLeft, size, true).toPoint()
+                bottomRight = transformPoint(bottomRight, size, true).toPoint()
+
+                android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+            }
+        }
+
+        // Determine filename
+        var fileName = "${_saveScanFileName}.jpg"
+        fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
+        fileName = fileName.replace(
+            "{FORMAT}",
+            ZXingAnalyzer.format2String(barcode.format)
+        )
+        fileName = fileName.replace("{CODE}", barcode.value?.replace("/", "") ?: "")
+
+        val newFileUri = runCatching {
+            DocumentsContract.createDocument(
+                context.contentResolver,
+                path,
+                "image/jpeg",
+                fileName
+            )
+        }.getOrNull()
+
+        newFileUri?.let { file ->
+            context.contentResolver.openOutputStream(file).use {
+                if (nv21.compressToJpeg(rect, _saveScanQuality, it)) {
+                    Log.d(TAG, "Saved scan image to ${file.path}")
+                    return file.lastPathSegment?.substringAfterLast("/")
+                }
+            }
+        }
+
+        Log.e(TAG, "Failed to create file at $path")
+        return null
     }
 
     private suspend fun mapJS(

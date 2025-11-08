@@ -1,12 +1,13 @@
 package dev.fabik.bluetoothhid
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.content.Context
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.KeyboardCommandKey
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PhonelinkSetup
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Save
@@ -49,16 +51,17 @@ import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material.icons.filled.PhonelinkSetup
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -71,6 +74,7 @@ import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxEnumPreference
 import dev.fabik.bluetoothhid.ui.CustomKeysDialog
 import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
+import dev.fabik.bluetoothhid.ui.SaveScanImageOptionsModal
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
@@ -259,12 +263,19 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         desc = strings[R.string.custom_js_desc],
         icon = Icons.Default.Code,
         extra = {
-            jsEnabled?.let { c ->
-                Switch(c, onCheckedChange = {
-                    jsEnabled = it
-                }, modifier = Modifier.semantics(mergeDescendants = true) {
-                    stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
-                })
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                VerticalDivider(
+                    Modifier
+                        .height(32.dp)
+                        .padding(horizontal = 24.dp)
+                )
+                jsEnabled?.let { c ->
+                    Switch(c, onCheckedChange = {
+                        jsEnabled = it
+                    }, modifier = Modifier.semantics(mergeDescendants = true) {
+                        stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
+                    })
+                }
             }
         },
         onClick = jsDialog::open
@@ -351,8 +362,8 @@ internal fun CameraSettings(strings: SettingsStrings) {
         values = strings.array(R.array.scan_res_values),
         preference = PreferenceStore.SCAN_RESOLUTION
     )
-	
-	/*SwitchPreference(
+
+    /*SwitchPreference(
             title = strings[R.string.auto_zoom],
             desc = strings[R.string.zooms_in_on_codes_to_far_away],
             icon = Icons.Default.ZoomIn,
@@ -426,7 +437,7 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         }
     )
 
-	/*ComboBoxEnumPreference(
+    /*ComboBoxEnumPreference(
         title = strings[R.string.highlight_type],
         desc = strings[R.string.highlight_type_desc],
         icon = Icons.Default.Highlight,
@@ -497,6 +508,8 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         icon = Icons.Default.Save,
         preference = PreferenceStore.PERSIST_HISTORY,
     )
+
+    SaveScanImageOptionsModal()
 }
 
 @Composable

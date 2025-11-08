@@ -6,10 +6,10 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.BroadcastReceiver
 import android.util.Log
 import android.widget.Toast
 import dev.fabik.bluetoothhid.R
@@ -19,17 +19,17 @@ import dev.fabik.bluetoothhid.utils.KeyboardLayout
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -459,7 +459,14 @@ class BluetoothController(var context: Context) {
         } ?: true
     }
 
-    suspend fun sendString(string: String, withExtraKeys: Boolean = true, from: String = "SCAN", scanTimestamp: Long? = null, barcodeType: String? = null) = with(context) {
+    suspend fun sendString(
+        string: String,
+        withExtraKeys: Boolean = true,
+        from: String = "SCAN",
+        scanTimestamp: Long? = null,
+        barcodeType: String? = null,
+        imageName: String? = null
+    ) = with(context) {
         if (!_isSending.compareAndSet(expect = false, update = true)) {
             return@with
         }
@@ -491,7 +498,8 @@ class BluetoothController(var context: Context) {
                 scanTimestamp,
                 scannerID,
                 barcodeType,
-                preserveUnsupported  // Pass preference
+                preserveUnsupported,  // Pass preference
+                imageName
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -504,7 +512,8 @@ class BluetoothController(var context: Context) {
                 scanTimestamp,
                 scannerID,
                 barcodeType,
-                false  // HID always false - placeholders needed for KeyTranslator
+                false,  // HID always false - placeholders needed for KeyTranslator
+                imageName
             )
             val locale = when (layout) {
                 KeyboardLayout.US -> "us"

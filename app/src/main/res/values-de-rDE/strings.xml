@@ -204,7 +204,8 @@
         Metadaten Platzhalter:\n
         • {CODE_TYPE} - Barcode-Typ (QR_CODE, CODE_128, usw.)\n
         • {SCAN_SOURCE} - Datenquelle (SCAN, HISTORY, MANUAL)\n
-        • {SCANNER_ID} - Scanner-Hardware-ID\n\n
+        • {SCANNER_ID} - Scanner-Hardware-ID\n
+        • {SCAN_IMAGE_NAME} - Name des gespeicherten Scans\n\n
         Universelle Kodierung (funktioniert mit JEDEM Daten-Platzhalter):\n
         • Fügen Sie _HEX oder _B64 zu jedem Platzhalter in beliebiger Reihenfolge hinzu\n
         • Beispiele: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
