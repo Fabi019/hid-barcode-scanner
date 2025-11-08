@@ -3,20 +3,20 @@ package dev.fabik.bluetoothhid.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.AlertDialog
@@ -102,38 +102,40 @@ fun TextBoxDialog(
         },
         onReset = onReset
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.8f)  // Takes 80% of screen height
-        ) {
-            description?.let {
-                Box(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Text(it)
-                }
-                Spacer(Modifier.height(16.dp))
-            }
-            TextField(
-                value = currentText,
-                isError = hasError != null,
-                onValueChange = { currentText = it },
-                supportingText = {
-                    hasError?.let {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
+        BoxWithConstraints {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sizeIn(maxHeight = maxHeight * 0.8f)
+            ) {
+                description?.let {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(it)
                     }
-                },
-                minLines = 1,
-                maxLines = 20,
-                modifier = Modifier.fillMaxWidth()
-            )
+                    Spacer(Modifier.height(16.dp))
+                }
+                TextField(
+                    value = currentText,
+                    isError = hasError != null,
+                    onValueChange = { currentText = it },
+                    supportingText = {
+                        hasError?.let {
+                            Text(
+                                text = it,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    },
+                    minLines = 1,
+                    maxLines = 20,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }

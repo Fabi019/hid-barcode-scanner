@@ -299,7 +299,7 @@ fun AppBarTextField(
         textStyle.merge(TextStyle(color = textColor, lineHeight = 16.sp, fontSize = 16.sp))
 
     // request focus when this composable is first initialized
-    val focusRequester = FocusRequester()
+    val focusRequester = remember { FocusRequester() }
     SideEffect {
         focusRequester.requestFocus()
     }
