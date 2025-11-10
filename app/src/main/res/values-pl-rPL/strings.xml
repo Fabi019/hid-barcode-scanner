@@ -237,7 +237,7 @@
     <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
     <string name="developer_mode">Tryb dewelopera</string>
     <string name="connection_mode">Tryb połączenia</string>
-    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania)</string>
+    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania). Nieobsługiwane ustawienia będą wyszarzone w trybie RFCOMM.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Jasny</item>

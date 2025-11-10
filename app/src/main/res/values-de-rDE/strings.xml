@@ -323,7 +323,7 @@
     <string name="manual_input">Manuelle Eingabe</string>
     <string name="include_extra_keys">Extra Tasten verwenden</string>
     <string name="connection_mode">Verbindungsmodus</string>
-    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port (kann zusätzliche Software erfordern)</string>
+    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port (kann zusätzliche Software erfordern). Nicht unterstützte Einstellungen werden im RFCOMM-Modus ausgegraut.</string>
     <string-array name="connection_mode_values">
         <item>HID-Tastatur</item>
         <item>RFCOMM (SPP)</item>

@@ -288,7 +288,7 @@
     <string name="manual_input">Manual input</string>
     <string name="include_extra_keys">Include extra keys</string>
     <string name="connection_mode">Connection Mode</string>
-    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software)</string>
+    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software). Unsupported settings will be greyed out in RFCOMM mode.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>

@@ -79,7 +79,9 @@ import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.rememberDialogState
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.launch
@@ -147,6 +149,8 @@ fun SectionTitle(text: String) {
 
 @Composable
 internal fun ConnectionSettings(strings: SettingsStrings) {
+    val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
+    val isRfcomm = connectionMode == ConnectionMode.RFCOMM
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -176,6 +180,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         valueFormat = strings[R.string.send_delay_template],
         range = 0f..100f,
         icon = Icons.Default.Timer,
+        enabled = !isRfcomm,
         preference = PreferenceStore.SEND_DELAY
     )
 
@@ -184,6 +189,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         desc = strings[R.string.keyboard_layout_desc],
         icon = Icons.Default.Keyboard,
         values = strings.array(R.array.keyboard_layout_values),
+        enabled = !isRfcomm,
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
 
@@ -193,6 +199,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.custom_keys],
         desc = strings[R.string.define_custom_keys],
         icon = Icons.Default.KeyboardCommandKey,
+        enabled = !isRfcomm,
         onClick = customKeysDialog::open
     )
 
