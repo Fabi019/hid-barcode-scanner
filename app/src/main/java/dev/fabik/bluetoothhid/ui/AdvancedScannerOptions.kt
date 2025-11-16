@@ -7,15 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -38,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlin.math.roundToInt
 
@@ -70,6 +73,7 @@ fun AdvancedOptionsModal() {
 fun AdvancedOptionsModalContent() {
     Column(
         modifier = Modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
@@ -108,7 +112,7 @@ fun AdvancedOptionsModalContent() {
             style = MaterialTheme.typography.titleSmall
         )
 
-        AdvancedSelectionOption(
+        AdvancedEnumSelectionOption(
             stringResource(R.string.binarizer),
             arrayOf("LOCAL_AVERAGE", "GLOBAL_HISTOGRAM", "FIXED_THRESHOLD", "BOOL_CAST"),
             PreferenceStore.ADV_BINARIZER
@@ -130,7 +134,7 @@ fun AdvancedOptionsModalContent() {
             style = MaterialTheme.typography.titleSmall
         )
 
-        AdvancedSelectionOption(
+        AdvancedEnumSelectionOption(
             stringResource(R.string.text_mode),
             arrayOf("PLAIN", "ECI", "HRI", "HEX", "ESCAPED"),
             PreferenceStore.ADV_TEXT_MODE
@@ -162,13 +166,13 @@ fun AdvancedToggleOption(text: String, preference: PreferenceStore.Preference<Bo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdvancedSelectionOption(
+fun <E : Enum<E>> AdvancedEnumSelectionOption(
     text: String,
     values: Array<String>,
-    preference: PreferenceStore.Preference<Int>
+    preference: PreferenceStore.EnumPref<E>
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    var selectedIndex by rememberPreference(preference)
+    var selectedEnum by rememberEnumPreference(preference)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -179,7 +183,7 @@ fun AdvancedSelectionOption(
         OutlinedTextField(
             readOnly = true,
             singleLine = true,
-            value = values.getOrNull(selectedIndex) ?: "",
+            value = values.getOrNull(selectedEnum.ordinal) ?: "",
             onValueChange = { },
             label = { Text(text) },
             trailingIcon = {
@@ -189,7 +193,7 @@ fun AdvancedSelectionOption(
             },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
             modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
                 .padding(2.dp)
         )
@@ -203,7 +207,7 @@ fun AdvancedSelectionOption(
                 DropdownMenuItem(
                     text = { Text(text = selectionOption) },
                     onClick = {
-                        selectedIndex = i
+                        selectedEnum = preference.fromOrdinal(i)
                         expanded = false
                     }
                 )

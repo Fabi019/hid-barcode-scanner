@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.utils.OverlayType
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.getPreferenceState
@@ -53,7 +54,8 @@ import kotlin.math.roundToInt
 fun OverlayCanvas(viewModel: CameraViewModel) {
     val context = LocalContext.current
 
-    val overlayType by context.getPreferenceStateBlocking(PreferenceStore.OVERLAY_TYPE)
+    val overlayTypeOrdinal by context.getPreferenceStateBlocking(PreferenceStore.OVERLAY_TYPE)
+    val overlayType = OverlayType.fromIndex(overlayTypeOrdinal)
     val restrictArea by context.getPreferenceStateBlocking(PreferenceStore.RESTRICT_AREA)
     // val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
@@ -76,7 +78,7 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
         if (restrictArea) {
             viewModel.scanRect = when (overlayType) {
                 // Rectangle optimized for barcodes
-                1 -> {
+                OverlayType.RECTANGLE -> {
                     val length = this.size.width * 0.8f
                     val height = (length * 0.45f).coerceAtMost(y * 0.8f)
                     Rect(
@@ -85,7 +87,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
                     )
                 }
 
-                2 -> {
+                // Custom - user adjustable overlay
+                OverlayType.CUSTOM -> {
                     val pos = viewModel.overlayPosition
                     val size = viewModel.overlaySize
 
@@ -103,8 +106,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
                     else Rect.Zero
                 }
 
-                // Square for scanning qr codes
-                else -> {
+                // Square for scanning qr codes (default)
+                OverlayType.SQUARE -> {
                     val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
                     Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
                 }
@@ -140,7 +143,7 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     }
 
     // Show the adjust buttons
-    if (restrictArea && overlayType == 2) {
+    if (restrictArea && overlayType == OverlayType.CUSTOM) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CustomOverlayButtons(viewModel)
         }

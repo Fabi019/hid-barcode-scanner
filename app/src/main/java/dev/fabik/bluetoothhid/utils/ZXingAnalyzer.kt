@@ -1,6 +1,6 @@
 package dev.fabik.bluetoothhid.utils
 
-import android.util.Size
+import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import zxingcpp.BarcodeReader
@@ -9,10 +9,12 @@ class ZXingAnalyzer(
     initialOptions: BarcodeReader.Options = BarcodeReader.Options(),
     var scanDelay: Int,
     private val onAnalyze: () -> Unit,
-    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: Size) -> Unit,
+    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     companion object {
+        private const val TAG = "ZXingAnalyzer"
+
         // Order based on the mlkit order to preserve indexes
         // Needs to be kept in sync with the "code_types_values" string array resource
         private val FORMATS = arrayOf(
@@ -54,6 +56,10 @@ class ZXingAnalyzer(
                 it.first == format
             }?.second ?: "UNKNOWN"
         }
+
+        fun index2String(formatIndex: Int): String {
+            return FORMATS.getOrNull(formatIndex)?.second ?: "UNKNOWN"
+        }
     }
 
     private val reader = BarcodeReader(initialOptions)
@@ -72,10 +78,15 @@ class ZXingAnalyzer(
             image.close()
         } else {
             lastAnalyzedTimeStamp = currentTime
-            val results = image.use {
-                reader.read(image)
+
+            runCatching {
+                image.use {
+                    val results = reader.read(image)
+                    onResult(results, image)
+                }
+            }.onFailure {
+                Log.e(TAG, "Error analyzing image!", it)
             }
-            onResult(results, Size(image.width, image.height))
         }
 
         onAnalyze()

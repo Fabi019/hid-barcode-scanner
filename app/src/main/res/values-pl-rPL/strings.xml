@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Translated by: Marcin Golesz (WinLin97) @ 10.10.2024 -->
 <resources>
     <string name="app_name">BT Scanner</string>
@@ -136,14 +137,53 @@
     <string name="filter_desc_long">Obsługuje typową składnię regex. Użyj pustego ciągu lub .*, aby dopasować wszystko. Jeśli wyrażenie regularne zawiera grupę przechwytywania „(...)”, zostanie użyta wartość grupy.</string>
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
-    <string name="custom_templ_desc_long">
-        Upewnij się, że ustawiłeś \'Ekstra klawisze\' na \'Własny szablon\'. Specjalne znaczniki: {CODE}, {CODE_B64}, {CODE_HEX}, {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {DATE}, {TIME}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {WAIT:n}\n
-        Modyfikatory mogą być ustawione poprzez dodanie następujących znaków:\n
-            \t^: Shift\n
-            \t+: Ctrl\n
-            \t#: Alt\n
-            \t@: Meta\n
-        Przykład: {+r} prześle CTRL+R, {^#F1} prześle SHIFT+ALT+F1, {WAIT:10} doda opóźnienie równe 10 znakom
+    <string name="custom_templ_desc_long">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
+        Placeholdery CODE:\n
+        • {CODE} - zwykły kod kreskowy\n
+        • Kodowanie: _HEX, _B64 można łączyć w dowolnej kolejności\n
+        • Przykłady: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Placeholdery daty/czasu z opcjonalnym formatowaniem:\n
+        • {DATE} - aktualna data (domyślnie: yyyy-MM-dd)\n
+        • {TIME} - aktualny czas (domyślnie: HH:mm:ss)\n
+        • {DATETIME} - data i czas (domyślnie: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - znacznik czasu skanu (domyślnie: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • Własny format: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
+        Wzorce formatowania:\n
+        • EEEE - dzień tygodnia (pełna nazwa), EEE - dzień tygodnia (skrót)\n
+        • MMMM - miesiąc (pełna nazwa), MMM - miesiąc (skrót), MM - miesiąc (liczbowo)\n
+        • yyyy - rok (pełny), yy - rok (dwie ostatnie cyfry), dd - dzień\n
+        • HH - godzina (24h), hh - godzina (12h), mm - minuta, ss - sekunda, SSS - milisekundy, a - AM/PM\n
+        • Uwaga: Tekst w apostrofach (\'tekst\') będzie wyświetlony dosłownie\n\n
+        Przykłady formatowania:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, dd MMMM yyyy]} → Piątek, 03 Października 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
+        Placeholdery metadanych:\n
+        • {CODE_TYPE} - typ kodu kreskowego (QR_CODE, CODE_128, itp.)\n
+        • {SCAN_SOURCE} - źródło danych (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - identyfikator skanera\n
+        • {SCAN_IMAGE_NAME} - name of the stored scan image\n\n
+        Uniwersalne kodowanie (działa z DOWOLNYM placeholderem danych):\n
+        • Dodaj _HEX lub _B64 do dowolnego placeholdera w dowolnej kolejności\n
+        • Przykłady: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • Kombinacje: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
+        Globalne kodowanie (stosowane do całego wyniku):\n
+        • {GLOBAL_HEX} - koduj cały wynik do szesnastkowego\n
+        • {GLOBAL_B64} - koduj cały wynik do base64\n
+        • Kombinacje: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Uwaga: W trybie RFCOMM nieobsługiwane placeholdery HID będą usunięte lub zachowane jako tekst zgodnie z ustawieniami w menu rozwijalnym.\n\n
+        Placeholdery specyficzne dla HID:\n
+        • Klawisze: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • Specjalne: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Uwaga: W trybie RFCOMM obsługiwane są tylko {TAB} i {ENTER}. Możesz kontrolować widoczność nieobsługiwanych placeholderów w menu rozwijalnym.\n\n
+        Modyfikatory można ustawić poprzedzając następującymi znakami:\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        Przykład: {+r} wyśle CTRL+R, {^#F1} wyśle SHIFT+ALT+F1, {WAIT:10} doda opóźnienie 10 znaków
     </string>
     <string name="camera">Aparat</string>
     <string name="focus_mode">Tryb ostrości</string>
@@ -163,6 +203,7 @@
     <string name="highlights_possible_codes">Wyróżnia możliwe kody kropkami</string>
     <string name="caps_lock_activated">Caps Lock jest włączony</string>
     <string name="click_to_turn_off">Kliknij tutaj, aby wyłączyć</string>
+    <string name="rfcomm_listening">Nasłuchiwanie</string>
     <string name="keep_screen_on">Nie wyłączaj podświetlenia</string>
     <string name="keep_screen_on_desc">Zapobiega wyłączaniu ekranu podczas skanowania</string>
     <string name="private_mode">Tryb prywatności</string>
@@ -182,16 +223,21 @@
     <string name="export">Eksport</string>
     <string name="export_csv">CSV</string>
     <string name="export_json">JSON</string>
+    <string name="export_xml">XML</string>
     <string name="export_lines">Linie</string>
     <string name="export_fields" translatable="false">tekst, sygnatura czasowa, typ</string>
     <string name="export_lines_description">tekst z podziałami wierszy</string>
     <string name="export_as">Eksportuj jako</string>
+    <string name="import_text">Import</string>
+    <string name="import_from">Importuj z</string>
     <string name="delete_selection">Usunąć zaznaczenie?</string>
     <string name="delete_selection_desc">Czy na pewno chcesz usunąć wybrane elementy?</string>
     <string name="templates_in_value">Szablony w wartości</string>
     <string name="template_in_value_desc">Rozwiń szablony w wartości kodu (wymaga opcji "Własny szablon")</string>
     <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
     <string name="developer_mode">Tryb dewelopera</string>
+    <string name="connection_mode">Tryb połączenia</string>
+    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania). Nieobsługiwane ustawienia będą wyszarzone w trybie RFCOMM.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Jasny</item>
@@ -245,8 +291,67 @@
         <item>Stałe (Nieskończoność)</item>
         <item>Ciągły (Szybki)</item>
     </string-array>
+    <string-array name="connection_mode_values">
+        <item>Klawiatura HID</item>
+        <item>RFCOMM (SPP)</item>
+    </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>
         <item quantity="other">Eksport %1$d elementów</item>
     </plurals>
+    <string name="click_to_connect">Kliknij, aby powrócić.</string>
+    <string name="custom_keys">Klawisze niestandardowe</string>
+    <string name="add_custom_key">Dodaj niestandardowy klawisz</string>
+    <string name="add_custom_key_desc_long">Wprowadź znak i odpowiadający mu kod HID (nie kod skanowania) wraz z wszelkimi modyfikatorami. Kod HID klawisza ENTER to na przykład 28 (szesnastkowy).</string>
+    <string name="character">Znak</string>
+    <string name="hid_code_hex">Kod HID (HEX)</string>
+    <string name="modifier">Modyfikator</string>
+    <string name="test">Test</string>
+    <string name="test_key">* Aby przetestować klawisz, musisz być podłączony do urządzenia.</string>
+    <string name="add_custom_key_desc">Umożliwia zdefiniowanie niestandardowych przypisań znaków do kodów HID, które zastąpią wszelkie definicje z wybranego układu klawiatury.</string>
+    <string name="define_custom_keys">Zdefiniuj klawisze niestandardowe</string>
+    <string name="add">Dodaj</string>
+    <string name="persistent_history">Trwała historia skanowania</string>
+    <string name="persistent_history_desc">Pamiętaj skanowane kody pomiędzy sesjami</string>
+    <string name="filter">Filtr</string>
+    <string name="date_range">Zakres dat</string>
+    <string name="select_types">Wybierz typy</string>
+    <string name="clear">Wyczyść</string>
+    <string name="apply">Zastosuj</string>
+    <string name="exclude_duplicates">Wyklucz duplikaty</string>
+    <string name="save_to_file">Zapisz do pliku</string>
+    <string name="invalid_regex">Błędny Regex</string>
+    <string name="template_error">Szablon musi zawierać co najmniej jeden komponent CODE.</string>
+    <string name="template_error_duplicates">Duplikaty komponentów niedozwolone: %1$s</string>
+    <string name="advanced_options">Zaawansowane</string>
+    <string name="advanced_opts_desc">Dostosuj parametry skanowania</string>
+    <string name="detection">Detekcja</string>
+    <string name="try_harder">Spróbuj mocniej</string>
+    <string name="try_rotate_image">Spróbuj obrócić obraz</string>
+    <string name="try_inverted">Spróbuj w odbiciu lustrzanym</string>
+    <string name="try_downscale">Spróbuj downscalingu</string>
+    <string name="minimum_scan_lines">Minmalna liczba linii skanowania</string>
+    <string name="processing">Przetwarzanie</string>
+    <string name="binarizer">Binaryzator</string>
+    <string name="downscale_factor">Współczynnik downscalingu</string>
+    <string name="downscale_threshold">Próg downscalingu (px)</string>
+    <string name="parser">Parser</string>
+    <string name="text_mode">Tryb tekstowy</string>
+    <string name="send_with_volume_keys">Wyślij za pomocą klawiszy głośności</string>
+    <string name="send_vol_keys_desc">Użyj przycisków zwiększania/zmniejszania głośności, aby wysłać kod kreskowy.</string>
+    <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
+    <string name="ocr_note_bottom">Następnie można użyć nowego przycisku w prawym dolnym rogu skanera, aby uruchomić wykrywanie.</string>
+    <string name="note">Uwaga</string>
+    <string name="ext_ocr_support">Zewn. wsparcie OCR</string>
+    <string name="scan_results">Rezultat skanowania</string>
+    <string name="ocr_results_selection">Zaznacz wszystkie wiersze, które mają zostać wysłane.</string>
+    <string name="clear_after_send">Czyść bufor po wysłaniu</string>
+    <string name="clear_after_send_desc">Kasuje wyświetlany kod po ręcznym wysłaniu</string>
+    <string name="manual_input">Ręczne wprowadzanie</string>
+    <string name="include_extra_keys">Użyj ekstra klawiszy</string>
+    <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
+    <string name="insecure_rfcomm_desc">Ta opcja umożliwia akceptowanie niebezpiecznych połączeń RFCOMM. Używaj tylko dla starszych urządzeń, które nie obsługują bezpiecznych połączeń Bluetooth Serial Port Profile.</string>
+    <string name="preserve_unsupported_placeholders">Zachowaj nieobsługiwane placeholdery</string>
+    <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
+    <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
 </resources>

@@ -3,35 +3,47 @@ package dev.fabik.bluetoothhid.ui
 import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DataObject
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.SettingsActivity
 import dev.fabik.bluetoothhid.bt.BluetoothService
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
 
 @Composable
-fun Dropdown() {
+fun Dropdown(transparent: Boolean = false) {
     val context = LocalContext.current
     val activity = LocalActivity.current
 
@@ -46,7 +58,20 @@ fun Dropdown() {
             onClick = { showMenu = !showMenu },
             modifier = Modifier.tooltip(stringResource(R.string.more))
         ) {
-            Icon(Icons.Default.MoreVert, "More options")
+            Icon(
+                Icons.Default.MoreVert,
+                "More options",
+                tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
+                modifier = if (transparent) {
+                    Modifier.drawBehind {
+                        // Draw shadow behind icon for better visibility
+                        drawCircle(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            radius = size.maxDimension
+                        )
+                    }
+                } else Modifier
+            )
         }
 
         DropdownMenu(
@@ -108,7 +133,14 @@ fun SettingsDropdown() {
         mutableStateOf(false)
     }
 
+    val context = LocalContext.current
     var developerMode by rememberPreference(PreferenceStore.DEVELOPER_MODE)
+    var ocrSupport by rememberPreference(PreferenceStore.OCR_COMPAT)
+    var insecureRfcomm by rememberPreference(PreferenceStore.INSECURE_RFCOMM)
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+
+    val ocrInfoDialog = rememberDialogState()
+    val insecureRfcommDialog = rememberDialogState()
 
     Box {
         IconButton(
@@ -128,13 +160,91 @@ fun SettingsDropdown() {
                 trailingIcon = {
                     Checkbox(
                         checked = developerMode,
-                        onCheckedChange = { developerMode = it }
+                        onCheckedChange = null
                     )
                 },
                 onClick = {
                     developerMode = !developerMode
                 }
             )
+
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.ext_ocr_support)) },
+                trailingIcon = {
+                    Checkbox(
+                        checked = ocrSupport,
+                        onCheckedChange = null
+                    )
+                },
+                onClick = {
+                    if (!ocrSupport) {
+                        ocrInfoDialog.open()
+                    }
+                    ocrSupport = !ocrSupport
+                }
+            )
+
+            if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.insecure_rfcomm)) },
+                    leadingIcon = { Icon(Icons.Default.Shield, null) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = insecureRfcomm,
+                            onCheckedChange = null
+                        )
+                    },
+                    onClick = {
+                        if (!insecureRfcomm) {
+                            insecureRfcommDialog.open()
+                        }
+                        insecureRfcomm = !insecureRfcomm
+                    }
+                )
+
+                var preserveUnsupportedPlaceholders by rememberPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS)
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.preserve_unsupported_placeholders)) },
+                    leadingIcon = { Icon(Icons.Default.DataObject, null) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = preserveUnsupportedPlaceholders,
+                            onCheckedChange = null
+                        )
+                    },
+                    onClick = {
+                        preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
+                    }
+                )
+            }
+        }
+    }
+
+    InfoDialog(
+        ocrInfoDialog, stringResource(R.string.note),
+        icon = { Icon(Icons.Default.Info, null) }
+    ) {
+        val uriHandler = LocalUriHandler.current
+
+        Column {
+            Text(stringResource(R.string.ocr_note_desc))
+
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                OutlinedButton({
+                    uriHandler.openUri("https://github.com/mtotschnig/OCR")
+                }) { Text(stringResource(R.string.ocr_app_github)) }
+            }
+
+            Text(stringResource(R.string.ocr_note_bottom))
+        }
+    }
+
+    InfoDialog(
+        insecureRfcommDialog, stringResource(R.string.note),
+        icon = { Icon(Icons.Default.Shield, null) }
+    ) {
+        Column {
+            Text(stringResource(R.string.insecure_rfcomm_desc))
         }
     }
 }

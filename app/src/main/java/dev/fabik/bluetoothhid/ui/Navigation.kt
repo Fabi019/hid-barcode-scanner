@@ -23,6 +23,7 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -84,9 +85,17 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(currentDevice) {
+                Scanner(currentDevice) { text, format, imageName ->
                     scope.launch {
-                        controller?.sendString(it)
+                        val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(
+                            text,
+                            true,
+                            "SCAN",
+                            null,
+                            barcodeType,
+                            imageName = imageName
+                        )
                     }
                 }
 
@@ -109,9 +118,10 @@ fun NavGraph() {
                     }
                 }
 
-                History(onBack) {
+                History(onBack) { historyEntry ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        controller?.sendString(it)
+                        val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
+                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
                     }
                 }
 
