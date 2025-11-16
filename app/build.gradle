@@ -21,8 +21,8 @@ android {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
         targetSdk 36
-        versionCode 53
-        versionName "2.1.0-rc.1"
+        versionCode 54
+        versionName "2.1.0"
 
         buildConfigField "String", "GIT_COMMIT_HASH", "\"${gitHash}\""
 
@@ -92,7 +92,7 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
     implementation 'androidx.compose.material3:material3:1.4.0'
 
-    implementation 'androidx.navigation:navigation-compose:2.9.5'
+    implementation 'androidx.navigation:navigation-compose:2.9.6'
     implementation 'androidx.datastore:datastore-preferences:1.1.7'
 
     implementation "androidx.camera:camera-core:$camerax_version"

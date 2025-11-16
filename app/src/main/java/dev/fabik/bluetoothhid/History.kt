@@ -138,7 +138,7 @@ fun HistoryViewModel.HistoryContent(onClick: (HistoryViewModel.HistoryEntry) -> 
     val types = stringArrayResource(R.array.code_types_values)
 
     LazyColumn(Modifier.fillMaxSize()) {
-        items(filteredHistory) { barcode ->
+        items(filteredHistory, key = { it.hashCode() }) { barcode ->
             val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
             ListItem(
                 overlineContent = {
@@ -299,7 +299,7 @@ fun AppBarTextField(
         textStyle.merge(TextStyle(color = textColor, lineHeight = 16.sp, fontSize = 16.sp))
 
     // request focus when this composable is first initialized
-    val focusRequester = FocusRequester()
+    val focusRequester = remember { FocusRequester() }
     SideEffect {
         focusRequester.requestFocus()
     }

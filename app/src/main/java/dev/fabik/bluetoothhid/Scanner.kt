@@ -18,6 +18,7 @@ import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -61,7 +62,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,18 +70,18 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -94,8 +94,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -116,7 +114,6 @@ import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
@@ -180,20 +177,23 @@ fun BoxScope.ElevatedWarningCard(
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
-    sendText: (String, Int?) -> Unit
+    sendText: (String, Int?, String?) -> Unit
 ) {
     val context = LocalContext.current
     val view = LocalView.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
     var currentBarcodeFormat by rememberSaveable { mutableStateOf<Int?>(null) }
+    var currentImageName by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val currentSendText = remember(currentBarcode, currentBarcodeFormat, currentImageName) {
+        { -> currentBarcode?.let { sendText(it, currentBarcodeFormat, currentImageName) } }
+    }
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
-
-    val currentSendText by rememberUpdatedState(sendText)
 
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
 
@@ -234,20 +234,19 @@ fun Scanner(
                 val cameraVM = viewModel<CameraViewModel>()
 
                 currentBarcode?.let {
-                    val barcode by rememberUpdatedState(it)
-                    val format by rememberUpdatedState(currentBarcodeFormat)
-
                     SendToDeviceFAB {
-                        currentSendText(barcode, format)
+                        currentSendText()
 
                         if (clearAfterSend == true) {
                             currentBarcode = null
                             currentBarcodeFormat = null
+                            currentImageName = null
                             cameraVM.lastBarcode = null
                         }
                     }
+
                     VolumeKeyHandler {
-                        currentSendText(barcode, format)
+                        currentSendText()
                     }
                 }
             }
@@ -262,11 +261,12 @@ fun Scanner(
             RequiresCameraPermission {
                 CameraPreviewArea(onCameraReady = { control, info, capt ->
                     cameraControl = control; cameraInfo = info
-                }) { value, format, send ->
+                }) { value, format, imageName, send ->
                     currentBarcode = value
                     currentBarcodeFormat = format
+                    currentImageName = imageName
                     if (send) {
-                        currentSendText(value, format)
+                        currentSendText()
                     }
                 }
             }
@@ -332,12 +332,12 @@ fun Scanner(
  * Area for the camera preview.
  *
  * @param onCameraReady callback to be called when the camera is ready
- * @param onBarcodeDetected callback to be called when a barcode is detected (value, format, autoSend)
+ * @param onBarcodeDetected callback to be called when a barcode is detected (value, format, scanImageName, autoSend)
  */
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String, Int?, Boolean) -> Unit,
+    onBarcodeDetected: (String, Int?, String?, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -374,12 +374,14 @@ private fun CameraPreviewArea(
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
     val cameraVM = viewModel<CameraViewModel>()
 
-    Log.d("Scanner", "Scanner initialized - vibrate: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}")
+    Log.d(
+        "Scanner",
+        "Scanner initialized - vibrate: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}"
+    )
 
-    CameraPreviewContent(onCameraReady = onCameraReady) { value ->
+    CameraPreviewContent(onCameraReady = onCameraReady) { value, format, imageName ->
         Log.d("Scanner", "Barcode detected: $value")
-        val format = cameraVM.lastBarcodeFormat?.let { ZXingAnalyzer.format2Index(it) }
-        onBarcodeDetected(value, format, autoSend)
+        onBarcodeDetected(value, format, imageName, autoSend)
 
         if (playSound) {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
@@ -388,7 +390,7 @@ private fun CameraPreviewArea(
         if (vibrate && vibrator.hasVibrator()) {
             runCatching {
                 val effect = VibrationEffect.createOneShot(75, VibrationEffect.DEFAULT_AMPLITUDE)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     // Use USAGE_NOTIFICATION instead of USAGE_TOUCH to bypass system
                     // "Haptic feedback" setting. USAGE_TOUCH respects that setting and may
                     // not vibrate if user disabled haptic feedback in system settings.
@@ -741,12 +743,15 @@ fun BoxScope.DeviceStatusIndicator() {
                     visible = true
                 )
             }
+
             connectionMode == ConnectionMode.RFCOMM.ordinal && isRFCOMMListening -> {
                 // RFCOMM mode with device selected and server listening
                 ElevatedWarningCard(
                     message = stringResource(R.string.rfcomm_listening),
-                    subMessage = stringResource(R.string.rfcomm_listening_from_device,
-                        currentDevice?.name ?: currentDevice?.address ?: ""),
+                    subMessage = stringResource(
+                        R.string.rfcomm_listening_from_device,
+                        currentDevice?.name ?: currentDevice?.address ?: ""
+                    ),
                     onClick = {
                         // Do nothing - this is just an informational message
                         // User has already selected a device and server is listening

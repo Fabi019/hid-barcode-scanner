@@ -163,7 +163,8 @@
         Metadata placeholders:\n
         • {CODE_TYPE} - barcode type (QR_CODE, CODE_128, etc.)\n
         • {SCAN_SOURCE} - data source (SCAN, HISTORY, MANUAL)\n
-        • {SCANNER_ID} - scanner hardware identifier\n\n
+        • {SCANNER_ID} - scanner hardware identifier\n
+        • {SCAN_IMAGE_NAME} - name of the stored scan image\n\n
         Universal encoding (works with ANY data placeholder):\n
         • Add _HEX or _B64 to any placeholder in any order\n
         • Examples: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
@@ -287,7 +288,7 @@
     <string name="manual_input">Manual input</string>
     <string name="include_extra_keys">Include extra keys</string>
     <string name="connection_mode">Connection Mode</string>
-    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software)</string>
+    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software). Unsupported settings will be greyed out in RFCOMM mode.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -353,4 +354,12 @@
     <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
     <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>
     <string name="preserve_unsupported_placeholders_desc">Keep HID-specific placeholders (e.g., {F1}, {ESC}) as text instead of removing them in RFCOMM mode</string>
+    <string name="save_scan_image">Save scan image</string>
+    <string name="save_scan_desc">Stores the scan to the gallery</string>
+    <string name="crop_mode">Crop mode</string>
+    <string name="image_quality">Image quality</string>
+    <string name="file_name_pattern">File name pattern</string>
+    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {CODE}, {FORMAT}</string>
+    <string name="output_folder">Output folder</string>
+    <string name="save_scan_image_hint">Note: The file name for each scan is available as {SCAN_IMAGE_NAME} in the custom template. This can be used for example to directly pull the image from the phone.</string>
 </resources>

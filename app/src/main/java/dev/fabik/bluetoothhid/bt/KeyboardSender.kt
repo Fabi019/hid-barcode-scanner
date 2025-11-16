@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.util.Log
+import dev.fabik.bluetoothhid.utils.ExtraKeys
 import kotlinx.coroutines.delay
 
 @SuppressLint("MissingPermission")
@@ -27,19 +28,19 @@ open class KeyboardSender(
     suspend fun sendProcessedString(
         processedString: String,
         sendDelay: Long,
-        appendKey: Int,
+        appendKey: ExtraKeys,
         locale: String,
         expandCode: Boolean,
     ) {
         val finalString = when (appendKey) {
-            1 -> "$processedString\n"
-            2 -> "$processedString\t"
-            3 -> "$processedString "
+            ExtraKeys.ENTER -> "$processedString\n"
+            ExtraKeys.TAB -> "$processedString\t"
+            ExtraKeys.SPACE -> "$processedString "
             else -> processedString
         }
 
         val keys = when (appendKey) {
-            4 -> {
+            ExtraKeys.CUSTOM -> {
                 if (expandCode) {
                     // Complex expandCode mechanism - treat processed string as template for expansion
                     val expandedCode = keyboardTranslator.translateStringWithTemplate(finalString, locale)

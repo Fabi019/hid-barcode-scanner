@@ -95,6 +95,13 @@ enum class TextMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HRI
     }
 }
+enum class CropMode {
+    NONE, SCAN_AREA, BARCODE;
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
+    }
+}
 
 open class PreferenceStore {
     // Simple generic preference class - no need for type-specific wrappers
@@ -126,7 +133,7 @@ open class PreferenceStore {
         private infix fun <T> Preferences.Key<T>.defaultsTo(value: T) =
             Preference(this, value)
 
-        private fun <E : Enum<E>> Preferences.Key<Int>.enumDefaultsTo(
+        private infix fun <E : Enum<E>> Preferences.Key<Int>.enumDefaultsTo(
             fromOrdinal: (Int) -> E
         ) = EnumPref(this, fromOrdinal)
 
@@ -188,6 +195,14 @@ open class PreferenceStore {
         val ADV_DOWNSCALE_FACTOR = intPreferencesKey("adv_downscale_factor") defaultsTo 3
         val ADV_DOWNSCALE_THRESHOLD = intPreferencesKey("adv_downscale_threshold") defaultsTo 500
         val ADV_TEXT_MODE = intPreferencesKey("adv_text_mode").enumDefaultsTo(TextMode::fromIndex)
+
+        val SAVE_SCAN = booleanPreferencesKey("save_scan") defaultsTo false
+        val SAVE_SCAN_PATH = stringPreferencesKey("save_scan_path") defaultsTo ""
+        val SAVE_SCAN_CROP_MODE =
+            intPreferencesKey("save_scan_crop_mode") enumDefaultsTo CropMode::fromIndex
+        val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
+        val SAVE_SCAN_FILE_PATTERN =
+            stringPreferencesKey("save_scan_file_pattern") defaultsTo "scan_{TIMESTAMP}"
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false
