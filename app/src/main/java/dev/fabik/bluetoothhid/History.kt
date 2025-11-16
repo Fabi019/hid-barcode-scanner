@@ -138,7 +138,7 @@ fun HistoryViewModel.HistoryContent(onClick: (HistoryViewModel.HistoryEntry) -> 
     val types = stringArrayResource(R.array.code_types_values)
 
     LazyColumn(Modifier.fillMaxSize()) {
-        items(filteredHistory) { barcode ->
+        items(filteredHistory, key = { it.hashCode() }) { barcode ->
             val isSelected by remember(barcode) { derivedStateOf { isItemSelected(barcode) } }
             ListItem(
                 overlineContent = {
