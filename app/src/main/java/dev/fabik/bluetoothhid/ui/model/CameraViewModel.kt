@@ -49,6 +49,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fabik.bluetoothhid.utils.Binarizer
 import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
+import dev.fabik.bluetoothhid.utils.ImageUtils
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ScanFrequency
@@ -178,6 +179,7 @@ class CameraViewModel : ViewModel() {
         val analyzerBuilder = ImageAnalysis.Builder()
             .setResolutionSelector(resolutionSelector)
             .setOutputImageRotationEnabled(true)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
 
         // Apply focus mode settings
@@ -536,21 +538,14 @@ class CameraViewModel : ViewModel() {
     }
 
     fun saveScanImage(context: Context, image: ImageProxy, path: Uri): String? {
-        val yBuffer = image.planes[0].buffer
-        val uBuffer = image.planes[1].buffer
-        val vBuffer = image.planes[2].buffer
-
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val yuv = ByteArray(ySize + uSize + vSize)
-        yBuffer.get(yuv, 0, ySize)
-        vBuffer.get(yuv, ySize, vSize)
-        uBuffer.get(yuv, ySize + vSize, uSize)
-
-        val nv21 =
-            YuvImage(yuv, ImageFormat.NV21, image.width, image.height, null)
+        val yuvImage =
+            YuvImage(
+                ImageUtils.yuv420888toNv21(image),
+                ImageFormat.NV21,
+                image.width,
+                image.height,
+                null
+            )
 
         val barcode = currentBarcode.value ?: return null
 
@@ -601,7 +596,7 @@ class CameraViewModel : ViewModel() {
 
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
-                if (nv21.compressToJpeg(rect, _saveScanQuality, it)) {
+                if (yuvImage.compressToJpeg(rect, _saveScanQuality, it)) {
                     Log.d(TAG, "Saved scan image to ${file.path}")
                     return file.lastPathSegment?.substringAfterLast("/")
                 }
