@@ -1,6 +1,8 @@
 package dev.fabik.bluetoothhid.utils
 
+import android.graphics.Rect
 import android.util.Log
+import android.util.Size
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import zxingcpp.BarcodeReader
@@ -8,8 +10,8 @@ import zxingcpp.BarcodeReader
 class ZXingAnalyzer(
     initialOptions: BarcodeReader.Options = BarcodeReader.Options(),
     var scanDelay: Int,
-    private val onAnalyze: () -> Unit,
-    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy) -> Unit,
+    private val onAnalyze: (source: Size, rotation: Int) -> Unit,
+    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy, source: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     companion object {
@@ -62,6 +64,9 @@ class ZXingAnalyzer(
         }
     }
 
+    var cropRect: Rect? = null
+    var currentScanRect: androidx.compose.ui.geometry.Rect? = null
+
     private val reader = BarcodeReader(initialOptions)
     private var lastAnalyzedTimeStamp = 0L
 
@@ -73,23 +78,38 @@ class ZXingAnalyzer(
         val currentTime = System.currentTimeMillis()
         val deltaTime = currentTime - lastAnalyzedTimeStamp
 
+        val source =
+            if (image.imageInfo.rotationDegrees == 90 || image.imageInfo.rotationDegrees == 270) {
+                Size(image.height, image.width)
+            } else {
+                Size(image.width, image.height)
+            }
+
         // Close image directly if wait time has not passed
         if (deltaTime < scanDelay) {
             image.close()
         } else {
-            lastAnalyzedTimeStamp = currentTime
-
             runCatching {
+                cropRect?.let {
+                    image.setCropRect(it)
+                }
+
                 image.use {
                     val results = reader.read(image)
-                    onResult(results, image)
+
+                    // Add delay only after something was detected
+                    if (results.isNotEmpty()) {
+                        lastAnalyzedTimeStamp = currentTime
+                    }
+
+                    onResult(results, image, source)
                 }
             }.onFailure {
                 Log.e(TAG, "Error analyzing image!", it)
             }
         }
 
-        onAnalyze()
+        onAnalyze(source, image.imageInfo.rotationDegrees)
     }
 
 }

@@ -24,7 +24,6 @@ import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProcessingUtil
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
@@ -149,6 +148,7 @@ class CameraViewModel : ViewModel() {
                         runCatching {
                             saveScanImage(appContext, image, path)
                         }.onFailure {
+                            Log.e(TAG, "Error saving scan!", it)
                             viewModelScope.launch {
                                 Toast.makeText(
                                     appContext,
@@ -268,8 +268,18 @@ class CameraViewModel : ViewModel() {
         }
     }
 
-    fun onBarcodeAnalyze() {
+    fun onBarcodeAnalyze(source: Size, rotation: Int) {
         cameraTrace.trigger()
+
+        if (_fullyInside && barcodeAnalyzer?.currentScanRect != scanRect) {
+            val topLeft = transformPoint(scanRect.topLeft.toPoint(), source, true).toPoint()
+            val bottomRight = transformPoint(scanRect.bottomRight.toPoint(), source, true).toPoint()
+            barcodeAnalyzer?.cropRect = when (rotation == 0 || rotation == 180) {
+                true -> android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+                false -> android.graphics.Rect(topLeft.y, topLeft.x, bottomRight.y, bottomRight.x)
+            }
+            barcodeAnalyzer?.currentScanRect = scanRect
+        }
     }
 
     var viewSize: IntSize? = null
@@ -376,6 +386,11 @@ class CameraViewModel : ViewModel() {
         }
         barcodeAnalyzer?.scanDelay = _scanDelay
         _fullyInside = fullyInside
+        if (!fullyInside) {
+            barcodeAnalyzer?.cropRect = null
+            barcodeAnalyzer?.currentScanRect = null
+        }
+
         _scanRegex = scanRegex
         _jsCode = jsCode
         _jsEngineService = jsEngineService
@@ -406,16 +421,10 @@ class CameraViewModel : ViewModel() {
 
     fun onBarcodeResult(
         result: List<BarcodeReader.Result>,
-        sourceImage: ImageProxy
+        sourceImage: ImageProxy,
+        source: Size
     ) {
         detectorTrace.trigger()
-
-        val source =
-            if (sourceImage.imageInfo.rotationDegrees == 90 || sourceImage.imageInfo.rotationDegrees == 270) {
-                Size(sourceImage.height, sourceImage.width)
-            } else {
-                Size(sourceImage.width, sourceImage.height)
-            }
 
         val barcode = result.map {
             val cornerPoints = listOf(
@@ -424,13 +433,24 @@ class CameraViewModel : ViewModel() {
                 it.position.bottomRight,
                 it.position.bottomLeft
             ).map { p ->
+                if (_fullyInside) {
+                    // Add offset from crop rect onto the position
+                    val cropRect = barcodeAnalyzer?.cropRect ?: android.graphics.Rect()
+                    if (sourceImage.imageInfo.rotationDegrees == 0 || sourceImage.imageInfo.rotationDegrees == 180) {
+                        p.x += cropRect.left
+                        p.y += cropRect.top
+                    } else {
+                        p.y += cropRect.left
+                        p.x += cropRect.top
+                    }
+                }
                 transformPoint(p, source)
             }
 
             Barcode(it.text, cornerPoints, it.format)
         }.filter {
             when (_fullyInside) {
-                true -> it.cornerPoints.all { scanRect.contains(Offset(it.x, it.y)) }
+                true -> true    // Automatically handled with setting cropRect
                 false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
             }
         }.filter {
@@ -556,7 +576,7 @@ class CameraViewModel : ViewModel() {
 
     @SuppressLint("RestrictedApi")
     fun saveScanImage(context: Context, image: ImageProxy, path: Uri): String? {
-        var bitmap = ImageProcessingUtil.convertYUVToBitmap(image)
+        var bitmap = image.toBitmap()
         if (image.imageInfo.rotationDegrees != 0) {
             bitmap = Bitmap.createBitmap(
                 bitmap,
@@ -573,8 +593,7 @@ class CameraViewModel : ViewModel() {
 
         if (_saveScanCropMode == CropMode.SCAN_AREA || _saveScanCropMode == CropMode.BARCODE) {
             var (topLeft, bottomRight) = if (_saveScanCropMode == CropMode.SCAN_AREA) {
-                scanRect.topLeft.let { Point(it.x.toInt(), it.y.toInt()) } to
-                        scanRect.bottomRight.let { Point(it.x.toInt(), it.y.toInt()) }
+                scanRect.topLeft.toPoint() to scanRect.bottomRight.toPoint()
             } else {
                 val minX = barcode.cornerPoints.minOf { it.x } - 5
                 val maxX = barcode.cornerPoints.maxOf { it.x } + 5
@@ -671,5 +690,7 @@ class CameraViewModel : ViewModel() {
         )
         cameraControl?.setZoomRatio(newZoomRatio)
     }
+
+    fun Offset.toPoint() = Point(x.toInt(), y.toInt())
 
 }
