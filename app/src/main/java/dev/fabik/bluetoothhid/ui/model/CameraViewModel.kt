@@ -96,7 +96,7 @@ class CameraViewModel : ViewModel() {
     var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    var onBarcodeDetected: (String, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
+    var onBarcodeDetected: (String?, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -131,13 +131,22 @@ class CameraViewModel : ViewModel() {
         fixExposure: Boolean,
         focusMode: FocusMode,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-        onBarcode: (String, Int, String?) -> Unit,
+        onBarcode: (String?, Int, String?) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         onBarcodeDetected = { value, format, image ->
-            if (!value.contentEquals(lastBarcode)) {
+            lastDetectionTime = System.currentTimeMillis()
+            if (value == null) {
+                Log.d(TAG, "Clearing barcode value")
+                if (lastBarcode != null) {
+                    viewModelScope.launch {
+                        onBarcode(null, 0, null)
+                    }
+                    lastBarcode = null
+                }
+            } else if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
 
                 val formatIdx = ZXingAnalyzer.format2Index(format)
@@ -280,6 +289,14 @@ class CameraViewModel : ViewModel() {
             }
             barcodeAnalyzer?.currentScanRect = scanRect
         }
+
+        _clearAfterTime?.let {
+            val now = System.currentTimeMillis()
+            if (now - (lastDetectionTime ?: now) >= it) {
+                _currentBarcode.update { null }
+                onBarcodeDetected(null, BarcodeReader.Format.NONE, null)
+            }
+        }
     }
 
     var viewSize: IntSize? = null
@@ -366,6 +383,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
     private var _saveScanFileName: String = "scan"
+    private var _clearAfterTime: Long? = 5000
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -409,6 +427,7 @@ class CameraViewModel : ViewModel() {
         Log.d(TAG, "Updated scan parameters")
     }
 
+    var lastDetectionTime: Long? = null
     var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()

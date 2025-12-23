@@ -124,8 +124,8 @@ import kotlinx.coroutines.launch
  * Helper function to create a circular background modifier for icons in fullscreen mode.
  * Provides better visibility by adding a semi-transparent black circle behind the icon.
  */
-private fun iconBackgroundModifier(): Modifier {
-    return Modifier.drawBehind {
+private fun Modifier.iconBackgroundModifier(): Modifier {
+    return drawBehind {
         drawCircle(
             color = Color.Black.copy(alpha = 0.5f),
             radius = size.maxDimension
@@ -265,7 +265,7 @@ fun Scanner(
                     currentBarcode = value
                     currentBarcodeFormat = format
                     currentImageName = imageName
-                    if (send) {
+                    if (send && value?.isNotEmpty() == true) {
                         currentSendText()
                     }
                 }
@@ -337,7 +337,7 @@ fun Scanner(
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String, Int?, String?, Boolean) -> Unit,
+    onBarcodeDetected: (String?, Int?, String?, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -372,7 +372,6 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
-    val cameraVM = viewModel<CameraViewModel>()
 
     Log.d(
         "Scanner",
@@ -382,6 +381,7 @@ private fun CameraPreviewArea(
     CameraPreviewContent(onCameraReady = onCameraReady) { value, format, imageName ->
         Log.d("Scanner", "Barcode detected: $value")
         onBarcodeDetected(value, format, imageName, autoSend)
+        if (value == null) return@CameraPreviewContent
 
         if (playSound) {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
@@ -619,7 +619,7 @@ private fun ScannerAppBar(
                         Icons.Default.Keyboard,
                         "Keyboard",
                         tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                        modifier = if (transparent) iconBackgroundModifier() else Modifier
+                        modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
                     )
                 }
                 KeyboardInputDialog(keyboardDialog)
@@ -632,7 +632,7 @@ private fun ScannerAppBar(
                     Icons.Default.History,
                     "History",
                     tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                    modifier = if (transparent) iconBackgroundModifier() else Modifier
+                    modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
                 )
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
@@ -680,7 +680,7 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
             },
             "Flash",
             tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-            modifier = if (transparent) iconBackgroundModifier() else Modifier
+            modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
         )
     }
 }
