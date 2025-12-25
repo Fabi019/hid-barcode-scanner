@@ -502,6 +502,14 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         preference = PreferenceStore.CLEAR_AFTER_SEND
     )
 
+    ComboBoxEnumPreference(
+        title = "Clear after time",
+        desc = "Clears the shown code after no detection within the specified time.",
+        values = arrayOf("Never", "1s", "3s", "5s"),
+        icon = Icons.Default.Timer,
+        preference = PreferenceStore.CLEAR_AFTER_TIME
+    )
+
     SwitchPreference(
         title = strings[R.string.private_mode],
         desc = strings[R.string.private_mode_desc],

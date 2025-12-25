@@ -139,8 +139,8 @@ class CameraViewModel : ViewModel() {
         onBarcodeDetected = { value, format, image ->
             lastDetectionTime = System.currentTimeMillis()
             if (value == null) {
-                Log.d(TAG, "Clearing barcode value")
                 if (lastBarcode != null) {
+                    Log.d(TAG, "Clearing barcode value")
                     viewModelScope.launch {
                         onBarcode(null, 0, null)
                     }
@@ -295,6 +295,7 @@ class CameraViewModel : ViewModel() {
             if (now - (lastDetectionTime ?: now) >= it) {
                 _currentBarcode.update { null }
                 onBarcodeDetected(null, BarcodeReader.Format.NONE, null)
+                lastDetectionTime = null
             }
         }
     }
@@ -383,7 +384,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
     private var _saveScanFileName: String = "scan"
-    private var _clearAfterTime: Long? = 5000
+    private var _clearAfterTime: Long? = null
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -394,7 +395,8 @@ class CameraViewModel : ViewModel() {
         saveScanPath: String?,
         saveScanCropMode: CropMode,
         scanSaveQuality: Int,
-        saveScanFileName: String
+        saveScanFileName: String,
+        clearAfterTime: Long?
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -423,6 +425,8 @@ class CameraViewModel : ViewModel() {
         _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
         _saveScanFileName = saveScanFileName
+
+        _clearAfterTime = clearAfterTime
 
         Log.d(TAG, "Updated scan parameters")
     }

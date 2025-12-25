@@ -102,6 +102,13 @@ enum class CropMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
 }
+enum class ClearAfterTime(val value: Long?) {
+    NEVER(null), ONE(1000), THREE(3000), FIVE(5000);
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
+    }
+}
 
 open class PreferenceStore {
     // Simple generic preference class - no need for type-specific wrappers
