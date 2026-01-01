@@ -186,6 +186,8 @@ open class PreferenceStore {
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
+        val CLEAR_AFTER_TIME =
+            intPreferencesKey("clear_after_time") enumDefaultsTo ClearAfterTime::fromIndex
 
         // val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false - Removed
         // val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false - Removed
