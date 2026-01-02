@@ -333,4 +333,5 @@
     <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
     <string name="preserve_unsupported_placeholders_desc">HID-spezifische Platzhalter (z.B. {F1}, {ESC}) als Text behalten, anstatt sie im RFCOMM-Modus zu entfernen</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
+    <string name="image_format">Bildformat</string>
 </resources>

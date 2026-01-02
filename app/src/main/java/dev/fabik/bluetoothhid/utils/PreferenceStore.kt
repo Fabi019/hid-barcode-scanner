@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -97,9 +98,18 @@ enum class TextMode {
 }
 enum class CropMode {
     NONE, SCAN_AREA, BARCODE;
-
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
+    }
+}
+
+enum class ScanImageFormat(var value: Bitmap.CompressFormat) {
+    JPEG(Bitmap.CompressFormat.JPEG), PNG(Bitmap.CompressFormat.PNG), WEBP_LOSSY(Bitmap.CompressFormat.WEBP_LOSSY), WEBP_LOSSLESS(
+        Bitmap.CompressFormat.WEBP_LOSSLESS
+    );
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: JPEG
     }
 }
 
@@ -203,6 +213,8 @@ open class PreferenceStore {
         val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
         val SAVE_SCAN_FILE_PATTERN =
             stringPreferencesKey("save_scan_file_pattern") defaultsTo "scan_{TIMESTAMP}"
+        val SAVE_SCAN_IMAGE_FORMAT =
+            intPreferencesKey("save_scan_filetype") enumDefaultsTo ScanImageFormat::fromIndex
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false

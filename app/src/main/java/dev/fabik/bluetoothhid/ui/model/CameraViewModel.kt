@@ -53,6 +53,7 @@ import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ScanFrequency
+import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
@@ -368,6 +369,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
     private var _saveScanFileName: String = "scan"
+    private var _saveScanImageFormat: ScanImageFormat = ScanImageFormat.JPEG
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -378,7 +380,8 @@ class CameraViewModel : ViewModel() {
         saveScanPath: String?,
         saveScanCropMode: CropMode,
         scanSaveQuality: Int,
-        saveScanFileName: String
+        saveScanFileName: String,
+        saveScanImageFormat: ScanImageFormat
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -407,6 +410,7 @@ class CameraViewModel : ViewModel() {
         _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
         _saveScanFileName = saveScanFileName
+        _saveScanImageFormat = saveScanImageFormat
 
         Log.d(TAG, "Updated scan parameters")
     }
@@ -623,8 +627,14 @@ class CameraViewModel : ViewModel() {
             )
         }
 
+        val (mime, ext) = when (_saveScanImageFormat) {
+            ScanImageFormat.JPEG -> "image/jpeg" to "jpg"
+            ScanImageFormat.PNG -> "image/png" to "png"
+            else -> "image/webp" to "webp"
+        }
+
         // Determine filename
-        var fileName = "${_saveScanFileName}.jpg"
+        var fileName = "${_saveScanFileName}.${ext}"
         fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
         fileName = fileName.replace(
             "{TIMESTAMP_ISO}",
@@ -640,7 +650,7 @@ class CameraViewModel : ViewModel() {
             DocumentsContract.createDocument(
                 context.contentResolver,
                 path,
-                "image/jpeg",
+                mime,
                 fileName
             )
         }.getOrNull()
@@ -648,7 +658,7 @@ class CameraViewModel : ViewModel() {
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
                 if (bitmap.compress(
-                        Bitmap.CompressFormat.JPEG,
+                        _saveScanImageFormat.value,
                         _saveScanQuality,
                         it ?: return null
                     )

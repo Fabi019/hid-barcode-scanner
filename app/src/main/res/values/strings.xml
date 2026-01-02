@@ -362,4 +362,5 @@
     <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">Output folder</string>
     <string name="save_scan_image_hint">Note: The file name for each scan is available as {SCAN_IMAGE_NAME} in the custom template. This can be used for example to directly pull the image from the phone.</string>
+    <string name="image_format">Image format</string>
 </resources>
