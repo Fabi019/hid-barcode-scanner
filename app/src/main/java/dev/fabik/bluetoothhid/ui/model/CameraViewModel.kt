@@ -69,6 +69,8 @@ import org.totschnig.ocr.TextBlock
 import zxingcpp.BarcodeReader
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -624,6 +626,10 @@ class CameraViewModel : ViewModel() {
         // Determine filename
         var fileName = "${_saveScanFileName}.jpg"
         fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
+        fileName = fileName.replace(
+            "{TIMESTAMP_ISO}",
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
+        )
         fileName = fileName.replace(
             "{FORMAT}",
             ZXingAnalyzer.format2String(barcode.format)
