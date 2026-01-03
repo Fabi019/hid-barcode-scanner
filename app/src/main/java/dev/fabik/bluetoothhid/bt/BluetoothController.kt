@@ -15,7 +15,6 @@ import android.widget.Toast
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.ExtraKeys
-import dev.fabik.bluetoothhid.utils.KeyboardLayout
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.getPreference
@@ -509,22 +508,11 @@ class BluetoothController(var context: Context) {
                 false,  // HID always false - placeholders needed for KeyTranslator
                 imageName
             )
-            val locale = when (layout) {
-                KeyboardLayout.US -> "us"
-                KeyboardLayout.DE -> "de"
-                KeyboardLayout.FR -> "fr"
-                KeyboardLayout.GB -> "en"
-                KeyboardLayout.ES -> "es"
-                KeyboardLayout.IT -> "it"
-                KeyboardLayout.TR -> "tr"
-                KeyboardLayout.PL -> "pl"
-                KeyboardLayout.CZ -> "cz"
-            }
             keyboardSender?.sendProcessedString(
                 processedString,
                 sendDelay.toLong(),
                 extraKeys,
-                locale,
+                layout.value,
                 expand
             )
         }
