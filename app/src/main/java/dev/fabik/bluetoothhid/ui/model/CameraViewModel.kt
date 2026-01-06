@@ -658,7 +658,7 @@ class CameraViewModel : ViewModel() {
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
                 if (bitmap.compress(
-                        _saveScanImageFormat.value,
+                        _saveScanImageFormat.toCompressFormat(),
                         _saveScanQuality,
                         it ?: return null
                     )
