@@ -400,7 +400,7 @@ class CameraViewModel : ViewModel() {
         saveScanCropMode: CropMode,
         scanSaveQuality: Int,
         saveScanFileName: String,
-        clearAfterTime: Long?
+        clearAfterTime: Long?,
         saveScanImageFormat: ScanImageFormat
     ) {
         _scanDelay = when (frequency) {
