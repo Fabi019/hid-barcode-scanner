@@ -2,6 +2,7 @@ package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -104,10 +105,29 @@ enum class CropMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
 }
+enum class ScanImageFormat {
+    JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
 
-enum class ScanImageFormat(var value: Bitmap.CompressFormat) {
-    JPEG(Bitmap.CompressFormat.JPEG), PNG(Bitmap.CompressFormat.PNG),
-    WEBP_LOSSY(Bitmap.CompressFormat.WEBP_LOSSY), WEBP_LOSSLESS(Bitmap.CompressFormat.WEBP_LOSSLESS);
+    fun toCompressFormat(): Bitmap.CompressFormat {
+        return when (this) {
+            JPEG -> Bitmap.CompressFormat.JPEG
+            PNG -> Bitmap.CompressFormat.PNG
+            WEBP_LOSSY ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSY
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+
+            WEBP_LOSSLESS ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSLESS
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+        }
+    }
+
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: JPEG
     }
