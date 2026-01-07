@@ -43,8 +43,10 @@ enum class ConnectionMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HID
     }
 }
-enum class KeyboardLayout {
-    US, DE, FR, GB, ES, IT, TR, PL, CZ;
+enum class KeyboardLayout(var value: String) {
+    US("us"), DE("de"), FR("fr"), GB("gb"), ES("es"),
+    IT("it"), TR("tr"), PL("pl"), CZ("cz"), PO("po"),
+    BR("br"), BE("be"), HU("hu");
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: US
     }
@@ -103,8 +105,7 @@ enum class CropMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
 }
-
-enum class ScanImageFormat() {
+enum class ScanImageFormat {
     JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
 
     fun toCompressFormat(): Bitmap.CompressFormat {
