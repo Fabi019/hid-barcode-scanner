@@ -277,6 +277,10 @@
         <item>Turecki Q (TR)</item>
         <item>Polski Programisty (PL)</item>
         <item>Czech (CZ)</item>
+        <item>Portuguese (PO)</item>
+        <item>Portuguese (BR)</item>
+        <item>Francuski (BE)</item>
+        <item>Hungarian (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Ramka</item>

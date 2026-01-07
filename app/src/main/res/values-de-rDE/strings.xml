@@ -145,6 +145,10 @@
         <item>Türkisch Q (TR)</item>
         <item>Polnische Programmierer (PL)</item>
         <item>Tschechisch (CZ)</item>
+        <item>Portugiesisch (PO)</item>
+        <item>Portugiesisch (BR)</item>
+        <item>Französisch (BE)</item>
+        <item>Ungarisch (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>
@@ -338,7 +342,7 @@
     <string name="crop_mode">Zuschneidemodus</string>
     <string name="image_quality">Bildqualität</string>
     <string name="file_name_pattern">Dateinamensmuster</string>
-    <string name="file_name_pattern_placeholder">Platzhalter: {TIMESTAMP}, {CODE}, {FORMAT}</string>
+    <string name="file_name_pattern_placeholder">Platzhalter: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">Ausgabeverzeichnis</string>
     <string name="save_scan_image_hint">Hinweis: Der Dateiname für jeden Scan ist in der benutzerdefinierten Vorlage als {SCAN_IMAGE_NAME} verfügbar. Dies kann beispielsweise verwendet werden, um das Bild direkt vom Telefon abzurufen.</string>
     <string name="clear_after_time">Nach Zeit löschen</string>
@@ -349,4 +353,5 @@
         <item>3s</item>
         <item>5s</item>
     </string-array>
+    <string name="image_format">Bildformat</string>
 </resources>

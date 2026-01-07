@@ -1,6 +1,8 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -41,8 +43,10 @@ enum class ConnectionMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HID
     }
 }
-enum class KeyboardLayout {
-    US, DE, FR, GB, ES, IT, TR, PL, CZ;
+enum class KeyboardLayout(var value: String) {
+    US("us"), DE("de"), FR("fr"), GB("gb"), ES("es"),
+    IT("it"), TR("tr"), PL("pl"), CZ("cz"), PO("po"),
+    BR("br"), BE("be"), HU("hu");
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: US
     }
@@ -97,16 +101,41 @@ enum class TextMode {
 }
 enum class CropMode {
     NONE, SCAN_AREA, BARCODE;
-
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
 }
 enum class ClearAfterTime(val value: Long?) {
     NEVER(null), ONE(1000), THREE(3000), FIVE(5000);
-
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
+    }
+}
+enum class ScanImageFormat {
+    JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
+
+    fun toCompressFormat(): Bitmap.CompressFormat {
+        return when (this) {
+            JPEG -> Bitmap.CompressFormat.JPEG
+            PNG -> Bitmap.CompressFormat.PNG
+            WEBP_LOSSY ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSY
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+
+            WEBP_LOSSLESS ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSLESS
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+        }
+    }
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: JPEG
     }
 }
 
@@ -212,6 +241,8 @@ open class PreferenceStore {
         val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
         val SAVE_SCAN_FILE_PATTERN =
             stringPreferencesKey("save_scan_file_pattern") defaultsTo "scan_{TIMESTAMP}"
+        val SAVE_SCAN_IMAGE_FORMAT =
+            intPreferencesKey("save_scan_filetype") enumDefaultsTo ScanImageFormat::fromIndex
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false

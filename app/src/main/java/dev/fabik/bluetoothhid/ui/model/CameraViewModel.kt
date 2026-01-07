@@ -53,6 +53,7 @@ import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ScanFrequency
+import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
@@ -69,6 +70,8 @@ import org.totschnig.ocr.TextBlock
 import zxingcpp.BarcodeReader
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -385,6 +388,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanQuality: Int = 100
     private var _saveScanFileName: String = "scan"
     private var _clearAfterTime: Long? = null
+    private var _saveScanImageFormat: ScanImageFormat = ScanImageFormat.JPEG
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -397,6 +401,7 @@ class CameraViewModel : ViewModel() {
         scanSaveQuality: Int,
         saveScanFileName: String,
         clearAfterTime: Long?
+        saveScanImageFormat: ScanImageFormat
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -425,6 +430,7 @@ class CameraViewModel : ViewModel() {
         _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
         _saveScanFileName = saveScanFileName
+        _saveScanImageFormat = saveScanImageFormat
 
         _clearAfterTime = clearAfterTime
 
@@ -644,9 +650,19 @@ class CameraViewModel : ViewModel() {
             )
         }
 
+        val (mime, ext) = when (_saveScanImageFormat) {
+            ScanImageFormat.JPEG -> "image/jpeg" to "jpg"
+            ScanImageFormat.PNG -> "image/png" to "png"
+            else -> "image/webp" to "webp"
+        }
+
         // Determine filename
-        var fileName = "${_saveScanFileName}.jpg"
+        var fileName = "${_saveScanFileName}.${ext}"
         fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
+        fileName = fileName.replace(
+            "{TIMESTAMP_ISO}",
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
+        )
         fileName = fileName.replace(
             "{FORMAT}",
             ZXingAnalyzer.format2String(barcode.format)
@@ -657,7 +673,7 @@ class CameraViewModel : ViewModel() {
             DocumentsContract.createDocument(
                 context.contentResolver,
                 path,
-                "image/jpeg",
+                mime,
                 fileName
             )
         }.getOrNull()
@@ -665,7 +681,7 @@ class CameraViewModel : ViewModel() {
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
                 if (bitmap.compress(
-                        Bitmap.CompressFormat.JPEG,
+                        _saveScanImageFormat.toCompressFormat(),
                         _saveScanQuality,
                         it ?: return null
                     )

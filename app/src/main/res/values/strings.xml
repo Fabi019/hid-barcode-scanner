@@ -328,6 +328,10 @@
         <item>Turkish Q (TR)</item>
         <item>Polish Programmer (PL)</item>
         <item>Czech (CZ)</item>
+        <item>Portuguese (PO)</item>
+        <item>Portuguese (BR)</item>
+        <item>French (BE)</item>
+        <item>Hungarian (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>
@@ -359,7 +363,7 @@
     <string name="crop_mode">Crop mode</string>
     <string name="image_quality">Image quality</string>
     <string name="file_name_pattern">File name pattern</string>
-    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {CODE}, {FORMAT}</string>
+    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">Output folder</string>
     <string name="save_scan_image_hint">Note: The file name for each scan is available as {SCAN_IMAGE_NAME} in the custom template. This can be used for example to directly pull the image from the phone.</string>
     <string name="clear_after_time">Clear after time</string>
@@ -370,4 +374,5 @@
         <item>3s</item>
         <item>5s</item>
     </string-array>
+    <string name="image_format">Image format</string>
 </resources>

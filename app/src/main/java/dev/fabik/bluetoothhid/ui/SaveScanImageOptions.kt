@@ -125,6 +125,11 @@ fun SaveToImageOptionsContent() {
             1 to 100,
             PreferenceStore.SAVE_SCAN_QUALITY
         )
+        AdvancedEnumSelectionOption(
+            stringResource(R.string.image_format),
+            arrayOf("JPG", "PNG", "WEBP_LOSSY", "WEBP_LOSSLESS"),
+            PreferenceStore.SAVE_SCAN_IMAGE_FORMAT
+        )
 
         val context = LocalContext.current
         val storedFileName by context.getPreferenceState(PreferenceStore.SAVE_SCAN_FILE_PATTERN)
