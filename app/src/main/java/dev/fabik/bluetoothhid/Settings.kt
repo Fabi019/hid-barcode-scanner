@@ -502,6 +502,14 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         preference = PreferenceStore.CLEAR_AFTER_SEND
     )
 
+    ComboBoxEnumPreference(
+        title = strings[R.string.clear_after_time],
+        desc = strings[R.string.clear_after_time_desc],
+        values = strings.array(R.array.clear_after_time_values),
+        icon = Icons.Default.Timer,
+        preference = PreferenceStore.CLEAR_AFTER_TIME
+    )
+
     SwitchPreference(
         title = strings[R.string.private_mode],
         desc = strings[R.string.private_mode_desc],

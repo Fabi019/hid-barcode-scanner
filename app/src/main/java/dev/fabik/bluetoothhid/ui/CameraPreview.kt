@@ -81,7 +81,7 @@ import zxingcpp.BarcodeReader
 fun CameraPreviewContent(
     viewModel: CameraViewModel = viewModel<CameraViewModel>(),
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String, Int, String?) -> Unit,
+    onBarcodeDetected: (String?, Int, String?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -213,6 +213,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.SAVE_SCAN_CROP_MODE,
         PreferenceStore.SAVE_SCAN_QUALITY,
         PreferenceStore.SAVE_SCAN_FILE_PATTERN,
+        PreferenceStore.CLEAR_AFTER_TIME,
         PreferenceStore.SAVE_SCAN_IMAGE_FORMAT
     )
 
@@ -237,6 +238,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.SAVE_SCAN_CROP_MODE.extractEnum(it),
                 PreferenceStore.SAVE_SCAN_QUALITY.extract(it),
                 PreferenceStore.SAVE_SCAN_FILE_PATTERN.extract(it),
+                PreferenceStore.CLEAR_AFTER_TIME.extractEnum(it).value,
                 PreferenceStore.SAVE_SCAN_IMAGE_FORMAT.extractEnum(it)
             )
         }

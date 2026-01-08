@@ -105,6 +105,12 @@ enum class CropMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
 }
+enum class ClearAfterTime(val value: Long?) {
+    NEVER(null), ONE(1000), THREE(3000), FIVE(5000);
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
+    }
+}
 enum class ScanImageFormat {
     JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
 
@@ -209,6 +215,8 @@ open class PreferenceStore {
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
+        val CLEAR_AFTER_TIME =
+            intPreferencesKey("clear_after_time") enumDefaultsTo ClearAfterTime::fromIndex
 
         // val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false - Removed
         // val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false - Removed
