@@ -138,6 +138,13 @@ enum class ScanImageFormat {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: JPEG
     }
 }
+enum class VolumeKeyAction {
+    NOTHING, SEND_VALUE, CLEAR_VALUE, RUN_OCR, OPEN_KEYBOARD, TOGGLE_FLASH, TOGGLE_ZOOM, TRIGGER_FOCUS;
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: SEND_VALUE
+    }
+}
 
 open class PreferenceStore {
     // Simple generic preference class - no need for type-specific wrappers
@@ -178,6 +185,11 @@ open class PreferenceStore {
         val CONNECTION_MODE = intPreferencesKey("connection_mode").enumDefaultsTo(ConnectionMode::fromIndex)
         //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
         val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
+        val VOLUME_ACTION_UP =
+            intPreferencesKey("vol_action_up") enumDefaultsTo VolumeKeyAction::fromIndex
+        val VOLUME_ACTION_DOWN =
+            intPreferencesKey("vol_action_down") enumDefaultsTo VolumeKeyAction::fromIndex
+        val VOLUME_ZOOM_LEVEL = floatPreferencesKey("vol_action_zoom") defaultsTo 1f
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 10f
         val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout").enumDefaultsTo(KeyboardLayout::fromIndex)
         val EXTRA_KEYS = intPreferencesKey("extra_keys").enumDefaultsTo(ExtraKeys::fromIndex)
