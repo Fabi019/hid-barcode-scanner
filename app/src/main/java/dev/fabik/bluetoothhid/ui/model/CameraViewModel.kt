@@ -720,6 +720,15 @@ class CameraViewModel : ViewModel() {
         }
     }
 
+    fun focusAtCenter() {
+        val resolution = surfaceRequest.value?.resolution ?: return
+        val centerPoint = surfaceMeteringPointFactory?.createPoint(
+            resolution.width / 2f,
+            resolution.height / 2f
+        ) ?: return
+        cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(centerPoint).build())
+    }
+
     fun pinchToZoom(zoom: Float) {
         val currentZoom = cameraInfo?.zoomState?.value ?: return
         val currentZoomRatio = currentZoom.zoomRatio

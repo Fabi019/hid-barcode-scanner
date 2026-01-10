@@ -117,7 +117,9 @@ fun VolumeKeysOptionsContent() {
             PreferenceStore.VOLUME_ACTION_DOWN
         )
 
-        AdvancedSliderOption("Zoom value", 1f to 10f, PreferenceStore.VOLUME_ZOOM_LEVEL)
+        AdvancedSliderOption("Zoom level (%)", 0f to 100f, PreferenceStore.VOLUME_ZOOM_LEVEL)
+
+        //AdvancedToggleOption("Trigger on key release")
 
         Spacer(Modifier.height(12.dp))
     }

@@ -246,20 +246,27 @@ fun Scanner(
 
             val volumeActionUp by context.getPreferenceState(PreferenceStore.VOLUME_ACTION_UP)
             val volumeActionDown by context.getPreferenceState(PreferenceStore.VOLUME_ACTION_DOWN)
+            val volumeZoom by context.getPreferenceState(PreferenceStore.VOLUME_ZOOM_LEVEL)
 
             VolumeKeyHandler {
                 val value =
                     if (it == KeyEvent.KEYCODE_VOLUME_UP) volumeActionUp else volumeActionDown
                 val action = VolumeKeyAction.fromIndex(value ?: return@VolumeKeyHandler false)
                 when (action) {
-                    VolumeKeyAction.NOTHING -> false
-                    VolumeKeyAction.SEND_VALUE -> {
-                        currentSendText()
-                        true
+                    VolumeKeyAction.NOTHING -> return@VolumeKeyHandler false
+                    VolumeKeyAction.SEND_VALUE -> currentSendText()
+                    VolumeKeyAction.TOGGLE_ZOOM -> {
+                        if (cameraInfo?.zoomState?.value?.linearZoom == 0.0f)
+                            cameraControl?.setLinearZoom(minOf((volumeZoom ?: 100f) / 100f, 1.0f))
+                        else
+                            cameraControl?.setLinearZoom(0.0f)
                     }
 
-                    else -> false
+                    VolumeKeyAction.TOGGLE_FLASH -> cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
+                    VolumeKeyAction.TRIGGER_FOCUS -> cameraVM.focusAtCenter()
+                    else -> return@VolumeKeyHandler false
                 }
+                return@VolumeKeyHandler true
             }
 
             // Gradients for better system bars visibility in fullscreen mode
@@ -517,7 +524,10 @@ private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
         DisposableEffect(context) {
             val keyEventDispatcher = ViewCompat.OnUnhandledKeyEventListenerCompat { _, event ->
                 if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                    onPress(event.keyCode)
+                    if (event.action == KeyEvent.ACTION_UP)
+                        onPress(event.keyCode)
+                    else
+                        true
                 } else {
                     false
                 }
