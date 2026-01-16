@@ -41,6 +41,8 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.FlashOff
@@ -901,27 +903,32 @@ fun KeyboardInputDialog(dialogState: DialogState) {
     val controller = LocalController.current
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
-    var currentText by rememberSaveable(dialogState.openState) { mutableStateOf("") }
+    val currentText = rememberTextFieldState("")
     var sendingInProgress by remember(dialogState.openState) { mutableStateOf(false) }
     val (extraKeys, setExtraKeys) = rememberSaveable { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
-    val enabled = !sendingInProgress && currentText.isNotBlank()
+    val enabled = !sendingInProgress && currentText.text.isNotBlank()
 
     ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
         scope.launch {
             sendingInProgress = true
-            controller?.sendString(currentText, extraKeys, "MANUAL", null, null)
+            controller?.sendString(currentText.text.toString(), extraKeys, "MANUAL", null, null)
         }.invokeOnCompletion {
             close()
         }
     }) {
         Column {
             OutlinedTextField(
-                value = currentText,
-                onValueChange = { currentText = it },
-                modifier = Modifier.focusRequester(focusRequester)
+                state = currentText,
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            currentText.edit { selectAll() }
+                        }
+                    }
             )
 
             Spacer(Modifier.height(8.dp))
