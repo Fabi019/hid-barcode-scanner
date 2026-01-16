@@ -80,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -201,11 +202,12 @@ fun Scanner(
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
     AdaptSystemBarsColor(fullScreen)
 
+    val keyboardDialog = rememberDialogState()
     val cameraVM = viewModel<CameraViewModel>()
 
     Scaffold(
         topBar = {
-            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen)
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -263,9 +265,15 @@ fun Scanner(
                         else
                             cameraControl?.setLinearZoom(0.0f)
                     }
-
+                    VolumeKeyAction.OPEN_KEYBOARD -> keyboardDialog.open()
                     VolumeKeyAction.TOGGLE_FLASH -> cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
                     VolumeKeyAction.TRIGGER_FOCUS -> cameraVM.focusAtCenter()
+                    VolumeKeyAction.CLEAR_VALUE -> {
+                        currentBarcode = null
+                        currentBarcodeFormat = null
+                        currentImageName = null
+                        cameraVM.lastBarcode = null
+                    }
                     else -> return@VolumeKeyHandler false
                 }
                 return@VolumeKeyHandler true
@@ -598,6 +606,7 @@ private fun ScannerAppBar(
     info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
+    keyboardDialog: DialogState
 ) {
     val navigation = LocalNavigation.current
 
@@ -643,7 +652,6 @@ private fun ScannerAppBar(
             }
 
             currentDevice?.let {
-                val keyboardDialog = rememberDialogState()
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
