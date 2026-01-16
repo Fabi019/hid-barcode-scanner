@@ -515,6 +515,12 @@ class CameraViewModel : ViewModel() {
 
     private val _ocrResults = MutableStateFlow<List<Line>>(emptyList())
     val ocrResults = _ocrResults.asStateFlow()
+    private val _triggerOcr = MutableStateFlow<Boolean?>(null)
+    val triggerOcr = _triggerOcr.asStateFlow()
+
+    fun triggerOcr() {
+        _triggerOcr.update { !(it ?: false) }
+    }
 
     fun onOcrResult(result: List<TextBlock>, source: Size): Boolean {
         val results = result.flatMap { block ->

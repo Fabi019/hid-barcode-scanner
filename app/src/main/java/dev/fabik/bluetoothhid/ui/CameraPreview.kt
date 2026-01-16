@@ -283,6 +283,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
 
     var imageSize by remember { mutableStateOf(Size(0, 0)) }
     val results by viewModel.ocrResults.collectAsStateWithLifecycle()
+    val triggerOcr by viewModel.triggerOcr.collectAsStateWithLifecycle()
 
     val startForResult =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -360,29 +361,35 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     Box(Modifier.fillMaxSize()) {
         val scope = rememberCoroutineScope()
 
-        FloatingActionButton(
-            onClick = {
-                viewModel.captureImageOCR(context) { photoUri, size ->
-                    imageSize = size
+        // Needed to trigger the detection as volume key action from Scanner
+        LaunchedEffect(triggerOcr) {
+            if (triggerOcr == null) return@LaunchedEffect
 
-                    runCatching {
-                        Log.d("Scanner", "Launching intent with $photoUri $imageSize")
-                        startForResult.launch(intent.apply {
-                            setDataAndType(photoUri, "image/jpeg")
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        })
-                    }.onFailure {
-                        scope.launch {
-                            Toast.makeText(
-                                context,
-                                "OCR engine not installed!",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        Log.e("Scanner", "Unable start intent!", it)
+            viewModel.captureImageOCR(context) { photoUri, size ->
+                imageSize = size
+
+                runCatching {
+                    Log.d("Scanner", "Launching intent with $photoUri $imageSize")
+                    startForResult.launch(intent.apply {
+                        setDataAndType(photoUri, "image/jpeg")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    })
+                }.onFailure {
+                    scope.launch {
+                        Toast.makeText(
+                            context,
+                            "OCR engine not installed!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
+                    Log.e("Scanner", "Unable start intent!", it)
                 }
-            }, modifier = Modifier
+            }
+        }
+
+        FloatingActionButton(
+            onClick = { viewModel.triggerOcr() },
+            modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.BottomEnd)
         ) {

@@ -274,7 +274,7 @@ fun Scanner(
                         currentImageName = null
                         cameraVM.lastBarcode = null
                     }
-                    else -> return@VolumeKeyHandler false
+                    VolumeKeyAction.RUN_OCR -> cameraVM.triggerOcr()
                 }
                 return@VolumeKeyHandler true
             }
