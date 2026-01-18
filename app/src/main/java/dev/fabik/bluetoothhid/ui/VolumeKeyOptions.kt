@@ -28,10 +28,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
@@ -45,8 +48,8 @@ fun VolumeKeyOptionsModal() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     ButtonPreference(
-        title = "Use volume keys",
-        desc = "Specify action when pressing volume up/down",
+        title = stringResource(R.string.send_with_volume_keys),
+        desc = stringResource(R.string.send_vol_keys_desc),
         icon = Icons.AutoMirrored.Filled.VolumeMute,
         onClick = { showSheet = true },
         extra = {
@@ -90,36 +93,33 @@ fun VolumeKeysOptionsContent() {
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            "Volume keys",
+            stringResource(R.string.send_with_volume_keys),
             style = MaterialTheme.typography.titleLarge,
         )
 
-        val actions = arrayOf(
-            "Nothing",
-            "Send value",
-            "Clear value",
-            "Run OCR",
-            "Open manual input",
-            "Toggle flash",
-            "Toggle zoom",
-            "Trigger focus"
-        )
+        val actions = stringArrayResource(R.array.volume_keys_actions)
 
         AdvancedEnumSelectionOption(
-            "Volume up",
+            stringResource(R.string.volume_up),
             actions,
             PreferenceStore.VOLUME_ACTION_UP
         )
 
         AdvancedEnumSelectionOption(
-            "Volume down",
-            actions,
-            PreferenceStore.VOLUME_ACTION_DOWN
+            text = stringResource(R.string.volume_down),
+            values = actions,
+            preference = PreferenceStore.VOLUME_ACTION_DOWN
         )
 
-        AdvancedSliderOption("Zoom level (%)", 0f to 100f, PreferenceStore.VOLUME_ZOOM_LEVEL)
-
-        //AdvancedToggleOption("Trigger on key release")
+        AdvancedSliderOption(
+            stringResource(R.string.zoom_level),
+            0f to 100f,
+            PreferenceStore.VOLUME_ZOOM_LEVEL
+        )
+        AdvancedToggleOption(
+            stringResource(R.string.trigger_on_key_release),
+            PreferenceStore.VOLUME_ON_RELEASE
+        )
 
         Spacer(Modifier.height(12.dp))
     }

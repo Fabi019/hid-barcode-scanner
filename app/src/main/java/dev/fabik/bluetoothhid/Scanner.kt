@@ -527,6 +527,7 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
 private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
     val context = LocalContext.current
     val sendWithVolume by context.getPreferenceState(PreferenceStore.SEND_WITH_VOLUME)
+    val triggerOnRelease by context.getPreferenceState(PreferenceStore.VOLUME_ON_RELEASE)
 
     if (sendWithVolume == true) {
         val view = LocalView.current
@@ -534,13 +535,14 @@ private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
         DisposableEffect(context) {
             val keyEventDispatcher = ViewCompat.OnUnhandledKeyEventListenerCompat { _, event ->
                 if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                    if (event.action == KeyEvent.ACTION_UP)
-                        onPress(event.keyCode)
-                    else
-                        true
-                } else {
-                    false
+                    if (event.repeatCount == 0
+                        && (event.action == KeyEvent.ACTION_UP && triggerOnRelease == true
+                                || event.action == KeyEvent.ACTION_DOWN && triggerOnRelease == false)
+                    )
+                        return@OnUnhandledKeyEventListenerCompat onPress(event.keyCode)
+                    return@OnUnhandledKeyEventListenerCompat true
                 }
+                false
             }
 
             ViewCompat.addOnUnhandledKeyEventListener(view, keyEventDispatcher)
