@@ -515,6 +515,12 @@ class CameraViewModel : ViewModel() {
 
     private val _ocrResults = MutableStateFlow<List<Line>>(emptyList())
     val ocrResults = _ocrResults.asStateFlow()
+    private val _triggerOcr = MutableStateFlow<Boolean?>(null)
+    val triggerOcr = _triggerOcr.asStateFlow()
+
+    fun triggerOcr() {
+        _triggerOcr.update { !(it ?: false) }
+    }
 
     fun onOcrResult(result: List<TextBlock>, source: Size): Boolean {
         val results = result.flatMap { block ->
@@ -718,6 +724,15 @@ class CameraViewModel : ViewModel() {
                 }, Executors.newSingleThreadExecutor()) ?: it.resume(Unit)
             }
         }
+    }
+
+    fun focusAtCenter() {
+        val resolution = surfaceRequest.value?.resolution ?: return
+        val centerPoint = surfaceMeteringPointFactory?.createPoint(
+            resolution.width / 2f,
+            resolution.height / 2f
+        ) ?: return
+        cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(centerPoint).build())
     }
 
     fun pinchToZoom(zoom: Float) {

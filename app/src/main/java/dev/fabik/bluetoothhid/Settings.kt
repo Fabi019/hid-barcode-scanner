@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.automirrored.filled.VolumeMute
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -78,6 +77,7 @@ import dev.fabik.bluetoothhid.ui.SaveScanImageOptionsModal
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
+import dev.fabik.bluetoothhid.ui.VolumeKeyOptionsModal
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -256,12 +256,13 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         preference = PreferenceStore.AUTO_SEND
     )
 
-    SwitchPreference(
-        title = strings[R.string.send_with_volume_keys],
-        desc = strings[R.string.send_vol_keys_desc],
-        icon = Icons.AutoMirrored.Filled.VolumeMute,
-        preference = PreferenceStore.SEND_WITH_VOLUME
-    )
+//    SwitchPreference(
+//        title = strings[R.string.send_with_volume_keys],
+//        desc = strings[R.string.send_vol_keys_desc],
+//        icon = Icons.AutoMirrored.Filled.VolumeMute,
+//        preference = PreferenceStore.SEND_WITH_VOLUME
+//    )
+    VolumeKeyOptionsModal()
 
     val jsDialog = rememberDialogState()
     var jsEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_JS)

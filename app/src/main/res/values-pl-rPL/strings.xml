@@ -341,8 +341,6 @@
     <string name="downscale_threshold">Próg downscalingu (px)</string>
     <string name="parser">Parser</string>
     <string name="text_mode">Tryb tekstowy</string>
-    <string name="send_with_volume_keys">Wyślij za pomocą klawiszy głośności</string>
-    <string name="send_vol_keys_desc">Użyj przycisków zwiększania/zmniejszania głośności, aby wysłać kod kreskowy.</string>
     <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
     <string name="ocr_note_bottom">Następnie można użyć nowego przycisku w prawym dolnym rogu skanera, aby uruchomić wykrywanie.</string>
     <string name="note">Uwaga</string>

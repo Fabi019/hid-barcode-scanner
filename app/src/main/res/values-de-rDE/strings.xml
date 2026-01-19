@@ -320,8 +320,8 @@
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
     <string name="detection">Erkennung</string>
     <string name="processing">Verarbeitung</string>
-    <string name="send_with_volume_keys">Senden mit Lautstärketasten</string>
-    <string name="send_vol_keys_desc">Verwenden von Lautstärke Hoch/Runter zum senden</string>
+    <string name="send_with_volume_keys">Lautstärketasten verwenden</string>
+    <string name="send_vol_keys_desc">Aktion für das Drücken der Lautstärketasten festlegen</string>
     <string name="clear_after_send">Nach dem Senden löschen</string>
     <string name="clear_after_send_desc">Löscht den angezeigten Code, nachdem er manuell gesendet wurde</string>
     <string name="manual_input">Manuelle Eingabe</string>
@@ -354,4 +354,18 @@
         <item>5s</item>
     </string-array>
     <string name="image_format">Bildformat</string>
+    <string name="volume_up">Lautstärke hoch</string>
+    <string name="volume_down">Lautstärke runter</string>
+    <string name="zoom_level">Zoomstufe (%)</string>
+    <string name="trigger_on_key_release">Auslösen beim Loslassen der Taste</string>
+    <string-array name="volume_keys_actions">
+        <item>Nichts</item>
+        <item>Wert senden</item>
+        <item>Wert löschen</item>
+        <item>OCR ausführen</item>
+        <item>Manuelle Eingabe öffnen</item>
+        <item>Blitz ein-/ausschalten</item>
+        <item>Zoom ein-/ausschalten</item>
+        <item>Fokussieren</item>
+    </string-array>
 </resources>
