@@ -51,7 +51,8 @@ pictures)*
 
 ## Download
 
-<a href='https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/></a>
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it at IzzyOnDroid" width='200px'>](https://apt.izzysoft.de/packages/dev.fabik.bluetoothhid)
+[<img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/>](https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid)
 
 > **Note**</br>
 > Because the version on the Play Store is usually one or two versions behind the latest release,
@@ -68,9 +69,7 @@ are using *nightly.link* to provide the files because GitHub doesn't allow to do
 actions without being logged in.
 
 - Latest APKs (Release): [here](https://github.com/Fabi019/hid-barcode-scanner/releases/latest)
-- Latest
-  APK (
-  Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
+- Latest APK (Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
 
 ## Troubleshooting
 
@@ -104,9 +103,9 @@ this might not happen.
 ***Solution:***
 
 Restart the app. When launching again, there should be a small message at the bottom of the screen
-that says the Bluetooth proxy was successfully connected. Otherwise you may have to restart your
-device. This could also mean that your device does not support the Bluetooth HID profile. To test
-this, search for the app "Bluetooth HID Profile Tester" in the PlayStore and see what the result is.
+that says the Bluetooth proxy was successfully connected. Otherwise you may have to toggle bluetooth
+or restart your device. This could also mean that your device does not support the Bluetooth HID profile.
+To test this, search for the app "Bluetooth HID Profile Tester" in the PlayStore and see what the result is.
 If the test is not successful, unfortunately your device is not supported.
 
 ## Contributing
@@ -142,9 +141,9 @@ If you want to add a new keyboard layout the following steps might help you:
    The layout file always consists of a list of characters with the hid code and modifier.
 2. Add the name of the layout to the `<string-array name="keyboard_layout_values">` for every
    available language under `app/src/main/res/values-*/strings.xml`
-3. Extend the switch case
-   in [BluetoothController.kt#sendString](app/src/main/java/dev/fabik/bluetoothhid/bt/BluetoothController.kt#L285).
-   The number is the index of the entry in the `keyboard_layout_values` and the value is the name of
+3. Extend the `KeyboardLayout` enum
+   in [PreferenceStore.kt](https://github.com/Fabi019/hid-barcode-scanner/blob/f62141654e3204b9e2e3ca1aee63a4822f51361a/app/src/main/java/dev/fabik/bluetoothhid/utils/PreferenceStore.kt#L46).
+   The placement of the entry should match the positions in `keyboard_layout_values` and the value is the name of
    the layout file without extension (usually two letters)
 
 ## Connection Modes
