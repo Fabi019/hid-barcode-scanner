@@ -1,0 +1,4 @@
+- new keyboard layouts (Belgian, Brazilian, Hungarian, Portuguese)
+- add new volume key actions
+- more formats for storing scan image
+- add option to clear code after fixed time

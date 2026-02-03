@@ -81,7 +81,7 @@
     <string name="devices">Devices</string>
     <string name="keyboard_layout">Keyboard layout</string>
     <string name="keyboard_layout_desc">Set the keyboard layout. Change if you want to type special characters or don\'t use a QWERTY layout.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %s)</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (build %d)</string>
     <string name="disconnect">Disconnect</string>
     <string name="more">More</string>
     <string name="toggle_flash">Toggle flash</string>
@@ -274,8 +274,8 @@
     <string name="downscale_threshold">Downscale threshold (px)</string>
     <string name="parser">Parser</string>
     <string name="text_mode">Text mode</string>
-    <string name="send_with_volume_keys">Send with volume keys</string>
-    <string name="send_vol_keys_desc">Use volume up/down to send the barcode</string>
+    <string name="send_with_volume_keys">Use volume keys</string>
+    <string name="send_vol_keys_desc">Specify action for pressing volume up/down</string>
     <string name="ocr_note_desc">The OCR extension requires an external app to provide the detection functionality. If you want to use this feature, the following app needs to be installed separately on your device.\nYou can choose between the ML-Kit or Tesseract based version of the app.\n(Note that this is a third-party app over which I don\'t have any control)</string>
     <string name="ocr_note_bottom">After this, you can use the new button in the bottom right corner of the scanner to trigger the detection.</string>
     <string name="note">Note</string>
@@ -328,6 +328,10 @@
         <item>Turkish Q (TR)</item>
         <item>Polish Programmer (PL)</item>
         <item>Czech (CZ)</item>
+        <item>Portuguese (PO)</item>
+        <item>Portuguese (BR)</item>
+        <item>French (BE)</item>
+        <item>Hungarian (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>
@@ -355,11 +359,34 @@
     <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>
     <string name="preserve_unsupported_placeholders_desc">Keep HID-specific placeholders (e.g., {F1}, {ESC}) as text instead of removing them in RFCOMM mode</string>
     <string name="save_scan_image">Save scan image</string>
-    <string name="save_scan_desc">Stores the scan to the gallery</string>
+    <string name="save_scan_desc">Stores the scan on the device</string>
     <string name="crop_mode">Crop mode</string>
     <string name="image_quality">Image quality</string>
     <string name="file_name_pattern">File name pattern</string>
-    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {CODE}, {FORMAT}</string>
+    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">Output folder</string>
     <string name="save_scan_image_hint">Note: The file name for each scan is available as {SCAN_IMAGE_NAME} in the custom template. This can be used for example to directly pull the image from the phone.</string>
+    <string name="clear_after_time">Clear after time</string>
+    <string name="clear_after_time_desc">Clears the shown code after no detection within the specified time interval.</string>
+    <string-array name="clear_after_time_values">
+        <item>Never</item>
+        <item>1s</item>
+        <item>3s</item>
+        <item>5s</item>
+    </string-array>
+    <string name="image_format">Image format</string>
+    <string name="volume_up">Volume up</string>
+    <string name="volume_down">Volume down</string>
+    <string name="zoom_level">Zoom level (%)</string>
+    <string name="trigger_on_key_release">Trigger on key release</string>
+    <string-array name="volume_keys_actions">
+        <item>Nothing</item>
+        <item>Send value</item>
+        <item>Clear value</item>
+        <item>Run OCR</item>
+        <item>Open manual input</item>
+        <item>Toggle flash</item>
+        <item>Toggle zoom</item>
+        <item>Trigger focus</item>
+    </string-array>
 </resources>

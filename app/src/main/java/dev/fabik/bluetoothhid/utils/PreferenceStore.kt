@@ -1,6 +1,8 @@
 package dev.fabik.bluetoothhid.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -41,8 +43,10 @@ enum class ConnectionMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HID
     }
 }
-enum class KeyboardLayout {
-    US, DE, FR, GB, ES, IT, TR, PL, CZ;
+enum class KeyboardLayout(var value: String) {
+    US("us"), DE("de"), FR("fr"), GB("gb"), ES("es"),
+    IT("it"), TR("tr"), PL("pl"), CZ("cz"), PO("po"),
+    BR("br"), BE("be"), HU("hu");
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: US
     }
@@ -97,9 +101,48 @@ enum class TextMode {
 }
 enum class CropMode {
     NONE, SCAN_AREA, BARCODE;
-
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
+    }
+}
+enum class ClearAfterTime(val value: Long?) {
+    NEVER(null), ONE(1000), THREE(3000), FIVE(5000);
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
+    }
+}
+enum class ScanImageFormat {
+    JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
+
+    fun toCompressFormat(): Bitmap.CompressFormat {
+        return when (this) {
+            JPEG -> Bitmap.CompressFormat.JPEG
+            PNG -> Bitmap.CompressFormat.PNG
+            WEBP_LOSSY ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSY
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+
+            WEBP_LOSSLESS ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSLESS
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }
+        }
+    }
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: JPEG
+    }
+}
+enum class VolumeKeyAction {
+    NOTHING, SEND_VALUE, CLEAR_VALUE, RUN_OCR, OPEN_KEYBOARD, TOGGLE_FLASH, TOGGLE_ZOOM, TRIGGER_FOCUS;
+
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: SEND_VALUE
     }
 }
 
@@ -142,6 +185,12 @@ open class PreferenceStore {
         val CONNECTION_MODE = intPreferencesKey("connection_mode").enumDefaultsTo(ConnectionMode::fromIndex)
         //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
         val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
+        val VOLUME_ACTION_UP =
+            intPreferencesKey("vol_action_up") enumDefaultsTo VolumeKeyAction::fromIndex
+        val VOLUME_ACTION_DOWN =
+            intPreferencesKey("vol_action_down") enumDefaultsTo VolumeKeyAction::fromIndex
+        val VOLUME_ON_RELEASE = booleanPreferencesKey("vol_on_release") defaultsTo false
+        val VOLUME_ZOOM_LEVEL = floatPreferencesKey("vol_action_zoom") defaultsTo 1f
         val SEND_DELAY = floatPreferencesKey("send_delay") defaultsTo 10f
         val KEYBOARD_LAYOUT = intPreferencesKey("keyboard_layout").enumDefaultsTo(KeyboardLayout::fromIndex)
         val EXTRA_KEYS = intPreferencesKey("extra_keys").enumDefaultsTo(ExtraKeys::fromIndex)
@@ -179,6 +228,8 @@ open class PreferenceStore {
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
+        val CLEAR_AFTER_TIME =
+            intPreferencesKey("clear_after_time") enumDefaultsTo ClearAfterTime::fromIndex
 
         // val RAW_VALUE = booleanPreferencesKey("raw_value") defaultsTo false - Removed
         // val SHOW_POSSIBLE = booleanPreferencesKey("show_possible") defaultsTo false - Removed
@@ -203,6 +254,8 @@ open class PreferenceStore {
         val SAVE_SCAN_QUALITY = intPreferencesKey("save_scan_quality") defaultsTo 70
         val SAVE_SCAN_FILE_PATTERN =
             stringPreferencesKey("save_scan_file_pattern") defaultsTo "scan_{TIMESTAMP}"
+        val SAVE_SCAN_IMAGE_FORMAT =
+            intPreferencesKey("save_scan_filetype") enumDefaultsTo ScanImageFormat::fromIndex
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false

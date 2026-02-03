@@ -53,6 +53,7 @@ import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ScanFrequency
+import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
@@ -69,6 +70,8 @@ import org.totschnig.ocr.TextBlock
 import zxingcpp.BarcodeReader
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -96,7 +99,7 @@ class CameraViewModel : ViewModel() {
     var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    var onBarcodeDetected: (String, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
+    var onBarcodeDetected: (String?, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -131,13 +134,22 @@ class CameraViewModel : ViewModel() {
         fixExposure: Boolean,
         focusMode: FocusMode,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-        onBarcode: (String, Int, String?) -> Unit,
+        onBarcode: (String?, Int, String?) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         onBarcodeDetected = { value, format, image ->
-            if (!value.contentEquals(lastBarcode)) {
+            lastDetectionTime = System.currentTimeMillis()
+            if (value == null) {
+                if (lastBarcode != null) {
+                    Log.d(TAG, "Clearing barcode value")
+                    viewModelScope.launch {
+                        onBarcode(null, 0, null)
+                    }
+                    lastBarcode = null
+                }
+            } else if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
 
                 val formatIdx = ZXingAnalyzer.format2Index(format)
@@ -280,6 +292,15 @@ class CameraViewModel : ViewModel() {
             }
             barcodeAnalyzer?.currentScanRect = scanRect
         }
+
+        _clearAfterTime?.let {
+            val now = System.currentTimeMillis()
+            if (now - (lastDetectionTime ?: now) >= it) {
+                _currentBarcode.update { null }
+                onBarcodeDetected(null, BarcodeReader.Format.NONE, null)
+                lastDetectionTime = null
+            }
+        }
     }
 
     var viewSize: IntSize? = null
@@ -366,6 +387,8 @@ class CameraViewModel : ViewModel() {
     private var _saveScanCropMode: CropMode = CropMode.NONE
     private var _saveScanQuality: Int = 100
     private var _saveScanFileName: String = "scan"
+    private var _clearAfterTime: Long? = null
+    private var _saveScanImageFormat: ScanImageFormat = ScanImageFormat.JPEG
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -376,7 +399,9 @@ class CameraViewModel : ViewModel() {
         saveScanPath: String?,
         saveScanCropMode: CropMode,
         scanSaveQuality: Int,
-        saveScanFileName: String
+        saveScanFileName: String,
+        clearAfterTime: Long?,
+        saveScanImageFormat: ScanImageFormat
     ) {
         _scanDelay = when (frequency) {
             ScanFrequency.FASTEST -> 0
@@ -405,10 +430,14 @@ class CameraViewModel : ViewModel() {
         _saveScanCropMode = saveScanCropMode
         _saveScanQuality = scanSaveQuality
         _saveScanFileName = saveScanFileName
+        _saveScanImageFormat = saveScanImageFormat
+
+        _clearAfterTime = clearAfterTime
 
         Log.d(TAG, "Updated scan parameters")
     }
 
+    var lastDetectionTime: Long? = null
     var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
@@ -486,6 +515,12 @@ class CameraViewModel : ViewModel() {
 
     private val _ocrResults = MutableStateFlow<List<Line>>(emptyList())
     val ocrResults = _ocrResults.asStateFlow()
+    private val _triggerOcr = MutableStateFlow<Boolean?>(null)
+    val triggerOcr = _triggerOcr.asStateFlow()
+
+    fun triggerOcr() {
+        _triggerOcr.update { !(it ?: false) }
+    }
 
     fun onOcrResult(result: List<TextBlock>, source: Size): Boolean {
         val results = result.flatMap { block ->
@@ -621,9 +656,19 @@ class CameraViewModel : ViewModel() {
             )
         }
 
+        val (mime, ext) = when (_saveScanImageFormat) {
+            ScanImageFormat.JPEG -> "image/jpeg" to "jpg"
+            ScanImageFormat.PNG -> "image/png" to "png"
+            else -> "image/webp" to "webp"
+        }
+
         // Determine filename
-        var fileName = "${_saveScanFileName}.jpg"
+        var fileName = "${_saveScanFileName}.${ext}"
         fileName = fileName.replace("{TIMESTAMP}", System.currentTimeMillis().toString())
+        fileName = fileName.replace(
+            "{TIMESTAMP_ISO}",
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"))
+        )
         fileName = fileName.replace(
             "{FORMAT}",
             ZXingAnalyzer.format2String(barcode.format)
@@ -634,7 +679,7 @@ class CameraViewModel : ViewModel() {
             DocumentsContract.createDocument(
                 context.contentResolver,
                 path,
-                "image/jpeg",
+                mime,
                 fileName
             )
         }.getOrNull()
@@ -642,7 +687,7 @@ class CameraViewModel : ViewModel() {
         newFileUri?.let { file ->
             context.contentResolver.openOutputStream(file).use {
                 if (bitmap.compress(
-                        Bitmap.CompressFormat.JPEG,
+                        _saveScanImageFormat.toCompressFormat(),
                         _saveScanQuality,
                         it ?: return null
                     )
@@ -679,6 +724,15 @@ class CameraViewModel : ViewModel() {
                 }, Executors.newSingleThreadExecutor()) ?: it.resume(Unit)
             }
         }
+    }
+
+    fun focusAtCenter() {
+        val resolution = surfaceRequest.value?.resolution ?: return
+        val centerPoint = surfaceMeteringPointFactory?.createPoint(
+            resolution.width / 2f,
+            resolution.height / 2f
+        ) ?: return
+        cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(centerPoint).build())
     }
 
     fun pinchToZoom(zoom: Float) {

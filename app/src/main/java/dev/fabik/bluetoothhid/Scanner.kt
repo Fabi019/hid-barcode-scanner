@@ -13,6 +13,7 @@ import android.os.VibratorManager
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
@@ -40,6 +41,8 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.FlashOff
@@ -77,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -114,6 +118,7 @@ import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.VolumeKeyAction
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
@@ -124,8 +129,8 @@ import kotlinx.coroutines.launch
  * Helper function to create a circular background modifier for icons in fullscreen mode.
  * Provides better visibility by adding a semi-transparent black circle behind the icon.
  */
-private fun iconBackgroundModifier(): Modifier {
-    return Modifier.drawBehind {
+private fun Modifier.iconBackgroundModifier(): Modifier {
+    return drawBehind {
         drawCircle(
             color = Color.Black.copy(alpha = 0.5f),
             radius = size.maxDimension
@@ -180,7 +185,6 @@ fun Scanner(
     sendText: (String, Int?, String?) -> Unit
 ) {
     val context = LocalContext.current
-    val view = LocalView.current
 
     var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
     var currentBarcodeFormat by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -196,42 +200,19 @@ fun Scanner(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
+    AdaptSystemBarsColor(fullScreen)
 
-    // Calculate light theme the same way MainActivity does
-    val colorScheme = MaterialTheme.colorScheme
-    val isLightTheme = colorScheme.background.luminance() > 0.5f
-
-    // Manage system bars appearance only in fullscreen mode
-    // In non-fullscreen mode, MainActivity handles system bars based on theme
-    // Use isLightTheme as key to react to theme changes
-    DisposableEffect(fullScreen, isLightTheme) {
-        val window = (context as? android.app.Activity)?.window
-        val insetsController = window?.let { WindowCompat.getInsetsController(it, view) }
-
-        if (fullScreen && insetsController != null) {
-            // In fullscreen mode, use white icons for better visibility on camera background
-            insetsController.isAppearanceLightStatusBars = false
-            insetsController.isAppearanceLightNavigationBars = false
-
-            onDispose {
-                // Restore proper system bars appearance based on current theme
-                insetsController.isAppearanceLightStatusBars = isLightTheme
-                insetsController.isAppearanceLightNavigationBars = isLightTheme
-            }
-        } else {
-            onDispose { }
-        }
-    }
+    val keyboardDialog = rememberDialogState()
+    val cameraVM = viewModel<CameraViewModel>()
 
     Scaffold(
         topBar = {
-            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen)
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             currentDevice?.let {
                 val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
-                val cameraVM = viewModel<CameraViewModel>()
 
                 currentBarcode?.let {
                     SendToDeviceFAB {
@@ -243,10 +224,6 @@ fun Scanner(
                             currentImageName = null
                             cameraVM.lastBarcode = null
                         }
-                    }
-
-                    VolumeKeyHandler {
-                        currentSendText()
                     }
                 }
             }
@@ -265,10 +242,41 @@ fun Scanner(
                     currentBarcode = value
                     currentBarcodeFormat = format
                     currentImageName = imageName
-                    if (send) {
+                    if (send && value?.isNotEmpty() == true) {
                         currentSendText()
                     }
                 }
+            }
+
+            val volumeActionUp by context.getPreferenceState(PreferenceStore.VOLUME_ACTION_UP)
+            val volumeActionDown by context.getPreferenceState(PreferenceStore.VOLUME_ACTION_DOWN)
+            val volumeZoom by context.getPreferenceState(PreferenceStore.VOLUME_ZOOM_LEVEL)
+
+            VolumeKeyHandler {
+                val value =
+                    if (it == KeyEvent.KEYCODE_VOLUME_UP) volumeActionUp else volumeActionDown
+                val action = VolumeKeyAction.fromIndex(value ?: return@VolumeKeyHandler false)
+                when (action) {
+                    VolumeKeyAction.NOTHING -> return@VolumeKeyHandler false
+                    VolumeKeyAction.SEND_VALUE -> currentSendText()
+                    VolumeKeyAction.TOGGLE_ZOOM -> {
+                        if (cameraInfo?.zoomState?.value?.linearZoom == 0.0f)
+                            cameraControl?.setLinearZoom(minOf((volumeZoom ?: 100f) / 100f, 1.0f))
+                        else
+                            cameraControl?.setLinearZoom(0.0f)
+                    }
+                    VolumeKeyAction.OPEN_KEYBOARD -> keyboardDialog.open()
+                    VolumeKeyAction.TOGGLE_FLASH -> cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
+                    VolumeKeyAction.TRIGGER_FOCUS -> cameraVM.focusAtCenter()
+                    VolumeKeyAction.CLEAR_VALUE -> {
+                        currentBarcode = null
+                        currentBarcodeFormat = null
+                        currentImageName = null
+                        cameraVM.lastBarcode = null
+                    }
+                    VolumeKeyAction.RUN_OCR -> cameraVM.triggerOcr()
+                }
+                return@VolumeKeyHandler true
             }
 
             // Gradients for better system bars visibility in fullscreen mode
@@ -328,6 +336,36 @@ fun Scanner(
     }
 }
 
+@Composable
+fun AdaptSystemBarsColor(fullScreen: Boolean) {
+    // Calculate light theme the same way MainActivity does
+    val colorScheme = MaterialTheme.colorScheme
+    val isLightTheme = colorScheme.background.luminance() > 0.5f
+    val activity = LocalActivity.current
+    val view = LocalView.current
+
+    // Manage system bars appearance only in fullscreen mode
+    // In non-fullscreen mode, MainActivity handles system bars based on theme
+    // Use isLightTheme as key to react to theme changes
+    DisposableEffect(fullScreen, isLightTheme) {
+        val insetsController = activity?.window?.let { WindowCompat.getInsetsController(it, view) }
+
+        if (fullScreen && insetsController != null) {
+            // In fullscreen mode, use white icons for better visibility on camera background
+            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightNavigationBars = false
+
+            onDispose {
+                // Restore proper system bars appearance based on current theme
+                insetsController.isAppearanceLightStatusBars = isLightTheme
+                insetsController.isAppearanceLightNavigationBars = isLightTheme
+            }
+        } else {
+            onDispose { }
+        }
+    }
+}
+
 /**
  * Area for the camera preview.
  *
@@ -337,7 +375,7 @@ fun Scanner(
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String, Int?, String?, Boolean) -> Unit,
+    onBarcodeDetected: (String?, Int?, String?, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -372,7 +410,6 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
-    val cameraVM = viewModel<CameraViewModel>()
 
     Log.d(
         "Scanner",
@@ -382,6 +419,7 @@ private fun CameraPreviewArea(
     CameraPreviewContent(onCameraReady = onCameraReady) { value, format, imageName ->
         Log.d("Scanner", "Barcode detected: $value")
         onBarcodeDetected(value, format, imageName, autoSend)
+        if (value == null) return@CameraPreviewContent
 
         if (playSound) {
             toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
@@ -486,9 +524,10 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
  * @param onPress called when the user presses vol up/down
  */
 @Composable
-private fun VolumeKeyHandler(onPress: () -> Unit) {
+private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
     val context = LocalContext.current
     val sendWithVolume by context.getPreferenceState(PreferenceStore.SEND_WITH_VOLUME)
+    val triggerOnRelease by context.getPreferenceState(PreferenceStore.VOLUME_ON_RELEASE)
 
     if (sendWithVolume == true) {
         val view = LocalView.current
@@ -496,11 +535,14 @@ private fun VolumeKeyHandler(onPress: () -> Unit) {
         DisposableEffect(context) {
             val keyEventDispatcher = ViewCompat.OnUnhandledKeyEventListenerCompat { _, event ->
                 if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP || event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                    onPress()
-                    true
-                } else {
-                    false
+                    if (event.repeatCount == 0
+                        && (event.action == KeyEvent.ACTION_UP && triggerOnRelease == true
+                                || event.action == KeyEvent.ACTION_DOWN && triggerOnRelease == false)
+                    )
+                        return@OnUnhandledKeyEventListenerCompat onPress(event.keyCode)
+                    return@OnUnhandledKeyEventListenerCompat true
                 }
+                false
             }
 
             ViewCompat.addOnUnhandledKeyEventListener(view, keyEventDispatcher)
@@ -566,6 +608,7 @@ private fun ScannerAppBar(
     info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
+    keyboardDialog: DialogState
 ) {
     val navigation = LocalNavigation.current
 
@@ -611,7 +654,6 @@ private fun ScannerAppBar(
             }
 
             currentDevice?.let {
-                val keyboardDialog = rememberDialogState()
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
@@ -619,7 +661,7 @@ private fun ScannerAppBar(
                         Icons.Default.Keyboard,
                         "Keyboard",
                         tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                        modifier = if (transparent) iconBackgroundModifier() else Modifier
+                        modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
                     )
                 }
                 KeyboardInputDialog(keyboardDialog)
@@ -632,7 +674,7 @@ private fun ScannerAppBar(
                     Icons.Default.History,
                     "History",
                     tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-                    modifier = if (transparent) iconBackgroundModifier() else Modifier
+                    modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
                 )
             }
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
@@ -680,7 +722,7 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
             },
             "Flash",
             tint = if (transparent) Color.White else MaterialTheme.colorScheme.onSurface,
-            modifier = if (transparent) iconBackgroundModifier() else Modifier
+            modifier = if (transparent) Modifier.iconBackgroundModifier() else Modifier
         )
     }
 }
@@ -871,27 +913,32 @@ fun KeyboardInputDialog(dialogState: DialogState) {
     val controller = LocalController.current
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
-    var currentText by rememberSaveable(dialogState.openState) { mutableStateOf("") }
+    val currentText = rememberTextFieldState("")
     var sendingInProgress by remember(dialogState.openState) { mutableStateOf(false) }
     val (extraKeys, setExtraKeys) = rememberSaveable { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
-    val enabled = !sendingInProgress && currentText.isNotBlank()
+    val enabled = !sendingInProgress && currentText.text.isNotBlank()
 
     ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
         scope.launch {
             sendingInProgress = true
-            controller?.sendString(currentText, extraKeys, "MANUAL", null, null)
+            controller?.sendString(currentText.text.toString(), extraKeys, "MANUAL", null, null)
         }.invokeOnCompletion {
             close()
         }
     }) {
         Column {
             OutlinedTextField(
-                value = currentText,
-                onValueChange = { currentText = it },
-                modifier = Modifier.focusRequester(focusRequester)
+                state = currentText,
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            currentText.edit { selectAll() }
+                        }
+                    }
             )
 
             Spacer(Modifier.height(8.dp))

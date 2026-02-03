@@ -277,6 +277,10 @@
         <item>Turecki Q (TR)</item>
         <item>Polski Programisty (PL)</item>
         <item>Czech (CZ)</item>
+        <item>Portuguese (PO)</item>
+        <item>Portuguese (BR)</item>
+        <item>Francuski (BE)</item>
+        <item>Hungarian (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Ramka</item>
@@ -337,8 +341,6 @@
     <string name="downscale_threshold">Próg downscalingu (px)</string>
     <string name="parser">Parser</string>
     <string name="text_mode">Tryb tekstowy</string>
-    <string name="send_with_volume_keys">Wyślij za pomocą klawiszy głośności</string>
-    <string name="send_vol_keys_desc">Użyj przycisków zwiększania/zmniejszania głośności, aby wysłać kod kreskowy.</string>
     <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
     <string name="ocr_note_bottom">Następnie można użyć nowego przycisku w prawym dolnym rogu skanera, aby uruchomić wykrywanie.</string>
     <string name="note">Uwaga</string>
@@ -354,4 +356,10 @@
     <string name="preserve_unsupported_placeholders">Zachowaj nieobsługiwane placeholdery</string>
     <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
     <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
+    <string-array name="clear_after_time_values">
+        <item>Never</item>
+        <item>1s</item>
+        <item>3s</item>
+        <item>5s</item>
+    </string-array>
 </resources>

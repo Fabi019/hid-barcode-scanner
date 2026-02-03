@@ -145,6 +145,10 @@
         <item>Türkisch Q (TR)</item>
         <item>Polnische Programmierer (PL)</item>
         <item>Tschechisch (CZ)</item>
+        <item>Portugiesisch (PO)</item>
+        <item>Portugiesisch (BR)</item>
+        <item>Französisch (BE)</item>
+        <item>Ungarisch (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Box</item>
@@ -316,8 +320,8 @@
     <string name="advanced_opts_desc">Anpassen weiterer Scan-Parameter</string>
     <string name="detection">Erkennung</string>
     <string name="processing">Verarbeitung</string>
-    <string name="send_with_volume_keys">Senden mit Lautstärketasten</string>
-    <string name="send_vol_keys_desc">Verwenden von Lautstärke Hoch/Runter zum senden</string>
+    <string name="send_with_volume_keys">Lautstärketasten verwenden</string>
+    <string name="send_vol_keys_desc">Aktion für das Drücken der Lautstärketasten festlegen</string>
     <string name="clear_after_send">Nach dem Senden löschen</string>
     <string name="clear_after_send_desc">Löscht den angezeigten Code, nachdem er manuell gesendet wurde</string>
     <string name="manual_input">Manuelle Eingabe</string>
@@ -333,4 +337,35 @@
     <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
     <string name="preserve_unsupported_placeholders_desc">HID-spezifische Platzhalter (z.B. {F1}, {ESC}) als Text behalten, anstatt sie im RFCOMM-Modus zu entfernen</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
+    <string name="save_scan_image">Scan-Bild speichern</string>
+    <string name="save_scan_desc">Speichert das gescannte Bild auf dem Gerät</string>
+    <string name="crop_mode">Zuschneidemodus</string>
+    <string name="image_quality">Bildqualität</string>
+    <string name="file_name_pattern">Dateinamensmuster</string>
+    <string name="file_name_pattern_placeholder">Platzhalter: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
+    <string name="output_folder">Ausgabeverzeichnis</string>
+    <string name="save_scan_image_hint">Hinweis: Der Dateiname für jeden Scan ist in der benutzerdefinierten Vorlage als {SCAN_IMAGE_NAME} verfügbar. Dies kann beispielsweise verwendet werden, um das Bild direkt vom Telefon abzurufen.</string>
+    <string name="clear_after_time">Nach Zeit löschen</string>
+    <string name="clear_after_time_desc">Löscht den angezeigten Code nachdem keine Erkennungen in dem Zeitintervall erfolgt sind.</string>
+    <string-array name="clear_after_time_values">
+        <item>Niemals</item>
+        <item>1s</item>
+        <item>3s</item>
+        <item>5s</item>
+    </string-array>
+    <string name="image_format">Bildformat</string>
+    <string name="volume_up">Lautstärke hoch</string>
+    <string name="volume_down">Lautstärke runter</string>
+    <string name="zoom_level">Zoomstufe (%)</string>
+    <string name="trigger_on_key_release">Auslösen beim Loslassen der Taste</string>
+    <string-array name="volume_keys_actions">
+        <item>Nichts</item>
+        <item>Wert senden</item>
+        <item>Wert löschen</item>
+        <item>OCR ausführen</item>
+        <item>Manuelle Eingabe öffnen</item>
+        <item>Blitz ein-/ausschalten</item>
+        <item>Zoom ein-/ausschalten</item>
+        <item>Fokussieren</item>
+    </string-array>
 </resources>
