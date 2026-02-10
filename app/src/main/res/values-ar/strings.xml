@@ -124,7 +124,6 @@
     <string name="clear_after_send">حذف بعد الإرسال</string>
     <string name="clear_after_send_desc">يحذف الكود المعروض بعد إرساله يدويا</string>
     <string name="manual_input">إدخال يدوي</string>
-    <string name="include_extra_keys">استخدام مفاتيح إضافية</string>
     <string name="connection_mode">طريقة الاتصال</string>
     <string-array name="focus_mode_values">
         <item>تلقائي</item>
