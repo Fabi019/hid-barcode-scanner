@@ -1,237 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BT Scanner</string>
-    <string name="scanner">Scanner</string>
-    <string name="send_to_device">Send to Device</string>
-    <string name="scan_code_to_start">Scan any QR Code / Barcode\nto get started.</string>
     <string name="settings">الإعدادات</string>
-    <string name="connection">Connection</string>
     <string name="auto_connect">اتصال تلقائي</string>
     <string name="auto_connect_desc">الاتصال بآخر جهاز عند البدء</string>
     <string name="show_unnamed">أجهزة بلا اسم</string>
     <string name="show_unnamed_desc">يعرض الأجهزة التي لا تحمل اسما</string>
-    <string name="appearance">Appearance</string>
-    <string name="theme">Theme</string>
     <string name="theme_desc">تغيير سمة واجهة المستخدم المفضلة</string>
-    <string name="dynamic_theme">Dynamic theme</string>
-    <string name="dynamic_theme_desc">Use the new dynamic theme</string>
     <string name="front_camera">الكاميرا الأمامية</string>
     <string name="front_camera_desc">استخدام الكاميرا الأمامية بدلاً من الكاميرا الخلفية إذا كان الجهاز يدعم ذلك.</string>
     <string name="restrict_area">تقييد منطقة القراءة</string>
     <string name="restrict_area_desc">سيظهر إطار حول المكان الذي ستتم قراءته</string>
-    <string name="overlay_type">Overlay type</string>
     <string name="overlay_type_desc">تحديد شكل الإطار حول المنطقة المقروءة</string>
-    <string name="full_inside">Full inside</string>
     <string name="full_inside_desc">يجب أن تكون الأكواد موجودة بالكامل داخل المنطقة</string>
-    <string name="scan_freq">Scan frequency</string>
     <string name="scan_freq_desc">الفترة الزمنية التي يتم فيها تحليل الصورة. كلما زادت زاد استهلاك وحدة المعالجة المركزية.</string>
-    <string name="scan_res">Scan resolution</string>
     <string name="scan_res_desc">دقة الصورة التي يتم تحليلها. كلما زادت الدقة، زاد وقت التحليل.</string>
     <string name="auto_send">إرسال تلقائي</string>
     <string name="auto_send_desc">إرسال أي أكواد جديدة يتم اكتشافها</string>
-    <string name="extra_keys">مفاتيح إضافية</string>
     <string name="extra_keys_desc">حدد المفتاح الذي سيتم إضافته في نهاية كل نص يتم إرساله إلى الكمبيوتر.</string>
-    <string name="play_sound">Scan sound</string>
     <string name="play_sound_desc">تشغيل صوت عند قراءة كود</string>
-    <string name="raw_value">Raw value</string>
-    <string name="raw_value_desc">Uses the raw value from the code</string>
-    <string name="about">About</string>
-    <string name="repository">Repository</string>
-    <string name="build_version">Version</string>
-    <string name="confirm">Confirm</string>
-    <string name="dismiss">Cancel</string>
-    <string name="scanned_devices">Scanned devices</string>
-    <string name="swipe_refresh">(Swipe from top to refresh)</string>
+    <string name="confirm">تأكيد</string>
+    <string name="dismiss">إلغاء</string>
     <string name="paired_devices">الأجهزة المقترنة</string>
     <string name="no_paired_devices">(لم يتم العثور على أجهزة مقترنة)</string>
-    <string name="skip">Skip</string>
-    <string name="request_again">Request again</string>
+    <string name="skip">تخطي</string>
+    <string name="request_again">إعادة المحاولة</string>
     <string name="exit">خروج</string>
     <string name="send_delay">تأخير الإرسال</string>
     <string name="send_delay_desc">الفاصل الزمني بين كل حرف أو رقم أثناء إرسال النص.</string>
-    <string name="send_delay_template">Delay (ms): %.0f</string>
     <string name="request_permission">طلب الإذن</string>
     <string name="bluetooth_permission">يتطلب هذا التطبيق أذونات بلوتوث للتواصل مع الأجهزة الأخرى. يُرجى منح التطبيق إذن الوصول إلى \'الأجهزة القريبة\'.</string>
     <string name="camera_permission">الكاميرا مطلوبة لعرض المعاينة وقراءة الأكواد. يرجى السماح للتطبيق بإذن \'الكاميرا\'.</string>
     <string name="location_permission">يتطلب البحث عن أجهزة جديدة الحصول على إذن الوصول إلى الموقع.</string>
     <string name="location_enable">يجب تفعيل خاصية الموقع على جهازك.</string>
     <string name="open_location_settings">افتح إعدادات الموقع</string>
-    <string name="connecting">Connecting…</string>
     <string name="connect_help">إذا تعذر الاتصال، قم بإلغاء الاقتران في كلا الجهازين، ثم حاول الاتصال مجدداً من داخل التطبيق.</string>
-    <string name="haptic_feedback">Haptic feedback</string>
     <string name="haptic_feedback_desc">يهتز الجهاز عند قراءة كود جديد</string>
-    <string name="connected_with">Connected with: %s</string>
     <string name="click_to_connect">اضغط للرجوع.</string>
-    <string name="info">Info</string>
-    <string name="name">Name</string>
-    <string name="mac_address">MAC-Address</string>
-    <string name="alias">Alias</string>
-    <string name="type">Type</string>
-    <string name="clazz">Class</string>
-    <string name="services">Services</string>
-    <string name="uuids">UUIDs</string>
-    <string name="code_types">Code types</string>
     <string name="code_types_desc">فعّل الأنواع المطلوبة فقط لتحسين سرعة الفحص. إذا لم تحدد شيئًا، سيتم تفعيل كل الأنواع.</string>
     <string name="code_types_desc_short">فعّل أنواعًا محددة فقط لتحسين سرعة قراءة الأكواد</string>
-    <string name="bt_proxy_registered">BT-Proxy registered!</string>
-    <string name="bt_proxy_error">Unable to get BT-Proxy! Try restarting the app…</string>
-    <string name="bt_service_disconnected">BT-Service disconnected!</string>
-    <string name="bt_service_connected">BT-Service connected!</string>
     <string name="please_wait">يرجى الانتظار!</string>
     <string name="copied_to_clipboard">تم النسخ إلى الحافظة!</string>
-    <string name="devices">Devices</string>
     <string name="keyboard_layout">تخطيط لوحة المفاتيح</string>
     <string name="keyboard_layout_desc">حدد تخطيط لوحة المفاتيح. غيّر التخطيط إذا كنت ترغب في كتابة أحرف خاصة أو إذا كنت لا تستخدم تخطيط QWERTY.</string>
-    <string name="build_version_desc" translatable="false">%s v%s-%s (build %d)</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="more">More</string>
-    <string name="toggle_flash">Toggle flash</string>
-    <string name="loading">Loading…</string>
-    <string name="error">Error</string>
-    <string name="failed_to_download">Failed to download and install the ML-Kit Barcode module.</string>
+    <string name="toggle_flash">تشغيل/إيقاف الفلاش</string>
     <string name="ensure_internet_and_play">تأكد من وجود اتصال إنترنت نشط وأن خدمات جوجل بلاي مثبتة على جهازك.</string>
-    <string name="download_bundled">Otherwise you can download the bundled APK version from the GitHub page which already contains the module.</string>
-    <string name="downloading_module">Requesting download and installation of the ML-Kit Barcode module through Google Play.\n\nThis only has to be done once. Usually when installing the app as APK or clearing the Google Play Services data.</string>
-    <string name="unpair_device">Unpair %s?</string>
     <string name="unpair_desc">سيؤدي إلغاء الاقتران إلى إزالة الجهاز من قائمة الأجهزة المقترنة.</string>
-    <string name="connect">Connect</string>
-    <string name="unpair">Unpair</string>
-    <string name="error_code" formatted="false">Error: %s (%s)</string>
-    <string name="downloading">Downloading…</string>
-    <string name="installing">Installing…</string>
-    <string name="ok">OK</string>
+    <string name="unpair">إلغاء الاقتران</string>
     <string name="reset_default">إعادة الضبط للوضع الافتراضي؟</string>
     <string name="reset_default_desc">أمتأكد من رغبتك في إعادة الضبط إلى الإعداد الافتراضي؟</string>
-    <string name="reset">Reset</string>
-    <string name="back">Back</string>
-    <string name="source_code">Source Code</string>
     <string name="source_code_desc">مشاهدة كود المصدر على GitHub</string>
     <string name="report_issue">إبلاغ عن مشكلة</string>
-    <string name="report_issue_desc">Report an issue on GitHub</string>
-    <string name="rate">Rate on Google Play</string>
     <string name="rate_desc">ذا أعجبك هذا التطبيق، يرجى تقييمه على جوجل بلاي</string>
-    <string name="share">Share</string>
     <string name="share_desc">شارك التطبيق مع أصدقائك</string>
-    <string name="share_via">Share via</string>
-    <string name="refresh">Refresh</string>
-    <string name="cancel">Cancel</string>
+    <string name="cancel">إلغاء</string>
     <string name="bluetooth_disabled">البلوتوث معطل</string>
     <string name="enable_bluetooth">يرجى تفعيل البلوتوث في إعدادات النظام أو بالنقر على الزر أدناه.</string>
     <string name="enable_bluetooth_btn">تفعيل البلوتوث</string>
     <string name="no_device">لا يوجد جهاز متصل</string>
-    <string name="highlight_type">Highlight type</string>
-    <string name="highlight_type_desc">Select how detected codes are highlighted</string>
     <string name="auto_focus">تركيز العدسة التلقائي</string>
     <string name="auto_focus_desc">قم بتعطيله إذا كنت ترغب فقط في التركيز عن طريق النقر على الشاشة</string>
-    <string name="bt_hid_service">Bluetooth HID Service</string>
-    <string name="service_running">Service is running</string>
-    <string name="refresh_proxy">Refresh proxy</string>
-    <string name="stop_proxy">Stop proxy</string>
-    <string name="proxy_waiting">Waiting for BT-Proxy to connect…</string>
     <string name="exit_confirm">اضغط مرة أخرى على زر الرجوع للخروج</string>
     <string name="allow_screen_rotation">السماح بدوران الشاشة</string>
     <string name="allow_screen_rotation_desc">يسمح للشاشة بالدوران عند تغيير اتجاه الجهاز</string>
     <string name="fix_exposure">ضبط حساسية الكاميرا</string>
     <string name="fix_exposure_desc">يساعد على تقليل ضبابية الحركة في الصورة</string>
-    <string name="filter_regex">Filter regex</string>
-    <string name="filter_regex_desc">Allows to filter codes by a regular expression</string>
-    <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything. If the regex contains a capture group "(…)", the value of the group will be used.</string>
     <string name="custom_template">قالب مخصص</string>
     <string name="custom_templ_desc">يتيح لك تعيين قالب مخصص</string>
-    <string name="custom_templ_desc_long">تأكد من ضبط \'مفاتيح إضافية\' على \'مخصص\'.\n\n
-        CODE placeholders:\n
-        • {CODE} - plain barcode\n
-        • Encoding: _HEX, _B64 can be combined in any order\n
-        • Examples: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
-        Date/Time placeholders with optional formatting:\n
-        • {DATE} - current date (default: yyyy-MM-dd)\n
-        • {TIME} - current time (default: HH:mm:ss)\n
-        • {DATETIME} - date and time (default: yyyy-MM-dd HH:mm:ss)\n
-        • {SCAN_TIME} - scan timestamp (default: yyyy-MM-dd HH:mm:ss.SSS)\n
-        • Custom format: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
-        Format patterns:\n
-        • EEEE - day of week (full name), EEE - day of week (short)\n
-        • MMMM - month (full name), MMM - month (short), MM - month (numeric)\n
-        • yyyy - year (full), yy - year (last two digits), dd - day\n
-        • HH - hour (24h), hh - hour (12h), mm - minute, ss - second, SSS - milliseconds, a - AM/PM\n
-        • Note: Text in quotes (\'text\') will be displayed literally\n\n
-        Format examples:\n
-        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
-        • {TIME[HH:mm:ss]} → 14:30:45\n
-        • {DATETIME[EEEE, MMMM dd yyyy]} → Friday, October 03 2025\n
-        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
-        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
-        Metadata placeholders:\n
-        • {CODE_TYPE} - barcode type (QR_CODE, CODE_128, etc.)\n
-        • {SCAN_SOURCE} - data source (SCAN, HISTORY, MANUAL)\n
-        • {SCANNER_ID} - scanner hardware identifier\n
-        • {SCAN_IMAGE_NAME} - name of the stored scan image\n\n
-        Universal encoding (works with ANY data placeholder):\n
-        • Add _HEX or _B64 to any placeholder in any order\n
-        • Examples: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
-        • Combination: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
-        Global encoding (applied to entire output):\n
-        • {GLOBAL_HEX} - encode entire result to hexadecimal\n
-        • {GLOBAL_B64} - encode entire result to base64\n
-        • Combinations: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
-        • Note: In RFCOMM mode, unsupported HID placeholders will be removed or kept as literal text based on dropdown settings.\n\n
-        HID-specific placeholders:\n
-        • Keys: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
-        • Special: {SPACE}, {CR}, {LF}, {WAIT:n}\n
-        • Note: In RFCOMM mode, only {TAB} and {ENTER} are supported. You can control the visibility of unsupported placeholders in the dropdown menu.\n\n
-        Modifiers can be set by prepending the following chars:\n
-        \t^: Shift\n
-        \t+: Ctrl\n
-        \t#: Alt\n
-        \t@: Meta\n
-        Example: {+r} will send CTRL+R, {^#F1} will send SHIFT+ALT+F1, {WAIT:10} will add a delay of 10 characters
-    </string>
-    <string name="camera">Camera</string>
     <string name="focus_mode">طريقة تركيز العدسة</string>
     <string name="focus_mode_desc">اختر طريقة التركيز التي تفضلها. بعض الأوضاع تمنع التركيز اليدوي عبر النقر على الشاشة.</string>
-    <string name="search_by_value">Search by value</string>
     <string name="history">السجل</string>
     <string name="search">بحث</string>
     <string name="clear_history">حذف السجل</string>
     <string name="clear_history_desc">هل أنت متأكد أنك تريد حذف السجل؟</string>
     <string name="preview_mode_desc">يمكنه تقليل استهلاك الطاقة وزمن الاستجابة</string>
-    <string name="preview_performance_mode">Preview performance mode</string>
-    <string name="full_screen_scanner">Full screen scanner</string>
     <string name="full_screen_scanner_desc">سيتم عرض الماسح الضوئي على كامل الشاشة</string>
     <string name="auto_zoom">تكبير (زووم) تلقائي</string>
     <string name="zooms_in_on_codes_to_far_away">يقوم بالتكبير على الأكواد البعيدة جدا</string>
-    <string name="show_possible">Show possible</string>
-    <string name="highlights_possible_codes">Highlights possible codes with dots</string>
     <string name="caps_lock_activated">وضع الأحرف الكبيرة مُفعل</string>
     <string name="click_to_turn_off">انقر هنا لإيقاف تشغيله</string>
-    <string name="rfcomm_listening">Listening for connection</string>
-    <string name="rfcomm_listening_from_device">Waiting for connection from %s</string>
     <string name="keep_screen_on">إبقاء الشاشة قيد التشغيل</string>
     <string name="keep_screen_on_desc">يمنع إيقاف تشغيل الشاشة أثناء المسح الضوئي</string>
     <string name="private_mode">وضع الخصوصية</string>
     <string name="private_mode_desc">إخفاء قيمة الكود افتراضيا</string>
-    <string name="camera_error">Camera error!</string>
     <string name="camera_error_desc">حدث خطأ أثناء تهيئة الكاميرا. يُرجى إعادة تشغيل التطبيق أو الجهاز. إذا استمرت المشكلة، يُرجى إنشاء بلاغ (issue) جديد على GitHub.</string>
     <string name="press_run_to_evaluate">اضغط زر تنفيذ للتجربة</string>
     <string name="custom_javascript">Custom JavaScript</string>
     <string name="custom_js_desc">تعديل القيمة المقروءة باستخدام جافاسكريبت</string>
     <string name="editor_desc">يتيح لك هذا إدخال أي نص جافاسكريبت لتعديل قيمة الكود. تم تعريف ثابتين هما (\'format\' و \'code\'). يُستخدم آخر سطر برمجي كنتيجة (لا يتطلب استخدام أمر return).</string>
-    <string name="editor">Editor</string>
-    <string name="debug">Debug</string>
-    <string name="code">Code</string>
-    <string name="format">Format</string>
-    <string name="output">Output</string>
-    <string name="run">Run</string>
-    <string name="export">Export</string>
-    <string name="export_csv">CSV data</string>
-    <string name="export_json">JSON data</string>
-    <string name="export_xml">XML data</string>
-    <string name="export_lines">Lines</string>
-    <string name="export_fields" translatable="false">text, timestamp, type</string>
-    <string name="export_lines_description">text with line breaks</string>
-    <string name="export_as">Export as</string>
-    <string name="import_text">Import</string>
-    <string name="import_from">Import from</string>
     <string name="delete_selection">حذف المحدد؟</string>
     <string name="delete_selection_desc">هل أنت متأكد من رغبتك في حذف العناصر المحددة؟</string>
     <string name="templates_in_value">استبدال القوالب بقيمتها</string>
@@ -241,29 +96,17 @@
     <string name="custom_keys">مفاتيح مخصصة</string>
     <string name="add_custom_key">إضافة مفتاح مخصص</string>
     <string name="add_custom_key_desc_long">أدخل الحرف والكود المقابل في محاكي لوحة المفاتيح بما في ذلك أي مفاتيح تعديل. على سبيل المثال، الكود لمفتاح ENTER هو 28 بالسداسي عشري.</string>
-    <string name="character">Character</string>
-    <string name="hid_code_hex">HID-Code (HEX)</string>
-    <string name="modifier">Modifier</string>
-    <string name="test">Test</string>
     <string name="test_key">* لاختبار المفتاح، يجب أن تكون متصلاً بجهاز.</string>
     <string name="add_custom_key_desc">تتيح لك تحديد تعيينات مخصصة بين الأحرف وأكواد الإدخال، والتي ستتجاوز أي تعيينات موجودة من تخطيط لوحة المفاتيح المحدد.</string>
     <string name="define_custom_keys">تحديد مفاتيح مخصصة</string>
-    <string name="add">Add</string>
+    <string name="add">إضافة</string>
     <string name="persistent_history">سجل دائم</string>
     <string name="persistent_history_desc">يحتفظ بسجل عمليات القراءة</string>
-    <string name="filter">Filter</string>
-    <string name="date_range">Date range</string>
-    <string name="select_types">Select Types</string>
-    <string name="clear">Clear</string>
-    <string name="apply">Apply</string>
+    <string name="clear">إزالة</string>
     <string name="exclude_duplicates">استبعاد المكرر</string>
-    <string name="save_to_file">Save to file</string>
-    <string name="invalid_regex">Invalid regex</string>
     <string name="template_error">يجب أن يحتوي القالب على عنصر {CODE} واحد على الأقل.</string>
-    <string name="template_error_duplicates">Duplicate components not allowed: %1$s</string>
     <string name="advanced_options">خيارات متقدمة</string>
     <string name="advanced_opts_desc">ضبط إعدادات المسح الإضافية</string>
-    <string name="detection">Detection</string>
     <string name="try_harder">محاولة مكثفة</string>
     <string name="try_rotate_image">محاولة تدوير الصورة</string>
     <string name="try_inverted">محاولة عكس ألوان الصورة</string>
@@ -273,98 +116,30 @@
     <string name="binarizer">طريقة تحويل الصورة لنمط ثنائي</string>
     <string name="downscale_factor">معامل تصغير دقة الصورة</string>
     <string name="downscale_threshold">الحد الأدنى لبدأ التصغير (بكسل)</string>
-    <string name="parser">Parser</string>
-    <string name="text_mode">Text mode</string>
     <string name="send_with_volume_keys">استخدام أزرار الصوت</string>
     <string name="send_vol_keys_desc">حدد الإجراء المطلوب عند الضغط على أزرار رفع وخفض الصوت</string>
     <string name="ocr_note_desc">يتطلب ملحق التعرف الضوئي على الأحرف (OCR) وجود تطبيق خارجي لتوفير وظيفة اكتشاف النص. إذا كنت ترغب في استخدام هذه الميزة، فيجب تثبيت التطبيق التالي بشكل منفصل على جهازك.\nيمكنك الاختيار بين إصدار التطبيق المبني على ML-Kit أو Tesseract.\n(يرجى ملاحظة أن هذا تطبيق تابع لجهة خارجية ولا أملك أي تحكم فيه)</string>
     <string name="ocr_note_bottom">بعد ذلك، يمكنك استخدام الزر الجديد الموجود في إحدى زوايا أسفل واجهة الماسح الضوئي لتشغيل عملية الكشف.</string>
-    <string name="note">Note</string>
-    <string name="ocr_app_github">OCR by mtotschnig (GitHub)</string>
-    <string name="ext_ocr_support">Ext. OCR support</string>
-    <string name="scan_results">Scan results</string>
     <string name="ocr_results_selection">حدد جميع الأسطر التي يجب إرسالها.</string>
     <string name="clear_after_send">حذف بعد الإرسال</string>
     <string name="clear_after_send_desc">يحذف الكود المعروض بعد إرساله يدويا</string>
     <string name="manual_input">إدخال يدوي</string>
     <string name="include_extra_keys">استخدام مفاتيح إضافية</string>
     <string name="connection_mode">طريقة الاتصال</string>
-    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software). Unsupported settings will be greyed out in RFCOMM mode.</string>
-    <string-array name="theme_values">
-        <item>System</item>
-        <item>Light</item>
-        <item>Dark</item>
-    </string-array>
-    <string-array name="overlay_values">
-        <item>Square (QR-Code)</item>
-        <item>Rectangle (Barcode)</item>
-        <item>Custom</item>
-    </string-array>
-    <string-array name="scan_freq_values">
-        <item>Fastest</item>
-        <item>Fast (100ms)</item>
-        <item>Normal (500ms)</item>
-        <item>Slow (1s)</item>
-    </string-array>
-    <string-array name="scan_res_values">
-        <item>SD (480P)</item>
-        <item>HD (720P)</item>
-        <item>FHD (1080P)</item>
-        <item>UHD (2160P)</item>
-    </string-array>
-    <string-array name="extra_keys_values">
-        <item>لا شيء</item>
-        <item>Return (ENTER)</item>
-        <item>Tab</item>
-        <item>Space</item>
-        <item>مخصص</item>
-    </string-array>
-    <string-array name="keyboard_layout_values">
-        <item>English (US)</item>
-        <item>German (DE)</item>
-        <item>French (FR)</item>
-        <item>English (GB)</item>
-        <item>Spanish (ES)</item>
-        <item>Italian (IT)</item>
-        <item>Turkish Q (TR)</item>
-        <item>Polish Programmer (PL)</item>
-        <item>Czech (CZ)</item>
-        <item>Portuguese (PO)</item>
-        <item>Portuguese (BR)</item>
-        <item>French (BE)</item>
-        <item>Hungarian (HU)</item>
-    </string-array>
-    <string-array name="highlight_values">
-        <item>Box</item>
-        <item>Dots</item>
-    </string-array>
     <string-array name="focus_mode_values">
         <item>تلقائي</item>
         <item>يدوي</item>
-        <item>Macro</item>
-        <item>Continuous</item>
-        <item>EDOF</item>
-        <item>Fixed (Infinity)</item>
-        <item>Continuous (Fast)</item>
+        <item>تصوير عن قُرب (Macro)</item>
+        <item>تركيز مستمر للعدسة</item>
+        <item>EDOF (عمق المجال الممتد)</item>
+        <item>Fixed (للمناظر البعيدة)</item>
+        <item>تركيز مستمر (سريع)</item>
     </string-array>
-    <string-array name="connection_mode_values">
-		<item>HID Keyboard</item>
-		<item>RFCOMM (SPP)</item>
-    </string-array>
-    <plurals name="export_items">
-        <item quantity="one">Export %1$d item</item>
-        <item quantity="other">Export %1$d items</item>
-    </plurals>
-    <string name="insecure_rfcomm">Insecure RFCOMM</string>
-    <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
-    <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>
-    <string name="preserve_unsupported_placeholders_desc">Keep HID-specific placeholders (e.g., {F1}, {ESC}) as text instead of removing them in RFCOMM mode</string>
     <string name="save_scan_image">حفظ صورة المسح الضوئي</string>
     <string name="save_scan_desc">يتم تخزين الصورة على الجهاز</string>
     <string name="crop_mode">طريقة الاقتصاص</string>
     <string name="image_quality">جودة الصورة</string>
     <string name="file_name_pattern">نمط اسم الملف</string>
-    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">مجلد الحفظ</string>
     <string name="save_scan_image_hint">ملاحظة: يتوفر اسم ملف كل عملية مسح ضوئي كـ {SCAN_IMAGE_NAME} في القالب المخصص. يمكن استخدامه، على سبيل المثال، للوصول للصورة مباشرة من الهاتف.</string>
     <string name="clear_after_time">إزالة بعد فترة</string>
