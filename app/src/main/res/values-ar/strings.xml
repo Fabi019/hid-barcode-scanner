@@ -125,6 +125,7 @@
     <string name="clear_after_send_desc">يحذف الكود المعروض بعد إرساله يدويا</string>
     <string name="manual_input">إدخال يدوي</string>
     <string name="connection_mode">طريقة الاتصال</string>
+	<string name="connection_mode_desc">يحاكي وضع HID إدخال لوحة المفاتيح، بينما يرسل RFCOMM البيانات عبر منفذ Bluetooth COM (قد يتطلب برامج إضافية). ستظهر الإعدادات غير المدعومة بلون باهت في وضع RFCOMM.</string>
     <string-array name="focus_mode_values">
         <item>تلقائي</item>
         <item>يدوي</item>
