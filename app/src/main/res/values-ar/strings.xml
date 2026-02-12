@@ -84,7 +84,6 @@
     <string name="private_mode_desc">إخفاء قيمة الكود افتراضيا</string>
     <string name="camera_error_desc">حدث خطأ أثناء تهيئة الكاميرا. يُرجى إعادة تشغيل التطبيق أو الجهاز. إذا استمرت المشكلة، يُرجى إنشاء بلاغ (issue) جديد على GitHub.</string>
     <string name="press_run_to_evaluate">اضغط زر تنفيذ للتجربة</string>
-    <string name="custom_javascript">Custom JavaScript</string>
     <string name="custom_js_desc">تعديل القيمة المقروءة باستخدام جافاسكريبت</string>
     <string name="editor_desc">يتيح لك هذا إدخال أي نص جافاسكريبت لتعديل قيمة الكود. تم تعريف ثابتين هما (\'format\' و \'code\'). يُستخدم آخر سطر برمجي كنتيجة (لا يتطلب استخدام أمر return).</string>
     <string name="delete_selection">حذف المحدد؟</string>
