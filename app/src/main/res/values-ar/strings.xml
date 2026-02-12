@@ -68,7 +68,7 @@
     <string name="custom_templ_desc">يتيح لك تعيين قالب مخصص</string>
     <string name="focus_mode">طريقة تركيز العدسة</string>
     <string name="focus_mode_desc">اختر طريقة التركيز التي تفضلها. بعض الأوضاع تمنع التركيز اليدوي عبر النقر على الشاشة.</string>
-	<string name="search_by_value">ابحث بالقيمة (الكود)</string>
+    <string name="search_by_value">ابحث بالقيمة (الكود)</string>
     <string name="history">السجل</string>
     <string name="search">بحث</string>
     <string name="clear_history">حذف السجل</string>
@@ -87,11 +87,11 @@
     <string name="press_run_to_evaluate">اضغط زر Run للتجربة</string>
     <string name="custom_js_desc">تعديل القيمة المقروءة باستخدام جافاسكريبت</string>
     <string name="editor_desc">يتيح لك هذا إدخال أي نص جافاسكريبت لتعديل قيمة الكود. تم تعريف ثابتين هما (\'format\' و \'code\'). يُستخدم آخر سطر برمجي كنتيجة (لا يتطلب استخدام أمر return).</string>
-	<string name="export">تصدير</string>
-	<string name="export_as">تصدير كـ</string>
-	<string name="import_text">استيراد</string>
-	<string name="import_from">استيراد من</string>
-	<string name="delete_selection">حذف المحدد؟</string>
+    <string name="export">تصدير</string>
+    <string name="export_as">تصدير كـ</string>
+    <string name="import_text">استيراد</string>
+    <string name="import_from">استيراد من</string>
+    <string name="delete_selection">حذف المحدد؟</string>
     <string name="delete_selection_desc">هل أنت متأكد من رغبتك في حذف العناصر المحددة؟</string>
     <string name="templates_in_value">استبدال القوالب بقيمتها</string>
     <string name="template_in_value_desc">يستبدل القوالب بقيمة الكود (يتطلب قالبًا مخصصًا)</string>
@@ -127,7 +127,7 @@
     <string name="clear_after_send_desc">يحذف الكود المعروض بعد إرساله يدويا</string>
     <string name="manual_input">إدخال يدوي</string>
     <string name="connection_mode">طريقة الاتصال</string>
-	<string name="connection_mode_desc">يحاكي وضع HID إدخال لوحة المفاتيح، بينما يرسل RFCOMM البيانات عبر منفذ Bluetooth COM (قد يتطلب برامج إضافية). ستظهر الإعدادات غير المدعومة بلون باهت في وضع RFCOMM.</string>
+    <string name="connection_mode_desc">يحاكي وضع HID إدخال لوحة المفاتيح، بينما يرسل RFCOMM البيانات عبر منفذ Bluetooth COM (قد يتطلب برامج إضافية). ستظهر الإعدادات غير المدعومة بلون باهت في وضع RFCOMM.</string>
     <string-array name="focus_mode_values">
         <item>تلقائي</item>
         <item>يدوي</item>
