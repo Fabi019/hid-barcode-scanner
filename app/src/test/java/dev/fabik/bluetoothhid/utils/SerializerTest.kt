@@ -36,8 +36,9 @@ class SerializerTest {
         val csv = Serializer.toCsv(entries)
 
         // Verify CSV contains header and data
-        assertTrue(csv.contains("\"text\";\"timestamp\";\"format\""))
+        assertTrue(csv.contains("text;timestamp;format"))
         assertTrue(csv.contains("\"12345\""))
+        assertTrue(csv.contains("\"1234567890\""))
         assertTrue(csv.contains("\"QR_CODE\""))
     }
 
@@ -78,7 +79,8 @@ class SerializerTest {
     @Test
     fun testJsonSerialization() {
         val entries = listOf(
-            Serializer.BarcodeEntry("TEST123", 1000L, "CODE_128")
+            Serializer.BarcodeEntry("TEST123", 1000L, "CODE_128"),
+            Serializer.BarcodeEntry("TEST", 123L, "QR_CODE")
         )
 
         val json = Serializer.toJson(entries)

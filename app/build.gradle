@@ -105,8 +105,6 @@ dependencies {
     implementation 'io.github.zxing-cpp:android:2.3.0'
 
     implementation "com.google.accompanist:accompanist-permissions:$accomp_version"
-
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.20.0'
