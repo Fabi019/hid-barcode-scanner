@@ -379,6 +379,7 @@
     <string name="volume_down">Volume down</string>
     <string name="zoom_level">Zoom level (%)</string>
     <string name="trigger_on_key_release">Trigger on key release</string>
+    <string name="try_denoise">Try denoise</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>

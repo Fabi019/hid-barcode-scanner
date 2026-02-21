@@ -345,6 +345,7 @@ class CameraViewModel : ViewModel() {
         tryRotate: Boolean,
         tryInvert: Boolean,
         tryDownscale: Boolean,
+        tryDenoise: Boolean,
         minLines: Int,
         binarizer: Binarizer,
         downscaleFactor: Int,
@@ -357,6 +358,7 @@ class CameraViewModel : ViewModel() {
         _readerOptions.tryRotate = tryRotate
         _readerOptions.tryInvert = tryInvert
         _readerOptions.tryDownscale = tryDownscale
+        _readerOptions.tryDenoise = tryDenoise
         _readerOptions.minLineCount = minLines
         _readerOptions.binarizer = when (binarizer) {
             Binarizer.LOCAL_AVERAGE -> BarcodeReader.Binarizer.LOCAL_AVERAGE

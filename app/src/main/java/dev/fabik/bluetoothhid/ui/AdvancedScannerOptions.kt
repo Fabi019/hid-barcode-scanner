@@ -100,6 +100,7 @@ fun AdvancedOptionsModalContent() {
             stringResource(R.string.try_downscale),
             PreferenceStore.ADV_TRY_DOWNSCALE
         )
+        AdvancedToggleOption(stringResource(R.string.try_denoise), PreferenceStore.ADV_TRY_DENOISE)
         AdvancedSliderOption(
             stringResource(R.string.minimum_scan_lines),
             1 to 50,

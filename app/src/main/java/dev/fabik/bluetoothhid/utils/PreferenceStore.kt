@@ -241,6 +241,7 @@ open class PreferenceStore {
         val ADV_TRY_ROTATE = booleanPreferencesKey("adv_try_rotate") defaultsTo false
         val ADV_TRY_INVERT = booleanPreferencesKey("adv_try_invert") defaultsTo false
         val ADV_TRY_DOWNSCALE = booleanPreferencesKey("adv_try_downscale") defaultsTo false
+        val ADV_TRY_DENOISE = booleanPreferencesKey("adv_try_denoise") defaultsTo false
         val ADV_MIN_LINE_COUNT = intPreferencesKey("adv_min_line_count") defaultsTo 2
         val ADV_BINARIZER = intPreferencesKey("adv_binarizer").enumDefaultsTo(Binarizer::fromIndex)
         val ADV_DOWNSCALE_FACTOR = intPreferencesKey("adv_downscale_factor") defaultsTo 3
