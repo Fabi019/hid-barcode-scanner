@@ -276,12 +276,8 @@ fun DevicesViewModel.DeviceList(
             }
         } else {
             items(foundDevices, key = { d -> "found_" + d.address }) { d ->
-                runCatching {
-                    DeviceCard(d, Modifier.animateItem()) {
-                        currentOnConnect(d)
-                    }
-                }.onFailure {
-                    Log.e("DeviceList", "Failed to get device info", it)
+                DeviceCard(d, Modifier.animateItem()) {
+                    currentOnConnect(d)
                 }
             }
         }
@@ -301,12 +297,8 @@ fun DevicesViewModel.DeviceList(
             }
         } else {
             items(pairedDevices, key = { d -> "paired_" + d.address }) {
-                runCatching {
-                    DeviceCard(it, Modifier.animateItem()) {
-                        currentOnConnect(it)
-                    }
-                }.onFailure {
-                    Log.e("DeviceList", "Failed to get device info", it)
+                DeviceCard(it, Modifier.animateItem()) {
+                    currentOnConnect(it)
                 }
             }
         }
@@ -345,7 +337,7 @@ fun DevicesViewModel.DeviceCard(
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                 Icon(
-                    when (DeviceInfo.deviceClassString(device.bluetoothClass.majorDeviceClass)) {
+                    when (DeviceInfo.deviceClassString(device.bluetoothClass?.majorDeviceClass)) {
                         "PHONE" -> Icons.Default.Smartphone
                         "AUDIO_VIDEO" -> Icons.Default.Headphones
                         "COMPUTER" -> Icons.Default.Computer

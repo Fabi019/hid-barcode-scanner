@@ -3,7 +3,7 @@ package dev.fabik.bluetoothhid.utils
 import android.bluetooth.BluetoothClass
 
 object DeviceInfo {
-    fun deviceClassString(classMajor: Int): String = when (classMajor) {
+    fun deviceClassString(classMajor: Int?): String = when (classMajor) {
         BluetoothClass.Device.Major.AUDIO_VIDEO -> "AUDIO_VIDEO"
         BluetoothClass.Device.Major.COMPUTER -> "COMPUTER"
         BluetoothClass.Device.Major.HEALTH -> "HEALTH"
@@ -18,27 +18,27 @@ object DeviceInfo {
         else -> "UNKNOWN"
     }
 
-    fun deviceServiceInfo(bluetoothClass: BluetoothClass): List<String> {
+    fun deviceServiceInfo(bluetoothClass: BluetoothClass?): List<String> {
         val services = mutableListOf<String>()
-        if (bluetoothClass.hasService(BluetoothClass.Service.AUDIO))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.AUDIO) == true)
             services.add("AUDIO")
-        if (bluetoothClass.hasService(BluetoothClass.Service.CAPTURE))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.CAPTURE) == true)
             services.add("CAPTURE")
-        if (bluetoothClass.hasService(BluetoothClass.Service.NETWORKING))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.NETWORKING) == true)
             services.add("NETWORKING")
-        if (bluetoothClass.hasService(BluetoothClass.Service.INFORMATION))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.INFORMATION) == true)
             services.add("INFORMATION")
-        if (bluetoothClass.hasService(BluetoothClass.Service.LE_AUDIO))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.LE_AUDIO) == true)
             services.add("LE_AUDIO")
-        if (bluetoothClass.hasService(BluetoothClass.Service.LIMITED_DISCOVERABILITY))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.LIMITED_DISCOVERABILITY) == true)
             services.add("LIMITED_DISCOVERABILITY")
-        if (bluetoothClass.hasService(BluetoothClass.Service.OBJECT_TRANSFER))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.OBJECT_TRANSFER) == true)
             services.add("OBJECT_TRANSFER")
-        if (bluetoothClass.hasService(BluetoothClass.Service.POSITIONING))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.POSITIONING) == true)
             services.add("POSITIONING")
-        if (bluetoothClass.hasService(BluetoothClass.Service.RENDER))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.RENDER) == true)
             services.add("RENDER")
-        if (bluetoothClass.hasService(BluetoothClass.Service.TELEPHONY))
+        if (bluetoothClass?.hasService(BluetoothClass.Service.TELEPHONY) == true)
             services.add("TELEPHONY")
         return services
     }

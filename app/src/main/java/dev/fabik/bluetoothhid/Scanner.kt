@@ -880,7 +880,7 @@ fun DeviceInfoDialog(
 
             item {
                 Text(stringResource(R.string.clazz) + ":", fontWeight = FontWeight.Bold)
-                with(device.bluetoothClass.majorDeviceClass) {
+                with(device.bluetoothClass?.majorDeviceClass) {
                     val classString = remember(device) {
                         DeviceInfo.deviceClassString(this)
                     }
