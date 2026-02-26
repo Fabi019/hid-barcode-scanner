@@ -55,9 +55,6 @@ import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.experimental.and
-import kotlin.experimental.inv
-import kotlin.experimental.or
 
 
 @Composable
@@ -99,8 +96,8 @@ fun CustomKeysDialog(dialogState: DialogState) {
 fun AddCustomKeyDialog(
     dialogState: DialogState,
     initialChar: String = "",
-    initialHID: Byte? = null,
-    initialModifier: Byte? = null,
+    initialHID: UByte? = null,
+    initialModifier: UByte? = null,
     onAddKey: (Pair<Char, Key>) -> Unit
 ) {
     var valueChar by rememberSaveable(dialogState.openState) { mutableStateOf(initialChar) }
@@ -110,9 +107,9 @@ fun AddCustomKeyDialog(
     val modifierNames = remember { arrayOf("Ctrl", "Shift", "Alt") }
     val modifierCheckedStates = remember(dialogState.openState, valueModifier) {
         mutableStateListOf(
-            (valueModifier ?: 0) and KeyTranslator.LCTRL == KeyTranslator.LCTRL,
-            (valueModifier ?: 0) and KeyTranslator.LSHIFT == KeyTranslator.LSHIFT,
-            (valueModifier ?: 0) and KeyTranslator.LALT == KeyTranslator.LALT
+            (valueModifier ?: 0u) and KeyTranslator.LCTRL == KeyTranslator.LCTRL,
+            (valueModifier ?: 0u) and KeyTranslator.LSHIFT == KeyTranslator.LSHIFT,
+            (valueModifier ?: 0u) and KeyTranslator.LALT == KeyTranslator.LALT
         )
     }
     val modifierNameStates =
@@ -151,9 +148,9 @@ fun AddCustomKeyDialog(
                         valueChar = it
                         // preselect shift state
                         valueModifier = if (it.firstOrNull()?.isUpperCase() == true) {
-                            (valueModifier ?: 0) or KeyTranslator.LSHIFT
+                            (valueModifier ?: 0u) or KeyTranslator.LSHIFT
                         } else {
-                            (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
+                            (valueModifier ?: 0u) and KeyTranslator.LSHIFT.inv()
                         }
                     }
                 },
@@ -165,7 +162,7 @@ fun AddCustomKeyDialog(
 
             TextField(
                 value = valueHID?.toString(16) ?: "",
-                onValueChange = { valueHID = it.toByteOrNull(16) },
+                onValueChange = { valueHID = it.toUByteOrNull(16) },
                 modifier = Modifier.padding(end = 8.dp),
                 placeholder = { Text(stringResource(R.string.hid_code_hex)) }
             )
@@ -176,7 +173,7 @@ fun AddCustomKeyDialog(
 
             TextField(
                 value = valueModifier?.toString() ?: "",
-                onValueChange = { valueModifier = it.toByteOrNull() },
+                onValueChange = { valueModifier = it.toUByteOrNull() },
                 modifier = Modifier.padding(end = 8.dp),
                 placeholder = { Text(stringResource(R.string.modifier)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -192,21 +189,21 @@ fun AddCustomKeyDialog(
                                 modifierCheckedStates[index] = isChecked
 
                                 valueModifier = if (modifierCheckedStates[0]) {
-                                    (valueModifier ?: 0) or KeyTranslator.LCTRL
+                                    (valueModifier ?: 0u) or KeyTranslator.LCTRL
                                 } else {
-                                    (valueModifier ?: 0) and KeyTranslator.LCTRL.inv()
+                                    (valueModifier ?: 0u) and KeyTranslator.LCTRL.inv()
                                 }
 
                                 valueModifier = if (modifierCheckedStates[1]) {
-                                    (valueModifier ?: 0) or KeyTranslator.LSHIFT
+                                    (valueModifier ?: 0u) or KeyTranslator.LSHIFT
                                 } else {
-                                    (valueModifier ?: 0) and KeyTranslator.LSHIFT.inv()
+                                    (valueModifier ?: 0u) and KeyTranslator.LSHIFT.inv()
                                 }
 
                                 valueModifier = if (modifierCheckedStates[2]) {
-                                    (valueModifier ?: 0) or KeyTranslator.LALT
+                                    (valueModifier ?: 0u) or KeyTranslator.LALT
                                 } else {
-                                    (valueModifier ?: 0) and KeyTranslator.LALT.inv()
+                                    (valueModifier ?: 0u) and KeyTranslator.LALT.inv()
                                 }
                             }
                         ), verticalAlignment = Alignment.CenterVertically) {
@@ -258,8 +255,8 @@ fun CustomKeys(
     val addKeyDialog = rememberDialogState()
 
     var initialChar by remember { mutableStateOf("") }
-    var initialHID by remember { mutableStateOf<Byte?>(null) }
-    var initialModifier by remember { mutableStateOf<Byte?>(null) }
+    var initialHID by remember { mutableStateOf<UByte?>(null) }
+    var initialModifier by remember { mutableStateOf<UByte?>(null) }
 
     LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         item {
@@ -308,8 +305,8 @@ fun CustomKeys(
 @Composable
 fun PreviewCustomKeys() {
     val keyMap = mapOf(
-        'a' to (0x123.toByte() to 0x1.toByte()),
-        'b' to (0x222.toByte() to 0x2.toByte()),
+        'a' to (0x12.toUByte() to 0x1.toUByte()),
+        'b' to (0x22.toUByte() to 0x2.toUByte()),
     )
 
     Surface {
