@@ -17,7 +17,7 @@ open class KeyboardSender(
         const val TAG = "KeyboardSender"
     }
 
-    private val report = ByteArray(3) { 0 }
+    private val report = ByteArray(3)
 
     private fun sendReport(report: ByteArray) {
         if (!hidDevice.sendReport(host, Descriptor.ID, report)) {
@@ -63,7 +63,7 @@ open class KeyboardSender(
     }
 
     suspend fun sendKey(key: Key, releaseDelay: Long = 10) =
-        sendKey(key.second, key.first, releaseDelay = releaseDelay)
+        sendKey(key.second.toByte(), key.first.toByte(), releaseDelay = releaseDelay)
 
     private suspend fun sendKey(
         key: Byte,

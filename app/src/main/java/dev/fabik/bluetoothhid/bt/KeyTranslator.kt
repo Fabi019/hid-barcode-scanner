@@ -4,10 +4,9 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
 import java.util.Collections
-import kotlin.experimental.or
 
 // Represents a key with its modifier and hid scan code
-typealias Key = Pair<Byte, Byte>
+typealias Key = Pair<UByte, UByte>
 
 // Represents a keymap with a map of chars and their key codes
 typealias Keymap = Map<Char, Key>
@@ -16,20 +15,20 @@ class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
 
-        const val LCTRL: Byte = 0x01
-        const val LSHIFT: Byte = 0x02
-        const val LALT: Byte = 0x04
-        private const val LMETA: Byte = 0x08
-//        private const val RCTRL: Byte = 0x10
-//        private const val RSHIFT: Byte = 0x20
-//        private const val RALT: Byte = 0x40
-//        private const val RMETA = 0x80.toByte()
+        const val LCTRL: UByte = 0x01u
+        const val LSHIFT: UByte = 0x02u
+        const val LALT: UByte = 0x04u
+        private const val LMETA: UByte = 0x08u
+//        private const val RCTRL: UByte = 0x10
+//        private const val RSHIFT: UByte = 0x20
+//        private const val RALT: UByte = 0x40
+//        private const val RMETA: UByte = 0x80
 
-        private val SPACE = ' ' to Key(0, 0x2C)
-        private val TAB = '\t' to Key(0, 0x2B)
-        private val RETURN = '\n' to Key(0, 0x28)
+        private val SPACE = ' ' to Key(0u, 0x2Cu)
+        private val TAB = '\t' to Key(0u, 0x2Bu)
+        private val RETURN = '\n' to Key(0u, 0x28u)
 
-        val CAPS_LOCK_KEY = Key(0, 0x39)
+        val CAPS_LOCK_KEY = Key(0u, 0x39u)
 
         private const val CUSTOM_KEYMAP_FILE = "custom.layout"
         private var customKeyMapLoaded = false
@@ -92,7 +91,7 @@ class KeyTranslator(context: Context) {
                     val (key, code, modifier) = it.split(" ")
 
                     keymap[key.first()] =
-                        Key(modifier.toByte(16), code.toByte(16))
+                        Key(modifier.toUByte(16), code.toUByte(16))
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to parse keymap line: $it", e)
                 }
@@ -130,49 +129,49 @@ class KeyTranslator(context: Context) {
 
         loadCustomKeyMap(context)
 
-        staticTemplates["F1"] = Key(0, 0x3A)
-        staticTemplates["F2"] = Key(0, 0x3B)
-        staticTemplates["F3"] = Key(0, 0x3C)
-        staticTemplates["F4"] = Key(0, 0x3D)
-        staticTemplates["F5"] = Key(0, 0x3E)
-        staticTemplates["F6"] = Key(0, 0x3F)
-        staticTemplates["F7"] = Key(0, 0x40)
-        staticTemplates["F8"] = Key(0, 0x41)
-        staticTemplates["F9"] = Key(0, 0x42)
-        staticTemplates["F10"] = Key(0, 0x43)
-        staticTemplates["F11"] = Key(0, 0x44)
-        staticTemplates["F12"] = Key(0, 0x45)
-        staticTemplates["ENTER"] = Key(0, 0x28)
-        staticTemplates["ESC"] = Key(0, 0x29)
-        staticTemplates["BKSP"] = Key(0, 0x2A)
-        staticTemplates["TAB"] = Key(0, 0x2B)
-        staticTemplates["RIGHT"] = Key(0, 0x4F)
-        staticTemplates["LEFT"] = Key(0, 0x50)
-        staticTemplates["DOWN"] = Key(0, 0x51)
-        staticTemplates["UP"] = Key(0, 0x52)
+        staticTemplates["F1"] = Key(0u, 0x3Au)
+        staticTemplates["F2"] = Key(0u, 0x3Bu)
+        staticTemplates["F3"] = Key(0u, 0x3Cu)
+        staticTemplates["F4"] = Key(0u, 0x3Du)
+        staticTemplates["F5"] = Key(0u, 0x3Eu)
+        staticTemplates["F6"] = Key(0u, 0x3Fu)
+        staticTemplates["F7"] = Key(0u, 0x40u)
+        staticTemplates["F8"] = Key(0u, 0x41u)
+        staticTemplates["F9"] = Key(0u, 0x42u)
+        staticTemplates["F10"] = Key(0u, 0x43u)
+        staticTemplates["F11"] = Key(0u, 0x44u)
+        staticTemplates["F12"] = Key(0u, 0x45u)
+        staticTemplates["ENTER"] = Key(0u, 0x28u)
+        staticTemplates["ESC"] = Key(0u, 0x29u)
+        staticTemplates["BKSP"] = Key(0u, 0x2Au)
+        staticTemplates["TAB"] = Key(0u, 0x2Bu)
+        staticTemplates["RIGHT"] = Key(0u, 0x4Fu)
+        staticTemplates["LEFT"] = Key(0u, 0x50u)
+        staticTemplates["DOWN"] = Key(0u, 0x51u)
+        staticTemplates["UP"] = Key(0u, 0x52u)
 
 //     winlin97:  added unused function keys for special usage
 //                F1-F12 are binded in many Windows apps - also in Explorer
 //                Now You can write an external app that can recognize this keys
-//                as a triggers (StartKey -> Barcode -> StopKey), 
+//                as a triggers (StartKey -> Barcode -> StopKey),
 //                without any unexpected interactions with the system.
-        staticTemplates["F13"] = Key(0, 0x68)
-        staticTemplates["F14"] = Key(0, 0x69)
-        staticTemplates["F15"] = Key(0, 0x6a)
-        staticTemplates["F16"] = Key(0, 0x6b)
-        staticTemplates["F17"] = Key(0, 0x6c)
-        staticTemplates["F18"] = Key(0, 0x6d)
-        staticTemplates["F19"] = Key(0, 0x6e)
-        staticTemplates["F20"] = Key(0, 0x6f)
-        staticTemplates["F21"] = Key(0, 0x70)
-        staticTemplates["F22"] = Key(0, 0x71)
-        staticTemplates["F23"] = Key(0, 0x72)
-        staticTemplates["F24"] = Key(0, 0x73)
+        staticTemplates["F13"] = Key(0u, 0x68u)
+        staticTemplates["F14"] = Key(0u, 0x69u)
+        staticTemplates["F15"] = Key(0u, 0x6au)
+        staticTemplates["F16"] = Key(0u, 0x6bu)
+        staticTemplates["F17"] = Key(0u, 0x6cu)
+        staticTemplates["F18"] = Key(0u, 0x6du)
+        staticTemplates["F19"] = Key(0u, 0x6eu)
+        staticTemplates["F20"] = Key(0u, 0x6fu)
+        staticTemplates["F21"] = Key(0u, 0x70u)
+        staticTemplates["F22"] = Key(0u, 0x71u)
+        staticTemplates["F23"] = Key(0u, 0x72u)
+        staticTemplates["F24"] = Key(0u, 0x73u)
 
         // Note: DATE and TIME templates are now handled by TemplateProcessor
 
         dynamicTemplates["WAIT"] = { locale, args ->
-            Collections.nCopies<Key>(args.toIntOrNull() ?: 1, Key(0, 0))
+            Collections.nCopies<Key>(args.toIntOrNull() ?: 1, Key(0u, 0u))
         }
     }
 
@@ -219,7 +218,7 @@ class KeyTranslator(context: Context) {
 
     // Process HID-specific templates (modifiers, F-keys, arrows, etc.)
     private fun processHidSpecificTemplate(template: String, locale: String, keys: MutableList<Key>) {
-        var modifiers = 0.toByte()
+        var modifiers = 0.toUByte()
         var temp = template
         var wasModifier = true
 
