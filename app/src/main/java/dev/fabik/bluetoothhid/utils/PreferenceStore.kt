@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid.utils
 
+import android.bluetooth.BluetoothHidDeviceAppQosSettings
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
@@ -140,9 +141,15 @@ enum class ScanImageFormat {
 }
 enum class VolumeKeyAction {
     NOTHING, SEND_VALUE, CLEAR_VALUE, RUN_OCR, OPEN_KEYBOARD, TOGGLE_FLASH, TOGGLE_ZOOM, TRIGGER_FOCUS;
-
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: SEND_VALUE
+    }
+}
+enum class QosServiceType(val value: Int) {
+    BEST_EFFORT(BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT),
+    GUARANTEED(BluetoothHidDeviceAppQosSettings.SERVICE_GUARANTEED);
+    companion object {
+        fun fromIndex(index: Int) = entries.getOrNull(index) ?: BEST_EFFORT
     }
 }
 
@@ -200,6 +207,13 @@ open class PreferenceStore {
         val EXPAND_CODE = booleanPreferencesKey("expand_code") defaultsTo false
         val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
         val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
+        val QOS_SERVICE_TYPE =
+            intPreferencesKey("qos_service_type") enumDefaultsTo QosServiceType::fromIndex
+        val QOS_TOKEN_RATE = intPreferencesKey("qos_token_rate") defaultsTo 800
+        val QOS_TOKEN_BUCKET_SIZE = intPreferencesKey("qos_token_bucket_size") defaultsTo 9
+        val QOS_PEAK_BANDWIDTH = intPreferencesKey("qos_peak_bandwidth") defaultsTo 0
+        val QOS_LATENCY = intPreferencesKey("qos_latency") defaultsTo 11250
+        val QOS_DELAY_VARIATION = intPreferencesKey("qos_delay_variation") defaultsTo 11250
 
         // Appearance
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on") defaultsTo false

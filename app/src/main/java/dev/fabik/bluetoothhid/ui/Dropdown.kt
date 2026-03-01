@@ -216,6 +216,8 @@ fun SettingsDropdown() {
                         preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
                     }
                 )
+            } else {
+                QosOptionsModal()
             }
         }
     }
