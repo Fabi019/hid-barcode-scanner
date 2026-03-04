@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
+import android.bluetooth.BluetoothHidDeviceAppQosSettings
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -90,10 +92,31 @@ class BluetoothController(var context: Context) {
             hostDevice.update { null }
             hidDevice = proxy as? BluetoothHidDevice
 
+            val qos = runBlocking {
+                context.getPreferences(
+                    PreferenceStore.QOS_SERVICE_TYPE,
+                    PreferenceStore.QOS_TOKEN_RATE,
+                    PreferenceStore.QOS_TOKEN_BUCKET_SIZE,
+                    PreferenceStore.QOS_PEAK_BANDWIDTH,
+                    PreferenceStore.QOS_LATENCY,
+                    PreferenceStore.QOS_DELAY_VARIATION
+                ).first()
+            }.let {
+                Log.d(TAG, "Using QoS: $it")
+                BluetoothHidDeviceAppQosSettings(
+                    PreferenceStore.QOS_SERVICE_TYPE.extractEnum(it).value,
+                    PreferenceStore.QOS_TOKEN_RATE.extract(it),
+                    PreferenceStore.QOS_TOKEN_BUCKET_SIZE.extract(it),
+                    PreferenceStore.QOS_PEAK_BANDWIDTH.extract(it),
+                    PreferenceStore.QOS_LATENCY.extract(it),
+                    PreferenceStore.QOS_DELAY_VARIATION.extract(it)
+                )
+            }
+
             hidDevice?.registerApp(
                 Descriptor.SDP_RECORD,
                 null,
-                Descriptor.QOS_OUT,
+                qos,
                 Executors.newCachedThreadPool(),
                 hidDeviceCallback
             )
