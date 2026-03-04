@@ -1,11 +1,13 @@
 package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
@@ -14,8 +16,12 @@ import androidx.compose.foundation.text.input.byValue
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -23,17 +29,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
-import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
+import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,10 +83,36 @@ fun QosOptionsContent() {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        Text(
-            "L2CAP QoS settings",
-            style = MaterialTheme.typography.titleLarge,
-        )
+        val context = LocalContext.current
+
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+            Text(
+                "L2CAP QoS settings",
+                style = MaterialTheme.typography.titleLarge,
+            )
+            IconButton(
+                onClick = {
+                    runBlocking {
+                        arrayOf(
+                            PreferenceStore.QOS_SERVICE_TYPE,
+                            PreferenceStore.QOS_TOKEN_RATE,
+                            PreferenceStore.QOS_TOKEN_BUCKET_SIZE,
+                            PreferenceStore.QOS_PEAK_BANDWIDTH,
+                            PreferenceStore.QOS_LATENCY,
+                            PreferenceStore.QOS_DELAY_VARIATION
+                        ).forEach {
+                            context.setPreference(it, it.defaultValue)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.CenterEnd)
+                    .tooltip(stringResource(R.string.reset))
+            ) {
+                Icon(Icons.Filled.Restore, "Reset to default", Modifier.size(28.dp))
+            }
+        }
 
         Text(
             "Note: These parameters normally don't need to be changed. " +
@@ -128,13 +167,21 @@ fun <T> AdvancedTextField(
     keyboard: KeyboardOptions = KeyboardOptions.Default,
     transform: (CharSequence) -> T?
 ) {
-    var prefValue by rememberPreference(pref)
+    val context = LocalContext.current
+    val prefValue by context.getPreferenceStateBlocking(pref)
     val value = rememberTextFieldState(prefValue.toString())
 
-    DisposableEffect(prefValue) {
-        value.setTextAndPlaceCursorAtEnd(prefValue.toString())
+    LaunchedEffect(prefValue) {
+        if (value.text != prefValue) {
+            value.setTextAndPlaceCursorAtEnd(prefValue.toString())
+        }
+    }
+
+    DisposableEffect(Unit) {
         onDispose {
-            transform(value.text)?.let { prefValue = it }
+            transform(value.text)?.let {
+                runBlocking { context.setPreference(pref, it) }
+            }
         }
     }
 
