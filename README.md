@@ -51,24 +51,21 @@ pictures)*
 
 ## Download
 
+[<img src="https://f-droid.org/badge/get-it-on.png" width='200px'>](https://f-droid.org/packages/dev.fabik.bluetoothhid)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it at IzzyOnDroid" width='200px'>](https://apt.izzysoft.de/packages/dev.fabik.bluetoothhid)
 [<img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200px'/>](https://play.google.com/store/apps/details?id=dev.fabik.bluetoothhid)
+[<img src="https://raw.githubusercontent.com/rubenpgrady/get-it-on-github/refs/heads/main/get-it-on-github.png" width='200px'>](https://github.com/Fabi019/hid-barcode-scanner/releases)
 
-> **Note**</br>
-> Because the version on the Play Store is usually one or two versions behind the latest release,
-> you can also download the latest APKs directly here on GitHub as explained in the next section
+> [!NOTE]
+> Each source signs the app with a different key. Because of this, once you install it from one source, you can only switch to another by uninstalling the app first.
 
-### Download as APK
+### Download nightly builds from [CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml)
 
-You can either download the latest stable version from
-the [Releases](https://github.com/Fabi019/hid-barcode-scanner/releases) tab or directly from
-the [CI](https://github.com/Fabi019/hid-barcode-scanner/actions/workflows/test.yml) using the links
-below. Please note that the CI version might be unstable and that the builds are not signed (debug
+Please note that the CI version might be unstable and that the builds are not signed (debug
 builds), thus requiring you to install them on your phone using *ADB*. The download links below
 are using *nightly.link* to provide the files because GitHub doesn't allow to download files from
 actions without being logged in.
 
-- Latest APKs (Release): [here](https://github.com/Fabi019/hid-barcode-scanner/releases/latest)
 - Latest APK (Debug): [here](https://nightly.link/Fabi019/hid-barcode-scanner/workflows/test/main/APK%28s%29%20debug%20generated.zip)
 
 ## Troubleshooting
@@ -231,7 +228,7 @@ while (true) {
 
 ## License
 
-Copyright (C) 2023-2025 Fabi019
+Copyright (C) 2023-2026 Fabi019
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
