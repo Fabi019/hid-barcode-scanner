@@ -55,7 +55,7 @@ fun QosOptionsModal() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     DropdownMenuItem(
-        text = { Text("L2CAP QoS settings") },
+        text = { Text(stringResource(R.string.qos_settings)) },
         onClick = {
             showSheet = true
         }
@@ -87,7 +87,7 @@ fun QosOptionsContent() {
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
             Text(
-                "L2CAP QoS settings",
+                stringResource(R.string.qos_settings),
                 style = MaterialTheme.typography.titleLarge,
             )
             IconButton(
@@ -115,25 +115,28 @@ fun QosOptionsContent() {
         }
 
         Text(
-            "Note: These parameters normally don't need to be changed. " +
-                    "Changes get applied after restarting the app.",
-            style = MaterialTheme.typography.bodySmall
+            stringResource(R.string.qos_description),
+            style = MaterialTheme.typography.bodyMedium
         )
 
         AdvancedEnumSelectionOption(
-            "Service type",
+            stringResource(R.string.qos_service_type),
             arrayOf("BEST_EFFORT", "GUARANTEED"),
             PreferenceStore.QOS_SERVICE_TYPE
         )
 
         val keyboard = remember { KeyboardOptions(keyboardType = KeyboardType.Number) }
 
-        AdvancedTextField("Token rate (bytes/sec)", PreferenceStore.QOS_TOKEN_RATE, keyboard) {
+        AdvancedTextField(
+            stringResource(R.string.qos_token_rate),
+            PreferenceStore.QOS_TOKEN_RATE,
+            keyboard
+        ) {
             if (it.isBlank()) 0 else it.toString().toIntOrNull()
         }
 
         AdvancedTextField(
-            "Token bucket size (bytes)",
+            stringResource(R.string.qos_token_bucket_size),
             PreferenceStore.QOS_TOKEN_BUCKET_SIZE,
             keyboard
         ) {
@@ -141,18 +144,26 @@ fun QosOptionsContent() {
         }
 
         AdvancedTextField(
-            "Peak bandwidth (bytes/sec)",
+            stringResource(R.string.qos_peak_bandwidth),
             PreferenceStore.QOS_PEAK_BANDWIDTH,
             keyboard
         ) {
             if (it.isBlank()) 0 else it.toString().toIntOrNull()
         }
 
-        AdvancedTextField("Latency (us)", PreferenceStore.QOS_LATENCY, keyboard) {
+        AdvancedTextField(
+            stringResource(R.string.qos_latency),
+            PreferenceStore.QOS_LATENCY,
+            keyboard
+        ) {
             if (it.isBlank()) 0 else it.toString().toIntOrNull()
         }
 
-        AdvancedTextField("Delay variation (us)", PreferenceStore.QOS_DELAY_VARIATION, keyboard) {
+        AdvancedTextField(
+            stringResource(R.string.qos_delay_variation),
+            PreferenceStore.QOS_DELAY_VARIATION,
+            keyboard
+        ) {
             if (it.isBlank()) 0 else it.toString().toIntOrNull()
         }
 
