@@ -380,6 +380,14 @@
     <string name="zoom_level">Zoom level (%)</string>
     <string name="trigger_on_key_release">Trigger on key release</string>
     <string name="try_denoise">Try denoise</string>
+    <string name="qos_settings">L2CAP QoS settings</string>
+    <string name="qos_description">Note: These parameters normally don\'t need to be changed. When connection instabilities occur, increasing the token rate/peak bandwidth or decreasing the latency might help. Changes get applied after restarting the app. For more information refer to the Bluetooth HID Specification v1.1.1 Section 5.2 and Appendix D.</string>
+    <string name="qos_service_type">Service type</string>
+    <string name="qos_token_rate">Token rate (bytes/sec)</string>
+    <string name="qos_token_bucket_size">Token bucket size (bytes)</string>
+    <string name="qos_peak_bandwidth">Peak bandwidth (bytes/sec)</string>
+    <string name="qos_latency">Latency (us)</string>
+    <string name="qos_delay_variation">Delay variation (us)</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>
