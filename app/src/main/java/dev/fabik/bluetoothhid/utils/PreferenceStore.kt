@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 val Context.dataStore by preferencesDataStore("settings")
 
@@ -179,13 +180,15 @@ open class PreferenceStore {
     }
 
     companion object {
+        var ALL_PREFS = mutableListOf<Preference<*>>()
+
         // Simple infix functions to create preferences - no wrapper classes needed
         private infix fun <T> Preferences.Key<T>.defaultsTo(value: T) =
-            Preference(this, value)
+            Preference(this, value).also { ALL_PREFS.add(it) }
 
         private infix fun <E : Enum<E>> Preferences.Key<Int>.enumDefaultsTo(
             fromOrdinal: (Int) -> E
-        ) = EnumPref(this, fromOrdinal)
+        ) = EnumPref(this, fromOrdinal).also { ALL_PREFS.add(it) }
 
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
@@ -281,6 +284,49 @@ open class PreferenceStore {
         val OVERLAY_WIDTH = floatPreferencesKey("overlay_width") defaultsTo 100.0f
         val OVERLAY_HEIGHT = floatPreferencesKey("overlay_height") defaultsTo 100.0f
     }
+}
+
+suspend fun Context.exportPreferences(): String {
+    val map = dataStore.data.first().asMap().toMutableMap()
+    // Include unchanged preferences
+    PreferenceStore.ALL_PREFS.forEach { map.putIfAbsent(it.key, it.defaultValue as Any) }
+    val json = JSONObject(map.mapKeys { it.key.name })
+    return json.toString(2)
+}
+
+suspend fun Context.importPreferences(json: String): Int {
+    val obj = JSONObject(json)
+    var count = 0
+    dataStore.edit { prefs ->
+        for (pref in PreferenceStore.ALL_PREFS) {
+            val key = pref.key
+            // Should this change the preference to default instead?
+            if (!obj.has(key.name)) continue
+            runCatching {
+                val prev = prefs[key]
+                when (pref.defaultValue) {
+                    is Boolean -> prefs[key as Preferences.Key<Boolean>] = obj.getBoolean(key.name)
+                    is Int -> prefs[key as Preferences.Key<Int>] = obj.getInt(key.name)
+                    is Long -> prefs[key as Preferences.Key<Long>] = obj.getLong(key.name)
+                    is Float -> prefs[key as Preferences.Key<Float>] =
+                        obj.getDouble(key.name).toFloat()
+
+                    is Double -> prefs[key as Preferences.Key<Double>] = obj.getDouble(key.name)
+                    is Set<*> -> prefs[key as Preferences.Key<Set<*>>] = buildSet {
+                        val arr = obj.getJSONArray(key.name)
+                        (0..arr.length()).forEach { add(arr.getString(it)) }
+                    }
+
+                    else -> prefs[key as Preferences.Key<String>] = obj.getString(key.name)
+                }
+                Log.d("PreferenceStore", "Set $key from '${prev}' to '${prefs[key]}'")
+                count += 1
+            }.onFailure {
+                Log.e("PreferenceStore", "Error importing preference ${key.name}", it)
+            }
+        }
+    }
+    return count
 }
 
 suspend fun <T> Context.setPreference(pref: PreferenceStore.Preference<T>, value: T) {

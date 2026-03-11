@@ -1,7 +1,12 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.app.Activity
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,8 +45,13 @@ import dev.fabik.bluetoothhid.SettingsActivity
 import dev.fabik.bluetoothhid.bt.BluetoothService
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.exportPreferences
 import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.importPreferences
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun Dropdown(transparent: Boolean = false) {
@@ -219,6 +230,8 @@ fun SettingsDropdown() {
             } else {
                 QosOptionsModal()
             }
+
+            ImportExportDropdown()
         }
     }
 
@@ -249,4 +262,90 @@ fun SettingsDropdown() {
             Text(stringResource(R.string.insecure_rfcomm_desc))
         }
     }
+}
+
+@Composable
+fun ImportExportDropdown() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var exportData = ""
+    val exportPickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    runCatching {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.bufferedWriter().use {
+                                it.write(exportData)
+                            }
+                        }
+                    }.onFailure {
+                        Log.e("Settings", "Error saving settings to file!", it)
+                    }
+                }
+            }
+            exportData = ""
+        }
+
+    DropdownMenuItem(
+        text = { Text("Export settings") },
+        onClick = {
+            CoroutineScope(Dispatchers.IO).launch {
+                runCatching {
+                    exportData = context.exportPreferences()
+                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "application/json"
+                        putExtra(Intent.EXTRA_TITLE, "settings.json")
+                    }
+                    exportPickerLauncher.launch(intent)
+                }.onFailure {
+                    Log.e("Settings", "Failed to export settings!", it)
+                }
+            }
+        }
+    )
+
+    val importPickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    var count = 0
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val content = context.contentResolver.openInputStream(uri)?.use {
+                            it.bufferedReader().readText()
+                        } ?: ""
+                        count = context.importPreferences(content)
+                    }.invokeOnCompletion { err ->
+                        val msg = if (err != null) {
+                            Log.e("Settings", "Error importing settings!", err)
+                            "Error during import: ${err.message}!"
+                        } else "Imported $count settings!"
+                        scope.launch {
+                            Toast.makeText(
+                                context,
+                                msg,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+
+    DropdownMenuItem(
+        text = { Text("Import settings") },
+        onClick = {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/json"
+            }
+            runCatching {
+                importPickerLauncher.launch(intent)
+            }.onFailure {
+                Log.e("Settings", "Error starting file picker!", it)
+            }
+        }
+    )
 }
