@@ -1,6 +1,5 @@
 package dev.fabik.bluetoothhid.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
@@ -271,35 +270,28 @@ fun ImportExportDropdown() {
 
     var exportData = ""
     val exportPickerLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    runCatching {
-                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                            outputStream.bufferedWriter().use {
-                                it.write(exportData)
-                            }
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { result ->
+            result?.let { uri ->
+                runCatching {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.bufferedWriter().use {
+                            it.write(exportData)
                         }
-                    }.onFailure {
-                        Log.e("Settings", "Error saving settings to file!", it)
                     }
+                }.onFailure {
+                    Log.e("Settings", "Error saving settings to file!", it)
                 }
             }
             exportData = ""
         }
 
     DropdownMenuItem(
-        text = { Text("Export settings") },
+        text = { Text(stringResource(R.string.export_settings)) },
         onClick = {
             CoroutineScope(Dispatchers.IO).launch {
                 runCatching {
                     exportData = context.exportPreferences()
-                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        type = "application/json"
-                        putExtra(Intent.EXTRA_TITLE, "settings.json")
-                    }
-                    exportPickerLauncher.launch(intent)
+                    exportPickerLauncher.launch("settings.json")
                 }.onFailure {
                     Log.e("Settings", "Failed to export settings!", it)
                 }
@@ -308,41 +300,35 @@ fun ImportExportDropdown() {
     )
 
     val importPickerLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    var count = 0
-                    CoroutineScope(Dispatchers.IO).launch {
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
+            result?.let { uri ->
+                var count = 0
+                CoroutineScope(Dispatchers.IO).launch {
+                    runCatching {
                         val content = context.contentResolver.openInputStream(uri)?.use {
                             it.bufferedReader().readText()
                         } ?: ""
                         count = context.importPreferences(content)
-                    }.invokeOnCompletion { err ->
-                        val msg = if (err != null) {
-                            Log.e("Settings", "Error importing settings!", err)
-                            "Error during import: ${err.message}!"
-                        } else "Imported $count settings!"
-                        scope.launch {
-                            Toast.makeText(
-                                context,
-                                msg,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+                    }.onFailure {
+                        Log.e("Settings", "Error importing settings!", it)
+                    }
+                }.invokeOnCompletion { err ->
+                    scope.launch {
+                        Toast.makeText(
+                            context,
+                            "Imported $count settings!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
         }
 
     DropdownMenuItem(
-        text = { Text("Import settings") },
+        text = { Text(stringResource(R.string.import_settings)) },
         onClick = {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "application/json"
-            }
             runCatching {
-                importPickerLauncher.launch(intent)
+                importPickerLauncher.launch(arrayOf("application/json"))
             }.onFailure {
                 Log.e("Settings", "Error starting file picker!", it)
             }

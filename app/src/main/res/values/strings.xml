@@ -388,6 +388,8 @@
     <string name="qos_peak_bandwidth">Peak bandwidth (bytes/sec)</string>
     <string name="qos_latency">Latency (us)</string>
     <string name="qos_delay_variation">Delay variation (us)</string>
+    <string name="export_settings">Export settings</string>
+    <string name="import_settings">Import settings</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>
