@@ -19,6 +19,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -61,7 +63,7 @@ import kotlinx.coroutines.launch
 fun CustomKeysDialog(dialogState: DialogState) {
     val context = LocalContext.current
 
-    var keyMap = remember(dialogState.openState) {
+    val keyMap = remember(dialogState.openState) {
         // Internally checks if it is already loaded once
         KeyTranslator.loadCustomKeyMap(context)
         mutableStateMapOf<Char, Key>().apply {
@@ -264,13 +266,23 @@ fun CustomKeys(
         }
 
         item {
-            OutlinedButton(onClick = {
-                initialChar = ""
-                initialHID = null
-                initialModifier = null
-                addKeyDialog.open()
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.add))
+            Row(Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = {
+                    initialChar = ""
+                    initialHID = null
+                    initialModifier = null
+                    addKeyDialog.open()
+                }, modifier = Modifier.weight(1.0f)) {
+                    Text(stringResource(R.string.add))
+                }
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.tooltip("Import")
+                ) { Icon(Icons.Default.Upload, "Import") }
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.tooltip("Export")
+                ) { Icon(Icons.Default.Download, "Export") }
             }
         }
 
