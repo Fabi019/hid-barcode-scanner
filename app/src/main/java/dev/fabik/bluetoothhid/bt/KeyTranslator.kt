@@ -70,8 +70,8 @@ class KeyTranslator(context: Context) {
                 }
 
                 file.bufferedWriter().use {
-                    CUSTOM_KEYMAP.forEach { k, (m, h) ->
-                        it.write("$k ${h.toString(16)} ${m.toString(16)}")
+                    keymapToString(CUSTOM_KEYMAP).forEach { l ->
+                        it.write(l)
                         it.newLine()
                     }
                 }
@@ -80,7 +80,13 @@ class KeyTranslator(context: Context) {
             }
         }
 
-        private fun loadKeymap(lines: List<String>): Keymap {
+        fun keymapToString(keymap: Keymap): List<String> {
+            return keymap.map { (k, v) ->
+                "$k ${v.second.toString(16)} ${v.first.toString(16)}"
+            }
+        }
+
+        fun loadKeymap(lines: List<String>): Keymap {
             val keymap = mutableMapOf<Char, Key>()
 
             lines.forEach {
