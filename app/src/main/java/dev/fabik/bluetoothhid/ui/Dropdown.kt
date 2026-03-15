@@ -272,17 +272,20 @@ fun ImportExportDropdown() {
     val exportPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { result ->
             result?.let { uri ->
-                runCatching {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.bufferedWriter().use {
-                            it.write(exportData)
+                CoroutineScope(Dispatchers.IO).launch {
+                    runCatching {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.bufferedWriter().use {
+                                it.write(exportData)
+                            }
                         }
+                    }.onFailure {
+                        Log.e("Settings", "Error saving settings to file!", it)
                     }
-                }.onFailure {
-                    Log.e("Settings", "Error saving settings to file!", it)
+                }.invokeOnCompletion {
+                    exportData = ""
                 }
             }
-            exportData = ""
         }
 
     DropdownMenuItem(
@@ -338,7 +341,7 @@ fun ImportExportDropdown() {
             }
         }
     ) {
-        Text("Importing will override only settings which are present in the file.")
+        Text(stringResource(R.string.import_settings_desc))
     }
 
     DropdownMenuItem(

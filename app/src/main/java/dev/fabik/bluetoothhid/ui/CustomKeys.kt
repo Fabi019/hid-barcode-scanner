@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -321,22 +322,25 @@ fun CustomKeys(
 @Composable
 private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val confirmDialog = rememberDialogState()
 
     val exportPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { result ->
             result?.let { uri ->
-                runCatching {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.bufferedWriter().use {
-                            KeyTranslator.keymapToString(keyMap).forEach { l ->
-                                it.write(l)
-                                it.newLine()
+                CoroutineScope(Dispatchers.IO).launch {
+                    runCatching {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.bufferedWriter().use {
+                                KeyTranslator.keymapToString(keyMap).forEach { l ->
+                                    it.write(l)
+                                    it.newLine()
+                                }
                             }
                         }
+                    }.onFailure {
+                        Log.e("CustomKeys", "Error saving custom keys to file!", it)
                     }
-                }.onFailure {
-                    Log.e("CustomKeys", "Error saving custom keys to file!", it)
                 }
             }
         }
@@ -345,24 +349,28 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
             result?.let { uri ->
                 var count = 0
-                runCatching {
-                    val content = context.contentResolver.openInputStream(uri)?.use {
-                        it.bufferedReader().readText()
-                    } ?: ""
-                    val map = KeyTranslator.loadKeymap(content.lines())
-                    count = map.size
-                    if (count > 0) {
-                        onImportKeys(map)
+                CoroutineScope(Dispatchers.IO).launch {
+                    runCatching {
+                        val content = context.contentResolver.openInputStream(uri)?.use {
+                            it.bufferedReader().readText()
+                        } ?: ""
+                        val map = KeyTranslator.loadKeymap(content.lines())
+                        count = map.size
+                        if (count > 0) {
+                            onImportKeys(map)
+                        }
+                    }.onFailure {
+                        Log.e("Settings", "Error importing custom keys!", it)
                     }
-                }.onFailure {
-                    Log.e("Settings", "Error importing custom keys!", it)
+                }.invokeOnCompletion {
+                    scope.launch {
+                        Toast.makeText(
+                            context,
+                            "Imported $count keys!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
-
-                Toast.makeText(
-                    context,
-                    "Imported $count keys!",
-                    Toast.LENGTH_SHORT
-                ).show()
             }
         }
 
@@ -379,6 +387,7 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
         onClick = {
             exportPickerLauncher.launch("custom.layout")
         },
+        enabled = keyMap.isNotEmpty(),
         modifier = Modifier.tooltip(stringResource(R.string.export_keys))
     ) {
         Icon(Icons.Default.Download, stringResource(R.string.export_keys))
@@ -392,11 +401,11 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
                 importPickerLauncher.launch(arrayOf("*/*"))
                 close()
             }.onFailure {
-                Log.e("CustomKeys", "Launchin file picker failed!", it)
+                Log.e("CustomKeys", "Error starting file picker!", it)
             }
         }
     ) {
-        Text("Importing from file will remove all current defined keys.")
+        Text(stringResource(R.string.import_keys_desc))
     }
 }
 
