@@ -321,6 +321,7 @@ fun CustomKeys(
 @Composable
 private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) {
     val context = LocalContext.current
+    val confirmDialog = rememberDialogState()
 
     val exportPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { result ->
@@ -367,18 +368,36 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
 
     IconButton(
         onClick = {
-            importPickerLauncher.launch(arrayOf("*/*"))
+            confirmDialog.open()
         },
-        modifier = Modifier.tooltip("Import")
-    ) { Icon(Icons.Default.Upload, "Import") }
-
+        modifier = Modifier.tooltip(stringResource(R.string.import_keys))
+    ) {
+        Icon(Icons.Default.Upload, stringResource(R.string.import_keys))
+    }
 
     IconButton(
         onClick = {
             exportPickerLauncher.launch("custom.layout")
         },
-        modifier = Modifier.tooltip("Export")
-    ) { Icon(Icons.Default.Download, "Export") }
+        modifier = Modifier.tooltip(stringResource(R.string.export_keys))
+    ) {
+        Icon(Icons.Default.Download, stringResource(R.string.export_keys))
+    }
+
+    ConfirmDialog(
+        dialogState = confirmDialog,
+        title = stringResource(R.string.import_keys),
+        onConfirm = {
+            runCatching {
+                importPickerLauncher.launch(arrayOf("*/*"))
+                close()
+            }.onFailure {
+                Log.e("CustomKeys", "Launchin file picker failed!", it)
+            }
+        }
+    ) {
+        Text("Importing from file will remove all current defined keys.")
+    }
 }
 
 @Preview

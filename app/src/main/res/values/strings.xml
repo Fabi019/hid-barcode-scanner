@@ -390,6 +390,8 @@
     <string name="qos_delay_variation">Delay variation (us)</string>
     <string name="export_settings">Export settings</string>
     <string name="import_settings">Import settings</string>
+    <string name="import_keys">Import keys</string>
+    <string name="export_keys">Export keys</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>

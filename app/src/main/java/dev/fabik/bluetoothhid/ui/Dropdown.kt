@@ -324,14 +324,27 @@ fun ImportExportDropdown() {
             }
         }
 
-    DropdownMenuItem(
-        text = { Text(stringResource(R.string.import_settings)) },
-        onClick = {
+    val confirmDialog = rememberDialogState()
+
+    ConfirmDialog(
+        dialogState = confirmDialog,
+        title = stringResource(R.string.import_settings),
+        onConfirm = {
             runCatching {
                 importPickerLauncher.launch(arrayOf("application/json"))
+                close()
             }.onFailure {
                 Log.e("Settings", "Error starting file picker!", it)
             }
+        }
+    ) {
+        Text("Importing will override only settings which are present in the file.")
+    }
+
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.import_settings)) },
+        onClick = {
+            confirmDialog.open()
         }
     )
 }
