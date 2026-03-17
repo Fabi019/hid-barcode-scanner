@@ -48,9 +48,9 @@ import dev.fabik.bluetoothhid.utils.exportPreferences
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.importPreferences
 import dev.fabik.bluetoothhid.utils.rememberPreference
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun Dropdown(transparent: Boolean = false) {
@@ -266,13 +266,13 @@ fun SettingsDropdown() {
 @Composable
 fun ImportExportDropdown() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
 
     var exportData = ""
     val exportPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { result ->
             result?.let { uri ->
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch {
                     runCatching {
                         context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.bufferedWriter().use {
@@ -291,7 +291,7 @@ fun ImportExportDropdown() {
     DropdownMenuItem(
         text = { Text(stringResource(R.string.export_settings)) },
         onClick = {
-            CoroutineScope(Dispatchers.IO).launch {
+            scope.launch {
                 runCatching {
                     exportData = context.exportPreferences()
                     exportPickerLauncher.launch("settings.json")
@@ -305,8 +305,8 @@ fun ImportExportDropdown() {
     val importPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
             result?.let { uri ->
-                var count = 0
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch {
+                    var count = 0
                     runCatching {
                         val content = context.contentResolver.openInputStream(uri)?.use {
                             it.bufferedReader().readText()
@@ -315,8 +315,8 @@ fun ImportExportDropdown() {
                     }.onFailure {
                         Log.e("Settings", "Error importing settings!", it)
                     }
-                }.invokeOnCompletion { err ->
-                    scope.launch {
+
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
                             "Imported $count settings!",

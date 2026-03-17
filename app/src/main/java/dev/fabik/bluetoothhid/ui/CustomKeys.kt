@@ -62,6 +62,7 @@ import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
@@ -322,13 +323,15 @@ fun CustomKeys(
 @Composable
 private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
     val confirmDialog = rememberDialogState()
+
+    var importing by remember { mutableStateOf(false) }
 
     val exportPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { result ->
             result?.let { uri ->
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch {
                     runCatching {
                         context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.bufferedWriter().use {
@@ -348,8 +351,10 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
     val importPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
             result?.let { uri ->
-                var count = 0
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch {
+                    importing = true
+
+                    var count = 0
                     runCatching {
                         val content = context.contentResolver.openInputStream(uri)?.use {
                             it.bufferedReader().readText()
@@ -362,14 +367,16 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
                     }.onFailure {
                         Log.e("Settings", "Error importing custom keys!", it)
                     }
-                }.invokeOnCompletion {
-                    scope.launch {
+
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
                             "Imported $count keys!",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+                }.invokeOnCompletion {
+                    importing = false
                 }
             }
         }
@@ -378,6 +385,7 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
         onClick = {
             confirmDialog.open()
         },
+        enabled = !importing,
         modifier = Modifier.tooltip(stringResource(R.string.import_keys))
     ) {
         Icon(Icons.Default.Upload, stringResource(R.string.import_keys))
@@ -385,7 +393,11 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
 
     IconButton(
         onClick = {
-            exportPickerLauncher.launch("custom.layout")
+            runCatching {
+                exportPickerLauncher.launch("custom.layout")
+            }.onFailure {
+                Log.e("CustomKeys", "Error starting file picker!", it)
+            }
         },
         enabled = keyMap.isNotEmpty(),
         modifier = Modifier.tooltip(stringResource(R.string.export_keys))
