@@ -1,6 +1,9 @@
 package dev.fabik.bluetoothhid.ui
 
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +21,10 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -35,6 +41,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,13 +62,14 @@ import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
 fun CustomKeysDialog(dialogState: DialogState) {
     val context = LocalContext.current
 
-    var keyMap = remember(dialogState.openState) {
+    val keyMap = remember(dialogState.openState) {
         // Internally checks if it is already loaded once
         KeyTranslator.loadCustomKeyMap(context)
         mutableStateMapOf<Char, Key>().apply {
@@ -88,6 +96,9 @@ fun CustomKeysDialog(dialogState: DialogState) {
             keyMap[char] = key
         }, { (char, _) ->
             keyMap.remove(char)
+        }, { map ->
+            keyMap.clear()
+            keyMap.putAll(map)
         })
     }
 }
@@ -181,7 +192,8 @@ fun AddCustomKeyDialog(
 
             LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 itemsIndexed(modifierNameStates) { index, (name, checked) ->
-                    Row(Modifier
+                    Row(
+                        Modifier
                         .toggleable(
                             value = checked,
                             role = Role.Checkbox,
@@ -250,7 +262,10 @@ fun AddCustomKeyDialog(
 
 @Composable
 fun CustomKeys(
-    keyMap: Keymap, onAddKey: (Pair<Char, Key>) -> Unit, onDeleteKey: (Pair<Char, Key>) -> Unit
+    keyMap: Keymap,
+    onAddKey: (Pair<Char, Key>) -> Unit,
+    onDeleteKey: (Pair<Char, Key>) -> Unit,
+    onImportKeys: (Keymap) -> Unit
 ) {
     val addKeyDialog = rememberDialogState()
 
@@ -264,13 +279,17 @@ fun CustomKeys(
         }
 
         item {
-            OutlinedButton(onClick = {
-                initialChar = ""
-                initialHID = null
-                initialModifier = null
-                addKeyDialog.open()
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.add))
+            Row(Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = {
+                    initialChar = ""
+                    initialHID = null
+                    initialModifier = null
+                    addKeyDialog.open()
+                }, modifier = Modifier.weight(1.0f)) {
+                    Icon(Icons.Default.Add, null)
+                    Text(stringResource(R.string.add))
+                }
+                ImportExportButtons(keyMap, onImportKeys)
             }
         }
 
@@ -301,6 +320,107 @@ fun CustomKeys(
     }
 }
 
+@Composable
+private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val confirmDialog = rememberDialogState()
+
+    var importing by remember { mutableStateOf(false) }
+
+    val exportPickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { result ->
+            result?.let { uri ->
+                scope.launch {
+                    runCatching {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.bufferedWriter().use {
+                                KeyTranslator.keymapToString(keyMap).forEach { l ->
+                                    it.write(l)
+                                    it.newLine()
+                                }
+                            }
+                        }
+                    }.onFailure {
+                        Log.e("CustomKeys", "Error saving custom keys to file!", it)
+                    }
+                }
+            }
+        }
+
+    val importPickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
+            result?.let { uri ->
+                scope.launch {
+                    importing = true
+
+                    var count = 0
+                    runCatching {
+                        val content = context.contentResolver.openInputStream(uri)?.use {
+                            it.bufferedReader().readText()
+                        } ?: ""
+                        val map = KeyTranslator.loadKeymap(content.lines())
+                        count = map.size
+                        if (count > 0) {
+                            onImportKeys(map)
+                        }
+                    }.onFailure {
+                        Log.e("Settings", "Error importing custom keys!", it)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            "Imported $count keys!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }.invokeOnCompletion {
+                    importing = false
+                }
+            }
+        }
+
+    IconButton(
+        onClick = {
+            confirmDialog.open()
+        },
+        enabled = !importing,
+        modifier = Modifier.tooltip(stringResource(R.string.import_keys))
+    ) {
+        Icon(Icons.Default.Upload, stringResource(R.string.import_keys))
+    }
+
+    IconButton(
+        onClick = {
+            runCatching {
+                exportPickerLauncher.launch("custom.layout")
+            }.onFailure {
+                Log.e("CustomKeys", "Error starting file picker!", it)
+            }
+        },
+        enabled = keyMap.isNotEmpty(),
+        modifier = Modifier.tooltip(stringResource(R.string.export_keys))
+    ) {
+        Icon(Icons.Default.Download, stringResource(R.string.export_keys))
+    }
+
+    ConfirmDialog(
+        dialogState = confirmDialog,
+        title = stringResource(R.string.import_keys),
+        onConfirm = {
+            runCatching {
+                importPickerLauncher.launch(arrayOf("*/*"))
+                close()
+            }.onFailure {
+                Log.e("CustomKeys", "Error starting file picker!", it)
+            }
+        }
+    ) {
+        Text(stringResource(R.string.import_keys_desc))
+    }
+}
+
 @Preview
 @Composable
 fun PreviewCustomKeys() {
@@ -310,6 +430,6 @@ fun PreviewCustomKeys() {
     )
 
     Surface {
-        CustomKeys(keyMap, {}, {})
+        CustomKeys(keyMap, {}, {}, {})
     }
 }
