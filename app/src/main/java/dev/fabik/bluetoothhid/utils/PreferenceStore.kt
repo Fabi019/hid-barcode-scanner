@@ -254,8 +254,8 @@ open class PreferenceStore {
         val PRIVATE_MODE = booleanPreferencesKey("private_mode") defaultsTo false
         val PERSIST_HISTORY = booleanPreferencesKey("persist_history") defaultsTo true
 
-        val ADV_TRY_HARDER = booleanPreferencesKey("adv_try_harder") defaultsTo false
-        val ADV_TRY_ROTATE = booleanPreferencesKey("adv_try_rotate") defaultsTo false
+        val ADV_TRY_HARDER = booleanPreferencesKey("adv_try_harder") defaultsTo true
+        val ADV_TRY_ROTATE = booleanPreferencesKey("adv_try_rotate") defaultsTo true
         val ADV_TRY_INVERT = booleanPreferencesKey("adv_try_invert") defaultsTo false
         val ADV_TRY_DOWNSCALE = booleanPreferencesKey("adv_try_downscale") defaultsTo false
         val ADV_TRY_DENOISE = booleanPreferencesKey("adv_try_denoise") defaultsTo false
