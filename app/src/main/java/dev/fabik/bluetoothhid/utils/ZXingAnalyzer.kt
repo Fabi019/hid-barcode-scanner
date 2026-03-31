@@ -91,6 +91,7 @@ class ZXingAnalyzer(
         } else {
             runCatching {
                 cropRect?.let {
+                    if (it.width() <= 0 || it.height() <= 0) return@runCatching
                     image.setCropRect(it)
                 }
 
