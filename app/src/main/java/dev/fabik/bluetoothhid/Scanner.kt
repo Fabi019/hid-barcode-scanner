@@ -392,7 +392,7 @@ private fun CameraPreviewArea(
 
     val playSound by context.getPreferenceStateDefault(PreferenceStore.PLAY_SOUND)
 
-    val toneGenerator = remember {
+    var toneGenerator = remember {
         runCatching {
             ToneGenerator(AudioManager.STREAM_MUSIC, ToneGenerator.MAX_VOLUME)
         }.onFailure {
@@ -405,6 +405,7 @@ private fun CameraPreviewArea(
     DisposableEffect(toneGenerator) {
         onDispose {
             toneGenerator?.release()
+            toneGenerator = null
         }
     }
 
@@ -422,7 +423,11 @@ private fun CameraPreviewArea(
         if (value == null) return@CameraPreviewContent
 
         if (playSound) {
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
+            runCatching {
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 75)
+            }.onFailure {
+                Log.e("Scanner", "Failed to start tone with tone generator", it)
+            }
         }
 
         if (vibrate && vibrator.hasVibrator()) {
