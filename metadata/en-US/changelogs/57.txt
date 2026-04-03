@@ -1,0 +1,3 @@
+- Add import/export function for settings and custom keys
+- Add menu to customize QoS parameter
+- Various bug fixes
