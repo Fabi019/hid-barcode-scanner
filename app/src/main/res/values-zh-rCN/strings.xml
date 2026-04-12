@@ -137,12 +137,12 @@
     <string name="filter_desc_long">支持常见的正则表达式语法。使用空字符串或 .* 来匹配所有内容。如果正则表达式包含捕获组"(…)"，则将使用该组的值。</string>
     <string name="custom_template">自定义模板</string>
     <string name="custom_templ_desc">允许您设置自定义模板</string>
-    <string name="custom_templ_desc_long">请确保将"附加按键"设置为"自定义"。\n\n
+    <string name="custom_templ_desc_long">请确保将\"附加按键\"设置为\"自定义\"。\n\n
         代码占位符：\n
         • {CODE} - 纯条码值\n
         • 编码: _HEX, _B64 可以任意顺序组合\n
         • 示例: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
-        日期/时间占位符（支持可选格式）：\n
+        Date/Time 占位符（支持可选格式）：\n
         • {DATE} - 当前日期 (默认: yyyy-MM-dd)\n
         • {TIME} - 当前时间 (默认: HH:mm:ss)\n
         • {DATETIME} - 日期和时间 (默认: yyyy-MM-dd HH:mm:ss)\n
@@ -152,21 +152,21 @@
         • EEEE - 星期几 (全名), EEE - 星期几 (缩写)\n
         • MMMM - 月份 (全名), MMM - 月份 (缩写), MM - 月份 (数字)\n
         • yyyy - 年份 (完整), yy - 年份 (后两位), dd - 日\n
-        • HH - 小时 (24时制), hh - 小时 (12时制), mm - 分钟, ss - 秒, SSS - 毫秒, a - 上午/下午\n
-        • 注：引号内的文本('文本')将按字面显示\n\n
-        格式示例：\n
+        • HH - 小时 (24时制), hh - 小时 (12时制), mm - 分钟, ss - 秒, SSS - 毫秒, a - AM/PM\n
+        • Note: 引号内的文本(\'文本\')将按字面显示\n\n
+        格式示例:\n
         • {DATE[dd.MM.yyyy]} → 03.10.2025\n
         • {TIME[HH:mm:ss]} → 14:30:45\n
-        • {DATETIME[EEEE, MMMM dd yyyy]} → 2025年10月3日 星期五\n
+        • {DATETIME[EEEE, MMMM dd yyyy]} → Friday, October 03 2025\n
         • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
         • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
-        元数据占位符：\n
+        元数据占位符:\n
         • {CODE_TYPE} - 条码类型 (QR_CODE, CODE_128 等)\n
         • {SCAN_SOURCE} - 数据源 (SCAN, HISTORY, MANUAL)\n
         • {SCANNER_ID} - 扫码器硬件标识符\n
         • {SCAN_IMAGE_NAME} - 已存储扫描图片的名称\n\n
         通用编码（适用于任何数据占位符）：\n
-        • 向任何占位符添加 _HEX 或 _B64，顺序任意\n
+        • 向任一占位符添加 _HEX 或 _B64，顺序任意\n\n
         • 示例: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
         • 组合: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
         全局编码（应用于整个输出）：\n
@@ -174,7 +174,7 @@
         • {GLOBAL_B64} - 将整个结果编码为base64\n
         • 组合: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
         • 注：在RFCOMM模式下，不支持的HID占位符将根据下拉菜单设置被移除或保留为字面文本。\n\n
-        HID特定占位符：\n
+        HID - 特定占位符：:\n
         • 按键: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
         • 特殊: {SPACE}, {CR}, {LF}, {WAIT:n}\n
         • 注：在RFCOMM模式下，仅支持 {TAB} 和 {ENTER}。您可以在下拉菜单中控制不支持的占位符的可见性。\n\n
