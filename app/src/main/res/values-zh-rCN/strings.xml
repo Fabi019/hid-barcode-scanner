@@ -2,7 +2,7 @@
     <string name="app_name">蓝牙扫码器</string>
     <string name="scanner">扫码器</string>
     <string name="send_to_device">发送到设备</string>
-    <string name="scan_code_to_start">扫描任意二维码 / 条码\n以开始使用。</string>
+    <string name="scan_code_to_start">扫描任意码\n以开始使用。</string>
     <string name="settings">设置</string>
     <string name="connection">连接</string>
     <string name="auto_connect">自动连接</string>
@@ -50,8 +50,8 @@
     <string name="send_delay_desc">发送文本时每个字符/数字之间的间隔时间</string>
     <string name="send_delay_template">延迟 (毫秒): %.0f</string>
     <string name="request_permission">请求权限</string>
-    <string name="bluetooth_permission">此应用需要蓝牙权限以与其他设备通信。请允许应用访问"附近设备"。</string>
-    <string name="camera_permission">需要摄像头来显示预览和扫描码。请允许应用"相机"权限。</string>
+    <string name="bluetooth_permission">此应用需要蓝牙权限以与其他设备通信。请允许应用访问\"附近设备\"。</string>
+    <string name="camera_permission">需要摄像头来显示预览和扫描码。请允许应用\"相机\"权限。</string>
     <string name="location_permission">扫描新设备需要位置权限。</string>
     <string name="location_enable">您的设备需要启用位置服务。</string>
     <string name="open_location_settings">打开位置设置</string>
@@ -134,7 +134,7 @@
     <string name="fix_exposure_desc">有助于减少图像中的运动模糊</string>
     <string name="filter_regex">过滤正则表达式</string>
     <string name="filter_regex_desc">允许通过正则表达式过滤码</string>
-    <string name="filter_desc_long">支持常见的正则表达式语法。使用空字符串或 .* 来匹配所有内容。如果正则表达式包含捕获组"(…)"，则将使用该组的值。</string>
+    <string name="filter_desc_long">支持常见的正则表达式语法。使用空字符串或 .* 来匹配所有内容。如果正则表达式包含捕获组\"(…)\"，则将使用该组的值。</string>
     <string name="custom_template">自定义模板</string>
     <string name="custom_templ_desc">允许您设置自定义模板</string>
     <string name="custom_templ_desc_long">请确保将\"附加按键\"设置为\"自定义\"。\n\n
@@ -381,7 +381,7 @@
     <string name="trigger_on_key_release">按键释放时触发</string>
     <string name="try_denoise">尝试去噪</string>
     <string name="qos_settings">L2CAP QoS设置</string>
-    <string name="qos_description">注意：这些参数通常无需更改。当连接不稳定时，增加令牌速率/峰值带宽或减少延迟可能有助于改善。更改将在重启应用后生效。更多信息请参阅蓝牙HID规范v1.1.1第5.2节和附录D。</string>
+    <string name="qos_description">注意：这些参数通常无需更改。当连接不稳定时，增加令牌速率/峰值带宽或减少延迟可能有助于改善。更改将在重启应用后生效。更多信息请参阅 蓝牙HID规范v1.1.1第5.2节和附录D。</string>
     <string name="qos_service_type">服务类型</string>
     <string name="qos_token_rate">令牌速率 (字节/秒)</string>
     <string name="qos_token_bucket_size">令牌桶大小 (字节)</string>
