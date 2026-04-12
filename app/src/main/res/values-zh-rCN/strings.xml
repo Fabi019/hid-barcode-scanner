@@ -1,0 +1,407 @@
+<resources>
+    <string name="app_name">蓝牙扫码器</string>
+    <string name="scanner">扫码器</string>
+    <string name="send_to_device">发送到设备</string>
+    <string name="scan_code_to_start">扫描任意码\n以开始使用。</string>
+    <string name="settings">设置</string>
+    <string name="connection">连接</string>
+    <string name="auto_connect">自动连接</string>
+    <string name="auto_connect_desc">启动时自动连接最后使用的设备</string>
+    <string name="show_unnamed">未命名设备</string>
+    <string name="show_unnamed_desc">显示没有名称的设备</string>
+    <string name="appearance">外观</string>
+    <string name="theme">主题</string>
+    <string name="theme_desc">更改首选界面主题</string>
+    <string name="dynamic_theme">动态主题</string>
+    <string name="dynamic_theme_desc">使用新的动态主题</string>
+    <string name="front_camera">前置摄像头</string>
+    <string name="front_camera_desc">如果设备支持，使用前置摄像头而非后置摄像头</string>
+    <string name="restrict_area">限制扫描区域</string>
+    <string name="restrict_area_desc">在扫码器上显示覆盖层</string>
+    <string name="overlay_type">覆盖层类型</string>
+    <string name="overlay_type_desc">指定覆盖层的形状</string>
+    <string name="full_inside">完全在区域内</string>
+    <string name="full_inside_desc">码需完全位于扫描区域内</string>
+    <string name="scan_freq">扫描频率</string>
+    <string name="scan_freq_desc">分析图像的间隔时间。更高的频率将导致更高的CPU使用率。</string>
+    <string name="scan_res">扫描分辨率</string>
+    <string name="scan_res_desc">被分析图像的分辨率。更高的分辨率需要更长的分析时间。</string>
+    <string name="auto_send">自动发送</string>
+    <string name="auto_send_desc">自动发送任何新检测到的码</string>
+    <string name="extra_keys">附加按键</string>
+    <string name="extra_keys_desc">指定在发送到PC的每条文本末尾追加的按键</string>
+    <string name="play_sound">扫描提示音</string>
+    <string name="play_sound_desc">扫描到码时播放提示音</string>
+    <string name="raw_value">原始值</string>
+    <string name="raw_value_desc">使用码的原始值</string>
+    <string name="about">关于</string>
+    <string name="repository">仓库</string>
+    <string name="build_version">版本</string>
+    <string name="confirm">确认</string>
+    <string name="dismiss">取消</string>
+    <string name="scanned_devices">已扫描设备</string>
+    <string name="swipe_refresh">(从顶部下拉刷新)</string>
+    <string name="paired_devices">已配对设备</string>
+    <string name="no_paired_devices">(未找到已配对设备)</string>
+    <string name="skip">跳过</string>
+    <string name="request_again">重新请求</string>
+    <string name="exit">退出</string>
+    <string name="send_delay">发送延迟</string>
+    <string name="send_delay_desc">发送文本时每个字符/数字之间的间隔时间</string>
+    <string name="send_delay_template">延迟 (毫秒): %.0f</string>
+    <string name="request_permission">请求权限</string>
+    <string name="bluetooth_permission">此应用需要蓝牙权限以与其他设备通信。请允许应用访问\"附近设备\"。</string>
+    <string name="camera_permission">需要摄像头来显示预览和扫描码。请允许应用\"相机\"权限。</string>
+    <string name="location_permission">扫描新设备需要位置权限。</string>
+    <string name="location_enable">您的设备需要启用位置服务。</string>
+    <string name="open_location_settings">打开位置设置</string>
+    <string name="connecting">正在连接…</string>
+    <string name="connect_help">如果无法连接，请在两端取消配对设备，然后从应用中重新尝试连接。</string>
+    <string name="haptic_feedback">触觉反馈</string>
+    <string name="haptic_feedback_desc">扫描到新码时振动</string>
+    <string name="connected_with">已连接: %s</string>
+    <string name="click_to_connect">点击返回。</string>
+    <string name="info">信息</string>
+    <string name="name">名称</string>
+    <string name="mac_address">MAC地址</string>
+    <string name="alias">别名</string>
+    <string name="type">类型</string>
+    <string name="clazz">类别</string>
+    <string name="services">服务</string>
+    <string name="uuids">UUID</string>
+    <string name="code_types">码类型</string>
+    <string name="code_types_desc">仅启用所需类型以提高扫描速度。不选则启用全部。</string>
+    <string name="code_types_desc_short">仅启用特定类型以提高扫描速度</string>
+    <string name="bt_proxy_registered">蓝牙代理已注册！</string>
+    <string name="bt_proxy_error">无法获取蓝牙代理！请尝试重启应用…</string>
+    <string name="bt_service_disconnected">蓝牙服务已断开！</string>
+    <string name="bt_service_connected">蓝牙服务已连接！</string>
+    <string name="please_wait">请稍候！</string>
+    <string name="copied_to_clipboard">已复制到剪贴板！</string>
+    <string name="devices">设备</string>
+    <string name="keyboard_layout">键盘布局</string>
+    <string name="keyboard_layout_desc">设置键盘布局。如需输入特殊字符或非QWERTY布局，请更改此项。</string>
+    <string name="build_version_desc" translatable="false">%s v%s-%s (构建 %d)</string>
+    <string name="disconnect">断开连接</string>
+    <string name="more">更多</string>
+    <string name="toggle_flash">切换闪光灯</string>
+    <string name="loading">正在加载…</string>
+    <string name="error">错误</string>
+    <string name="failed_to_download">下载并安装ML-Kit条码模块失败。</string>
+    <string name="ensure_internet_and_play">请确保设备有活跃的网络连接并且已安装Google Play服务。</string>
+    <string name="download_bundled">或者，您可以从GitHub页面下载包含该模块的捆绑APK版本。</string>
+    <string name="downloading_module">正在通过Google Play请求下载并安装ML-Kit条码模块。\n\n此操作只需执行一次。通常在安装APK或清除Google Play服务数据后需要。</string>
+    <string name="unpair_device">取消配对 %s？</string>
+    <string name="unpair_desc">取消配对将从您的已配对设备列表中移除该设备。</string>
+    <string name="connect">连接</string>
+    <string name="unpair">取消配对</string>
+    <string name="error_code" formatted="false">错误: %s (%s)</string>
+    <string name="downloading">正在下载…</string>
+    <string name="installing">正在安装…</string>
+    <string name="ok">确定</string>
+    <string name="reset_default">重置为默认？</string>
+    <string name="reset_default_desc">确定要重置为默认设置吗？</string>
+    <string name="reset">重置</string>
+    <string name="back">返回</string>
+    <string name="source_code">源代码</string>
+    <string name="source_code_desc">在GitHub上查看源代码</string>
+    <string name="report_issue">报告问题</string>
+    <string name="report_issue_desc">在GitHub上报告问题</string>
+    <string name="rate">在Google Play上评分</string>
+    <string name="rate_desc">如果您喜欢此应用，请在Google Play上评分</string>
+    <string name="share">分享</string>
+    <string name="share_desc">与朋友分享此应用</string>
+    <string name="share_via">通过…分享</string>
+    <string name="refresh">刷新</string>
+    <string name="cancel">取消</string>
+    <string name="bluetooth_disabled">蓝牙已禁用</string>
+    <string name="enable_bluetooth">请在系统设置中启用蓝牙，或点击下方按钮。</string>
+    <string name="enable_bluetooth_btn">启用蓝牙</string>
+    <string name="no_device">无设备连接</string>
+    <string name="highlight_type">高亮类型</string>
+    <string name="highlight_type_desc">选择检测到的码如何高亮显示</string>
+    <string name="auto_focus">自动对焦</string>
+    <string name="auto_focus_desc">禁用后，仅通过点击屏幕进行对焦</string>
+    <string name="bt_hid_service">蓝牙HID服务</string>
+    <string name="service_running">服务正在运行</string>
+    <string name="refresh_proxy">刷新代理</string>
+    <string name="stop_proxy">停止代理</string>
+    <string name="proxy_waiting">正在等待蓝牙代理连接…</string>
+    <string name="exit_confirm">再按一次返回键退出</string>
+    <string name="allow_screen_rotation">允许屏幕旋转</string>
+    <string name="allow_screen_rotation_desc">当设备方向改变时允许屏幕旋转</string>
+    <string name="fix_exposure">固定相机曝光</string>
+    <string name="fix_exposure_desc">有助于减少图像中的运动模糊</string>
+    <string name="filter_regex">过滤正则表达式</string>
+    <string name="filter_regex_desc">允许通过正则表达式过滤码</string>
+    <string name="filter_desc_long">支持常见的正则表达式语法。使用空字符串或 .* 来匹配所有内容。如果正则表达式包含捕获组\"(…)\"，则将使用该组的值。</string>
+    <string name="custom_template">自定义模板</string>
+    <string name="custom_templ_desc">允许您设置自定义模板</string>
+    <string name="custom_templ_desc_long">请确保将\"附加按键\"设置为\"自定义\"。\n\n
+        代码占位符：\n
+        • {CODE} - 纯条码值\n
+        • 编码: _HEX, _B64 可以任意顺序组合\n
+        • 示例: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Date/Time 占位符（支持可选格式）：\n
+        • {DATE} - 当前日期 (默认: yyyy-MM-dd)\n
+        • {TIME} - 当前时间 (默认: HH:mm:ss)\n
+        • {DATETIME} - 日期和时间 (默认: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - 扫描时间戳 (默认: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • 自定义格式: {DATE[格式]}, {TIME[格式]}, {DATETIME[格式]}, {SCAN_TIME[格式]}\n\n
+        格式模式：\n
+        • EEEE - 星期几 (全名), EEE - 星期几 (缩写)\n
+        • MMMM - 月份 (全名), MMM - 月份 (缩写), MM - 月份 (数字)\n
+        • yyyy - 年份 (完整), yy - 年份 (后两位), dd - 日\n
+        • HH - 小时 (24时制), hh - 小时 (12时制), mm - 分钟, ss - 秒, SSS - 毫秒, a - AM/PM\n
+        • Note: 引号内的文本(\'文本\')将按字面显示\n\n
+        格式示例:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, MMMM dd yyyy]} → Friday, October 03 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
+        元数据占位符:\n
+        • {CODE_TYPE} - 条码类型 (QR_CODE, CODE_128 等)\n
+        • {SCAN_SOURCE} - 数据源 (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - 扫码器硬件标识符\n
+        • {SCAN_IMAGE_NAME} - 已存储扫描图片的名称\n\n
+        通用编码（适用于任何数据占位符）：\n
+        • 向任一占位符添加 _HEX 或 _B64，顺序任意\n\n
+        • 示例: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • 组合: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
+        全局编码（应用于整个输出）：\n
+        • {GLOBAL_HEX} - 将整个结果编码为十六进制\n
+        • {GLOBAL_B64} - 将整个结果编码为base64\n
+        • 组合: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • 注：在RFCOMM模式下，不支持的HID占位符将根据下拉菜单设置被移除或保留为字面文本。\n\n
+        HID - 特定占位符：:\n
+        • 按键: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • 特殊: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • 注：在RFCOMM模式下，仅支持 {TAB} 和 {ENTER}。您可以在下拉菜单中控制不支持的占位符的可见性。\n\n
+        可以通过前置以下字符设置修饰键：\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        示例: {+r} 将发送 CTRL+R, {^#F1} 将发送 SHIFT+ALT+F1, {WAIT:10} 将添加10个字符的延迟
+    </string>
+    <string name="camera">相机</string>
+    <string name="focus_mode">对焦模式</string>
+    <string name="focus_mode_desc">选择首选的对焦行为。某些模式会禁用通过点击屏幕手动对焦的功能。</string>
+    <string name="search_by_value">按值搜索</string>
+    <string name="history">历史记录</string>
+    <string name="search">搜索</string>
+    <string name="clear_history">清除历史记录</string>
+    <string name="clear_history_desc">确定要清除历史记录吗？</string>
+    <string name="preview_mode_desc">可降低功耗和延迟</string>
+    <string name="preview_performance_mode">预览性能模式</string>
+    <string name="full_screen_scanner">全屏扫码器</string>
+    <string name="full_screen_scanner_desc">扫码器将全屏显示</string>
+    <string name="auto_zoom">自动缩放</string>
+    <string name="zooms_in_on_codes_to_far_away">对距离过远的码进行放大</string>
+    <string name="show_possible">显示可能的码</string>
+    <string name="highlights_possible_codes">用点高亮显示可能的码</string>
+    <string name="caps_lock_activated">大写锁定已激活</string>
+    <string name="click_to_turn_off">点击此处关闭</string>
+    <string name="rfcomm_listening">正在监听连接</string>
+    <string name="rfcomm_listening_from_device">正在等待来自 %s 的连接</string>
+    <string name="keep_screen_on">保持屏幕常亮</string>
+    <string name="keep_screen_on_desc">防止扫描时屏幕关闭</string>
+    <string name="private_mode">隐私模式</string>
+    <string name="private_mode_desc">默认隐藏扫描值</string>
+    <string name="camera_error">相机错误！</string>
+    <string name="camera_error_desc">初始化相机时出错。请重启应用或设备。如果问题持续，请在Github上提交新问题。</string>
+    <string name="press_run_to_evaluate">按运行进行评估</string>
+    <string name="custom_javascript">自定义JavaScript</string>
+    <string name="custom_js_desc">使用JavaScript修改扫描值</string>
+    <string name="editor_desc">允许您输入任何JavaScript来修改码的值。定义了两个常量（\'format\' 和 \'code\'）。最后一条语句将作为结果（不需要return）。</string>
+    <string name="editor">编辑器</string>
+    <string name="debug">调试</string>
+    <string name="code">代码</string>
+    <string name="format">格式</string>
+    <string name="output">输出</string>
+    <string name="run">运行</string>
+    <string name="export">导出</string>
+    <string name="export_csv">CSV数据</string>
+    <string name="export_json">JSON数据</string>
+    <string name="export_xml">XML数据</string>
+    <string name="export_lines">行</string>
+    <string name="export_fields" translatable="false">text, timestamp, type</string>
+    <string name="export_lines_description">带换行符的文本</string>
+    <string name="export_as">导出为</string>
+    <string name="import_text">导入</string>
+    <string name="import_from">从…导入</string>
+    <string name="delete_selection">删除所选？</string>
+    <string name="delete_selection_desc">确定要删除所选项目吗？</string>
+    <string name="templates_in_value">值中的模板</string>
+    <string name="template_in_value_desc">在代码值中展开模板（需要自定义模板）</string>
+    <string name="error_connecting_to_device">连接设备时出错！正在尝试重启服务…</string>
+    <string name="developer_mode">开发者模式</string>
+    <string name="custom_keys">自定义按键</string>
+    <string name="add_custom_key">添加自定义按键</string>
+    <string name="add_custom_key_desc_long">输入字符和对应的HID码（非扫描码），包括任何修饰键。例如，ENTER键的HID码是28 (十六进制)。</string>
+    <string name="character">字符</string>
+    <string name="hid_code_hex">HID码 (十六进制)</string>
+    <string name="modifier">修饰键</string>
+    <string name="test">测试</string>
+    <string name="test_key">* 要测试按键，您需要连接到设备。</string>
+    <string name="add_custom_key_desc">允许您定义自定义字符到HID码的映射，这将覆盖所选键盘布局中的任何定义。</string>
+    <string name="define_custom_keys">定义自定义按键</string>
+    <string name="add">添加</string>
+    <string name="persistent_history">持久化历史记录</string>
+    <string name="persistent_history_desc">记住扫描历史</string>
+    <string name="filter">筛选</string>
+    <string name="date_range">日期范围</string>
+    <string name="select_types">选择类型</string>
+    <string name="clear">清除</string>
+    <string name="apply">应用</string>
+    <string name="exclude_duplicates">排除重复项</string>
+    <string name="save_to_file">保存到文件</string>
+    <string name="invalid_regex">无效的正则表达式</string>
+    <string name="template_error">模板必须至少包含一个CODE组件。</string>
+    <string name="template_error_duplicates">不允许重复组件: %1$s</string>
+    <string name="advanced_options">高级选项</string>
+    <string name="advanced_opts_desc">调整更多扫描参数</string>
+    <string name="detection">检测</string>
+    <string name="try_harder">尽力尝试</string>
+    <string name="try_rotate_image">尝试旋转图像</string>
+    <string name="try_inverted">尝试反转</string>
+    <string name="try_downscale">尝试下采样</string>
+    <string name="minimum_scan_lines">最小扫描行数</string>
+    <string name="processing">处理</string>
+    <string name="binarizer">二值化器</string>
+    <string name="downscale_factor">下采样因子</string>
+    <string name="downscale_threshold">下采样阈值 (像素)</string>
+    <string name="parser">解析器</string>
+    <string name="text_mode">文本模式</string>
+    <string name="send_with_volume_keys">使用音量键</string>
+    <string name="send_vol_keys_desc">指定按下音量上/下键的操作</string>
+    <string name="ocr_note_desc">OCR扩展功能需要外部应用提供检测功能。如需使用此功能，您的设备上需要单独安装以下应用之一。\n您可以选择ML-Kit或基于Tesseract的版本。\n（请注意，这是第三方应用，我无法控制）</string>
+    <string name="ocr_note_bottom">之后，您就可以使用扫码器右下角的新按钮来触发检测。</string>
+    <string name="note">注意</string>
+    <string name="ocr_app_github">OCR by mtotschnig (GitHub)</string>
+    <string name="ext_ocr_support">外部OCR支持</string>
+    <string name="scan_results">扫描结果</string>
+    <string name="ocr_results_selection">选择所有要发送的行。</string>
+    <string name="clear_after_send">发送后清除</string>
+    <string name="clear_after_send_desc">手动发送后清除显示的代码</string>
+    <string name="manual_input">手动输入</string>
+    <string name="include_extra_keys">包含附加按键</string>
+    <string name="connection_mode">连接模式</string>
+    <string name="connection_mode_desc">HID模式模拟键盘输入，RFCOMM模式通过蓝牙COM端口发送数据（可能需要额外软件）。不支持的设置在RFCOMM模式下将显示为灰色。</string>
+    <string-array name="theme_values">
+        <item>系统</item>
+        <item>浅色</item>
+        <item>深色</item>
+    </string-array>
+    <string-array name="overlay_values">
+        <item>方形 (二维码)</item>
+        <item>矩形 (条码)</item>
+        <item>自定义</item>
+    </string-array>
+    <string-array name="scan_freq_values">
+        <item>最快</item>
+        <item>快速 (100毫秒)</item>
+        <item>普通 (500毫秒)</item>
+        <item>慢速 (1秒)</item>
+    </string-array>
+    <string-array name="scan_res_values">
+        <item>标清 (480P)</item>
+        <item>高清 (720P)</item>
+        <item>全高清 (1080P)</item>
+        <item>超高清 (2160P)</item>
+    </string-array>
+    <string-array name="extra_keys_values">
+        <item>无</item>
+        <item>回车</item>
+        <item>制表符</item>
+        <item>空格</item>
+        <item>自定义</item>
+    </string-array>
+    <string-array name="keyboard_layout_values">
+        <item>英语 (美国)</item>
+        <item>德语 (德国)</item>
+        <item>法语 (法国)</item>
+        <item>英语 (英国)</item>
+        <item>西班牙语 (西班牙)</item>
+        <item>意大利语 (意大利)</item>
+        <item>土耳其语 Q (土耳其)</item>
+        <item>波兰语程序员 (波兰)</item>
+        <item>捷克语 (捷克)</item>
+        <item>葡萄牙语 (葡萄牙)</item>
+        <item>葡萄牙语 (巴西)</item>
+        <item>法语 (比利时)</item>
+        <item>匈牙利语 (匈牙利)</item>
+    </string-array>
+    <string-array name="highlight_values">
+        <item>方框</item>
+        <item>点阵</item>
+    </string-array>
+    <string-array name="focus_mode_values">
+        <item>自动</item>
+        <item>手动</item>
+        <item>微距</item>
+        <item>连续</item>
+        <item>扩展景深</item>
+        <item>固定 (无限远)</item>
+        <item>连续 (快速)</item>
+    </string-array>
+    <string-array name="connection_mode_values">
+        <item>HID键盘</item>
+        <item>RFCOMM (串行端口)</item>
+    </string-array>
+    <plurals name="export_items">
+        <item quantity="one">导出 %1$d 项</item>
+        <item quantity="other">导出 %1$d 项</item>
+    </plurals>
+    <string name="insecure_rfcomm">不安全的RFCOMM</string>
+    <string name="insecure_rfcomm_desc">此选项启用不安全的RFCOMM连接。仅适用于不支持使用蓝牙串行端口配置文件的安全连接的旧设备。</string>
+    <string name="preserve_unsupported_placeholders">保留不支持的占位符</string>
+    <string name="preserve_unsupported_placeholders_desc">在RFCOMM模式下，将HID特定占位符（例如 {F1}, {ESC}）保留为文本而非移除</string>
+    <string name="save_scan_image">保存扫描图片</string>
+    <string name="save_scan_desc">将扫描图片存储在设备上</string>
+    <string name="crop_mode">裁剪模式</string>
+    <string name="image_quality">图片质量</string>
+    <string name="file_name_pattern">文件名模式</string>
+    <string name="file_name_pattern_placeholder">占位符: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
+    <string name="output_folder">输出文件夹</string>
+    <string name="save_scan_image_hint">注意：每次扫描的文件名可在自定义模板中通过 {SCAN_IMAGE_NAME} 使用。例如，这可用于直接从手机拉取图片。</string>
+    <string name="clear_after_time">超时后清除</string>
+    <string name="clear_after_time_desc">在指定时间间隔内未检测到新码时，清除显示的代码。</string>
+    <string-array name="clear_after_time_values">
+        <item>从不</item>
+        <item>1秒</item>
+        <item>3秒</item>
+        <item>5秒</item>
+    </string-array>
+    <string name="image_format">图片格式</string>
+    <string name="volume_up">音量增加</string>
+    <string name="volume_down">音量减小</string>
+    <string name="zoom_level">缩放级别 (%%)</string>
+    <string name="trigger_on_key_release">按键释放时触发</string>
+    <string name="try_denoise">尝试去噪</string>
+    <string name="qos_settings">L2CAP QoS设置</string>
+    <string name="qos_description">注意：这些参数通常无需更改。当连接不稳定时，增加令牌速率/峰值带宽或减少延迟可能有助于改善。更改将在重启应用后生效。更多信息请参阅 蓝牙HID规范v1.1.1第5.2节和附录D。</string>
+    <string name="qos_service_type">服务类型</string>
+    <string name="qos_token_rate">令牌速率 (字节/秒)</string>
+    <string name="qos_token_bucket_size">令牌桶大小 (字节)</string>
+    <string name="qos_peak_bandwidth">峰值带宽 (字节/秒)</string>
+    <string name="qos_latency">延迟 (微秒)</string>
+    <string name="qos_delay_variation">延迟变化 (微秒)</string>
+    <string name="export_settings">导出设置</string>
+    <string name="import_settings">导入设置</string>
+    <string name="import_keys">导入按键</string>
+    <string name="export_keys">导出按键</string>
+    <string name="import_settings_desc">导入将仅覆盖文件中存在的设置。</string>
+    <string name="import_keys_desc">从文件导入将移除当前定义的所有按键。</string>
+    <string-array name="volume_keys_actions">
+        <item>无操作</item>
+        <item>发送值</item>
+        <item>清除值</item>
+        <item>运行OCR</item>
+        <item>打开手动输入</item>
+        <item>切换闪光灯</item>
+        <item>切换缩放</item>
+        <item>触发对焦</item>
+    </string-array>
+</resources>
