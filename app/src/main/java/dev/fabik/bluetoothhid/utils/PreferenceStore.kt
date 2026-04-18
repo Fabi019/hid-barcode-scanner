@@ -231,6 +231,8 @@ open class PreferenceStore {
         val FIX_EXPOSURE = booleanPreferencesKey("fix_exposure") defaultsTo false
         val FOCUS_MODE = intPreferencesKey("focus_mode").enumDefaultsTo(FocusMode::fromIndex)
         val PREVIEW_PERFORMANCE_MODE = booleanPreferencesKey("preview_performance_mode") defaultsTo false
+        val PREVIEW_STABILIZATION =
+            booleanPreferencesKey("preview_stabilization_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res").enumDefaultsTo(ScanResolution::fromIndex)
         // val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false - Removed
 

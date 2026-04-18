@@ -13,7 +13,6 @@ import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.ImageCapture
 import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
-import androidx.camera.viewfinder.core.ImplementationMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -72,7 +71,6 @@ import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceState
-import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import kotlinx.coroutines.launch
 import org.totschnig.ocr.Text
 import zxingcpp.BarcodeReader
@@ -95,7 +93,9 @@ fun CameraPreviewContent(
         PreferenceStore.FRONT_CAMERA,
         PreferenceStore.SCAN_RESOLUTION,
         PreferenceStore.FIX_EXPOSURE,
-        PreferenceStore.FOCUS_MODE
+        PreferenceStore.FOCUS_MODE,
+        PreferenceStore.PREVIEW_PERFORMANCE_MODE,
+        PreferenceStore.PREVIEW_STABILIZATION
     )
 
     var isPaused by rememberSaveable { mutableStateOf(false) }
@@ -119,6 +119,8 @@ fun CameraPreviewContent(
                         PreferenceStore.SCAN_RESOLUTION.extractEnum(it),
                         PreferenceStore.FIX_EXPOSURE.extract(it),
                         PreferenceStore.FOCUS_MODE.extractEnum(it),
+                        PreferenceStore.PREVIEW_PERFORMANCE_MODE.extract(it),
+                        PreferenceStore.PREVIEW_STABILIZATION.extract(it),
                         onCameraReady = onCameraReady,
                         onBarcode = onBarcodeDetected,
                     )
@@ -137,13 +139,10 @@ fun CameraPreviewContent(
         var isFocusing by remember { mutableStateOf(false) }
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
 
-        val previewMode by context.getPreferenceStateBlocking(PreferenceStore.PREVIEW_PERFORMANCE_MODE)
-
         val coordinateTransformer = remember { MutableCoordinateTransformer() }
 
         CameraXViewfinder(surfaceRequest = request,
             coordinateTransformer = coordinateTransformer,
-            implementationMode = if (previewMode) ImplementationMode.EXTERNAL else ImplementationMode.EMBEDDED,
             modifier = Modifier
                 .pointerInput(viewModel, coordinateTransformer) {
                     detectTapGestures { tapCoords ->

@@ -26,9 +26,11 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.SessionConfig
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
-import androidx.camera.core.UseCaseGroup
+import androidx.camera.core.featuregroup.GroupableFeature.Companion.FPS_60
+import androidx.camera.core.featuregroup.GroupableFeature.Companion.PREVIEW_STABILIZATION
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -133,6 +135,8 @@ class CameraViewModel : ViewModel() {
         resolution: ScanResolution,
         fixExposure: Boolean,
         focusMode: FocusMode,
+        perfMode: Boolean,
+        stabilization: Boolean,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
         onBarcode: (String?, Int, String?) -> Unit,
     ) {
@@ -243,17 +247,17 @@ class CameraViewModel : ViewModel() {
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build()
 
-        val useCaseGroup = UseCaseGroup.Builder()
-            .addUseCase(cameraPreviewUseCase)
-            .addUseCase(analysis)
-            .addUseCase(imageCapture!!)
-            .build()
-
         val camera = processCameraProvider.bindToLifecycle(
             lifecycleOwner,
             if (frontCamera && processCameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA))
                 CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA,
-            useCaseGroup
+            SessionConfig(
+                useCases = listOf(cameraPreviewUseCase, analysis, imageCapture!!),
+                preferredFeatureGroup = buildList {
+                    if (perfMode) add(FPS_60)
+                    if (stabilization) add(PREVIEW_STABILIZATION)
+                },
+            )
         )
 
         cameraControl = camera.cameraControl

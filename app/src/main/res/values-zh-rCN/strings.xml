@@ -193,7 +193,7 @@
     <string name="search">搜索</string>
     <string name="clear_history">清除历史记录</string>
     <string name="clear_history_desc">确定要清除历史记录吗？</string>
-    <string name="preview_mode_desc">可降低功耗和延迟</string>
+    <string name="preview_mode_desc">如果设备支持,将以 60FPS 进行录制</string>
     <string name="preview_performance_mode">预览性能模式</string>
     <string name="full_screen_scanner">全屏扫码器</string>
     <string name="full_screen_scanner_desc">扫码器将全屏显示</string>

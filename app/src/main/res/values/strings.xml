@@ -193,7 +193,7 @@
     <string name="search">Search</string>
     <string name="clear_history">Clear history</string>
     <string name="clear_history_desc">Are you sure you want to clear the history?</string>
-    <string name="preview_mode_desc">Can reduce power and latency</string>
+    <string name="preview_mode_desc">Uses 60 FPS capture, if supported</string>
     <string name="preview_performance_mode">Preview performance mode</string>
     <string name="full_screen_scanner">Full screen scanner</string>
     <string name="full_screen_scanner_desc">Scanner will be shown in full screen</string>
@@ -394,6 +394,8 @@
     <string name="export_keys">Export keys</string>
     <string name="import_settings_desc">Importing will override only settings which are present in the file.</string>
     <string name="import_keys_desc">Importing from file will remove all current defined keys.</string>
+    <string name="preview_stabilization">Preview stabilization</string>
+    <string name="preview_stabilization_desc">Enables preview stabilization, if supported</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>
