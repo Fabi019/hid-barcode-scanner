@@ -73,7 +73,7 @@
     <string name="search">بحث</string>
     <string name="clear_history">حذف السجل</string>
     <string name="clear_history_desc">هل أنت متأكد أنك تريد حذف السجل؟</string>
-    <string name="preview_mode_desc">يمكنه تقليل استهلاك الطاقة وزمن الاستجابة</string>
+    <string name="preview_mode_desc">يستخدم التقاط 60 إطارًا في الثانية، إذا كان ذلك متاحًا</string>
     <string name="full_screen_scanner_desc">سيتم عرض الماسح الضوئي على كامل الشاشة</string>
     <string name="auto_zoom">تكبير (زووم) تلقائي</string>
     <string name="zooms_in_on_codes_to_far_away">يقوم بالتكبير على الأكواد البعيدة جدا</string>

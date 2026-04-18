@@ -193,7 +193,7 @@
     <string name="search">Wyszukiwanie</string>
     <string name="clear_history">Wyczyść historię</string>
     <string name="clear_history_desc">Czy na pewno chcesz usunąć historię?</string>
-    <string name="preview_mode_desc">Może obniżyć opóźnienia i zużycie baterii.</string>
+    <string name="preview_mode_desc">Używa nagrywania 60 kl./s, jeśli jest obsługiwane</string>
     <string name="preview_performance_mode">Zwiększ wydajność podglądu</string>
     <string name="full_screen_scanner">Skaner w trybie pełnoekranowym</string>
     <string name="full_screen_scanner_desc">Skaner zostanie wyświetlony na pełnym ekranie</string>

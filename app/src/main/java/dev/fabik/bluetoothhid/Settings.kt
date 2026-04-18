@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.ShutterSpeed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.VideoStable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -361,6 +362,13 @@ internal fun CameraSettings(strings: SettingsStrings) {
         desc = strings[R.string.preview_mode_desc],
         icon = Icons.Default.Bolt,
         preference = PreferenceStore.PREVIEW_PERFORMANCE_MODE
+    )
+
+    SwitchPreference(
+        title = "Preview stabilization",
+        desc = "Enables preview stabilization, if supported",
+        icon = Icons.Default.VideoStable,
+        preference = PreferenceStore.PREVIEW_STABILIZATION
     )
 
     ComboBoxEnumPreference(
