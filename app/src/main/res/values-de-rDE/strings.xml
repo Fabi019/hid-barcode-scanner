@@ -368,4 +368,6 @@
         <item>Zoom ein-/ausschalten</item>
         <item>Fokussieren</item>
     </string-array>
+    <string name="preview_stabilization">Vorschaustabilisierung</string>
+    <string name="preview_stabilization_desc">Aktiviert Vorschaustabilisierung, sofern unterstützt</string>
 </resources>

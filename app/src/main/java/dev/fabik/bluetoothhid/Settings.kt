@@ -365,8 +365,8 @@ internal fun CameraSettings(strings: SettingsStrings) {
     )
 
     SwitchPreference(
-        title = "Preview stabilization",
-        desc = "Enables preview stabilization, if supported",
+        title = strings[R.string.preview_stabilization],
+        desc = strings[R.string.preview_stabilization_desc],
         icon = Icons.Default.VideoStable,
         preference = PreferenceStore.PREVIEW_STABILIZATION
     )

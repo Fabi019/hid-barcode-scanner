@@ -394,6 +394,8 @@
     <string name="export_keys">Export keys</string>
     <string name="import_settings_desc">Importing will override only settings which are present in the file.</string>
     <string name="import_keys_desc">Importing from file will remove all current defined keys.</string>
+    <string name="preview_stabilization">Preview stabilization</string>
+    <string name="preview_stabilization_desc">Enables preview stabilization, if supported</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>
