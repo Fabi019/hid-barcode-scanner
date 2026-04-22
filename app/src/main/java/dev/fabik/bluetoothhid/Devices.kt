@@ -69,7 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
-import dev.fabik.bluetoothhid.ui.Dropdown
+import dev.fabik.bluetoothhid.ui.DevicesDropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequireLocationPermission
@@ -126,7 +126,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                             "Refresh"
                         )
                     }
-                    Dropdown()
+                    DevicesDropdown()
                 },
                 scrollBehavior = scrollBehavior
             )

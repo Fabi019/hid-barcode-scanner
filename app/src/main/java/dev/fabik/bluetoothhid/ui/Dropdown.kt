@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -48,12 +49,30 @@ import dev.fabik.bluetoothhid.utils.exportPreferences
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.importPreferences
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun Dropdown(transparent: Boolean = false) {
+fun DevicesDropdown() {
+    Dropdown {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        DropdownMenuItem(
+            text = { Text("Reset favourites") },
+            leadingIcon = { Icon(Icons.Outlined.Restore, null) },
+            onClick = {
+                scope.launch {
+                    context.setPreference(PreferenceStore.FAVOURITE_DEVICES, setOf())
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun Dropdown(transparent: Boolean = false, content: @Composable () -> Unit = {}) {
     val context = LocalContext.current
     val activity = LocalActivity.current
 
@@ -87,7 +106,8 @@ fun Dropdown(transparent: Boolean = false) {
         DropdownMenu(
             expanded = showMenu,
             modifier = Modifier.widthIn(min = 150.dp),
-            onDismissRequest = { showMenu = false }) {
+            onDismissRequest = { showMenu = false }
+        ) {
             if (developerMode == true) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.refresh_proxy)) },
@@ -118,6 +138,8 @@ fun Dropdown(transparent: Boolean = false) {
                     }
                 )
             }
+
+            content()
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.settings)) },
                 leadingIcon = { Icon(Icons.Outlined.Settings, null) },
