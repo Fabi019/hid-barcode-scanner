@@ -248,7 +248,7 @@ fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
     val currentOnConnect by rememberUpdatedState(onConnect)
-    val favouriteDeviceIds by rememberPreference(PreferenceStore.FAVOURITE_DEVICES)
+    var favouriteDeviceIds by rememberPreference(PreferenceStore.FAVOURITE_DEVICES)
 
     val split by remember {
         derivedStateOf { pairedDevices.partition { favouriteDeviceIds.contains(it.address) } }
@@ -301,7 +301,10 @@ fun DevicesViewModel.DeviceList(
                 )
             }
             items(favourites, key = { d -> "fav_" + d.address }) {
-                DeviceCard(it, Modifier.animateItem()) {
+                DeviceCard(
+                    it,
+                    Modifier.animateItem(),
+                    onFavourite = { favouriteDeviceIds = favouriteDeviceIds - it.address }) {
                     currentOnConnect(it)
                 }
             }
@@ -322,7 +325,10 @@ fun DevicesViewModel.DeviceList(
             }
         } else {
             items(remaining, key = { d -> "paired_" + d.address }) {
-                DeviceCard(it, Modifier.animateItem()) {
+                DeviceCard(
+                    it,
+                    Modifier.animateItem(),
+                    onFavourite = { favouriteDeviceIds = favouriteDeviceIds + it.address }) {
                     currentOnConnect(it)
                 }
             }
@@ -347,6 +353,7 @@ fun DevicesViewModel.DeviceList(
 fun DevicesViewModel.DeviceCard(
     device: BluetoothDevice,
     modifier: Modifier = Modifier,
+    onFavourite: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val infoDialog = rememberDialogState()
@@ -389,7 +396,8 @@ fun DevicesViewModel.DeviceCard(
                     DeviceDropdown(
                         onConnect = onClick,
                         onInfo = { infoDialog.open() },
-                        onRemove = { confirmDialog.open() }
+                        onRemove = { confirmDialog.open() },
+                        onFavourite
                     ) {
                         Icon(Icons.Default.MoreVert, "More options for $deviceName")
                     }
@@ -464,6 +472,7 @@ fun DeviceDropdown(
     onConnect: () -> Unit = {},
     onInfo: () -> Unit = {},
     onRemove: () -> Unit = {},
+    onFavourite: () -> Unit = {},
     icon: @Composable () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -498,6 +507,13 @@ fun DeviceDropdown(
                 onRemove()
             },
             text = { Text(stringResource(R.string.unpair)) }
+        )
+        DropdownMenuItem(
+            onClick = {
+                showMenu = false
+                onFavourite()
+            },
+            text = { Text("Toggle favourite") }
         )
     }
 }
