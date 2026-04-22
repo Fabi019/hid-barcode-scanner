@@ -53,6 +53,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,7 +79,9 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -245,6 +248,12 @@ fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
     val currentOnConnect by rememberUpdatedState(onConnect)
+    val favouriteDeviceIds by rememberPreference(PreferenceStore.FAVOURITE_DEVICES)
+
+    val split by remember {
+        derivedStateOf { pairedDevices.partition { favouriteDeviceIds.contains(it.address) } }
+    }
+    val (favourites, remaining) = split
 
     LazyColumn(
         Modifier
@@ -282,6 +291,22 @@ fun DevicesViewModel.DeviceList(
             }
         }
 
+        if (!favourites.isEmpty()) {
+            item(key = "favorite") {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Favourite devices",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            items(favourites, key = { d -> "fav_" + d.address }) {
+                DeviceCard(it, Modifier.animateItem()) {
+                    currentOnConnect(it)
+                }
+            }
+        }
+
         item(key = "paired") {
             Spacer(Modifier.height(8.dp))
             Text(
@@ -291,12 +316,12 @@ fun DevicesViewModel.DeviceList(
             )
         }
 
-        if (pairedDevices.isEmpty()) {
+        if (remaining.isEmpty()) {
             item(key = "no_paired") {
                 Text(stringResource(R.string.no_paired_devices))
             }
         } else {
-            items(pairedDevices, key = { d -> "paired_" + d.address }) {
+            items(remaining, key = { d -> "paired_" + d.address }) {
                 DeviceCard(it, Modifier.animateItem()) {
                     currentOnConnect(it)
                 }

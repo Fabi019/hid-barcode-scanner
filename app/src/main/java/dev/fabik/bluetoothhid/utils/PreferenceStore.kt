@@ -285,6 +285,7 @@ open class PreferenceStore {
         val OVERLAY_POS_Y = floatPreferencesKey("overlay_pos_y") defaultsTo 0.0f
         val OVERLAY_WIDTH = floatPreferencesKey("overlay_width") defaultsTo 100.0f
         val OVERLAY_HEIGHT = floatPreferencesKey("overlay_height") defaultsTo 100.0f
+        val FAVOURITE_DEVICES = stringSetPreferencesKey("favourite_devices") defaultsTo setOf()
     }
 }
 
