@@ -60,7 +60,7 @@ fun DevicesDropdown() {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         DropdownMenuItem(
-            text = { Text("Reset favourites") },
+            text = { Text(stringResource(R.string.reset_favourites)) },
             leadingIcon = { Icon(Icons.Outlined.Restore, null) },
             onClick = {
                 scope.launch {

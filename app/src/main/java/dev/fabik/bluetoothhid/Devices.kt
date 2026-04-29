@@ -295,12 +295,12 @@ fun DevicesViewModel.DeviceList(
             item(key = "favorite") {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Favourite devices",
+                    stringResource(R.string.favourite_devices),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleSmall
                 )
             }
-            items(favourites, key = { d -> "fav_" + d.address }) {
+            items(favourites, key = { d -> "paired_" + d.address }) {
                 DeviceCard(
                     it,
                     Modifier.animateItem(),
@@ -346,6 +346,7 @@ fun DevicesViewModel.DeviceList(
  *
  * @param device Bluetooth device to show.
  * @param modifier Additional modifier to use
+ * @param onFavourite Callback function when the favourite toggle is clicked.
  * @param onClick Callback function when the card is clicked.
  */
 @SuppressLint("MissingPermission")
@@ -465,6 +466,7 @@ fun BluetoothDisabledCard() {
  * @param onConnect Callback function when the connect entry is pressed.
  * @param onInfo Callback function when the info entry is pressed.
  * @param onRemove Callback function when the remove entry is pressed.
+ * @param onFavourite Callback function when the toggle favourite is pressed.
  * @param icon Icon of the dropdown menu button.
  */
 @Composable
@@ -513,7 +515,7 @@ fun DeviceDropdown(
                 showMenu = false
                 onFavourite()
             },
-            text = { Text("Toggle favourite") }
+            text = { Text(stringResource(R.string.toggle_favourite)) }
         )
     }
 }
