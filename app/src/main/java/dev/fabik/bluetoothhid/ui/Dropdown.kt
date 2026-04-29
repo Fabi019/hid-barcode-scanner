@@ -56,7 +56,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun DevicesDropdown() {
-    Dropdown {
+    Dropdown { hideMenu ->
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         DropdownMenuItem(
@@ -65,6 +65,7 @@ fun DevicesDropdown() {
             onClick = {
                 scope.launch {
                     context.setPreference(PreferenceStore.FAVOURITE_DEVICES, setOf())
+                    hideMenu()
                 }
             }
         )
@@ -72,7 +73,7 @@ fun DevicesDropdown() {
 }
 
 @Composable
-fun Dropdown(transparent: Boolean = false, content: @Composable () -> Unit = {}) {
+fun Dropdown(transparent: Boolean = false, content: @Composable (() -> Unit) -> Unit = {}) {
     val context = LocalContext.current
     val activity = LocalActivity.current
 
@@ -139,7 +140,10 @@ fun Dropdown(transparent: Boolean = false, content: @Composable () -> Unit = {})
                 )
             }
 
-            content()
+            content {
+                showMenu = false
+            }
+
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.settings)) },
                 leadingIcon = { Icon(Icons.Outlined.Settings, null) },
