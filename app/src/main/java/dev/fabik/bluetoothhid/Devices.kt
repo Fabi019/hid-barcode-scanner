@@ -53,6 +53,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,7 +69,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
-import dev.fabik.bluetoothhid.ui.Dropdown
+import dev.fabik.bluetoothhid.ui.DevicesDropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequireLocationPermission
@@ -78,7 +79,9 @@ import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.DeviceInfo
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.SystemBroadcastReceiver
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -123,7 +126,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                             "Refresh"
                         )
                     }
-                    Dropdown()
+                    DevicesDropdown()
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -245,6 +248,12 @@ fun DevicesViewModel.DeviceList(
     onConnect: (BluetoothDevice) -> Unit
 ) {
     val currentOnConnect by rememberUpdatedState(onConnect)
+    var favouriteDeviceIds by rememberPreference(PreferenceStore.FAVOURITE_DEVICES)
+
+    val split by remember {
+        derivedStateOf { pairedDevices.partition { favouriteDeviceIds.contains(it.address) } }
+    }
+    val (favourites, remaining) = split
 
     LazyColumn(
         Modifier
@@ -282,6 +291,25 @@ fun DevicesViewModel.DeviceList(
             }
         }
 
+        if (!favourites.isEmpty()) {
+            item(key = "favorite") {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.favourite_devices),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            items(favourites, key = { d -> "paired_" + d.address }) {
+                DeviceCard(
+                    it,
+                    Modifier.animateItem(),
+                    onFavourite = { favouriteDeviceIds = favouriteDeviceIds - it.address }) {
+                    currentOnConnect(it)
+                }
+            }
+        }
+
         item(key = "paired") {
             Spacer(Modifier.height(8.dp))
             Text(
@@ -291,13 +319,16 @@ fun DevicesViewModel.DeviceList(
             )
         }
 
-        if (pairedDevices.isEmpty()) {
+        if (remaining.isEmpty()) {
             item(key = "no_paired") {
                 Text(stringResource(R.string.no_paired_devices))
             }
         } else {
-            items(pairedDevices, key = { d -> "paired_" + d.address }) {
-                DeviceCard(it, Modifier.animateItem()) {
+            items(remaining, key = { d -> "paired_" + d.address }) {
+                DeviceCard(
+                    it,
+                    Modifier.animateItem(),
+                    onFavourite = { favouriteDeviceIds = favouriteDeviceIds + it.address }) {
                     currentOnConnect(it)
                 }
             }
@@ -315,6 +346,7 @@ fun DevicesViewModel.DeviceList(
  *
  * @param device Bluetooth device to show.
  * @param modifier Additional modifier to use
+ * @param onFavourite Callback function when the favourite toggle is clicked.
  * @param onClick Callback function when the card is clicked.
  */
 @SuppressLint("MissingPermission")
@@ -322,6 +354,7 @@ fun DevicesViewModel.DeviceList(
 fun DevicesViewModel.DeviceCard(
     device: BluetoothDevice,
     modifier: Modifier = Modifier,
+    onFavourite: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val infoDialog = rememberDialogState()
@@ -364,7 +397,8 @@ fun DevicesViewModel.DeviceCard(
                     DeviceDropdown(
                         onConnect = onClick,
                         onInfo = { infoDialog.open() },
-                        onRemove = { confirmDialog.open() }
+                        onRemove = { confirmDialog.open() },
+                        onFavourite
                     ) {
                         Icon(Icons.Default.MoreVert, "More options for $deviceName")
                     }
@@ -432,6 +466,7 @@ fun BluetoothDisabledCard() {
  * @param onConnect Callback function when the connect entry is pressed.
  * @param onInfo Callback function when the info entry is pressed.
  * @param onRemove Callback function when the remove entry is pressed.
+ * @param onFavourite Callback function when the toggle favourite is pressed.
  * @param icon Icon of the dropdown menu button.
  */
 @Composable
@@ -439,6 +474,7 @@ fun DeviceDropdown(
     onConnect: () -> Unit = {},
     onInfo: () -> Unit = {},
     onRemove: () -> Unit = {},
+    onFavourite: () -> Unit = {},
     icon: @Composable () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -473,6 +509,13 @@ fun DeviceDropdown(
                 onRemove()
             },
             text = { Text(stringResource(R.string.unpair)) }
+        )
+        DropdownMenuItem(
+            onClick = {
+                showMenu = false
+                onFavourite()
+            },
+            text = { Text(stringResource(R.string.toggle_favourite)) }
         )
     }
 }

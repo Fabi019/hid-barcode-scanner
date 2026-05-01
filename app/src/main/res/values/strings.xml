@@ -396,6 +396,9 @@
     <string name="import_keys_desc">Importing from file will remove all current defined keys.</string>
     <string name="preview_stabilization">Preview stabilization</string>
     <string name="preview_stabilization_desc">Enables preview stabilization, if supported</string>
+    <string name="favourite_devices">Favourite devices</string>
+    <string name="reset_favourites">Reset favourites</string>
+    <string name="toggle_favourite">Toggle favourite</string>
     <string-array name="volume_keys_actions">
         <item>Nothing</item>
         <item>Send value</item>
