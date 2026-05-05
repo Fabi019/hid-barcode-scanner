@@ -88,6 +88,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.FilterModal
+import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.model.HistoryViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
@@ -105,14 +106,16 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun History(onBack: () -> Unit, onClick: (HistoryViewModel.HistoryEntry) -> Unit) = with(viewModel<HistoryViewModel>()) {
+fun History(onClick: (HistoryViewModel.HistoryEntry) -> Unit) =
+    with(viewModel<HistoryViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+        val navigation = LocalNavigation.current
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             HistoryTopBar(scrollBehavior) {
-                onBack()
+                navigation.removeLastOrNull()
             }
         },
         floatingActionButton = {

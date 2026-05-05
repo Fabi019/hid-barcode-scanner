@@ -14,10 +14,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import dev.fabik.bluetoothhid.Devices
 import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
@@ -29,13 +30,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-object Routes {
-    const val Devices = "Devices"
-    const val Main = "Main"
-    const val History = "History"
+enum class Routes : NavKey {
+    Devices, Main, History
 }
 
-val LocalNavigation = staticCompositionLocalOf<NavHostController> {
+val LocalNavigation = staticCompositionLocalOf<NavBackStack<NavKey>> {
     error("No Navigation provided")
 }
 
@@ -44,100 +43,170 @@ fun NavGraph() {
     val controller = LocalController.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
-    val navController = rememberNavController()
 
     var canExit by remember { mutableStateOf(false) }
     val exitString = stringResource(R.string.exit_confirm)
 
     // Handles shortcut to scanner
-    val startDestination = remember {
+    val startDestinations = remember {
         when (activity?.intent?.dataString) {
-            "Scanner" -> Routes.Main
-            "History" -> Routes.History
-            else -> Routes.Devices
+            "Scanner" -> arrayOf(Routes.Devices, Routes.Main)
+            "History" -> arrayOf(Routes.Devices, Routes.History)
+            else -> arrayOf(Routes.Devices)
         }
     }
 
     val currentDevice by controller?.currentDevice?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(null) }
 
-    CompositionLocalProvider(LocalNavigation provides navController) {
-        NavHost(
-            navController,
-            startDestination,
-        ) {
-            composable(Routes.Devices) {
-                Devices()
+    val backStack = rememberNavBackStack(*startDestinations)
 
-                // Confirm back presses to exit the app
-                BackHandler {
-                    if (canExit) {
-                        activity?.finishAfterTransition()
-                    } else {
-                        canExit = true
-                        Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
-                        scope.launch {
-                            delay(2000)
-                            canExit = false
+    CompositionLocalProvider(LocalNavigation provides backStack) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = {
+                when (backStack.removeLastOrNull()) {
+                    Routes.Main -> controller?.disconnect()
+                    else -> {}
+                }
+            },
+            entryProvider = { key ->
+                when (key) {
+                    Routes.Main -> NavEntry(key) {
+                        Scanner(currentDevice) { text, format, imageName ->
+                            scope.launch {
+                                val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
+                                controller?.sendString(
+                                    text,
+                                    true,
+                                    "SCAN",
+                                    null,
+                                    barcodeType,
+                                    imageName = imageName
+                                )
+                            }
                         }
                     }
+
+                    Routes.History -> NavEntry(key) {
+                        History { historyEntry ->
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val barcodeType =
+                                    historyEntry.format.let { ZXingAnalyzer.index2String(it) }
+                                controller?.sendString(
+                                    historyEntry.value,
+                                    true,
+                                    "HISTORY",
+                                    historyEntry.timestamp,
+                                    barcodeType
+                                )
+                            }
+                        }
+                    }
+
+                    else -> NavEntry(key) {
+                        // Confirm back presses to exit the app
+                        BackHandler {
+                            if (canExit) {
+                                activity?.finishAfterTransition()
+                            } else {
+                                canExit = true
+                                Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+                                scope.launch {
+                                    delay(2000)
+                                    canExit = false
+                                }
+                            }
+                        }
+
+                        Devices()
+                    }
                 }
             }
-
-            composable(Routes.Main) {
-                Scanner(currentDevice) { text, format, imageName ->
-                    scope.launch {
-                        val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(
-                            text,
-                            true,
-                            "SCAN",
-                            null,
-                            barcodeType,
-                            imageName = imageName
-                        )
-                    }
-                }
-
-                BackHandler {
-                    // Disconnect from device and navigate back to devices list
-                    controller?.disconnect()
-                    if (!navController.navigateUp()) {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Devices)
-                    }
-                }
-            }
-
-            composable(Routes.History) {
-                // Go back either by pressing the back button or the back arrow
-                val onBack: () -> Unit = {
-                    if (!navController.navigateUp()) {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Devices)
-                    }
-                }
-
-                History(onBack) { historyEntry ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
-                    }
-                }
-
-                BackHandler(onBack = onBack)
-            }
-        }
+        )
     }
+
+
+//    CompositionLocalProvider(LocalNavigation provides navController) {
+//        NavHost(
+//            navController,
+//            startDestination,
+//            popExitTransition = {
+//                scaleOut(
+//                    targetScale = 0.9f,
+//                    transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0.5f)
+//                )
+//            },
+//        ) {
+//            composable(Routes.Devices) {
+//                Devices()
+
+// Confirm back presses to exit the app
+//                BackHandler {
+//                    if (canExit) {
+//                        activity?.finishAfterTransition()
+//                    } else {
+//                        canExit = true
+//                        Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+//                        scope.launch {
+//                            delay(2000)
+//                            canExit = false
+//                        }
+//                    }
+//                }
+//            }
+//
+//            composable(Routes.Main) {
+//                Scanner(currentDevice) { text, format, imageName ->
+//                    scope.launch {
+//                        val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
+//                        controller?.sendString(
+//                            text,
+//                            true,
+//                            "SCAN",
+//                            null,
+//                            barcodeType,
+//                            imageName = imageName
+//                        )
+//                    }
+//                }
+
+//                BackHandler {
+//                    // Disconnect from device and navigate back to devices list
+//                    controller?.disconnect()
+//                    if (!navController.navigateUp()) {
+//                        navController.popBackStack()
+//                        navController.navigate(Routes.Devices)
+//                    }
+//                }
+//            }
+//
+//            composable(Routes.History) {
+//                // Go back either by pressing the back button or the back arrow
+//                val onBack: () -> Unit = {
+//                    if (!navController.navigateUp()) {
+//                        navController.popBackStack()
+//                        navController.navigate(Routes.Devices)
+//                    }
+//                }
+//
+//                History(onBack) { historyEntry ->
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
+//                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
+//                    }
+//                }
+
+//BackHandler(onBack = onBack)
+//            }
+//        }
+//    }
 
     // Listen for changes in the current device
     LaunchedEffect(currentDevice) {
         // When connected to a device, navigate to the scanner
-        if (currentDevice != null) {
-            // Single-top is used to avoid creating multiple instances of the scanner
-            navController.navigate(Routes.Main) {
-                launchSingleTop = true
-            }
+        if (currentDevice != null && !backStack.contains(Routes.Main)) {
+            backStack.add(Routes.Main)
         }
     }
 }

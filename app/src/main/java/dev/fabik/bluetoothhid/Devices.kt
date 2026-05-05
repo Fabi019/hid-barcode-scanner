@@ -106,7 +106,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
                     IconButton(
-                        onClick = { navigation.navigate(Routes.Main) },
+                        onClick = { navigation.add(Routes.Main) },
                         modifier = Modifier.tooltip(stringResource(R.string.skip))
                     ) {
                         Icon(Icons.Default.East, "Skip")

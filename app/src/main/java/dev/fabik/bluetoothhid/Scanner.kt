@@ -673,7 +673,7 @@ private fun ScannerAppBar(
             }
 
             IconButton(onClick = {
-                navigation.navigate(Routes.History)
+                navigation.add(Routes.History)
             }, Modifier.tooltip(stringResource(R.string.history))) {
                 Icon(
                     Icons.Default.History,
@@ -785,7 +785,7 @@ fun BoxScope.DeviceStatusIndicator() {
                     message = stringResource(R.string.no_device),
                     subMessage = stringResource(R.string.click_to_connect),
                     onClick = {
-                        navigation.navigate(Routes.Devices)
+                        navigation.removeLastOrNull()
                     },
                     visible = true
                 )
