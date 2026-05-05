@@ -261,10 +261,14 @@ fun Scanner(
                     VolumeKeyAction.NOTHING -> return@VolumeKeyHandler false
                     VolumeKeyAction.SEND_VALUE -> currentSendText()
                     VolumeKeyAction.TOGGLE_ZOOM -> {
-                        if (cameraInfo?.zoomState?.value?.linearZoom == 0.0f)
-                            cameraControl?.setLinearZoom(minOf((volumeZoom ?: 100f) / 100f, 1.0f))
+                        val targetZoom = minOf((volumeZoom ?: 100f) / 100f, 1.0f)
+                        if (abs(
+                                cameraInfo?.zoomState?.value?.linearZoom?.minus(targetZoom) ?: 1.0f
+                            ) > 0.1f
+                        )
+                            cameraControl?.setLinearZoom(targetZoom)
                         else
-                            cameraControl?.setLinearZoom(0.0f)
+                            cameraControl?.setZoomRatio(1.0f)
                     }
 
                     VolumeKeyAction.OPEN_KEYBOARD -> keyboardDialog.open()
