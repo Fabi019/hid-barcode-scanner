@@ -124,6 +124,7 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 /**
  * Helper function to create a circular background modifier for icons in fullscreen mode.
@@ -820,7 +821,7 @@ fun BoxScope.DeviceStatusIndicator() {
 fun BoxScope.ZoomStateInfo(camera: CameraInfo) {
     val zoomState by camera.zoomState.observeAsState()
     zoomState?.let {
-        if (it.zoomRatio > 1.0f) {
+        if (abs(it.zoomRatio - 1.0f) > 0.01f) {
             Text(
                 "%.2fx".format(it.zoomRatio),
                 Modifier
