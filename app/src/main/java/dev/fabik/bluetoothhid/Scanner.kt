@@ -266,6 +266,7 @@ fun Scanner(
                         else
                             cameraControl?.setLinearZoom(0.0f)
                     }
+
                     VolumeKeyAction.OPEN_KEYBOARD -> keyboardDialog.open()
                     VolumeKeyAction.TOGGLE_FLASH -> cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
                     VolumeKeyAction.TRIGGER_FOCUS -> cameraVM.focusAtCenter()
@@ -275,6 +276,7 @@ fun Scanner(
                         currentImageName = null
                         cameraVM.lastBarcode = null
                     }
+
                     VolumeKeyAction.RUN_OCR -> cameraVM.triggerOcr()
                 }
                 return@VolumeKeyHandler true
@@ -821,12 +823,14 @@ fun BoxScope.DeviceStatusIndicator() {
 fun BoxScope.ZoomStateInfo(camera: CameraInfo) {
     val zoomState by camera.zoomState.observeAsState()
     zoomState?.let {
-        if (abs(it.zoomRatio - 1.0f) > 0.01f) {
+        AnimatedVisibility(
+            abs(it.zoomRatio - 1.0f) > 0.01f,
+            Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+        ) {
             Text(
                 "%.2fx".format(it.zoomRatio),
-                Modifier
-                    .align(Alignment.TopStart)
-                    .padding(8.dp),
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     shadow = Shadow(
