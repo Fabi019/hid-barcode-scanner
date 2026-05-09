@@ -792,7 +792,7 @@ fun BoxScope.DeviceStatusIndicator() {
                     message = stringResource(R.string.no_device),
                     subMessage = stringResource(R.string.click_to_connect),
                     onClick = {
-                        navigation.navigate(Routes.Devices)
+                        navigation.navigateUp()
                     },
                     visible = true
                 )

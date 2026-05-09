@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,12 +50,18 @@ fun NavGraph() {
     var canExit by remember { mutableStateOf(false) }
     val exitString = stringResource(R.string.exit_confirm)
 
-    // Handles shortcut to scanner
+    // Handles shortcut to scanner/history
     val startDestination = remember {
         when (activity?.intent?.dataString) {
             "Scanner" -> Routes.Main
             "History" -> Routes.History
-            else -> Routes.Devices
+            else -> null
+        }
+    }
+
+    LaunchedEffect(startDestination) {
+        startDestination?.let {
+            navController.navigate(it)
         }
     }
 
@@ -64,10 +71,12 @@ fun NavGraph() {
     CompositionLocalProvider(LocalNavigation provides navController) {
         NavHost(
             navController,
-            startDestination,
+            Routes.Devices
         ) {
             composable(Routes.Devices) {
-                Devices()
+                Devices {
+                    navController.navigate(Routes.Main)
+                }
 
                 // Confirm back presses to exit the app
                 BackHandler {
@@ -99,23 +108,16 @@ fun NavGraph() {
                     }
                 }
 
-                BackHandler {
-                    // Disconnect from device and navigate back to devices list
-                    controller?.disconnect()
-                    if (!navController.navigateUp()) {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Devices)
+                DisposableEffect(Unit) {
+                    onDispose {
+                        controller?.disconnect()
                     }
                 }
             }
 
             composable(Routes.History) {
-                // Go back either by pressing the back button or the back arrow
                 val onBack: () -> Unit = {
-                    if (!navController.navigateUp()) {
-                        navController.popBackStack()
-                        navController.navigate(Routes.Devices)
-                    }
+                    navController.navigateUp()
                 }
 
                 History(onBack) { historyEntry ->
@@ -124,8 +126,6 @@ fun NavGraph() {
                         controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
                     }
                 }
-
-                BackHandler(onBack = onBack)
             }
         }
     }

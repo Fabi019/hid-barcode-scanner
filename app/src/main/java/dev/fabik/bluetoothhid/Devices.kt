@@ -71,9 +71,7 @@ import dev.fabik.bluetoothhid.bt.removeBond
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.DevicesDropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
-import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequireLocationPermission
-import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.model.DevicesViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.theme.Typography
@@ -94,10 +92,9 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Devices() = with(viewModel<DevicesViewModel>()) {
+fun Devices(onSkip: () -> Unit) = with(viewModel<DevicesViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val controller = LocalController.current
-    val navigation = LocalNavigation.current
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -106,7 +103,7 @@ fun Devices() = with(viewModel<DevicesViewModel>()) {
                 title = { Text(stringResource(R.string.devices)) },
                 actions = {
                     IconButton(
-                        onClick = { navigation.navigate(Routes.Main) },
+                        onClick = onSkip,
                         modifier = Modifier.tooltip(stringResource(R.string.skip))
                     ) {
                         Icon(Icons.Default.East, "Skip")
