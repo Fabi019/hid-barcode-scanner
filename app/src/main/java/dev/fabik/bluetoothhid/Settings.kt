@@ -1,5 +1,6 @@
 package dev.fabik.bluetoothhid
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -7,6 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +57,8 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -66,8 +70,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
@@ -627,23 +635,39 @@ internal fun AboutSettings(strings: SettingsStrings) {
         }
     }
 
-    ButtonPreference(
-        title = strings[R.string.build_version],
-        desc = strings.buildVersionDescription(
+    val haptics = LocalHapticFeedback.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val versionString = remember {
+        strings.buildVersionDescription(
             BuildConfig.BUILD_TYPE,
             BuildConfig.VERSION_NAME,
             BuildConfig.GIT_COMMIT_HASH,
             BuildConfig.VERSION_CODE
-        ),
-        icon = Icons.Default.Info
-    ) {
-        context.startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", context.packageName, null)
-            )
         )
     }
+
+    ListItem(
+        headlineContent = { Text(strings[R.string.build_version]) },
+        modifier = Modifier
+            .combinedClickable(onClick = {
+                context.startActivity(
+                    Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", context.packageName, null)
+                    )
+                )
+            }, onLongClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                scope.launch {
+                    clipboard.setClipEntry(
+                        ClipData.newPlainText("Version", versionString).toClipEntry()
+                    )
+                }
+            }),
+        supportingContent = { Text(versionString) },
+        leadingContent = { Icon(Icons.Default.Info, null) },
+    )
 }
 
 // Cached strings to avoid repeated resource lookups during scroll
