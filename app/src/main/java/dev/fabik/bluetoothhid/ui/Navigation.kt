@@ -5,7 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +74,10 @@ fun NavGraph() {
             Routes.Devices
         ) {
             composable(Routes.Devices) {
+                LaunchedEffect(Unit) {
+                    controller?.disconnect()
+                }
+
                 Devices {
                     navController.navigate(Routes.Main)
                 }
@@ -109,12 +112,6 @@ fun NavGraph() {
                         )
                     }
                 }
-
-                DisposableEffect(Unit) {
-                    onDispose {
-                        controller?.disconnect()
-                    }
-                }
             }
 
             composable(Routes.History) {
@@ -125,7 +122,13 @@ fun NavGraph() {
                 History(onBack) { historyEntry ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(historyEntry.value, true, "HISTORY", historyEntry.timestamp, barcodeType)
+                        controller?.sendString(
+                            historyEntry.value,
+                            true,
+                            "HISTORY",
+                            historyEntry.timestamp,
+                            barcodeType
+                        )
                     }
                 }
             }
@@ -138,6 +141,7 @@ fun NavGraph() {
         if (currentDevice != null) {
             // Single-top is used to avoid creating multiple instances of the scanner
             navController.navigate(Routes.Main) {
+                popUpTo(Routes.Devices)
                 launchSingleTop = true
             }
         }
