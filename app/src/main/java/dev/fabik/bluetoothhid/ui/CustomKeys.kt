@@ -72,7 +72,7 @@ fun CustomKeysDialog(dialogState: DialogState) {
     val keyMap = remember(dialogState.openState) {
         // Internally checks if it is already loaded once
         KeyTranslator.loadCustomKeyMap(context)
-        mutableStateMapOf<Char, Key>().apply {
+        mutableStateMapOf<Char, Pair<Key, Key?>>().apply {
             putAll(KeyTranslator.CUSTOM_KEYMAP.toMap())
         }
     }
@@ -194,31 +194,31 @@ fun AddCustomKeyDialog(
                 itemsIndexed(modifierNameStates) { index, (name, checked) ->
                     Row(
                         Modifier
-                        .toggleable(
-                            value = checked,
-                            role = Role.Checkbox,
-                            onValueChange = { isChecked ->
-                                modifierCheckedStates[index] = isChecked
+                            .toggleable(
+                                value = checked,
+                                role = Role.Checkbox,
+                                onValueChange = { isChecked ->
+                                    modifierCheckedStates[index] = isChecked
 
-                                valueModifier = if (modifierCheckedStates[0]) {
-                                    (valueModifier ?: 0u) or KeyTranslator.LCTRL
-                                } else {
-                                    (valueModifier ?: 0u) and KeyTranslator.LCTRL.inv()
-                                }
+                                    valueModifier = if (modifierCheckedStates[0]) {
+                                        (valueModifier ?: 0u) or KeyTranslator.LCTRL
+                                    } else {
+                                        (valueModifier ?: 0u) and KeyTranslator.LCTRL.inv()
+                                    }
 
-                                valueModifier = if (modifierCheckedStates[1]) {
-                                    (valueModifier ?: 0u) or KeyTranslator.LSHIFT
-                                } else {
-                                    (valueModifier ?: 0u) and KeyTranslator.LSHIFT.inv()
-                                }
+                                    valueModifier = if (modifierCheckedStates[1]) {
+                                        (valueModifier ?: 0u) or KeyTranslator.LSHIFT
+                                    } else {
+                                        (valueModifier ?: 0u) and KeyTranslator.LSHIFT.inv()
+                                    }
 
-                                valueModifier = if (modifierCheckedStates[2]) {
-                                    (valueModifier ?: 0u) or KeyTranslator.LALT
-                                } else {
-                                    (valueModifier ?: 0u) and KeyTranslator.LALT.inv()
+                                    valueModifier = if (modifierCheckedStates[2]) {
+                                        (valueModifier ?: 0u) or KeyTranslator.LALT
+                                    } else {
+                                        (valueModifier ?: 0u) and KeyTranslator.LALT.inv()
+                                    }
                                 }
-                            }
-                        ), verticalAlignment = Alignment.CenterVertically) {
+                            ), verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = checked, onCheckedChange = null, Modifier.padding(8.dp))
                         Text(name)
                     }
@@ -263,8 +263,8 @@ fun AddCustomKeyDialog(
 @Composable
 fun CustomKeys(
     keyMap: Keymap,
-    onAddKey: (Pair<Char, Key>) -> Unit,
-    onDeleteKey: (Pair<Char, Key>) -> Unit,
+    onAddKey: (Pair<Char, Pair<Key, Key?>>) -> Unit,
+    onDeleteKey: (Pair<Char, Pair<Key, Key?>>) -> Unit,
     onImportKeys: (Keymap) -> Unit
 ) {
     val addKeyDialog = rememberDialogState()
@@ -296,7 +296,11 @@ fun CustomKeys(
         items(keyMap.toList(), key = { i -> i.first }) { item ->
             ListItem(
                 headlineContent = { Text(item.first.toString()) },
-                supportingContent = { Text(item.second.toString()) },
+                supportingContent = {
+                    Text(
+                        item.second.first.toString() +
+                                ((item.second.second?.let { ", $it" } ?: "")))
+                },
                 trailingContent = {
                     IconButton(onClick = { onDeleteKey(item) }) {
                         Icon(Icons.Default.Delete, "Delete $item")
@@ -307,8 +311,8 @@ fun CustomKeys(
                     .clip(MaterialTheme.shapes.medium)
                     .clickable {
                         initialChar = item.first.toString()
-                        initialHID = item.second.second
-                        initialModifier = item.second.first
+                        initialHID = item.second.first.second
+                        initialModifier = item.second.first.first
                         addKeyDialog.open()
                     }
             )
@@ -316,7 +320,7 @@ fun CustomKeys(
     }
 
     AddCustomKeyDialog(addKeyDialog, initialChar, initialHID, initialModifier) {
-        onAddKey(it)
+        onAddKey(it.first to (it.second to null))
     }
 }
 
@@ -425,8 +429,8 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
 @Composable
 fun PreviewCustomKeys() {
     val keyMap = mapOf(
-        'a' to (0x12.toUByte() to 0x1.toUByte()),
-        'b' to (0x22.toUByte() to 0x2.toUByte()),
+        'a' to ((0x12.toUByte() to 0x1.toUByte()) to (0x44.toUByte() to 0x55.toUByte())),
+        'b' to ((0x22.toUByte() to 0x2.toUByte()) to null),
     )
 
     Surface {
