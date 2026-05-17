@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Expand
 import androidx.compose.material.icons.filled.Exposure
@@ -51,6 +52,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -379,6 +381,24 @@ internal fun CameraSettings(strings: SettingsStrings) {
         preference = PreferenceStore.SCAN_RESOLUTION
     )
 
+    SliderPreference(
+        title = strings[R.string.initial_zoom],
+        desc = strings[R.string.initial_zoom_desc],
+        valueFormat = "%.1fx",
+        range = 1.0f..5.0f,
+        steps = 8,
+        icon = Icons.Default.ZoomIn,
+        preference = PreferenceStore.INITIAL_ZOOM
+    )
+
+    CheckBoxPreference(
+        title = strings[R.string.zoom_gesture],
+        desc = strings[R.string.zoom_gesture_desc],
+        valueStrings = strings.array(R.array.zoom_gesture_values),
+        icon = Icons.Default.ZoomIn,
+        preference = PreferenceStore.ZOOM_GESTURES
+    )
+
     /*SwitchPreference(
             title = strings[R.string.auto_zoom],
             desc = strings[R.string.zooms_in_on_codes_to_far_away],
@@ -495,6 +515,13 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         desc = strings[R.string.haptic_feedback_desc],
         icon = Icons.Default.Vibration,
         preference = PreferenceStore.VIBRATE
+    )
+
+    SwitchPreference(
+        title = strings[R.string.auto_copy_to_clipboard],
+        desc = strings[R.string.auto_copy_to_clipboard_desc],
+        icon = Icons.Default.ContentCopy,
+        preference = PreferenceStore.AUTO_COPY_TO_CLIPBOARD
     )
 
     /*SwitchPreference(

@@ -19,7 +19,7 @@
     <string name="front_camera">Przednia kamera</string>
     <string name="front_camera_desc">Użyj przedniej kamery zamiast tylnej, jeśli jest obsługiwana</string>
     <string name="restrict_area">Ogranicz obszar skanowania</string>
-    <string name="restrict_area_desc">Pokaż ramkę na podlgądzie</string>
+    <string name="restrict_area_desc">Pokaż ramkę na podglądzie</string>
     <string name="overlay_type">Typ ramki</string>
     <string name="overlay_type_desc">Określ kształt ramki</string>
     <string name="full_inside">Cały kod w ramce</string>
@@ -61,6 +61,8 @@
     <string name="connect_help">Jeśli nie możesz się połączyć, należy rozparować urządzenie po obu stronach, a następnie spróbować połączyć się z nim ponownie z poziomu aplikacji.</string>
     <string name="haptic_feedback">Haptyczne sprzężenie zwrotne</string>
     <string name="haptic_feedback_desc">Wibruj podczas skanowania nowego kodu</string>
+    <string name="auto_copy_to_clipboard">Automatyczne kopiowanie do schowka</string>
+    <string name="auto_copy_to_clipboard_desc">Automatycznie kopiuje zeskanowaną wartość do schowka</string>
     <string name="connected_with">Połączono z: %s</string>
     <string name="info">Info</string>
     <string name="name">Nazwa</string>
@@ -246,7 +248,7 @@
     <string-array name="overlay_values">
         <item>Kwadratowa (Kody QR)</item>
         <item>Prostokątna (Kody kreskowe)</item>
-        <item>Custom</item>
+        <item>Własny rozmiar</item>
     </string-array>
     <string-array name="scan_freq_values">
         <item>Najszybciej</item>
@@ -334,6 +336,7 @@
     <string name="try_rotate_image">Spróbuj obrócić obraz</string>
     <string name="try_inverted">Spróbuj w odbiciu lustrzanym</string>
     <string name="try_downscale">Spróbuj downscalingu</string>
+    <string name="try_denoise">Spróbuj odszumiania</string>
     <string name="minimum_scan_lines">Minmalna liczba linii skanowania</string>
     <string name="processing">Przetwarzanie</string>
     <string name="binarizer">Binaryzator</string>
@@ -357,9 +360,63 @@
     <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
     <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
     <string-array name="clear_after_time_values">
-        <item>Never</item>
+        <item>Nigdy</item>
         <item>1s</item>
         <item>3s</item>
         <item>5s</item>
     </string-array>
+    <string name="send_with_volume_keys">Użyj klawiszy głośności</string>
+    <string name="send_vol_keys_desc">Określ akcję dla naciśnięcia klawiszy głośności w górę/dół</string>
+    <string name="volume_up">Głośność w górę</string>
+    <string name="volume_down">Głośność w dół</string>
+    <string name="zoom_level">Poziom zoomu (%)</string>
+    <string name="trigger_on_key_release">Wyzwalaj po puszczeniu klawisza</string>
+    <string-array name="volume_keys_actions">
+        <item>Nic</item>
+        <item>Wyślij wartość</item>
+        <item>Wyczyść wartość</item>
+        <item>Uruchom OCR</item>
+        <item>Otwórz ręczne wprowadzanie</item>
+        <item>Przełącz lampę</item>
+        <item>Przełącz zoom</item>
+        <item>Wyzwól ostrość</item>
+    </string-array>
+    <string name="preview_stabilization">Stabilizacja podglądu</string>
+    <string name="preview_stabilization_desc">Włącza stabilizację podglądu, jeśli jest obsługiwana</string>
+    <string name="initial_zoom">Domyślny poziom przybliżenia</string>
+    <string name="initial_zoom_desc">Poziom przybliżenia kamery stosowany przy uruchomieniu</string>
+    <string name="zoom_gesture">Gest przybliżenia</string>
+    <string name="zoom_gesture_desc">Wybierz aktywne gesty przybliżenia</string>
+    <string-array name="zoom_gesture_values">
+        <item>Szczypnięcie (pinch)</item>
+        <item>Przeciągnięcie (swipe)</item>
+    </string-array>
+    <string name="qos_settings">Ustawienia L2CAP QoS</string>
+    <string name="qos_description">Uwaga: Te parametry zazwyczaj nie wymagają zmian. W przypadku niestabilności połączenia pomocne może być zwiększenie szybkości tokenu/szczytowej przepustowości lub zmniejszenie opóźnienia. Zmiany są stosowane po ponownym uruchomieniu aplikacji. Więcej informacji w specyfikacji Bluetooth HID v1.1.1, rozdział 5.2 i dodatek D.</string>
+    <string name="qos_service_type">Typ usługi</string>
+    <string name="qos_token_rate">Szybkość tokenu (bajty/s)</string>
+    <string name="qos_token_bucket_size">Rozmiar bufora tokenów (bajty)</string>
+    <string name="qos_peak_bandwidth">Szczytowa przepustowość (bajty/s)</string>
+    <string name="qos_latency">Opóźnienie (µs)</string>
+    <string name="qos_delay_variation">Zmienność opóźnienia (µs)</string>
+    <string name="export_settings">Eksportuj ustawienia</string>
+    <string name="import_settings">Importuj ustawienia</string>
+    <string name="import_keys">Importuj klawisze</string>
+    <string name="export_keys">Eksportuj klawisze</string>
+    <string name="import_settings_desc">Importowanie nadpisze tylko ustawienia obecne w pliku.</string>
+    <string name="import_keys_desc">Importowanie z pliku usunie wszystkie aktualnie zdefiniowane klawisze.</string>
+    <string name="favourite_devices">Ulubione urządzenia</string>
+    <string name="reset_favourites">Resetuj ulubione</string>
+    <string name="toggle_favourite">Przełącz ulubione</string>
+    <string name="save_scan_image">Zapisz obraz skanu</string>
+    <string name="save_scan_desc">Przechowuje skan na urządzeniu</string>
+    <string name="crop_mode">Tryb przycinania</string>
+    <string name="image_quality">Jakość obrazu</string>
+    <string name="image_format">Format obrazu</string>
+    <string name="file_name_pattern">Wzorzec nazwy pliku</string>
+    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
+    <string name="output_folder">Folder wyjściowy</string>
+    <string name="save_scan_image_hint">Uwaga: Nazwa pliku każdego skanu jest dostępna jako {SCAN_IMAGE_NAME} w szablonie niestandardowym. Można jej użyć np. do bezpośredniego pobrania obrazu z telefonu.</string>
+    <string name="clear_after_time">Wyczyść po czasie</string>
+    <string name="clear_after_time_desc">Czyści wyświetlany kod po braku wykrycia w określonym przedziale czasowym.</string>
 </resources>

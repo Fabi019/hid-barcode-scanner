@@ -57,6 +57,8 @@
     <string name="connect_help">Falls keine Verbindung möglich sein sollte, muss das Gerät zunächst auf beiden Seiten entfernt werden und dann erneut von der App aus verbunden werden.</string>
     <string name="haptic_feedback">Haptisches Feedback</string>
     <string name="haptic_feedback_desc">Vibriert wenn ein neuer Code gescannt wird</string>
+    <string name="auto_copy_to_clipboard">Automatisch in Zwischenablage kopieren</string>
+    <string name="auto_copy_to_clipboard_desc">Kopiert den gescannten Wert automatisch in die Zwischenablage</string>
     <string name="connected_with">Verbunden mit: %s</string>
     <string name="info">Info</string>
     <string name="name">Name</string>
@@ -370,6 +372,14 @@
     </string-array>
     <string name="preview_stabilization">Vorschaustabilisierung</string>
     <string name="preview_stabilization_desc">Aktiviert Vorschaustabilisierung, sofern unterstützt</string>
+    <string name="initial_zoom">Standard-Zoomstufe</string>
+    <string name="initial_zoom_desc">Anfängliche Zoomstufe beim Start der Kamera</string>
+    <string name="zoom_gesture">Zoom-Geste</string>
+    <string name="zoom_gesture_desc">Aktive Zoom-Gesten auswählen</string>
+    <string-array name="zoom_gesture_values">
+        <item>Pinch-Zoom</item>
+        <item>Wisch-Zoom</item>
+    </string-array>
     <string name="favourite_devices">Favorisierte Geräte</string>
     <string name="reset_favourites">Favoriten zurücksetzen</string>
     <string name="toggle_favourite">Favorisierung umschalten</string>

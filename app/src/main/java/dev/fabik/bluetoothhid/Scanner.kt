@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
@@ -86,7 +86,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalClipboardManager
+import android.content.ClipData
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -197,6 +197,11 @@ fun Scanner(
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraInfo by remember { mutableStateOf<CameraInfo?>(null) }
+
+    val initialZoom by context.getPreferenceStateDefault(PreferenceStore.INITIAL_ZOOM)
+    LaunchedEffect(cameraControl) {
+        cameraControl?.setZoomRatio(initialZoom)
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -418,6 +423,10 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
+    val copyToClipboard by context.getPreferenceStateDefault(PreferenceStore.AUTO_COPY_TO_CLIPBOARD)
+    val clipboardManager = remember {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    }
 
     Log.d(
         "Scanner",
@@ -458,6 +467,10 @@ private fun CameraPreviewArea(
                 Log.w("Scanner", "Vibration failed", it)
             }
         }
+
+        if (copyToClipboard) {
+            clipboardManager.setPrimaryClip(ClipData.newPlainText("", value))
+        }
     }
 }
 
@@ -469,7 +482,9 @@ private fun CameraPreviewArea(
 @Composable
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = remember {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    }
     val privateMode by context.getPreferenceStateDefault(PreferenceStore.PRIVATE_MODE)
 
     Column(
@@ -504,18 +519,19 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
                 ParagraphStyle(TextAlign.Center)
             )
 
-            ClickableText(
+            Text(
                 text,
                 maxLines = 6,
-                overflow = TextOverflow.Ellipsis
-            ) {
-                if (privateMode) {
-                    hideText = !hideText
-                } else {
-                    clipboardManager.setText(text)
-                    Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable {
+                    if (privateMode) {
+                        hideText = !hideText
+                    } else {
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("", currentBarcode))
+                        Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
+            )
         } ?: run {
             Text(
                 stringResource(R.string.scan_code_to_start),

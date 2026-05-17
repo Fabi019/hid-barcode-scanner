@@ -35,6 +35,16 @@
     <string name="open_location_settings">افتح إعدادات الموقع</string>
     <string name="connect_help">إذا تعذر الاتصال، قم بإلغاء الاقتران في كلا الجهازين، ثم حاول الاتصال مجدداً من داخل التطبيق.</string>
     <string name="haptic_feedback_desc">يهتز الجهاز عند قراءة كود جديد</string>
+    <string name="auto_copy_to_clipboard">نسخ تلقائي إلى الحافظة</string>
+    <string name="auto_copy_to_clipboard_desc">ينسخ القيمة الممسوحة تلقائياً إلى الحافظة</string>
+    <string name="initial_zoom">مستوى التكبير الافتراضي</string>
+    <string name="initial_zoom_desc">مستوى التكبير المطبق عند بدء تشغيل الكاميرا</string>
+    <string name="zoom_gesture">إيماءة التكبير</string>
+    <string name="zoom_gesture_desc">حدد إيماءات التكبير المفعّلة</string>
+    <string-array name="zoom_gesture_values">
+        <item>قرص (Pinch)</item>
+        <item>سحب (Swipe)</item>
+    </string-array>
     <string name="click_to_connect">اضغط للرجوع.</string>
     <string name="code_types_desc">فعّل الأنواع المطلوبة فقط لتحسين سرعة الفحص. إذا لم تحدد شيئًا، سيتم تفعيل كل الأنواع.</string>
     <string name="code_types_desc_short">فعّل أنواعًا محددة فقط لتحسين سرعة قراءة الأكواد</string>

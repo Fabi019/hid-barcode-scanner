@@ -19,6 +19,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -134,6 +135,10 @@ fun CameraPreviewContent(
 
     CameraPreviewPreferences(viewModel)
 
+    val zoomGestures by context.getPreferenceState(PreferenceStore.ZOOM_GESTURES)
+    val pinchZoom = zoomGestures?.contains("0") != false
+    val swipeZoom = zoomGestures?.contains("1") == true
+
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     surfaceRequest?.let { request ->
         var isFocusing by remember { mutableStateOf(false) }
@@ -158,11 +163,20 @@ fun CameraPreviewContent(
                         }
                     }
                 }
-                .pointerInput(viewModel) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        viewModel.pinchToZoom(zoom)
-                    }
-                })
+                .then(
+                    if (pinchZoom != false) Modifier.pointerInput(viewModel) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            viewModel.pinchToZoom(zoom)
+                        }
+                    } else Modifier
+                )
+                .then(
+                    if (swipeZoom == true) Modifier.pointerInput(viewModel) {
+                        detectVerticalDragGestures { _, dragAmount ->
+                            viewModel.swipeToZoom(dragAmount)
+                        }
+                    } else Modifier
+                ))
 
         OverlayCanvas(viewModel)
 
@@ -289,6 +303,8 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val startForResult =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
+                // New API (API 33+) is used when available; deprecated fallback required for API < 33
+                @Suppress("DEPRECATION")
                 val text: Text? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     result.data?.getParcelableExtra("result", Text::class.java)
                 } else {

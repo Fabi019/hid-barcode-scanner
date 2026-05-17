@@ -84,11 +84,6 @@ import kotlin.math.min
 class CameraViewModel : ViewModel() {
     companion object {
         const val TAG = "CameraViewModel"
-
-        val SD_480P = Size(640, 480)
-        val HD_720P = Size(960, 720)
-        val FHD_1080P = Size(1440, 1080)
-        val UHD_2160P = Size(2160, 1440)
     }
 
     // Used to set up a link between the Camera and your UI.
@@ -193,12 +188,7 @@ class CameraViewModel : ViewModel() {
 
         val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
             ResolutionStrategy(
-                when (resolution) {
-                    ScanResolution.UHD_2160P -> UHD_2160P
-                    ScanResolution.FHD_1080P -> FHD_1080P
-                    ScanResolution.HD_720P -> HD_720P
-                    ScanResolution.SD_480P -> SD_480P
-                },
+                resolution.size,
                 ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
             )
         ).build()
@@ -364,21 +354,10 @@ class CameraViewModel : ViewModel() {
         _readerOptions.tryDownscale = tryDownscale
         _readerOptions.tryDenoise = tryDenoise
         _readerOptions.minLineCount = minLines
-        _readerOptions.binarizer = when (binarizer) {
-            Binarizer.LOCAL_AVERAGE -> BarcodeReader.Binarizer.LOCAL_AVERAGE
-            Binarizer.GLOBAL_HISTOGRAM -> BarcodeReader.Binarizer.GLOBAL_HISTOGRAM
-            Binarizer.FIXED_THRESHOLD -> BarcodeReader.Binarizer.FIXED_THRESHOLD
-            Binarizer.BOOL_CAST -> BarcodeReader.Binarizer.BOOL_CAST
-        }
+        _readerOptions.binarizer = binarizer.readerValue
         _readerOptions.downscaleFactor = downscaleFactor
         _readerOptions.downscaleThreshold = downscaleThreshold
-        _readerOptions.textMode = when (textMode) {
-            TextMode.PLAIN -> BarcodeReader.TextMode.PLAIN
-            TextMode.ECI -> BarcodeReader.TextMode.ECI
-            TextMode.HRI -> BarcodeReader.TextMode.HRI
-            TextMode.HEX -> BarcodeReader.TextMode.HEX
-            TextMode.ESCAPED -> BarcodeReader.TextMode.ESCAPED
-        }
+        _readerOptions.textMode = textMode.readerValue
 
         Log.d(TAG, "Updating reader options: $_readerOptions")
         barcodeAnalyzer?.setOptions(_readerOptions)
@@ -409,12 +388,7 @@ class CameraViewModel : ViewModel() {
         clearAfterTime: Long?,
         saveScanImageFormat: ScanImageFormat
     ) {
-        _scanDelay = when (frequency) {
-            ScanFrequency.FASTEST -> 0
-            ScanFrequency.FAST -> 100
-            ScanFrequency.NORMAL -> 500
-            ScanFrequency.SLOW -> 1000
-        }
+        _scanDelay = frequency.delayMs
         barcodeAnalyzer?.scanDelay = _scanDelay
         _fullyInside = fullyInside
         if (!fullyInside) {
@@ -662,11 +636,8 @@ class CameraViewModel : ViewModel() {
             )
         }
 
-        val (mime, ext) = when (_saveScanImageFormat) {
-            ScanImageFormat.JPEG -> "image/jpeg" to "jpg"
-            ScanImageFormat.PNG -> "image/png" to "png"
-            else -> "image/webp" to "webp"
-        }
+        val mime = _saveScanImageFormat.mimeType
+        val ext = _saveScanImageFormat.extension
 
         // Determine filename
         var fileName = "${_saveScanFileName}.${ext}"
@@ -739,6 +710,12 @@ class CameraViewModel : ViewModel() {
             resolution.height / 2f
         ) ?: return
         cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(centerPoint).build())
+    }
+
+    fun swipeToZoom(dragDeltaY: Float) {
+        val currentZoom = cameraInfo?.zoomState?.value ?: return
+        val newLinearZoom = (currentZoom.linearZoom - dragDeltaY / 1000f).coerceIn(0f, 1f)
+        cameraControl?.setLinearZoom(newLinearZoom)
     }
 
     fun pinchToZoom(zoom: Float) {
