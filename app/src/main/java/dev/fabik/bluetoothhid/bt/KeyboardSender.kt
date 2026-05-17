@@ -32,25 +32,17 @@ open class KeyboardSender(
         locale: String,
         expandCode: Boolean,
     ) {
-        val finalString = when (appendKey) {
-            ExtraKeys.ENTER -> "$processedString\n"
-            ExtraKeys.TAB -> "$processedString\t"
-            ExtraKeys.SPACE -> "$processedString "
-            else -> processedString
-        }
+        val finalString = appendKey.suffix?.let { "$processedString$it" } ?: processedString
 
-        val keys = when (appendKey) {
-            ExtraKeys.CUSTOM -> {
-                if (expandCode) {
-                    // Complex expandCode mechanism - treat processed string as template for expansion
-                    val expandedCode = keyboardTranslator.translateStringWithTemplate(finalString, locale)
-                    keyboardTranslator.translateStringWithTemplate("", locale, expandedCode)
-                } else {
-                    // Simple template processing on the already processed string
-                    keyboardTranslator.translateStringWithTemplate(finalString, locale)
-                }
+        val keys = if (appendKey == ExtraKeys.CUSTOM) {
+            if (expandCode) {
+                val expandedCode = keyboardTranslator.translateStringWithTemplate(finalString, locale)
+                keyboardTranslator.translateStringWithTemplate("", locale, expandedCode)
+            } else {
+                keyboardTranslator.translateStringWithTemplate(finalString, locale)
             }
-            else -> keyboardTranslator.translateString(finalString, locale)
+        } else {
+            keyboardTranslator.translateString(finalString, locale)
         }
 
         keys.forEach { key ->

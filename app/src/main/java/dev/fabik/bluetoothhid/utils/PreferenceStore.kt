@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import android.util.Size
+import zxingcpp.BarcodeReader
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -53,8 +55,8 @@ enum class KeyboardLayout(var value: String) {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: US
     }
 }
-enum class ExtraKeys {
-    NONE, ENTER, TAB, SPACE, CUSTOM;
+enum class ExtraKeys(val suffix: String?) {
+    NONE(null), ENTER("\n"), TAB("\t"), SPACE(" "), CUSTOM(null);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
@@ -71,14 +73,15 @@ enum class FocusMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: AUTO
     }
 }
-enum class ScanResolution {
-    SD_480P, HD_720P, FHD_1080P, UHD_2160P;
+enum class ScanResolution(val size: Size) {
+    SD_480P(Size(640, 480)), HD_720P(Size(960, 720)),
+    FHD_1080P(Size(1440, 1080)), UHD_2160P(Size(2160, 1440));
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HD_720P
     }
 }
-enum class ScanFrequency {
-    FASTEST, FAST, NORMAL, SLOW;
+enum class ScanFrequency(val delayMs: Int) {
+    FASTEST(0), FAST(100), NORMAL(500), SLOW(1000);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NORMAL
     }
@@ -89,14 +92,21 @@ enum class OverlayType {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: SQUARE
     }
 }
-enum class Binarizer {
-    LOCAL_AVERAGE, GLOBAL_HISTOGRAM, FIXED_THRESHOLD, BOOL_CAST;
+enum class Binarizer(val readerValue: BarcodeReader.Binarizer) {
+    LOCAL_AVERAGE(BarcodeReader.Binarizer.LOCAL_AVERAGE),
+    GLOBAL_HISTOGRAM(BarcodeReader.Binarizer.GLOBAL_HISTOGRAM),
+    FIXED_THRESHOLD(BarcodeReader.Binarizer.FIXED_THRESHOLD),
+    BOOL_CAST(BarcodeReader.Binarizer.BOOL_CAST);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: LOCAL_AVERAGE
     }
 }
-enum class TextMode {
-    PLAIN, ECI, HRI, HEX, ESCAPED;
+enum class TextMode(val readerValue: BarcodeReader.TextMode) {
+    PLAIN(BarcodeReader.TextMode.PLAIN),
+    ECI(BarcodeReader.TextMode.ECI),
+    HRI(BarcodeReader.TextMode.HRI),
+    HEX(BarcodeReader.TextMode.HEX),
+    ESCAPED(BarcodeReader.TextMode.ESCAPED);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HRI
     }
@@ -113,8 +123,9 @@ enum class ClearAfterTime(val value: Long?) {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
     }
 }
-enum class ScanImageFormat {
-    JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
+enum class ScanImageFormat(val mimeType: String, val extension: String) {
+    JPEG("image/jpeg", "jpg"), PNG("image/png", "png"),
+    WEBP_LOSSY("image/webp", "webp"), WEBP_LOSSLESS("image/webp", "webp");
 
     fun toCompressFormat(): Bitmap.CompressFormat {
         return when (this) {
