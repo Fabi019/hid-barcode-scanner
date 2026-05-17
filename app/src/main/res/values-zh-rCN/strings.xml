@@ -63,6 +63,12 @@
     <string name="auto_copy_to_clipboard_desc">扫描后自动将结果复制到剪贴板</string>
     <string name="initial_zoom">默认缩放级别</string>
     <string name="initial_zoom_desc">相机启动时应用的初始缩放级别</string>
+    <string name="zoom_gesture">缩放手势</string>
+    <string name="zoom_gesture_desc">选择启用的缩放手势</string>
+    <string-array name="zoom_gesture_values">
+        <item>双指捏合缩放</item>
+        <item>单指滑动缩放</item>
+    </string-array>
     <string name="connected_with">已连接: %s</string>
     <string name="click_to_connect">点击返回。</string>
     <string name="info">信息</string>

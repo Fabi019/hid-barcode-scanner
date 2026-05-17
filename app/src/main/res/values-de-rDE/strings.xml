@@ -374,6 +374,12 @@
     <string name="preview_stabilization_desc">Aktiviert Vorschaustabilisierung, sofern unterstützt</string>
     <string name="initial_zoom">Standard-Zoomstufe</string>
     <string name="initial_zoom_desc">Anfängliche Zoomstufe beim Start der Kamera</string>
+    <string name="zoom_gesture">Zoom-Geste</string>
+    <string name="zoom_gesture_desc">Aktive Zoom-Gesten auswählen</string>
+    <string-array name="zoom_gesture_values">
+        <item>Pinch-Zoom</item>
+        <item>Wisch-Zoom</item>
+    </string-array>
     <string name="favourite_devices">Favorisierte Geräte</string>
     <string name="reset_favourites">Favoriten zurücksetzen</string>
     <string name="toggle_favourite">Favorisierung umschalten</string>

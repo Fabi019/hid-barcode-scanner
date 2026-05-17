@@ -712,6 +712,12 @@ class CameraViewModel : ViewModel() {
         cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(centerPoint).build())
     }
 
+    fun swipeToZoom(dragDeltaY: Float) {
+        val currentZoom = cameraInfo?.zoomState?.value ?: return
+        val newLinearZoom = (currentZoom.linearZoom - dragDeltaY / 1000f).coerceIn(0f, 1f)
+        cameraControl?.setLinearZoom(newLinearZoom)
+    }
+
     fun pinchToZoom(zoom: Float) {
         val currentZoom = cameraInfo?.zoomState?.value ?: return
         val currentZoomRatio = currentZoom.zoomRatio

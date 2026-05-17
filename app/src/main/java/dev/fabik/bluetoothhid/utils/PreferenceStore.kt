@@ -171,6 +171,8 @@ open class PreferenceStore {
         val key: Preferences.Key<T>,
         val defaultValue: T
     ) {
+        // Safe: map value was stored via put(this, T) so the runtime type is always T
+        @Suppress("UNCHECKED_CAST")
         fun extract(prefs: Map<Preference<*>, *>): T = prefs[this] as? T ?: defaultValue
     }
 
@@ -246,6 +248,7 @@ open class PreferenceStore {
             booleanPreferencesKey("preview_stabilization_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res").enumDefaultsTo(ScanResolution::fromIndex)
         val INITIAL_ZOOM = floatPreferencesKey("initial_zoom") defaultsTo 1.0f
+        val ZOOM_GESTURES = stringSetPreferencesKey("zoom_gestures") defaultsTo setOf("0")
         // val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false - Removed
 
         // Scanner
@@ -320,6 +323,8 @@ suspend fun Context.importPreferences(json: String): Int {
             if (!obj.has(key.name)) continue
             runCatching {
                 val prev = prefs[key]
+                // Each branch casts key to the concrete type matched by defaultValue — safe by construction
+                @Suppress("UNCHECKED_CAST")
                 when (pref.defaultValue) {
                     is Boolean -> prefs[key as Preferences.Key<Boolean>] = obj.getBoolean(key.name)
                     is Int -> prefs[key as Preferences.Key<Int>] = obj.getInt(key.name)

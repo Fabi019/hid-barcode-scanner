@@ -391,6 +391,14 @@ internal fun CameraSettings(strings: SettingsStrings) {
         preference = PreferenceStore.INITIAL_ZOOM
     )
 
+    CheckBoxPreference(
+        title = strings[R.string.zoom_gesture],
+        desc = strings[R.string.zoom_gesture_desc],
+        valueStrings = strings.array(R.array.zoom_gesture_values),
+        icon = Icons.Default.ZoomIn,
+        preference = PreferenceStore.ZOOM_GESTURES
+    )
+
     /*SwitchPreference(
             title = strings[R.string.auto_zoom],
             desc = strings[R.string.zooms_in_on_codes_to_far_away],

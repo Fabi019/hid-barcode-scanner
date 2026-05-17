@@ -400,6 +400,12 @@
     <string name="preview_stabilization_desc">Enables preview stabilization, if supported</string>
     <string name="initial_zoom">Default zoom level</string>
     <string name="initial_zoom_desc">Initial zoom level applied when the camera starts</string>
+    <string name="zoom_gesture">Zoom gesture</string>
+    <string name="zoom_gesture_desc">Select enabled zoom gestures</string>
+    <string-array name="zoom_gesture_values">
+        <item>Pinch to zoom</item>
+        <item>Swipe to zoom</item>
+    </string-array>
     <string name="favourite_devices">Favourite devices</string>
     <string name="reset_favourites">Reset favourites</string>
     <string name="toggle_favourite">Toggle favourite</string>

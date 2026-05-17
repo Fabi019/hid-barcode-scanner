@@ -385,6 +385,12 @@
     <string name="preview_stabilization_desc">Włącza stabilizację podglądu, jeśli jest obsługiwana</string>
     <string name="initial_zoom">Domyślny poziom przybliżenia</string>
     <string name="initial_zoom_desc">Poziom przybliżenia kamery stosowany przy uruchomieniu</string>
+    <string name="zoom_gesture">Gest przybliżenia</string>
+    <string name="zoom_gesture_desc">Wybierz aktywne gesty przybliżenia</string>
+    <string-array name="zoom_gesture_values">
+        <item>Szczypnięcie (pinch)</item>
+        <item>Przeciągnięcie (swipe)</item>
+    </string-array>
     <string name="qos_settings">Ustawienia L2CAP QoS</string>
     <string name="qos_description">Uwaga: Te parametry zazwyczaj nie wymagają zmian. W przypadku niestabilności połączenia pomocne może być zwiększenie szybkości tokenu/szczytowej przepustowości lub zmniejszenie opóźnienia. Zmiany są stosowane po ponownym uruchomieniu aplikacji. Więcej informacji w specyfikacji Bluetooth HID v1.1.1, rozdział 5.2 i dodatek D.</string>
     <string name="qos_service_type">Typ usługi</string>
