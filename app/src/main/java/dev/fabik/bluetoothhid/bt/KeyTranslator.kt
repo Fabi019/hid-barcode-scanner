@@ -9,7 +9,8 @@ import java.util.Collections
 typealias Key = Pair<UByte, UByte>
 
 // Represents a keymap with a map of chars and their key codes
-typealias Keymap = Map<Char, Key>
+// Each character has an optional second key to support dead keys
+typealias Keymap = Map<Char, Pair<Key, Key?>>
 
 class KeyTranslator(context: Context) {
     companion object {
@@ -24,15 +25,15 @@ class KeyTranslator(context: Context) {
 //        private const val RALT: UByte = 0x40
 //        private const val RMETA: UByte = 0x80
 
-        private val SPACE = ' ' to Key(0u, 0x2Cu)
-        private val TAB = '\t' to Key(0u, 0x2Bu)
-        private val RETURN = '\n' to Key(0u, 0x28u)
+        private val SPACE = ' ' to (Key(0u, 0x2Cu) to null)
+        private val TAB = '\t' to (Key(0u, 0x2Bu) to null)
+        private val RETURN = '\n' to (Key(0u, 0x28u) to null)
 
         val CAPS_LOCK_KEY = Key(0u, 0x39u)
 
         private const val CUSTOM_KEYMAP_FILE = "custom.layout"
         private var customKeyMapLoaded = false
-        var CUSTOM_KEYMAP = mutableMapOf<Char, Key>()
+        var CUSTOM_KEYMAP = mutableMapOf<Char, Pair<Key, Key?>>()
 
         // Load custom user-defined keys from filesystem
         fun loadCustomKeyMap(context: Context) {
@@ -82,22 +83,26 @@ class KeyTranslator(context: Context) {
 
         fun keymapToString(keymap: Keymap): List<String> {
             return keymap.map { (k, v) ->
-                "$k ${v.second.toString(16)} ${v.first.toString(16)}"
+                "$k ${v.first.second.toString(16)} ${v.first.first.toString(16)}" + (v.second?.let {
+                    " ${it.second.toString(16)} ${it.first.toString(16)}"
+                } ?: "")
             }
         }
 
         fun loadKeymap(lines: List<String>): Keymap {
-            val keymap = mutableMapOf<Char, Key>()
+            val keymap = mutableMapOf<Char, Pair<Key, Key?>>()
 
             lines.forEach {
                 if (it.startsWith("##") || it.isBlank())
                     return@forEach
 
                 runCatching {
-                    val (key, code, modifier) = it.split(" ")
-
-                    keymap[key.first()] =
-                        Key(modifier.toUByte(16), code.toUByte(16))
+                    val split = it.split(" ")
+                    val first = Key(split[2].toUByte(16), split[1].toUByte(16))
+                    val second =
+                        if (split.size >= 5) Key(split[4].toUByte(16), split[3].toUByte(16))
+                        else null
+                    keymap[split[0].first()] = first to second
                 }.onFailure { e ->
                     Log.e(TAG, "Failed to parse keymap line: $it", e)
                 }
@@ -223,7 +228,11 @@ class KeyTranslator(context: Context) {
     }
 
     // Process HID-specific templates (modifiers, F-keys, arrows, etc.)
-    private fun processHidSpecificTemplate(template: String, locale: String, keys: MutableList<Key>) {
+    private fun processHidSpecificTemplate(
+        template: String,
+        locale: String,
+        keys: MutableList<Key>
+    ) {
         var modifiers = 0.toUByte()
         var temp = template
         var wasModifier = true
@@ -261,16 +270,17 @@ class KeyTranslator(context: Context) {
 
         Log.d(TAG, "Translating: '$string' with locale '$locale'")
 
-        string.forEach {
-            translate(it, locale)?.let { key ->
+        string.forEach { chr ->
+            translate(chr, locale)?.let { (key, dkey) ->
                 keys.add(key)
-            } ?: Log.w(TAG, "Unknown char: $it (${it.code})")
+                dkey?.let { keys.add(it) }
+            } ?: Log.w(TAG, "Unknown char: $chr (${chr.code})")
         }
 
         return keys
     }
 
-    private fun translate(char: Char, locale: String): Key? {
+    private fun translate(char: Char, locale: String): Pair<Key, Key?>? {
         val keymap = keyMaps[locale] ?: baseMap
         return CUSTOM_KEYMAP[char] ?: keymap[char] ?: baseMap[char]
     }
