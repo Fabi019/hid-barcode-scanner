@@ -257,6 +257,7 @@ open class PreferenceStore {
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
+        val AUTO_COPY_TO_CLIPBOARD = booleanPreferencesKey("auto_copy_to_clipboard") defaultsTo false
         val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
         val CLEAR_AFTER_TIME =
             intPreferencesKey("clear_after_time") enumDefaultsTo ClearAfterTime::fromIndex

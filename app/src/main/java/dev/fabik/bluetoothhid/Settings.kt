@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Expand
 import androidx.compose.material.icons.filled.Exposure
@@ -495,6 +496,13 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         desc = strings[R.string.haptic_feedback_desc],
         icon = Icons.Default.Vibration,
         preference = PreferenceStore.VIBRATE
+    )
+
+    SwitchPreference(
+        title = strings[R.string.auto_copy_to_clipboard],
+        desc = strings[R.string.auto_copy_to_clipboard_desc],
+        icon = Icons.Default.ContentCopy,
+        preference = PreferenceStore.AUTO_COPY_TO_CLIPBOARD
     )
 
     /*SwitchPreference(

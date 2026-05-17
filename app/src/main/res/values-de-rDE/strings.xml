@@ -57,6 +57,8 @@
     <string name="connect_help">Falls keine Verbindung möglich sein sollte, muss das Gerät zunächst auf beiden Seiten entfernt werden und dann erneut von der App aus verbunden werden.</string>
     <string name="haptic_feedback">Haptisches Feedback</string>
     <string name="haptic_feedback_desc">Vibriert wenn ein neuer Code gescannt wird</string>
+    <string name="auto_copy_to_clipboard">Automatisch in Zwischenablage kopieren</string>
+    <string name="auto_copy_to_clipboard_desc">Kopiert den gescannten Wert automatisch in die Zwischenablage</string>
     <string name="connected_with">Verbunden mit: %s</string>
     <string name="info">Info</string>
     <string name="name">Name</string>

@@ -418,6 +418,8 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
+    val copyToClipboard by context.getPreferenceStateDefault(PreferenceStore.AUTO_COPY_TO_CLIPBOARD)
+    val clipboardManager = LocalClipboardManager.current
 
     Log.d(
         "Scanner",
@@ -457,6 +459,10 @@ private fun CameraPreviewArea(
             }.onFailure {
                 Log.w("Scanner", "Vibration failed", it)
             }
+        }
+
+        if (copyToClipboard) {
+            clipboardManager.setText(AnnotatedString(value))
         }
     }
 }
