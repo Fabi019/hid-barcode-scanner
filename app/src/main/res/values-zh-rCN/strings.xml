@@ -61,6 +61,8 @@
     <string name="haptic_feedback_desc">扫描到新码时振动</string>
     <string name="auto_copy_to_clipboard">自动复制到剪贴板</string>
     <string name="auto_copy_to_clipboard_desc">扫描后自动将结果复制到剪贴板</string>
+    <string name="initial_zoom">默认缩放级别</string>
+    <string name="initial_zoom_desc">相机启动时应用的初始缩放级别</string>
     <string name="connected_with">已连接: %s</string>
     <string name="click_to_connect">点击返回。</string>
     <string name="info">信息</string>

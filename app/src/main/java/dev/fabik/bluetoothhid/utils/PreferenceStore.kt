@@ -245,6 +245,7 @@ open class PreferenceStore {
         val PREVIEW_STABILIZATION =
             booleanPreferencesKey("preview_stabilization_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res").enumDefaultsTo(ScanResolution::fromIndex)
+        val INITIAL_ZOOM = floatPreferencesKey("initial_zoom") defaultsTo 1.0f
         // val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false - Removed
 
         // Scanner

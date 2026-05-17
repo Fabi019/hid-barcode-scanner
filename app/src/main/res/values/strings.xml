@@ -398,6 +398,8 @@
     <string name="import_keys_desc">Importing from file will remove all current defined keys.</string>
     <string name="preview_stabilization">Preview stabilization</string>
     <string name="preview_stabilization_desc">Enables preview stabilization, if supported</string>
+    <string name="initial_zoom">Default zoom level</string>
+    <string name="initial_zoom_desc">Initial zoom level applied when the camera starts</string>
     <string name="favourite_devices">Favourite devices</string>
     <string name="reset_favourites">Reset favourites</string>
     <string name="toggle_favourite">Toggle favourite</string>

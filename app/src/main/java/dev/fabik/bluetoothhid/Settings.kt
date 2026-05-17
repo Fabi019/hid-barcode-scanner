@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -378,6 +379,16 @@ internal fun CameraSettings(strings: SettingsStrings) {
         icon = Icons.Default.Hd,
         values = strings.array(R.array.scan_res_values),
         preference = PreferenceStore.SCAN_RESOLUTION
+    )
+
+    SliderPreference(
+        title = strings[R.string.initial_zoom],
+        desc = strings[R.string.initial_zoom_desc],
+        valueFormat = "%.1fx",
+        range = 1.0f..5.0f,
+        steps = 8,
+        icon = Icons.Default.ZoomIn,
+        preference = PreferenceStore.INITIAL_ZOOM
     )
 
     /*SwitchPreference(
