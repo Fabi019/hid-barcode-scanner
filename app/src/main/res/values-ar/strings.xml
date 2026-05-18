@@ -38,7 +38,7 @@
     <string name="auto_copy_to_clipboard">نسخ تلقائي إلى الحافظة</string>
     <string name="auto_copy_to_clipboard_desc">ينسخ القيمة الممسوحة تلقائياً إلى الحافظة</string>
     <string name="initial_zoom">مستوى التكبير الافتراضي</string>
-    <string name="initial_zoom_desc">مستوى التكبير المطبق عند بدء تشغيل الكاميرا</string>
+    <string name="initial_zoom_desc">مستوى التكبير المطبق عند بدء تشغيل الكاميرا (الحد الأقصى يعتمد على إمكانيات الكاميرا)</string>
     <string name="zoom_gesture">إيماءة التكبير</string>
     <string name="zoom_gesture_desc">حدد إيماءات التكبير المفعّلة</string>
     <string-array name="zoom_gesture_values">

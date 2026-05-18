@@ -384,7 +384,7 @@
     <string name="preview_stabilization">Stabilizacja podglądu</string>
     <string name="preview_stabilization_desc">Włącza stabilizację podglądu, jeśli jest obsługiwana</string>
     <string name="initial_zoom">Domyślny poziom przybliżenia</string>
-    <string name="initial_zoom_desc">Poziom przybliżenia kamery stosowany przy uruchomieniu</string>
+    <string name="initial_zoom_desc">Poziom przybliżenia kamery stosowany przy uruchomieniu (maksimum zależy od możliwości kamery)</string>
     <string name="zoom_gesture">Gest przybliżenia</string>
     <string name="zoom_gesture_desc">Wybierz aktywne gesty przybliżenia</string>
     <string-array name="zoom_gesture_values">

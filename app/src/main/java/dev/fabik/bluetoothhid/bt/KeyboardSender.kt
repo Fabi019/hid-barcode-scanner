@@ -36,9 +36,11 @@ open class KeyboardSender(
 
         val keys = if (appendKey == ExtraKeys.CUSTOM) {
             if (expandCode) {
+                // Complex expandCode mechanism - treat processed string as template for expansion
                 val expandedCode = keyboardTranslator.translateStringWithTemplate(finalString, locale)
                 keyboardTranslator.translateStringWithTemplate("", locale, expandedCode)
             } else {
+                // Simple template processing on the already processed string
                 keyboardTranslator.translateStringWithTemplate(finalString, locale)
             }
         } else {

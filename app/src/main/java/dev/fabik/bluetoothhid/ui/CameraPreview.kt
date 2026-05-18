@@ -122,6 +122,7 @@ fun CameraPreviewContent(
                         PreferenceStore.FOCUS_MODE.extractEnum(it),
                         PreferenceStore.PREVIEW_PERFORMANCE_MODE.extract(it),
                         PreferenceStore.PREVIEW_STABILIZATION.extract(it),
+                        PreferenceStore.INITIAL_ZOOM.extract(it),
                         onCameraReady = onCameraReady,
                         onBarcode = onBarcodeDetected,
                     )
@@ -164,14 +165,14 @@ fun CameraPreviewContent(
                     }
                 }
                 .then(
-                    if (pinchZoom != false) Modifier.pointerInput(viewModel) {
+                    if (pinchZoom) Modifier.pointerInput(viewModel) {
                         detectTransformGestures { _, _, zoom, _ ->
                             viewModel.pinchToZoom(zoom)
                         }
                     } else Modifier
                 )
                 .then(
-                    if (swipeZoom == true) Modifier.pointerInput(viewModel) {
+                    if (swipeZoom) Modifier.pointerInput(viewModel) {
                         detectVerticalDragGestures { _, dragAmount ->
                             viewModel.swipeToZoom(dragAmount)
                         }

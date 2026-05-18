@@ -132,6 +132,7 @@ class CameraViewModel : ViewModel() {
         focusMode: FocusMode,
         perfMode: Boolean,
         stabilization: Boolean,
+        initialZoom: Float,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
         onBarcode: (String?, Int, String?) -> Unit,
     ) {
@@ -252,6 +253,12 @@ class CameraViewModel : ViewModel() {
 
         cameraControl = camera.cameraControl
         cameraInfo = camera.cameraInfo
+
+        camera.cameraInfo.zoomState.value?.let { zoomState ->
+            camera.cameraControl.setZoomRatio(
+                initialZoom.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
+            )
+        }
 
         onCameraReady(camera.cameraControl, camera.cameraInfo, imageCapture)
         Log.d(TAG, "Camera is ready!")

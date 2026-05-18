@@ -385,7 +385,7 @@ internal fun CameraSettings(strings: SettingsStrings) {
         title = strings[R.string.initial_zoom],
         desc = strings[R.string.initial_zoom_desc],
         valueFormat = "%.1fx",
-        range = 1.0f..5.0f,
+        range = 1.0f..10.0f,
         steps = 8,
         icon = Icons.Default.ZoomIn,
         preference = PreferenceStore.INITIAL_ZOOM

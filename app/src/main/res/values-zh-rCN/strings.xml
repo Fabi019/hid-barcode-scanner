@@ -62,7 +62,7 @@
     <string name="auto_copy_to_clipboard">自动复制到剪贴板</string>
     <string name="auto_copy_to_clipboard_desc">扫描后自动将结果复制到剪贴板</string>
     <string name="initial_zoom">默认缩放级别</string>
-    <string name="initial_zoom_desc">相机启动时应用的初始缩放级别</string>
+    <string name="initial_zoom_desc">相机启动时应用的初始缩放级别（最大值取决于相机支持）</string>
     <string name="zoom_gesture">缩放手势</string>
     <string name="zoom_gesture_desc">选择启用的缩放手势</string>
     <string-array name="zoom_gesture_values">
