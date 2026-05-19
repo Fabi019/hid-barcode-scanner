@@ -168,6 +168,7 @@ fun CameraPreviewContent(
                 .then(
                     if (pinchZoom || swipeZoom) Modifier.pointerInput(viewModel, pinchZoom, swipeZoom) {
                         val screenHeight = context.resources.displayMetrics.heightPixels
+                        val swipeThreshold = 10f * context.resources.displayMetrics.density
                         awaitEachGesture {
                             var isMultiTouch = false
                             var prevY = 0f
@@ -186,14 +187,17 @@ fun CameraPreviewContent(
                                         val dist = (active[0].position - active[1].position).getDistance()
                                         if (prevDist > 0f) viewModel.pinchToZoom(dist / prevDist)
                                         prevDist = dist
+                                        event.changes.forEach { it.consume() }
                                     }
                                     active.size == 1 && swipeZoom && !isMultiTouch -> {
                                         val dy = active[0].position.y - prevY
-                                        viewModel.swipeToZoom(dy, screenHeight)
                                         prevY = active[0].position.y
+                                        if (kotlin.math.abs(dy) > swipeThreshold) {
+                                            viewModel.swipeToZoom(dy, screenHeight)
+                                            event.changes.forEach { it.consume() }
+                                        }
                                     }
                                 }
-                                event.changes.forEach { it.consume() }
                             } while (event.changes.any { it.pressed })
                         }
                     } else Modifier
