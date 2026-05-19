@@ -414,7 +414,7 @@
     <string name="image_quality">Jakość obrazu</string>
     <string name="image_format">Format obrazu</string>
     <string name="file_name_pattern">Wzorzec nazwy pliku</string>
-    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
+    <string name="file_name_pattern_placeholder">Dostępne znaczniki: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
     <string name="output_folder">Folder wyjściowy</string>
     <string name="save_scan_image_hint">Uwaga: Nazwa pliku każdego skanu jest dostępna jako {SCAN_IMAGE_NAME} w szablonie niestandardowym. Można jej użyć np. do bezpośredniego pobrania obrazu z telefonu.</string>
     <string name="clear_after_time">Wyczyść po czasie</string>

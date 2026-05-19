@@ -96,7 +96,8 @@ fun CameraPreviewContent(
         PreferenceStore.FIX_EXPOSURE,
         PreferenceStore.FOCUS_MODE,
         PreferenceStore.PREVIEW_PERFORMANCE_MODE,
-        PreferenceStore.PREVIEW_STABILIZATION
+        PreferenceStore.PREVIEW_STABILIZATION,
+        PreferenceStore.INITIAL_ZOOM
     )
 
     var isPaused by rememberSaveable { mutableStateOf(false) }
