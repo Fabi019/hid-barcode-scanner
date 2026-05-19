@@ -18,8 +18,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -166,17 +166,35 @@ fun CameraPreviewContent(
                     }
                 }
                 .then(
-                    if (pinchZoom) Modifier.pointerInput(viewModel) {
-                        detectTransformGestures { _, _, zoom, _ ->
-                            viewModel.pinchToZoom(zoom)
-                        }
-                    } else Modifier
-                )
-                .then(
-                    if (swipeZoom) Modifier.pointerInput(viewModel) {
+                    if (pinchZoom || swipeZoom) Modifier.pointerInput(viewModel, pinchZoom, swipeZoom) {
                         val screenHeight = context.resources.displayMetrics.heightPixels
-                        detectVerticalDragGestures { _, dragAmount ->
-                            viewModel.swipeToZoom(dragAmount, screenHeight)
+                        awaitEachGesture {
+                            var isMultiTouch = false
+                            var prevY = 0f
+                            var prevDist = 0f
+
+                            val first = awaitFirstDown(requireUnconsumed = false)
+                            prevY = first.position.y
+
+                            do {
+                                val event = awaitPointerEvent()
+                                val active = event.changes.filter { it.pressed }
+
+                                when {
+                                    active.size >= 2 && pinchZoom -> {
+                                        isMultiTouch = true
+                                        val dist = (active[0].position - active[1].position).getDistance()
+                                        if (prevDist > 0f) viewModel.pinchToZoom(dist / prevDist)
+                                        prevDist = dist
+                                    }
+                                    active.size == 1 && swipeZoom && !isMultiTouch -> {
+                                        val dy = active[0].position.y - prevY
+                                        viewModel.swipeToZoom(dy, screenHeight)
+                                        prevY = active[0].position.y
+                                    }
+                                }
+                                event.changes.forEach { it.consume() }
+                            } while (event.changes.any { it.pressed })
                         }
                     } else Modifier
                 ))
