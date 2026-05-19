@@ -174,8 +174,9 @@ fun CameraPreviewContent(
                 )
                 .then(
                     if (swipeZoom) Modifier.pointerInput(viewModel) {
+                        val screenHeight = context.resources.displayMetrics.heightPixels
                         detectVerticalDragGestures { _, dragAmount ->
-                            viewModel.swipeToZoom(dragAmount)
+                            viewModel.swipeToZoom(dragAmount, screenHeight)
                         }
                     } else Modifier
                 ))
