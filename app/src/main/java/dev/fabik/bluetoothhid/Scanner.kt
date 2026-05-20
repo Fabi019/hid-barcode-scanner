@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
@@ -86,7 +86,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalClipboardManager
+import android.content.ClipData
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -418,6 +420,9 @@ private fun CameraPreviewArea(
 
     val autoSend by context.getPreferenceStateDefault(PreferenceStore.AUTO_SEND)
     val vibrate by context.getPreferenceStateDefault(PreferenceStore.VIBRATE)
+    val copyToClipboard by context.getPreferenceStateDefault(PreferenceStore.AUTO_COPY_TO_CLIPBOARD)
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
 
     Log.d(
         "Scanner",
@@ -458,6 +463,10 @@ private fun CameraPreviewArea(
                 Log.w("Scanner", "Vibration failed", it)
             }
         }
+
+        if (copyToClipboard) {
+            clipboardScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value))) }
+        }
     }
 }
 
@@ -469,7 +478,8 @@ private fun CameraPreviewArea(
 @Composable
 private fun BoxScope.BarcodeValue(currentBarcode: String?) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
     val privateMode by context.getPreferenceStateDefault(PreferenceStore.PRIVATE_MODE)
 
     Column(
@@ -504,18 +514,19 @@ private fun BoxScope.BarcodeValue(currentBarcode: String?) {
                 ParagraphStyle(TextAlign.Center)
             )
 
-            ClickableText(
+            Text(
                 text,
                 maxLines = 6,
-                overflow = TextOverflow.Ellipsis
-            ) {
-                if (privateMode) {
-                    hideText = !hideText
-                } else {
-                    clipboardManager.setText(text)
-                    Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable {
+                    if (privateMode) {
+                        hideText = !hideText
+                    } else {
+                        clipboardScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", currentBarcode))) }
+                        Toast.makeText(context, copiedString, Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
+            )
         } ?: run {
             Text(
                 stringResource(R.string.scan_code_to_start),

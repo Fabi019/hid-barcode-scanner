@@ -18,7 +18,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -95,7 +96,8 @@ fun CameraPreviewContent(
         PreferenceStore.FIX_EXPOSURE,
         PreferenceStore.FOCUS_MODE,
         PreferenceStore.PREVIEW_PERFORMANCE_MODE,
-        PreferenceStore.PREVIEW_STABILIZATION
+        PreferenceStore.PREVIEW_STABILIZATION,
+        PreferenceStore.INITIAL_ZOOM
     )
 
     var isPaused by rememberSaveable { mutableStateOf(false) }
@@ -121,6 +123,7 @@ fun CameraPreviewContent(
                         PreferenceStore.FOCUS_MODE.extractEnum(it),
                         PreferenceStore.PREVIEW_PERFORMANCE_MODE.extract(it),
                         PreferenceStore.PREVIEW_STABILIZATION.extract(it),
+                        PreferenceStore.INITIAL_ZOOM.extract(it),
                         onCameraReady = onCameraReady,
                         onBarcode = onBarcodeDetected,
                     )
@@ -133,6 +136,10 @@ fun CameraPreviewContent(
     }
 
     CameraPreviewPreferences(viewModel)
+
+    val zoomGestures by context.getPreferenceState(PreferenceStore.ZOOM_GESTURES)
+    val pinchZoom = zoomGestures?.contains("0") != false
+    val swipeZoom = zoomGestures?.contains("1") == true
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     surfaceRequest?.let { request ->
@@ -158,11 +165,43 @@ fun CameraPreviewContent(
                         }
                     }
                 }
-                .pointerInput(viewModel) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        viewModel.pinchToZoom(zoom)
-                    }
-                })
+                .then(
+                    if (pinchZoom || swipeZoom) Modifier.pointerInput(viewModel, pinchZoom, swipeZoom) {
+                        val screenHeight = context.resources.displayMetrics.heightPixels
+                        val swipeThreshold = 10f * context.resources.displayMetrics.density
+                        awaitEachGesture {
+                            var isMultiTouch = false
+                            var prevY = 0f
+                            var prevDist = 0f
+
+                            val first = awaitFirstDown(requireUnconsumed = false)
+                            prevY = first.position.y
+
+                            do {
+                                val event = awaitPointerEvent()
+                                val active = event.changes.filter { it.pressed }
+
+                                when {
+                                    active.size >= 2 && pinchZoom -> {
+                                        isMultiTouch = true
+                                        val dist = (active[0].position - active[1].position).getDistance()
+                                        if (prevDist > 0f) viewModel.pinchToZoom(dist / prevDist)
+                                        prevDist = dist
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                    active.size == 1 && swipeZoom && !isMultiTouch -> {
+                                        val dy = active[0].position.y - prevY
+                                        prevY = active[0].position.y
+                                        if (kotlin.math.abs(dy) > swipeThreshold) {
+                                            viewModel.swipeToZoom(dy, screenHeight)
+                                            event.changes.forEach { it.consume() }
+                                        }
+                                    }
+                                }
+                            } while (event.changes.any { it.pressed })
+                        }
+                    } else Modifier
+                ))
 
         OverlayCanvas(viewModel)
 
@@ -289,6 +328,8 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
     val startForResult =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
+                // New API (API 33+) is used when available; deprecated fallback required for API < 33
+                @Suppress("DEPRECATION")
                 val text: Text? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     result.data?.getParcelableExtra("result", Text::class.java)
                 } else {

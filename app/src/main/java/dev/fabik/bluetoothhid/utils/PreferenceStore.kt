@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import android.util.Size
+import zxingcpp.BarcodeReader
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -53,8 +55,8 @@ enum class KeyboardLayout(var value: String) {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: US
     }
 }
-enum class ExtraKeys {
-    NONE, ENTER, TAB, SPACE, CUSTOM;
+enum class ExtraKeys(val suffix: String?) {
+    NONE(null), ENTER("\n"), TAB("\t"), SPACE(" "), CUSTOM(null);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NONE
     }
@@ -71,14 +73,15 @@ enum class FocusMode {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: AUTO
     }
 }
-enum class ScanResolution {
-    SD_480P, HD_720P, FHD_1080P, UHD_2160P;
+enum class ScanResolution(val size: Size) {
+    SD_480P(Size(640, 480)), HD_720P(Size(960, 720)),
+    FHD_1080P(Size(1440, 1080)), UHD_2160P(Size(2160, 1440));
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HD_720P
     }
 }
-enum class ScanFrequency {
-    FASTEST, FAST, NORMAL, SLOW;
+enum class ScanFrequency(val delayMs: Int) {
+    FASTEST(0), FAST(100), NORMAL(500), SLOW(1000);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NORMAL
     }
@@ -89,14 +92,21 @@ enum class OverlayType {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: SQUARE
     }
 }
-enum class Binarizer {
-    LOCAL_AVERAGE, GLOBAL_HISTOGRAM, FIXED_THRESHOLD, BOOL_CAST;
+enum class Binarizer(val readerValue: BarcodeReader.Binarizer) {
+    LOCAL_AVERAGE(BarcodeReader.Binarizer.LOCAL_AVERAGE),
+    GLOBAL_HISTOGRAM(BarcodeReader.Binarizer.GLOBAL_HISTOGRAM),
+    FIXED_THRESHOLD(BarcodeReader.Binarizer.FIXED_THRESHOLD),
+    BOOL_CAST(BarcodeReader.Binarizer.BOOL_CAST);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: LOCAL_AVERAGE
     }
 }
-enum class TextMode {
-    PLAIN, ECI, HRI, HEX, ESCAPED;
+enum class TextMode(val readerValue: BarcodeReader.TextMode) {
+    PLAIN(BarcodeReader.TextMode.PLAIN),
+    ECI(BarcodeReader.TextMode.ECI),
+    HRI(BarcodeReader.TextMode.HRI),
+    HEX(BarcodeReader.TextMode.HEX),
+    ESCAPED(BarcodeReader.TextMode.ESCAPED);
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HRI
     }
@@ -113,8 +123,9 @@ enum class ClearAfterTime(val value: Long?) {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: NEVER
     }
 }
-enum class ScanImageFormat {
-    JPEG, PNG, WEBP_LOSSY, WEBP_LOSSLESS;
+enum class ScanImageFormat(val mimeType: String, val extension: String) {
+    JPEG("image/jpeg", "jpg"), PNG("image/png", "png"),
+    WEBP_LOSSY("image/webp", "webp"), WEBP_LOSSLESS("image/webp", "webp");
 
     fun toCompressFormat(): Bitmap.CompressFormat {
         return when (this) {
@@ -160,6 +171,8 @@ open class PreferenceStore {
         val key: Preferences.Key<T>,
         val defaultValue: T
     ) {
+        // Safe: map value was stored via put(this, T) so the runtime type is always T
+        @Suppress("UNCHECKED_CAST")
         fun extract(prefs: Map<Preference<*>, *>): T = prefs[this] as? T ?: defaultValue
     }
 
@@ -234,6 +247,8 @@ open class PreferenceStore {
         val PREVIEW_STABILIZATION =
             booleanPreferencesKey("preview_stabilization_mode") defaultsTo false
         val SCAN_RESOLUTION = intPreferencesKey("scan_res").enumDefaultsTo(ScanResolution::fromIndex)
+        val INITIAL_ZOOM = floatPreferencesKey("initial_zoom") defaultsTo 1.0f
+        val ZOOM_GESTURES = stringSetPreferencesKey("zoom_gestures") defaultsTo setOf("0")
         // val AUTO_ZOOM = booleanPreferencesKey("auto_zoom") defaultsTo false - Removed
 
         // Scanner
@@ -246,6 +261,7 @@ open class PreferenceStore {
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
+        val AUTO_COPY_TO_CLIPBOARD = booleanPreferencesKey("auto_copy_to_clipboard") defaultsTo false
         val CLEAR_AFTER_SEND = booleanPreferencesKey("clear_after_send") defaultsTo false
         val CLEAR_AFTER_TIME =
             intPreferencesKey("clear_after_time") enumDefaultsTo ClearAfterTime::fromIndex
@@ -307,6 +323,8 @@ suspend fun Context.importPreferences(json: String): Int {
             if (!obj.has(key.name)) continue
             runCatching {
                 val prev = prefs[key]
+                // Each branch casts key to the concrete type matched by defaultValue — safe by construction
+                @Suppress("UNCHECKED_CAST")
                 when (pref.defaultValue) {
                     is Boolean -> prefs[key as Preferences.Key<Boolean>] = obj.getBoolean(key.name)
                     is Int -> prefs[key as Preferences.Key<Int>] = obj.getInt(key.name)
