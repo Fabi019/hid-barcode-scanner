@@ -68,13 +68,9 @@ $ 21 40
 ä 2F 40 04 00
 ë 2F 40 08 00
 ï 2F 40 0C 00
-ö 2F 40 12 00
-ü 2F 40 18 00
 Ä 2F 40 04 02
 Ë 2F 40 08 02
 Ï 2F 40 34 02
-Ö 2F 40 12 02
-Ü 2F 40 18 02
 ¨ 2F 40 2C 00
 ã 30 40 04 00
 õ 30 40 12 00
@@ -84,7 +80,6 @@ $ 21 40
 Ñ 30 40 11 02
 ~ 30 40 2C 00
 á 33 40 04 00
-é 33 40 08 00
 í 33 40 0C 00
 ó 33 40 12 00
 ú 33 40 18 00
@@ -105,3 +100,15 @@ $ 21 40
 Ò 32 40 12 02
 Ù 32 40 18 02
 ` 32 40 2C 00
+
+## -------------------------
+## NON USED DEAD KEYS
+## -------------------------
+## You can see here a complete mapping but it's now commented, because it's better for the HID emulator
+## to use just one key + modifier instead of a combination two keys + two modifiers (send time saving).
+## -------------------------
+## ö 2F 40 12 00
+## ü 2F 40 18 00
+## Ö 2F 40 12 02
+## Ü 2F 40 18 02
+## é 33 40 08 00
