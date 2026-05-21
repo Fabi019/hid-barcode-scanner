@@ -9,6 +9,27 @@ final def gitHash = providers.exec {
     commandLine('git', 'rev-parse', '--short=7', 'HEAD')
 }.standardOutput.asText.get().trim()
 
+def processedAssetsDir = layout.buildDirectory.dir('processed-assets')
+
+tasks.register('processAssets', Copy) {
+    filteringCharset = 'UTF-8'
+    from('src/main/assets') { exclude '**/*.layout' }
+    from('src/main/assets') {
+        include '**/*.layout'
+        filter { line -> (line.startsWith('##') || line.isBlank()) ? null : line }
+    }
+    into processedAssetsDir
+}
+
+android.sourceSets.main.assets.srcDirs = [processedAssetsDir]
+
+tasks.matching {
+    def n = it.name.toLowerCase()
+    (n.startsWith('merge') && n.endsWith('assets')) || n.contains('lint')
+}.configureEach {
+    dependsOn 'processAssets'
+}
+
 kotlin {
     jvmToolchain(11)
 }

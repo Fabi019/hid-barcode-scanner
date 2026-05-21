@@ -1,13 +1,14 @@
 ## Keymap overlay for a Polish Programmer keyboard
 
 ## -------------------------
-## SOME USEFUL INFORMATIONS
+## SOME USEFUL INFORMATION
 ## -------------------------
-##  ... for everyone who, just like me (winlin97), had no idea how it works, and want to make a custom keyboard layout.
+##  ... for everyone who, just like me (winlin97), had no idea how it works, and want to make a custom keyboard layout to allow the app to type in your own language.
 ## -------------------------
-## The PC (thanks to the HID interface) see this application just like the physical keyboard.
+## The PC (thanks to the HID interface) sees this application just like the physical keyboard.
 ## Application does not know the actual layout of the keyboard in the system.
-## We must to call the language-appropriate characters just as if we were typing them on a physical keyboard with this layout.
+## We must call the language-appropriate characters just as if we were typing them on a physical keyboard with this layout.
+## Simply - we're just simulating a human typing on a keyboard, but without keyboard - only knowing which key has which scancode and sending it via Bluetooth to PC.
 ## -------------------------
 ## This file contains a table of key mapping.
 ## Column order in the table: CHAR <-SPACE-> HID_KEY_SCANCODE <-SPACE-> MODIFIERS
@@ -24,7 +25,7 @@
 ## MODIFIERS such as LCTRL, LSHIFT, LALT, etc. can be combined using the “or” (|) bit operation.
 ## The modifier value is stored using 1 byte [8 bits] - that allows to combine modifiers, setting the corresponding bits to 1.
 ## Each modifier corresponds to one bit in the byte, so no bits overlap.
-## 00: none     [bit: 0000 0000] // DEFAULT VALUE - all modifiers is off
+## 00: none     [bit: 0000 0000] // DEFAULT VALUE - all modifiers are off
 ## 01: LCTRL    [bit: 0000 0001]
 ## 02: LSHIFT   [bit: 0000 0010]
 ## 04: LALT     [bit: 0000 0100]
@@ -34,11 +35,17 @@
 ## 40: RALT     [bit: 0100 0000] // "ALTGR" in polish programmers layout -> https://kbdlayout.info/KBDPL1/
 ## 80: RMETA    [bit: 1000 0000]
 ## So, to get RALT and LSHIFT in the same time we have: 0x40 | 0x02 -> [bit: 0100 0010] -> 0x42
+## Sounds a little bit too hard? Don't worry - I prepared a small tool to get the correct value for MODIFIERS.
+## Take a look here -> https://github.com/Fabi019/hid-barcode-scanner/issues/438
+## -------------------------
+## As you may know - commented mappings will be ignored. Comment lines start with "##"
 ## -------------------------
 ## More info -> https://source.android.com/docs/core/interaction/input/keyboard-devices
 ## -------------------------
 
+## -------------------------
 ## START OF THE RIGHT TABLE:
+## -------------------------
 ą 04 40
 ć 06 40
 ę 08 40
@@ -92,24 +99,38 @@ $ 21 02
 ) 27 02
 _ 2D 02
 + 2E 02
-~ 35 02
 
-ę 35 02 08 00
-ó 35 02 12 00
-ą 35 02 04 00
-ś 35 02 16 00
-ł 35 02 0F 00
-ż 35 02 1D 00
-ź 35 02 1B 00
-ć 35 02 06 00
-ń 35 02 11 00
-Ę 35 02 08 02
-Ó 35 02 12 02
-Ą 35 02 04 02
-Ś 35 02 16 02
-Ł 35 02 0F 02
-Ż 35 02 1D 02
-Ź 35 02 1B 02
-Ć 35 02 06 02
-Ń 35 02 11 02
+## -------------------------
+## DEAD KEYS
+## -------------------------
 ~ 35 02 2C 00
+
+
+## -------------------------
+## NON USED DEAD KEYS
+## -------------------------
+## You can see here a complete mapping but it's now commented, because it's better for the HID emulator
+## to use just one key + modifier instead of a combination two keys + two modifiers (send time saving).
+## -------------------------
+## ę 35 02 08 00
+## ó 35 02 12 00
+## ą 35 02 04 00
+## ś 35 02 16 00
+## ł 35 02 0F 00
+## ż 35 02 1D 00
+## ź 35 02 1B 00
+## ć 35 02 06 00
+## ń 35 02 11 00
+## Ę 35 02 08 02
+## Ó 35 02 12 02
+## Ą 35 02 04 02
+## Ś 35 02 16 02
+## Ł 35 02 0F 02
+## Ż 35 02 1D 02
+## Ź 35 02 1B 02
+## Ć 35 02 06 02
+## Ń 35 02 11 02
+
+## -------------------------
+## END OF THE RIGHT TABLE
+## -------------------------
