@@ -6,10 +6,12 @@ on:
     paths:
       - 'app/**'
       - 'build.gradle'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - 'app/**'
       - 'build.gradle'
+      - '.github/workflows/**'
 
 jobs:
   build:
