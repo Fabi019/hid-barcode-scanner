@@ -216,6 +216,7 @@
     <string name="press_run_to_evaluate">Press run to evaluate</string>
     <string name="custom_javascript">Custom JavaScript</string>
     <string name="custom_js_desc">Modify the scanned value using JS</string>
+    <string name="js_error">JS error: %s</string>
     <string name="editor_desc">Allows you to enter any JavaScript to modify the value of the code. Two constants are defined (\'format\' and \'code\'). Last statement is used as result (no return required).</string>
     <string name="editor">Editor</string>
     <string name="debug">Debug</string>

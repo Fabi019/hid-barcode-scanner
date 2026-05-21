@@ -213,10 +213,11 @@ object TemplateProcessor {
         scannerId: String? = null,
         barcodeType: String? = null,
         preserveUnsupportedPlaceholders: Boolean = false,
-        scanImageFileName: String? = null
+        scanImageFileName: String? = null,
+        regexGroups: List<String> = emptyList()
     ): String {
-        // Validation - ensure template contains at least one CODE placeholder
-        val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}")
+        // Validation - ensure template contains at least one CODE placeholder (including {CODE%N} syntax)
+        val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}|\\{CODE%\\d+\\}")
         if (!codeRegex.containsMatchIn(template)) {
             Log.e(TAG, "Template must contain at least one {CODE...} placeholder")
             return data // Fallback to raw data
@@ -250,6 +251,14 @@ object TemplateProcessor {
 
         // Begin template processing
         var processedTemplate = template
+
+        // Phase 0: Process {CODE%N} capture group placeholders
+        // {CODE%1} = first capture group, {CODE%2} = second, etc.
+        // Falls back to data (first group / full match) if the group doesn't exist
+        processedTemplate = processedTemplate.replace(Regex("\\{CODE%(\\d+)\\}")) { match ->
+            val groupIndex = match.groupValues[1].toIntOrNull() ?: 0
+            regexGroups.getOrElse(groupIndex - 1) { data }
+        }
 
         // Phase 1: Extract and remove global encoding placeholders
         val globalEncodings = extractGlobalEncodings(processedTemplate)

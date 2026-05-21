@@ -61,8 +61,11 @@ import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -90,6 +93,10 @@ class CameraViewModel : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
+    // Emits error messages when JavaScript evaluation fails
+    private val _jsErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val jsErrors: SharedFlow<String> = _jsErrors.asSharedFlow()
+
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
     private var cameraInfo: CameraInfo? = null
@@ -97,6 +104,9 @@ class CameraViewModel : ViewModel() {
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
     var onBarcodeDetected: (String?, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
+
+    // Regex capture groups from the last scanned barcode (groups 1..N, group 0 is the full match)
+    var lastRegexGroups: List<String> = emptyList()
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -479,12 +489,19 @@ class CameraViewModel : ViewModel() {
             var value = v
 
             _scanRegex?.let { re ->
-                // extract first capture group if it exists
+                // extract regex capture groups if they exist
                 re.find(value)?.let { match ->
+                    // Store all capture groups (1..N) for {CODE%N} template support
+                    lastRegexGroups = match.groupValues.drop(1)
+                    // Use first capture group as the main value (backward compat)
                     match.groupValues.getOrNull(1)?.let { group ->
                         value = group
                     }
+                } ?: run {
+                    lastRegexGroups = emptyList()
                 }
+            } ?: run {
+                lastRegexGroups = emptyList()
             }
 
             _jsEngineService?.let { s ->
@@ -691,11 +708,25 @@ class CameraViewModel : ViewModel() {
         value: String,
         format: String
     ): String {
-        return service.evaluateTemplate(
+        var lastError: String? = null
+
+        val result = service.evaluateTemplate(
             _jsCode ?: return value,
             value,
             format,
-        ) ?: value
+        ) { message ->
+            // Capture error messages (ignore execution start/end markers)
+            if (!message.startsWith("---")) {
+                lastError = message
+            }
+        }
+
+        if (result == null) {
+            // Emit the captured error message (or a generic fallback) for UI display
+            _jsErrors.tryEmit(lastError ?: "JS evaluation failed")
+        }
+
+        return result ?: value
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {

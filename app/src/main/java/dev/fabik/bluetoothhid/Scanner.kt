@@ -208,6 +208,16 @@ fun Scanner(
     val keyboardDialog = rememberDialogState()
     val cameraVM = viewModel<CameraViewModel>()
 
+    // Show a Snackbar when JavaScript evaluation fails
+    LaunchedEffect(cameraVM) {
+        cameraVM.jsErrors.collect { error ->
+            snackbarHostState.showSnackbar(
+                message = context.getString(R.string.js_error, error),
+                withDismissAction = true
+            )
+        }
+    }
+
     Scaffold(
         topBar = {
             ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)

@@ -19,11 +19,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.Devices
 import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +96,7 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
+                val cameraVM = viewModel<CameraViewModel>()
                 Scanner(currentDevice) { text, format, imageName ->
                     scope.launch {
                         val barcodeType = format?.let { ZXingAnalyzer.index2String(it) }
@@ -103,7 +106,8 @@ fun NavGraph() {
                             "SCAN",
                             null,
                             barcodeType,
-                            imageName = imageName
+                            imageName = imageName,
+                            regexGroups = cameraVM.lastRegexGroups
                         )
                     }
                 }
