@@ -139,9 +139,10 @@
     <string name="filter_desc_long">Supports common regex syntax. Use empty string or .* to match everything. If the regex contains a capture group "(…)", the value of the group will be used.</string>
     <string name="custom_template">Custom template</string>
     <string name="custom_templ_desc">Allows you to set a custom template</string>
-    <string name="custom_templ_desc_long">Make sure to set \'Extra keys\' to \'Custom\'.\n\n
+    <string name="custom_templ_desc_long" formatted="false">Make sure to set \'Extra keys\' to \'Custom\'.\n\n
         CODE placeholders:\n
-        • {CODE} - plain barcode\n
+        • {CODE} - plain barcode value\n
+        • {CODE%N} - Nth regex capture group (e.g. {CODE%1}, {CODE%2}); falls back to {CODE} if the group doesn\'t exist or no regex is set\n
         • Encoding: _HEX, _B64 can be combined in any order\n
         • Examples: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
         Date/Time placeholders with optional formatting:\n

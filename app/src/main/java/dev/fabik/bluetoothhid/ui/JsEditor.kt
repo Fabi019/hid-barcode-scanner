@@ -130,9 +130,11 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
                 scope.launch {
                     outputText = ""
 
-                    val result = jsEngine?.evaluateTemplate(code, value, type) { message ->
-                        outputText += message + "\n"
-                    }
+                    val result = jsEngine?.evaluateTemplate(
+                        code, value, type,
+                        onOutput = { message -> outputText += message + "\n" },
+                        onException = { throwable -> outputText += "Error: ${throwable.message ?: "Unknown error"}\n" }
+                    )
 
                     outputText += when {
                         result == null -> "JSEngine not initialized or unsupported! Make sure that you have enabled the feature."

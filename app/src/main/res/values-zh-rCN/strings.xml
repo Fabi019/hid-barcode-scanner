@@ -147,9 +147,10 @@
     <string name="filter_desc_long">支持常见的正则表达式语法。使用空字符串或 .* 来匹配所有内容。如果正则表达式包含捕获组\"(…)\"，则将使用该组的值。</string>
     <string name="custom_template">自定义模板</string>
     <string name="custom_templ_desc">允许您设置自定义模板</string>
-    <string name="custom_templ_desc_long">请确保将\"附加按键\"设置为\"自定义\"。\n\n
+    <string name="custom_templ_desc_long" formatted="false">请确保将\"附加按键\"设置为\"自定义\"。\n\n
         代码占位符：\n
         • {CODE} - 纯条码值\n
+        • {CODE%N} - 第N个正则捕获组（例如 {CODE%1}、{CODE%2}）；若该组不存在或未设置正则表达式则回退到 {CODE}\n
         • 编码: _HEX, _B64 可以任意顺序组合\n
         • 示例: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
         Date/Time 占位符（支持可选格式）：\n
@@ -222,6 +223,7 @@
     <string name="camera_error">相机错误！</string>
     <string name="camera_error_desc">初始化相机时出错。请重启应用或设备。如果问题持续，请在Github上提交新问题。</string>
     <string name="press_run_to_evaluate">按运行进行评估</string>
+    <string name="js_error">JS 错误：%s</string>
     <string name="custom_javascript">自定义JavaScript</string>
     <string name="custom_js_desc">使用JavaScript修改扫描值</string>
     <string name="editor_desc">允许您输入任何JavaScript来修改码的值。定义了两个常量（\'format\' 和 \'code\'）。最后一条语句将作为结果（不需要return）。</string>
