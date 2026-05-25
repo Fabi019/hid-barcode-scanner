@@ -75,6 +75,11 @@ class BluetoothController(var context: Context) {
     private var _isSending: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isSending = _isSending.asStateFlow()
 
+    // Number of typed characters from the last completed HID send — used for precise undo.
+    // Null means no completed send is available for undo (or last send was cancelled).
+    private var _lastSentCharCount: MutableStateFlow<Int?> = MutableStateFlow(null)
+    val lastSentCharCount = _lastSentCharCount.asStateFlow()
+
     private var _isCapsLockOn: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isCapsLockOn = _isCapsLockOn.asStateFlow()
 
@@ -112,6 +117,12 @@ class BluetoothController(var context: Context) {
                     PreferenceStore.QOS_DELAY_VARIATION.extract(it)
                 )
             }
+
+            // Clean up any stale HID app registration from a previous process instance.
+            // This can happen on Android 12+ when the OS kills the service without calling
+            // onDestroy, leaving the Bluetooth stack with an orphaned HID registration.
+            // Toggling Bluetooth (which clears the stack) was the only workaround before this fix.
+            hidDevice?.unregisterApp()
 
             hidDevice?.registerApp(
                 Descriptor.SDP_RECORD,
@@ -454,6 +465,40 @@ class BluetoothController(var context: Context) {
         }
     }
 
+    /**
+     * Cancel the currently running send operation (HID mode only).
+     * The keyboard sender will stop after the current key and send a release report (0,0)
+     * to avoid stuck keys on the host.
+     *
+     * Not applicable to RFCOMM mode: in RFCOMM the value is sent as a raw string directly
+     * into the stream in one shot, so there is nothing to interrupt by the time the UI reacts.
+     */
+    fun cancelSending() {
+        if (currentConnectionMode != ConnectionMode.HID) return
+        Log.d(TAG, "cancelSending")
+        keyboardSender?.requestCancel()
+    }
+
+    /**
+     * Undo the last sent value by transmitting one backspace per character (HID mode only).
+     * Clears [lastSentString] afterwards so double-undo is not possible.
+     *
+     * Not applicable to RFCOMM mode: backspace has no defined meaning in a raw byte stream —
+     * the receiving application would need to interpret it, which is not guaranteed.
+     */
+    suspend fun undoLastSent() {
+        if (currentConnectionMode != ConnectionMode.HID) return
+        val count = _lastSentCharCount.value ?: return
+        if (!_isSending.compareAndSet(expect = false, update = true)) return
+        try {
+            Log.d(TAG, "undoLastSent: $count backspaces")
+            keyboardSender?.sendBackspaces(count)
+            _lastSentCharCount.update { null }
+        } finally {
+            _isSending.update { false }
+        }
+    }
+
     fun disconnect(): Boolean {
         if (_isSending.value) {
             return false
@@ -521,7 +566,12 @@ class BluetoothController(var context: Context) {
             )
             rfcommController.sendProcessedData(processedString)
         } else {
-            // HID mode - process template for HID conversion
+            // HID mode - process template for HID conversion.
+            // expandCode controls whether HID template tokens inside the barcode value (e.g.
+            // "{ENTER}" embedded in the scanned data) are expanded as real keypresses (true)
+            // or typed as literal text (false, the default).  This is handled entirely inside
+            // TemplateProcessor by escaping { } in the barcode value when expandCode=false;
+            // KeyboardSender no longer needs to know about it.
             val processedString = TemplateProcessor.processTemplate(
                 string,
                 template,
@@ -530,17 +580,18 @@ class BluetoothController(var context: Context) {
                 scanTimestamp,
                 scannerID,
                 barcodeType,
-                false,  // HID always false - placeholders needed for KeyTranslator
-                imageName,
-                regexGroups
+                preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
+                scanImageFileName = imageName,
+                regexGroups = regexGroups,
+                expandCode = expand
             )
+            // Store the precise typed-character count for undo (null = cancelled, not stored)
             keyboardSender?.sendProcessedString(
                 processedString,
                 sendDelay.toLong(),
                 extraKeys,
-                layout.value,
-                expand
-            )
+                layout.value
+            )?.let { charCount -> _lastSentCharCount.update { charCount } }
         }
 
         _isSending.update { false }

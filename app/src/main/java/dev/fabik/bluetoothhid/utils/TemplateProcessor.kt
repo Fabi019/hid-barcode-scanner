@@ -23,6 +23,15 @@ object TemplateProcessor {
     private const val TAG = "TemplateProcessor"
 
     /**
+     * Private Use Area sentinels used to escape literal `{` / `}` characters that originate
+     * from barcode data when [expandCode] is false.  They are invisible to the HID template
+     * regex in [KeyTranslator] (which only matches `{…}`) and are decoded back to `{` / `}`
+     * in the text segments of [KeyTranslator.translateStringWithTemplate] before keymap lookup.
+     */
+    internal const val ESCAPED_OPEN_BRACE  = '\uE001'  // Unicode Private Use Area U+E001
+    internal const val ESCAPED_CLOSE_BRACE = '\uE002'  // Unicode Private Use Area U+E002
+
+    /**
      * Template processing modes that determine output formatting and placeholder behavior.
      */
     enum class TemplateMode {
@@ -134,11 +143,26 @@ object TemplateProcessor {
     }
 
     /**
+     * Escapes `{` and `}` in barcode-derived text using Private Use Area sentinels so that
+     * HID template tokens embedded in the barcode value (e.g. `{ENTER}`, `{TAB}`) are NOT
+     * expanded as real keypresses when `expandCode = false`.
+     *
+     * [ESCAPED_OPEN_BRACE] () →   and  [ESCAPED_CLOSE_BRACE] () →  are
+     * decoded by [KeyTranslator.restoreEscapedBraces] before keymap lookup.
+     */
+    private fun escapeBracesForHID(value: String): String =
+        value.replace('{', ESCAPED_OPEN_BRACE).replace('}', ESCAPED_CLOSE_BRACE)
+
+    /**
      * Applies global encoding in HID mode - encodes only text, preserves key placeholders.
      *
      * In HID mode, key placeholders like {TAB}, {ENTER}, {F1-24}, etc. are NOT converted to text
      * in TemplateProcessor - they are passed to KeyTranslator for HID key conversion.
      * Global encoding must preserve these placeholders and only encode actual text content.
+     *
+     * Sentinel characters ( / ) introduced by [escapeBracesForHID] are decoded to
+     * their original { / } before encoding so the encoded output reflects the true byte values
+     * (e.g. 7b / 7d in hex) rather than the sentinel codepoints.
      *
      * @param template The template string with text and key placeholders
      * @param encodings List of encodings to apply in order ("HEX", "B64")
@@ -170,12 +194,16 @@ object TemplateProcessor {
             parts.add(Pair(template.substring(lastIndex), false))
         }
 
-        // Encode only text parts, preserve key placeholders
+        // Encode only text parts, preserve key placeholders.
+        // Decode brace sentinels (→{, →}) before encoding so that literal
+        // braces from barcode data are encoded to their true byte values (e.g. 7b/7d in hex)
+        // rather than to the sentinel codepoints.
         return parts.joinToString("") { (content, isKey) ->
             if (isKey) {
                 content // preserve key placeholders for KeyTranslator
             } else {
-                applyEncodings(content, encodings, hexFormat) // encode text
+                val decoded = content.replace(ESCAPED_OPEN_BRACE, '{').replace(ESCAPED_CLOSE_BRACE, '}')
+                applyEncodings(decoded, encodings, hexFormat) // encode text
             }
         }
     }
@@ -202,6 +230,13 @@ object TemplateProcessor {
      * @param scannerId Scanner hardware identifier (optional)
      * @param barcodeType Barcode type string (e.g., "QR_CODE", "CODE_128", "UNKNOWN")
      * @param preserveUnsupportedPlaceholders If true (RFCOMM only), keep unsupported HID placeholders as text
+     * @param expandCode HID only — when false (default), any HID template tokens such as `{ENTER}` or
+     *   `{TAB}` that are embedded in the scanned barcode value itself are escaped with Private Use
+     *   Area sentinels ([ESCAPED_OPEN_BRACE] / [ESCAPED_CLOSE_BRACE]) so [KeyTranslator] types them
+     *   as literal `{`/`}` characters rather than expanding them as real keypresses.
+     *   When true, those tokens are left as-is and will be expanded by [KeyTranslator].
+     *   Has no effect in RFCOMM mode or when the value is encoded via `_HEX` / `_B64` (the encoding
+     *   already eliminates `{` and `}` from the output).
      * @return Processed template with all placeholders replaced
      */
     fun processTemplate(
@@ -214,13 +249,17 @@ object TemplateProcessor {
         barcodeType: String? = null,
         preserveUnsupportedPlaceholders: Boolean = false,
         scanImageFileName: String? = null,
-        regexGroups: List<String> = emptyList()
+        regexGroups: List<String> = emptyList(),
+        expandCode: Boolean = false
     ): String {
         // Validation - ensure template contains at least one CODE placeholder (including {CODE%N} syntax)
         val codeRegex = Regex("\\{[^{}]*CODE[^{}]*\\}|\\{CODE%\\d+\\}")
         if (!codeRegex.containsMatchIn(template)) {
             Log.e(TAG, "Template must contain at least one {CODE...} placeholder")
-            return data // Fallback to raw data
+            // Apply the same brace escaping as the normal Phase 3 path: if expandCode=false
+            // in HID mode, return the barcode value with { } escaped so that any embedded HID
+            // template tokens (e.g. "{ENTER}") are typed as literal text rather than executed.
+            return if (!expandCode && mode == TemplateMode.HID) escapeBracesForHID(data) else data
         }
 
         // Create single Date instance to ensure timestamp consistency across all formatters
@@ -254,10 +293,13 @@ object TemplateProcessor {
 
         // Phase 0: Process {CODE%N} capture group placeholders
         // {CODE%1} = first capture group, {CODE%2} = second, etc.
-        // Falls back to data (first group / full match) if the group doesn't exist
+        // Falls back to data (first group / full match) if the group doesn't exist.
+        // In HID mode with expandCode=false, escape { } in the substituted value so that
+        // any HID template tokens embedded in the regex group are typed as literal text.
         processedTemplate = processedTemplate.replace(Regex("\\{CODE%(\\d+)\\}")) { match ->
             val groupIndex = match.groupValues[1].toIntOrNull() ?: 0
-            regexGroups.getOrElse(groupIndex - 1) { data }
+            val value = regexGroups.getOrElse(groupIndex - 1) { data }
+            if (!expandCode && mode == TemplateMode.HID) escapeBracesForHID(value) else value
         }
 
         // Phase 1: Extract and remove global encoding placeholders
@@ -280,6 +322,9 @@ object TemplateProcessor {
 
             // Prepare encodings list
             var allEncodings: List<String> = emptyList()
+            // Track whether this placeholder's value comes from barcode data,
+            // so we can optionally escape HID template tokens in it (see expandCode).
+            var isCodeDerived = false
 
             // Get raw value for the placeholder
             val rawValue = try {
@@ -314,7 +359,10 @@ object TemplateProcessor {
                                 val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss" }
                                 SimpleDateFormat(format, Locale.getDefault()).format(now)
                             }
-                            "CODE" -> data
+                            "CODE" -> {
+                                isCodeDerived = true
+                                data
+                            }
                             "SPACE" -> " "
                             "CR" -> "\r"
                             "LF" -> "\n"
@@ -327,9 +375,20 @@ object TemplateProcessor {
                 matchResult.value  // Return original on error
             }
 
-            // Apply encodings if any
+            // When encodings are present ({CODE_HEX}, {CODE_B64} etc.), the encoding itself
+            // eliminates any { } in the barcode value (they become "7b"/"7d" in hex, or
+            // vanish into base64).  Encoding must receive the RAW value so it produces the
+            // correct bytes; escaping before encoding would encode the sentinel codepoints
+            // instead of the original braces.
+            //
+            // When there are no encodings and the value is CODE-derived, we escape { } so
+            // that HID template tokens embedded in the barcode (e.g. "{ENTER}") are typed
+            // as literal text by KeyTranslator rather than expanded as real keypresses —
+            // unless expandCode=true, in which case we intentionally leave them intact.
             if (allEncodings.isNotEmpty()) {
                 applyEncodings(rawValue, allEncodings, hexFormat)
+            } else if (isCodeDerived && !expandCode && mode == TemplateMode.HID) {
+                escapeBracesForHID(rawValue)
             } else {
                 rawValue
             }
@@ -351,12 +410,14 @@ object TemplateProcessor {
             }
         }
 
-        // Phase 5: Mark unsupported placeholders in HID mode
-        if (mode == TemplateMode.HID && !preserveUnsupportedPlaceholders) {
-            // Replace unsupported HID placeholders (TAB, ENTER) with marker
-            processedTemplate = processedTemplate.replace("{TAB}", "\uFFFD{TAB}")
-            processedTemplate = processedTemplate.replace("{ENTER}", "\uFFFD{ENTER}")
-        }
+        // NOTE: there is intentionally no "Phase 5" here.  A previous version prepended \uFFFD
+        // to {TAB} and {ENTER} in HID mode, but that was harmful:
+        //   \u2022 KeyTranslator cannot type \uFFFD (it's not in any keymap) \u2192 spurious warnings.
+        //   \u2022 countTypedChars counted the \uFFFD as an extra plain character \u2192 undo sent one
+        //     too many backspaces per {TAB}/{ENTER} in the user's template.
+        // {TAB} and {ENTER} from the user's template are correctly handled by KeyTranslator as-is.
+        // {TAB}/{ENTER} originating from the barcode value are now escaped in Phase 0 / Phase 3
+        // when expandCode=false, so they are typed literally rather than expanded.
 
         Log.d(TAG, "Processed template for $mode: '$template' -> '$processedTemplate'")
         return processedTemplate

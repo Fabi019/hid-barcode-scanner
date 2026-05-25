@@ -43,11 +43,12 @@ fun SwitchPreference(
     title: String,
     desc: String,
     icon: ImageVector? = null,
+    enabled: Boolean = true,
     preference: PreferenceStore.Preference<Boolean>
 ) {
     var checked by rememberPreferenceNull(preference)
 
-    SwitchPreference(title, desc, icon, checked) {
+    SwitchPreference(title, desc, icon, checked, enabled) {
         checked = it
     }
 }
@@ -58,6 +59,7 @@ fun SwitchPreference(
     desc: String,
     icon: ImageVector? = null,
     checked: Boolean?,
+    enabled: Boolean = true,
     onToggle: (Boolean) -> Unit
 ) {
     ButtonPreference(
@@ -65,10 +67,12 @@ fun SwitchPreference(
             checked?.let { c ->
                 Switch(
                     checked = c,
-                    onCheckedChange = null
+                    onCheckedChange = null,
+                    enabled = enabled
                 )
             }
-        }
+        },
+        enabled = enabled
     ) {
         checked?.let {
             onToggle(!it)

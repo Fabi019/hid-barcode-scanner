@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.utils
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -139,29 +140,214 @@ class TemplateProcessorTest {
     }
 
     @Test
-    fun testUnsupportedPlaceholdersInHIDMode() {
-        // Test that unsupported placeholders in HID mode are replaced with markers
+    fun testHidTemplateFromUserTemplatePassedThrough() {
+        // {TAB} in the user's own template must reach KeyTranslator as-is (no \uFFFD prefix,
+        // no escaping) so it is expanded as a real Tab keypress.
+        // Phase 5 was removed because it incorrectly prepended \uFFFD and broke countTypedChars.
         val result = TemplateProcessor.processTemplate(
             data = "test",
             template = "{CODE}{TAB}",
             mode = TemplateProcessor.TemplateMode.HID,
             preserveUnsupportedPlaceholders = false
         )
-        // {TAB} should be replaced with a marker in HID mode
-        assertEquals("test\uFFFD{TAB}", result)
+        assertEquals("test{TAB}", result)
     }
 
     @Test
     fun testPreserveUnsupportedPlaceholders() {
-        // Test preserveUnsupported flag
+        // preserveUnsupportedPlaceholders only affects RFCOMM mode (whether unsupported HID
+        // placeholders are encoded as literal text or removed).  In HID mode the flag has
+        // no observable effect since Phase 5 was removed; {TAB} passes through regardless.
         val result = TemplateProcessor.processTemplate(
             data = "test",
             template = "{CODE}{TAB}",
             mode = TemplateProcessor.TemplateMode.HID,
             preserveUnsupportedPlaceholders = true
         )
-        // {TAB} should be kept as-is when preserveUnsupported is true
         assertEquals("test{TAB}", result)
+    }
+
+    // --- expandCode tests ---
+
+    @Test
+    fun testExpandCodeFalse_bracesInBarcodeEscaped() {
+        // When expandCode=false, { } embedded in the barcode value must be escaped with
+        // Private Use Area sentinels so KeyTranslator types them as literal characters
+        // rather than expanding e.g. {TAB} as a real Tab keypress.
+        val esc = TemplateProcessor.ESCAPED_OPEN_BRACE
+        val escClose = TemplateProcessor.ESCAPED_CLOSE_BRACE
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{CODE}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        assertEquals("A${esc}TAB${escClose}B", result)
+    }
+
+    @Test
+    fun testExpandCodeTrue_bracesInBarcodeNotEscaped() {
+        // When expandCode=true, {TAB} from barcode data is left as-is so KeyTranslator
+        // expands it as a real Tab keypress.
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{CODE}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = true
+        )
+        assertEquals("A{TAB}B", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_templateHIDKeysNotEscaped() {
+        // {ENTER} that comes from the USER'S TEMPLATE (not the barcode) must never be escaped,
+        // regardless of expandCode.  It should always reach KeyTranslator as {ENTER}.
+        val esc = TemplateProcessor.ESCAPED_OPEN_BRACE
+        val escClose = TemplateProcessor.ESCAPED_CLOSE_BRACE
+        val result = TemplateProcessor.processTemplate(
+            data = "hello",
+            template = "{CODE}{ENTER}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // barcode "hello" has no braces \u2192 no escaping in it; {ENTER} from template stays
+        assertEquals("hello{ENTER}", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_codeHexNotAffected() {
+        // {CODE_HEX} encodes the barcode value to hex; the encoding naturally eliminates
+        // { } so escaping must NOT be applied before encoding (it would corrupt the sentinel
+        // codepoints into the hex output instead of the original brace bytes 7b/7d).
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{CODE_HEX}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // "A{TAB}B" = 0x41, 0x7b, 0x54, 0x41, 0x42, 0x7d, 0x42
+        assertEquals("417b5441427d42", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_globalHexDecodedCorrectly() {
+        // {GLOBAL_HEX}{CODE} with expandCode=false: the barcode value is escaped (sentinels)
+        // during Phase 3.  applyGlobalEncodingHID must decode the sentinels back to { }
+        // before encoding so the hex output reflects the true bytes 7b/7d.
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{GLOBAL_HEX}{CODE}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // "A{TAB}B" in hex (plain text including the literal braces)
+        assertEquals("417b5441427d42", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_f2PrefixAndEnterSuffix() {
+        // Template {F2}{CODE}{ENTER}: F2 and ENTER from the template must never be escaped;
+        // only the barcode value substituted via {CODE} is subject to expandCode escaping.
+        val esc = TemplateProcessor.ESCAPED_OPEN_BRACE
+        val escClose = TemplateProcessor.ESCAPED_CLOSE_BRACE
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{F2}{CODE}{ENTER}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // "ABC" has no braces \u2192 no escaping; template keys pass through unchanged
+        assertEquals("{F2}ABC{ENTER}", result)
+    }
+
+    @Test
+    fun testExpandCodeTrue_f2PrefixAndEnterSuffix() {
+        // Same scenario with expandCode=true: identical result because "ABC" has no braces.
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{F2}{CODE}{ENTER}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = true
+        )
+        assertEquals("{F2}ABC{ENTER}", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_codeB64NotAffected() {
+        // {CODE_B64} encodes the barcode value to base64; encoding must receive RAW data,
+        // not sentinel-escaped data, so the result reflects the true byte values.
+        // Base64 output never contains { or }, so no escaping is needed after encoding.
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{CODE_B64}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // "A{TAB}B" = bytes [0x41,0x7b,0x54,0x41,0x42,0x7d,0x42] → base64 "QXtUQUJ9Qg=="
+        assertEquals("QXtUQUJ9Qg==", result)
+        // Verify no sentinel chars leaked into the output
+        assertFalse(result.contains(TemplateProcessor.ESCAPED_OPEN_BRACE))
+        assertFalse(result.contains(TemplateProcessor.ESCAPED_CLOSE_BRACE))
+    }
+
+    @Test
+    fun testExpandCodeFalse_globalB64DecodedCorrectly() {
+        // {GLOBAL_B64}{CODE} with expandCode=false: sentinels in the CODE value must be
+        // decoded back to { } before base64 encoding so the output reflects "A{TAB}B".
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{GLOBAL_B64}{CODE}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // Same bytes as CODE_B64 case
+        assertEquals("QXtUQUJ9Qg==", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_globalHexWithTemplateEnterPreserved() {
+        // When the user's template combines {GLOBAL_HEX} with a {ENTER} key suffix, the
+        // barcode text must be hex-encoded (including any literal braces) while {ENTER}
+        // from the TEMPLATE is preserved as a key placeholder for KeyTranslator.
+        val result = TemplateProcessor.processTemplate(
+            data = "A{TAB}B",
+            template = "{GLOBAL_HEX}{CODE}{ENTER}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false
+        )
+        // Text part "A{TAB}B" hex-encoded → "417b5441427d42"; {ENTER} from template preserved
+        assertEquals("417b5441427d42{ENTER}", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_rfcommModeUnchanged() {
+        // expandCode has no effect in RFCOMM mode; {ENTER} in barcode data should be
+        // substituted literally and then expanded by the RFCOMM phase 2 replacement.
+        val result = TemplateProcessor.processTemplate(
+            data = "A{ENTER}B",
+            template = "{CODE}",
+            mode = TemplateProcessor.TemplateMode.RFCOMM,
+            expandCode = false
+        )
+        // RFCOMM mode: {ENTER} in the barcode stays as literal text; it was never a template
+        // in RFCOMM context (Phase 2 only replaces {ENTER} that appear in the template string,
+        // not inside the already-substituted {CODE} value).
+        assertEquals("A{ENTER}B", result)
+    }
+
+    @Test
+    fun testExpandCodeFalse_regexGroupEscaped() {
+        // {CODE%1} with expandCode=false: the regex group value should also have braces escaped.
+        val esc = TemplateProcessor.ESCAPED_OPEN_BRACE
+        val escClose = TemplateProcessor.ESCAPED_CLOSE_BRACE
+        val result = TemplateProcessor.processTemplate(
+            data = "full",
+            template = "{CODE%1}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            expandCode = false,
+            regexGroups = listOf("X{TAB}Y")
+        )
+        assertEquals("X${esc}TAB${escClose}Y", result)
     }
 
     @Test

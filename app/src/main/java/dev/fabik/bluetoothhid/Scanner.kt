@@ -45,6 +45,8 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
@@ -55,6 +57,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -582,8 +585,11 @@ private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
 }
 
 /**
- * Floating action button to send the current barcode to the connected device.
- * If the currentBarcode is null, the button is hidden.
+ * Floating action button area to send the current barcode to the connected device.
+ *
+ * - Normal state: Send FAB. If [enableUndoSend] is enabled and there is a last sent value,
+ *   a small Undo button is shown to the left of the Send FAB.
+ * - Sending state: Cancel FAB that stops the current transmission.
  *
  * @param onClick callback to send text to the current device
  */
@@ -591,31 +597,50 @@ private fun VolumeKeyHandler(onPress: (Int) -> Boolean) {
 @Composable
 private fun SendToDeviceFAB(onClick: () -> Unit) {
     val controller = LocalController.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     controller?.let {
-        val colorScheme = MaterialTheme.colorScheme
         val isSending by controller.isSending.collectAsStateWithLifecycle()
+        val lastSentCharCount by controller.lastSentCharCount.collectAsStateWithLifecycle()
+        val enableUndoSend by context.getPreferenceStateDefault(PreferenceStore.ENABLE_UNDO_SEND)
+        val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+        val isHidMode = connectionMode != ConnectionMode.RFCOMM.ordinal
 
-        val (containerColor, contentColor) = remember(isSending) {
-            if (isSending) {
-                colorScheme.surface.copy(alpha = 0.12f) to
-                        colorScheme.onSurface.copy(alpha = 0.32f)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Undo button: HID mode only — visible when undo is enabled and a completed send exists
+            if (isHidMode && !isSending && enableUndoSend && lastSentCharCount != null) {
+                SmallFloatingActionButton(
+                    onClick = { scope.launch { controller.undoLastSent() } },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Undo, stringResource(R.string.undo_last_sent))
+                }
+            }
+
+            if (isHidMode && isSending) {
+                // Cancel button: HID mode only — stops the current transmission
+                ExtendedFloatingActionButton(
+                    text = { Text(stringResource(R.string.cancel)) },
+                    icon = { Icon(Icons.Default.Close, stringResource(R.string.cancel)) },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    onClick = { controller.cancelSending() }
+                )
             } else {
-                colorScheme.primary to colorScheme.onPrimary
+                ExtendedFloatingActionButton(
+                    text = { Text(stringResource(R.string.send_to_device)) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.Send, "Send") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    onClick = onClick
+                )
             }
         }
-
-        ExtendedFloatingActionButton(
-            text = {
-                Text(stringResource(R.string.send_to_device))
-            },
-            icon = {
-                Icon(Icons.AutoMirrored.Filled.Send, "Send")
-            },
-            contentColor = contentColor,
-            containerColor = containerColor,
-            onClick = { if (!isSending) onClick() }
-        )
     }
 }
 

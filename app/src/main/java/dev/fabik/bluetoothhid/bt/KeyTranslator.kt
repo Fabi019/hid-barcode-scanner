@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid.bt
 import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import java.util.Collections
 
 // Represents a key with its modifier and hid scan code
@@ -15,6 +16,17 @@ typealias Keymap = Map<Char, Pair<Key, Key?>>
 class KeyTranslator(context: Context) {
     companion object {
         private const val TAG = "KeyTranslator"
+
+        /**
+         * Private Use Area sentinels written by [TemplateProcessor.escapeBracesForHID] when
+         * `expandCode = false`.  They mark literal `{` / `}` characters that originated from
+         * the scanned barcode value and must be decoded back to braces before keymap lookup,
+         * so that embedded HID template tokens are typed as text rather than executed.
+         *
+         * Must stay in sync with [TemplateProcessor.ESCAPED_OPEN_BRACE] / [TemplateProcessor.ESCAPED_CLOSE_BRACE].
+         */
+        private const val ESCAPED_OPEN_BRACE = TemplateProcessor.ESCAPED_OPEN_BRACE
+        private const val ESCAPED_CLOSE_BRACE = TemplateProcessor.ESCAPED_CLOSE_BRACE
 
         const val LCTRL: UByte = 0x01u
         const val LSHIFT: UByte = 0x02u
@@ -30,6 +42,7 @@ class KeyTranslator(context: Context) {
         private val RETURN = '\n' to (Key(0u, 0x28u) to null)
 
         val CAPS_LOCK_KEY = Key(0u, 0x39u)
+        val BACKSPACE_KEY = Key(0u, 0x2Au)
 
         private const val CUSTOM_KEYMAP_FILE = "custom.layout"
         private var customKeyMapLoaded = false
@@ -186,6 +199,17 @@ class KeyTranslator(context: Context) {
         }
     }
 
+    /**
+     * Restores Private Use Area brace sentinels introduced by [TemplateProcessor.escapeBracesForHID]
+     * (when `expandCode = false`) back to their original `{` / `}` characters.
+     *
+     * This is called on the plain-text segments *between* HID template matches inside
+     * [translateStringWithTemplate], so that literal braces originating from barcode data are
+     * typed as real characters rather than remaining as unrecognised codepoints.
+     */
+    private fun restoreEscapedBraces(text: String): String =
+        text.replace(ESCAPED_OPEN_BRACE, '{').replace(ESCAPED_CLOSE_BRACE, '}')
+
     // Translates a string into a list of keys using a template string
     // Note: Basic templates (CODE, DATE, TIME, etc.) should be processed by TemplateProcessor first
     fun translateStringWithTemplate(
@@ -198,8 +222,9 @@ class KeyTranslator(context: Context) {
 
         var startIdx = 0
         templateRegex.findAll(processedString).forEach {
-            // Adds everything before the template
-            val before = processedString.substring(startIdx, it.range.first)
+            // Adds everything before the template, restoring any escaped braces that came
+            // from barcode data (expandCode=false path in TemplateProcessor).
+            val before = restoreEscapedBraces(processedString.substring(startIdx, it.range.first))
             keys.addAll(translateString(before, locale))
 
             // Process HID-specific template
@@ -220,8 +245,8 @@ class KeyTranslator(context: Context) {
             startIdx = it.range.last + 1
         }
 
-        // Adds the rest of the template
-        val after = processedString.substring(startIdx)
+        // Adds the rest of the template, also restoring any trailing escaped braces.
+        val after = restoreEscapedBraces(processedString.substring(startIdx))
         keys.addAll(translateString(after, locale))
 
         return keys
@@ -262,6 +287,41 @@ class KeyTranslator(context: Context) {
                 keys.add(Key(t.first or modifiers, t.second))
             }
         }
+    }
+
+    /**
+     * Counts the number of characters that will actually appear as typed text on the host
+     * for a given [processedString] going through [translateStringWithTemplate].
+     *
+     * - Regular chars: each counts as 1 (dead-key sequences still produce one visible char).
+     * - Text-producing HID templates ({ENTER}, {TAB}, {BKSP}, {SPACE}): count as 1 each.
+     * - Non-text HID templates ({F1}–{F24}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {ESC}, {WAIT}): 0.
+     */
+    fun countTypedChars(processedString: String, locale: String): Int {
+        val templateRegex = Regex("\\{([+^#@]*[\\w:]+)\\}")
+        // Templates that produce exactly one typed character on the host
+        val textProducingTemplates = setOf("ENTER", "TAB", "BKSP", "SPACE")
+
+        var count = 0
+        var startIdx = 0
+
+        templateRegex.findAll(processedString).forEach { match ->
+            // Count plain chars before this template
+            count += processedString.substring(startIdx, match.range.first).length
+            // Count the template itself if it produces text
+            val templateName = match.groupValues[1].trimStart('+', '^', '#', '@')
+                .substringBefore(':')
+            if (templateName in textProducingTemplates || templateName.startsWith("CODE")) {
+                count += 1
+            }
+            // Non-text templates (Fx, arrows, ESC, WAIT, …) contribute 0
+            startIdx = match.range.last + 1
+        }
+
+        // Count remaining plain chars after last template
+        count += processedString.substring(startIdx).length
+
+        return count
     }
 
     // Converts a normal string into a list of keys
