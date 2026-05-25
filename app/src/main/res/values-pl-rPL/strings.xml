@@ -139,9 +139,10 @@
     <string name="filter_desc_long">Obsługuje typową składnię regex. Użyj pustego ciągu lub .*, aby dopasować wszystko. Jeśli wyrażenie regularne zawiera grupę przechwytywania „(...)”, zostanie użyta wartość grupy.</string>
     <string name="custom_template">Własny szablon</string>
     <string name="custom_templ_desc">Umożliwia ustawienie niestandardowego szablonu</string>
-    <string name="custom_templ_desc_long">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
+    <string name="custom_templ_desc_long" formatted="false">Upewnij się, że ustawiłeś opcję \'Ekstra klawisze\' na \'Własny szablon\'.\n\n
         Placeholdery CODE:\n
-        • {CODE} - zwykły kod kreskowy\n
+        • {CODE} - zwykła wartość kodu kreskowego\n
+        • {CODE%N} - N-ta grupa przechwytująca regex (np. {CODE%1}, {CODE%2}); wraca do {CODE} jeśli grupa nie istnieje lub nie ustawiono wyrażenia regularnego\n
         • Kodowanie: _HEX, _B64 można łączyć w dowolnej kolejności\n
         • Przykłady: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
         Placeholdery daty/czasu z opcjonalnym formatowaniem:\n
@@ -213,6 +214,7 @@
     <string name="camera_error">Błąd aparatu!</string>
     <string name="camera_error_desc">Błąd inicjalizacji kamery. Uruchom ponownie aplikację lub urządzenie. Jeśli problem będzie się powtarzał, utwórz nowe zgłoszenie w serwisie Github.</string>
     <string name="press_run_to_evaluate">Naciśnij przycisk uruchom, aby przetestować</string>
+    <string name="js_error">Błąd JS: %s</string>
     <string name="custom_javascript">Niestandardowy JavaScript</string>
     <string name="custom_js_desc">Zmodyfikuj zeskanowaną wartość za pomocą JS</string>
     <string name="editor_desc">Umożliwia wprowadzenie dowolnego kodu JavaScript w celu zmodyfikowania wartości kodu. Zdefiniowane są dwie stałe (\'format\' i \'code\'). Ostatnia instrukcja jest używana jako wynik (ENTER nie jest wymagany).</string>

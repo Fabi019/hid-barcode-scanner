@@ -114,6 +114,7 @@ import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
+import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
@@ -180,21 +181,19 @@ fun BoxScope.ElevatedWarningCard(
  * Scanner screen with camera preview.
  *
  * @param currentDevice the device that is currently connected, can be null if no device is connected
- * @param sendText callback to send text and format to the current device
+ * @param sendText callback to send the scanned barcode result to the current device
  */
 @Composable
 fun Scanner(
     currentDevice: BluetoothDevice?,
-    sendText: (String, Int?, String?) -> Unit
+    sendText: (BarcodeResult) -> Unit
 ) {
     val context = LocalContext.current
 
-    var currentBarcode by rememberSaveable { mutableStateOf<String?>(null) }
-    var currentBarcodeFormat by rememberSaveable { mutableStateOf<Int?>(null) }
-    var currentImageName by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentResult by remember { mutableStateOf<BarcodeResult?>(null) }
 
-    val currentSendText = remember(currentBarcode, currentBarcodeFormat, currentImageName) {
-        { -> currentBarcode?.let { sendText(it, currentBarcodeFormat, currentImageName) } }
+    val currentSendText = remember(currentResult) {
+        { -> currentResult?.let { sendText(it) } }
     }
 
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
@@ -208,6 +207,16 @@ fun Scanner(
     val keyboardDialog = rememberDialogState()
     val cameraVM = viewModel<CameraViewModel>()
 
+    // Show a Snackbar when JavaScript evaluation fails
+    LaunchedEffect(cameraVM) {
+        cameraVM.jsErrors.collect { error ->
+            snackbarHostState.showSnackbar(
+                message = context.getString(R.string.js_error, error),
+                withDismissAction = true
+            )
+        }
+    }
+
     Scaffold(
         topBar = {
             ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)
@@ -217,14 +226,12 @@ fun Scanner(
             currentDevice?.let {
                 val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
 
-                currentBarcode?.let {
+                currentResult?.let {
                     SendToDeviceFAB {
                         currentSendText()
 
                         if (clearAfterSend == true) {
-                            currentBarcode = null
-                            currentBarcodeFormat = null
-                            currentImageName = null
+                            currentResult = null
                             cameraVM.lastBarcode = null
                         }
                     }
@@ -241,11 +248,9 @@ fun Scanner(
             RequiresCameraPermission {
                 CameraPreviewArea(onCameraReady = { control, info, capt ->
                     cameraControl = control; cameraInfo = info
-                }) { value, format, imageName, send ->
-                    currentBarcode = value
-                    currentBarcodeFormat = format
-                    currentImageName = imageName
-                    if (send && value?.isNotEmpty() == true) {
+                }) { result, send ->
+                    currentResult = result
+                    if (send && result?.text?.isNotEmpty() == true) {
                         currentSendText()
                     }
                 }
@@ -277,9 +282,7 @@ fun Scanner(
                     VolumeKeyAction.TOGGLE_FLASH -> cameraControl?.enableTorch(cameraInfo?.torchState?.value == TorchState.OFF)
                     VolumeKeyAction.TRIGGER_FOCUS -> cameraVM.focusAtCenter()
                     VolumeKeyAction.CLEAR_VALUE -> {
-                        currentBarcode = null
-                        currentBarcodeFormat = null
-                        currentImageName = null
+                        currentResult = null
                         cameraVM.lastBarcode = null
                     }
 
@@ -333,7 +336,7 @@ fun Scanner(
             contentAlignment = Alignment.Center
         ) {
 
-            BarcodeValue(currentBarcode)
+            BarcodeValue(currentResult?.text)
             CapsLockWarning()
             DeviceStatusIndicator()
 
@@ -379,12 +382,13 @@ fun AdaptSystemBarsColor(fullScreen: Boolean) {
  * Area for the camera preview.
  *
  * @param onCameraReady callback to be called when the camera is ready
- * @param onBarcodeDetected callback to be called when a barcode is detected (value, format, scanImageName, autoSend)
+ * @param onBarcodeDetected callback invoked when a barcode is detected (result, autoSend).
+ *   A null result means the barcode left the frame.
  */
 @Composable
 private fun CameraPreviewArea(
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String?, Int?, String?, Boolean) -> Unit,
+    onBarcodeDetected: (BarcodeResult?, Boolean) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -429,10 +433,10 @@ private fun CameraPreviewArea(
         "Scanner initialized - vibrate: $vibrate, hasVibrator: ${vibrator.hasVibrator()}, SDK: ${Build.VERSION.SDK_INT}"
     )
 
-    CameraPreviewContent(onCameraReady = onCameraReady) { value, format, imageName ->
-        Log.d("Scanner", "Barcode detected: $value")
-        onBarcodeDetected(value, format, imageName, autoSend)
-        if (value == null) return@CameraPreviewContent
+    CameraPreviewContent(onCameraReady = onCameraReady) { result ->
+        Log.d("Scanner", "Barcode detected: ${result?.text}")
+        onBarcodeDetected(result, result != null && autoSend)
+        if (result == null) return@CameraPreviewContent
 
         if (playSound) {
             runCatching {
@@ -465,7 +469,7 @@ private fun CameraPreviewArea(
         }
 
         if (copyToClipboard) {
-            clipboardScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", value))) }
+            clipboardScope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", result.text))) }
         }
     }
 }

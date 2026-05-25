@@ -478,7 +478,8 @@ class BluetoothController(var context: Context) {
         from: String = "SCAN",
         scanTimestamp: Long? = null,
         barcodeType: String? = null,
-        imageName: String? = null
+        imageName: String? = null,
+        regexGroups: List<String> = emptyList()
     ) = with(context) {
         if (!_isSending.compareAndSet(expect = false, update = true)) {
             return@with
@@ -515,7 +516,8 @@ class BluetoothController(var context: Context) {
                 scannerID,
                 barcodeType,
                 preserveUnsupported,  // Pass preference
-                imageName
+                imageName,
+                regexGroups
             )
             rfcommController.sendProcessedData(processedString)
         } else {
@@ -529,7 +531,8 @@ class BluetoothController(var context: Context) {
                 scannerID,
                 barcodeType,
                 false,  // HID always false - placeholders needed for KeyTranslator
-                imageName
+                imageName,
+                regexGroups
             )
             keyboardSender?.sendProcessedString(
                 processedString,

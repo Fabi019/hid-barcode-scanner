@@ -199,4 +199,90 @@ class TemplateProcessorTest {
         )
         assertEquals("test", result)
     }
+
+    // --- {CODE%N} regex capture group tests ---
+
+    @Test
+    fun testRegexGroupFirst() {
+        // {CODE%1} should return first capture group
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{CODE%1}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = listOf("ABC", "123")
+        )
+        assertEquals("ABC", result)
+    }
+
+    @Test
+    fun testRegexGroupSecond() {
+        // {CODE%2} should return second capture group
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{CODE%2}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = listOf("ABC", "123")
+        )
+        assertEquals("123", result)
+    }
+
+    @Test
+    fun testRegexGroupMixedWithCode() {
+        // {CODE} and {CODE%N} can be used together
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{CODE} / {CODE%2}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = listOf("ABC", "123")
+        )
+        assertEquals("ABC / 123", result)
+    }
+
+    @Test
+    fun testRegexGroupOutOfRange() {
+        // {CODE%5} when only 2 groups exist → fallback to data
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{CODE%5}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = listOf("ABC", "123")
+        )
+        assertEquals("ABC", result)
+    }
+
+    @Test
+    fun testRegexGroupNoGroups() {
+        // {CODE%1} when no groups provided → fallback to data
+        val result = TemplateProcessor.processTemplate(
+            data = "ABC",
+            template = "{CODE%1}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = emptyList()
+        )
+        assertEquals("ABC", result)
+    }
+
+    @Test
+    fun testRegexGroupValidationAcceptsCodeN() {
+        // Template with only {CODE%N} should pass validation (not return raw data)
+        val result = TemplateProcessor.processTemplate(
+            data = "fallback",
+            template = "{CODE%2}",
+            mode = TemplateProcessor.TemplateMode.HID,
+            regexGroups = listOf("part1", "part2")
+        )
+        assertEquals("part2", result)
+    }
+
+    @Test
+    fun testRegexGroupRFCOMM() {
+        // {CODE%N} works in RFCOMM mode too
+        val result = TemplateProcessor.processTemplate(
+            data = "full",
+            template = "A:{CODE%1} B:{CODE%2}{ENTER}",
+            mode = TemplateProcessor.TemplateMode.RFCOMM,
+            regexGroups = listOf("hello", "world")
+        )
+        assertEquals("A:hello B:world\r\n", result)
+    }
 }

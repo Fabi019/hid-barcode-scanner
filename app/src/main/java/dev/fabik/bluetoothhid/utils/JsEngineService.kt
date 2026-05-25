@@ -81,7 +81,11 @@ class JsEngineService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     @SuppressLint("RequiresFeature")
-    suspend fun evaluate(code: String, onOutput: ((String) -> Unit)? = null): String? {
+    suspend fun evaluate(
+        code: String,
+        onOutput: ((String) -> Unit)? = null,
+        onException: ((Throwable) -> Unit)? = null
+    ): String? {
         var result: String? = "Error: Unable to create isolate!"
 
         jsSandbox?.createIsolate()?.let {
@@ -109,7 +113,9 @@ class JsEngineService : Service() {
                         it.resume(future.get(1, TimeUnit.SECONDS))
                     }.onFailure { err ->
                         Log.e(TAG, "Failed to evaluate code", err)
-                        onOutput?.invoke(err.cause?.message ?: err.message ?: err.toString())
+                        // Route the actual exception to onException, not onOutput,
+                        // so callers can distinguish console.log output from errors.
+                        onException?.invoke(err.cause ?: err)
                         it.resume(null)
                     }
                 }
@@ -125,14 +131,18 @@ class JsEngineService : Service() {
     }
 
     inner class LocalBinder : Binder() {
-        private suspend fun evaluate(code: String, onOutput: ((String) -> Unit)? = null) =
-            this@JsEngineService.evaluate(code, onOutput)
+        private suspend fun evaluate(
+            code: String,
+            onOutput: ((String) -> Unit)? = null,
+            onException: ((Throwable) -> Unit)? = null
+        ) = this@JsEngineService.evaluate(code, onOutput, onException)
 
         suspend fun evaluateTemplate(
             code: String,
             value: String,
             type: String,
-            onOutput: ((String) -> Unit)? = null
+            onOutput: ((String) -> Unit)? = null,
+            onException: ((Throwable) -> Unit)? = null
         ): String? {
             val escapedVal = value.replace("\\", "\\\\").replace("\"", "\\\"")
 
@@ -141,7 +151,7 @@ class JsEngineService : Service() {
             const code = "$escapedVal";
             $code""".trimIndent()
 
-            return evaluate(template, onOutput)
+            return evaluate(template, onOutput, onException)
         }
     }
 

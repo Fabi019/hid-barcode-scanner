@@ -59,10 +59,14 @@ import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -90,13 +94,20 @@ class CameraViewModel : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
+    // Emits error messages when JavaScript evaluation fails
+    private val _jsErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val jsErrors: SharedFlow<String> = _jsErrors.asSharedFlow()
+
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
     private var cameraInfo: CameraInfo? = null
     var imageCapture: ImageCapture? = null
     private var barcodeAnalyzer: ZXingAnalyzer? = null
 
-    var onBarcodeDetected: (String?, BarcodeReader.Format, ImageProxy?) -> Unit = { _, _, _ -> }
+    // Internal callback: carries the processed value, format, image and regex capture groups.
+    // regexGroups contains groups 1..N from the filter regex (empty if no regex or no groups).
+    var onBarcodeDetected: (String?, BarcodeReader.Format, ImageProxy?, List<String>) -> Unit =
+        { _, _, _, _ -> }
 
     var scanRect = Rect.Zero
     var overlayPosition by mutableStateOf<Offset?>(null)
@@ -134,18 +145,18 @@ class CameraViewModel : ViewModel() {
         stabilization: Boolean,
         initialZoom: Float,
         onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-        onBarcode: (String?, Int, String?) -> Unit,
+        onBarcode: (BarcodeResult?) -> Unit,
     ) {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
-        onBarcodeDetected = { value, format, image ->
+        onBarcodeDetected = { value, format, image, regexGroups ->
             lastDetectionTime = System.currentTimeMillis()
             if (value == null) {
                 if (lastBarcode != null) {
                     Log.d(TAG, "Clearing barcode value")
                     viewModelScope.launch {
-                        onBarcode(null, 0, null)
+                        onBarcode(null)
                     }
                     lastBarcode = null
                 }
@@ -173,7 +184,7 @@ class CameraViewModel : ViewModel() {
                 }
 
                 viewModelScope.launch {
-                    onBarcode(value, formatIdx, scanImageName)
+                    onBarcode(BarcodeResult(value, formatIdx, scanImageName, regexGroups))
                 }
                 lastBarcode = value
             }
@@ -298,7 +309,7 @@ class CameraViewModel : ViewModel() {
             val now = System.currentTimeMillis()
             if (now - (lastDetectionTime ?: now) >= it) {
                 _currentBarcode.update { null }
-                onBarcodeDetected(null, BarcodeReader.Format.NONE, null)
+                onBarcodeDetected(null, BarcodeReader.Format.NONE, null, emptyList())
                 lastDetectionTime = null
             }
         }
@@ -478,24 +489,28 @@ class CameraViewModel : ViewModel() {
         barcode?.value?.let { v ->
             var value = v
 
-            _scanRegex?.let { re ->
-                // extract first capture group if it exists
+            // Compute regex capture groups locally — passed directly through the callback chain
+            // instead of being stored as ViewModel state, to avoid threading issues.
+            val regexGroups: List<String> = _scanRegex?.let { re ->
                 re.find(value)?.let { match ->
+                    // Use first capture group as the main value (backward compat)
                     match.groupValues.getOrNull(1)?.let { group ->
                         value = group
                     }
-                }
-            }
+                    // Return all capture groups (1..N) for {CODE%N} template support
+                    match.groupValues.drop(1)
+                } ?: emptyList()
+            } ?: emptyList()
 
             _jsEngineService?.let { s ->
                 // Only blocks the analyzer thread
                 runBlocking {
                     value =
                         mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, barcode.format, sourceImage)
+                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
                 }
             } ?: run {
-                onBarcodeDetected(value, barcode.format, sourceImage)
+                onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
             }
         }
     }
@@ -539,7 +554,7 @@ class CameraViewModel : ViewModel() {
             _ocrResults.update { _ -> results }
             return true
         } else if (results.isNotEmpty()) {
-            onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE, null)
+            onBarcodeDetected(results.first().text, BarcodeReader.Format.NONE, null, emptyList())
         }
 
         return false
@@ -691,11 +706,18 @@ class CameraViewModel : ViewModel() {
         value: String,
         format: String
     ): String {
-        return service.evaluateTemplate(
+        val result = service.evaluateTemplate(
             _jsCode ?: return value,
             value,
             format,
-        ) ?: value
+            onException = { throwable ->
+                // Emit the actual exception message for UI display (Snackbar in Scanner).
+                // console.log output goes through onOutput (null here) and is not shown as errors.
+                _jsErrors.tryEmit(throwable.message ?: "JS evaluation failed")
+            }
+        )
+
+        return result ?: value
     }
 
     suspend fun tapToFocus(tapCoords: Offset) {

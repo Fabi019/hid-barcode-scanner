@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.LocalJsEngineService
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -80,7 +81,7 @@ import zxingcpp.BarcodeReader
 fun CameraPreviewContent(
     viewModel: CameraViewModel = viewModel<CameraViewModel>(),
     onCameraReady: (CameraControl?, CameraInfo?, ImageCapture?) -> Unit,
-    onBarcodeDetected: (String?, Int, String?) -> Unit,
+    onBarcodeDetected: (BarcodeResult?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -355,7 +356,7 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
         onConfirm = {
             viewModel.onBarcodeDetected(
                 selectedTexts.map { e -> e.value }.joinToString("\n"),
-                BarcodeReader.Format.NONE, null
+                BarcodeReader.Format.NONE, null, emptyList()
             )
             close()
         }

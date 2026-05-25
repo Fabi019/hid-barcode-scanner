@@ -1,11 +1,15 @@
 package dev.fabik.bluetoothhid.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldBuffer
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -19,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +46,61 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import dev.fabik.bluetoothhid.utils.rememberPreference
 import kotlinx.coroutines.launch
+
+/**
+ * Input transformation for the JavaScript editor that provides minimal IDE-like assistance:
+ * - Auto-pairs quotes (" and ') and brackets ({}, (), [])
+ * - Inserts a new line with the same indentation after a semicolon
+ * - Preserves the indentation of the previous line when pressing Enter
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private object JsInputTransformation : InputTransformation {
+    override fun TextFieldBuffer.transformInput() {
+        // Only handle single-change events (ignore multi-change e.g. paste)
+        if (changes.changeCount != 1) return
+
+        val originalRange = changes.getOriginalRange(0)
+        val newRange = changes.getRange(0)
+
+        // Only handle single character insertions (no deletions or replacements)
+        if (originalRange.length != 0 || newRange.length != 1) return
+
+        val cursor = newRange.end
+        val insertedChar = asCharSequence()[newRange.start]
+
+        when (insertedChar) {
+            // Auto-pair quotes: insert closing quote and keep cursor between them
+            '"', '\'' -> {
+                // Skip if the next char is already the same quote (avoid double-pairing)
+                if (asCharSequence().getOrNull(cursor) == insertedChar) return
+                replace(cursor, cursor, insertedChar.toString())
+                placeCursorBeforeCharAt(cursor)
+            }
+            // Auto-pair brackets: insert closing bracket and keep cursor between them
+            '(' -> { replace(cursor, cursor, ")"); placeCursorBeforeCharAt(cursor) }
+            '[' -> { replace(cursor, cursor, "]"); placeCursorBeforeCharAt(cursor) }
+            '{' -> { replace(cursor, cursor, "}"); placeCursorBeforeCharAt(cursor) }
+            // Semicolon: insert a new line with the same indentation as the current line
+            ';' -> {
+                val text = asCharSequence().toString()
+                val lineStart = (text.lastIndexOf('\n', cursor - 2) + 1).coerceAtLeast(0)
+                val indentation = text.substring(lineStart, cursor - 1).takeWhile { it == ' ' || it == '\t' }
+                replace(cursor, cursor, "\n$indentation")
+                placeCursorAfterCharAt(cursor + indentation.length)
+            }
+            // Enter: preserve the indentation of the previous line
+            '\n' -> {
+                val text = asCharSequence().toString()
+                val lineStart = (text.lastIndexOf('\n', cursor - 2) + 1).coerceAtLeast(0)
+                val indentation = text.substring(lineStart, cursor - 1).takeWhile { it == ' ' || it == '\t' }
+                if (indentation.isNotEmpty()) {
+                    replace(cursor, cursor, indentation)
+                    placeCursorAfterCharAt(cursor + indentation.length - 1)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun JavaScriptEditorDialog(jsDialog: DialogState) {
@@ -69,9 +130,11 @@ fun JavaScriptEditorDialog(jsDialog: DialogState) {
                 scope.launch {
                     outputText = ""
 
-                    val result = jsEngine?.evaluateTemplate(code, value, type) { message ->
-                        outputText += message + "\n"
-                    }
+                    val result = jsEngine?.evaluateTemplate(
+                        code, value, type,
+                        onOutput = { message -> outputText += message + "\n" },
+                        onException = { throwable -> outputText += "Error: ${throwable.message ?: "Unknown error"}\n" }
+                    )
 
                     outputText += when {
                         result == null -> "JSEngine not initialized or unsupported! Make sure that you have enabled the feature."
@@ -94,12 +157,17 @@ fun JavaScriptEditor(
     onEdit: (String) -> Unit,
     outputText: String
 ) {
-    var codeText by remember { mutableStateOf(TextFieldValue(initialCode)) }
+    val codeState = rememberTextFieldState(initialCode)
     var valueText by remember { mutableStateOf(TextFieldValue("")) }
     var typeText by remember { mutableStateOf("") }
 
     val currentOnRunClicked by rememberUpdatedState(onRunClicked)
     val currentOnEdit by rememberUpdatedState(onEdit)
+
+    // Notify parent of text changes
+    LaunchedEffect(Unit) {
+        snapshotFlow { codeState.text.toString() }.collect { currentOnEdit(it) }
+    }
 
     Column(Modifier.verticalScroll(rememberScrollState())) {
         Text(stringResource(R.string.editor_desc))
@@ -110,10 +178,10 @@ fun JavaScriptEditor(
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        // JavaScript code editor
+        // JavaScript code editor with auto-complete assistance
         TextField(
-            value = codeText,
-            onValueChange = { codeText = it; currentOnEdit(it.text) },
+            state = codeState,
+            inputTransformation = JsInputTransformation,
             textStyle = TextStyle(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -188,7 +256,7 @@ fun JavaScriptEditor(
 
         // Run button
         Button(
-            onClick = { currentOnRunClicked(codeText.text, valueText.text, typeText) },
+            onClick = { currentOnRunClicked(codeState.text.toString(), valueText.text, typeText) },
             modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 8.dp)
