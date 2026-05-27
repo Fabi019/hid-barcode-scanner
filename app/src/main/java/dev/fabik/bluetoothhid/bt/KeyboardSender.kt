@@ -14,7 +14,7 @@ open class KeyboardSender(
     private val host: BluetoothDevice
 ) {
     companion object {
-        const val TAG = "KeyboardSender"
+        private const val TAG = "KeyboardSender"
     }
 
     private val report = ByteArray(3)
@@ -35,15 +35,21 @@ open class KeyboardSender(
 
     /**
      * Sends [processedString] as HID keystrokes and returns the number of characters that
-     * were actually typed on the host, or `null` if the send was cancelled before it finished.
+     * were actually typed on the host, or `null` if the send was cancelled before any visible
+     * character was typed.
      *
-     * The returned count is the number of backspaces required to fully undo the send:
-     * - For non-CUSTOM extra keys: equals [finalString].length — always exact, because each
-     *   character in the string maps to exactly one visible character on the host (dead-key
-     *   sequences take two keypresses but still produce one character = one backspace).
-     * - For CUSTOM extra keys: equals the number of non-template characters plus one per
-     *   text-producing HID template (e.g. {ENTER}, {TAB}). Pure control templates like
-     *   {F1} or {LEFT} produce no visible characters and are not counted.
+     * The returned count is the number of backspaces required to undo what was typed:
+     * - On full completion: total visible characters (letters, digits, Enter, Tab, Space, …).
+     *   Note: {BKSP} is intentionally excluded — it removes a character rather than adding one,
+     *   so counting it would send one extra backspace per {BKSP} and delete an unrelated char.
+     * - On cancel mid-send: visible characters typed so far — enables partial undo via
+     *   [sendBackspaces] when the send is interrupted.
+     * - On cancel before any visible character: `null` (nothing to undo).
+     *
+     * Character counting is performed in-loop using information from [KeyTranslator]:
+     * each translated key carries a flag indicating whether it completes a visible character
+     * on the host (dead-key prefix keys are flagged `false`; control combinations and
+     * non-text templates such as {F1} or {WAIT} are also flagged `false`).
      */
     suspend fun sendProcessedString(
         processedString: String,
@@ -55,26 +61,33 @@ open class KeyboardSender(
 
         val finalString = appendKey.suffix?.let { "$processedString$it" } ?: processedString
 
-        val (keys, charCount) = if (appendKey == ExtraKeys.CUSTOM) {
-            // TemplateProcessor has already handled both {CODE} substitution and the expandCode
-            // semantics: when expandCode=false, any HID template tokens embedded in the barcode
-            // value (e.g. "{ENTER}") were escaped with Private Use Area sentinels so that
-            // KeyTranslator types them as literal characters rather than executing them as
-            // keypresses.  A single pass through translateStringWithTemplate is therefore correct
-            // for both expandCode=true and expandCode=false; no two-pass mechanism is needed here.
-            keyboardTranslator.translateStringWithTemplate(finalString, locale)
-                .let { it to keyboardTranslator.countTypedChars(finalString, locale) }
-        } else {
-            // Non-CUSTOM: finalString is a plain string, length = exact undo char count
-            keyboardTranslator.translateString(finalString, locale) to finalString.length
-        }
+        // Always use translateStringWithTemplateDetailed, even for non-CUSTOM modes.
+        //
+        // Reason: TemplateProcessor may have escaped literal `{`/`}` characters in the barcode
+        // value with Private Use Area sentinels (U+E001/U+E002) when expandCode=false.
+        // translateStringDetailed does NOT know about those sentinels and would log "Unknown char"
+        // for every brace in the barcode.  translateStringWithTemplateDetailed calls
+        // restoreEscapedBraces() on every text segment, so the sentinels are decoded back to
+        // `{`/`}` before keymap lookup — regardless of whether the template contained HID tokens.
+        //
+        // For non-CUSTOM modes, finalString contains no unresolved `{…}` HID template tokens
+        // (TemplateProcessor already substituted them all), so the template-matching pass is a
+        // cheap no-op and correctness is preserved.
+        val keys: List<Pair<Key, Boolean>> =
+            keyboardTranslator.translateStringWithTemplateDetailed(finalString, locale)
+
+        var charCount = 0
 
         try {
-            for (key in keys) {
-                if (cancelRequested) return null
+            for ((key, completesChar) in keys) {
+                if (cancelRequested) return charCount.takeIf { it > 0 }
                 Log.d(TAG, "sendProcessedString: $key")
                 sendKey(key, sendDelay / 2)
-                if (cancelRequested) return null
+                // Increment immediately after sendKey so the count reflects what was actually
+                // transmitted — BluetoothHidDevice.sendReport is fire-and-forget, so by the
+                // time sendKey() returns the host has already received the report.
+                if (completesChar) charCount++
+                if (cancelRequested) return charCount.takeIf { it > 0 }
                 delay(sendDelay / 2)
             }
         } finally {

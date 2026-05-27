@@ -493,8 +493,10 @@ class BluetoothController(var context: Context) {
         try {
             Log.d(TAG, "undoLastSent: $count backspaces")
             keyboardSender?.sendBackspaces(count)
-            _lastSentCharCount.update { null }
         } finally {
+            // Clear the count and release the lock regardless of whether sendBackspaces throws.
+            // Clearing in finally prevents a double-undo if the BT send fails mid-way.
+            _lastSentCharCount.update { null }
             _isSending.update { false }
         }
     }
@@ -530,71 +532,76 @@ class BluetoothController(var context: Context) {
             return@with
         }
 
-        val sendDelay = PreferenceStore.SEND_DELAY.extract(preferences)
-        val extraKeys =
-            if (!withExtraKeys) ExtraKeys.NONE
-            else PreferenceStore.EXTRA_KEYS.extractEnum(preferences)
-        val layout = PreferenceStore.KEYBOARD_LAYOUT.extractEnum(preferences)
-        val template =
-            if (!withExtraKeys || extraKeys != ExtraKeys.CUSTOM) ""
-            else PreferenceStore.TEMPLATE_TEXT.extract(preferences)
-        val expand =
-            if (!withExtraKeys || extraKeys != ExtraKeys.CUSTOM) false
-            else PreferenceStore.EXPAND_CODE.extract(preferences)
+        try {
+            val sendDelay = PreferenceStore.SEND_DELAY.extract(preferences)
+            val extraKeys =
+                if (!withExtraKeys) ExtraKeys.NONE
+                else PreferenceStore.EXTRA_KEYS.extractEnum(preferences)
+            val layout = PreferenceStore.KEYBOARD_LAYOUT.extractEnum(preferences)
+            val template =
+                if (!withExtraKeys || extraKeys != ExtraKeys.CUSTOM) ""
+                else PreferenceStore.TEMPLATE_TEXT.extract(preferences)
+            val expand =
+                if (!withExtraKeys || extraKeys != ExtraKeys.CUSTOM) false
+                else PreferenceStore.EXPAND_CODE.extract(preferences)
 
-        // Get scanner ID
-        val scannerID = getScannerID()
+            // Get scanner ID
+            val scannerID = getScannerID()
 
-        // Get preserve unsupported placeholders preference (RFCOMM only)
-        val preserveUnsupported =
-            PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
+            // Get preserve unsupported placeholders preference (RFCOMM only)
+            val preserveUnsupported =
+                PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
 
-        // Check connection mode - RFCOMM or HID using cached value
-        if (currentConnectionMode == ConnectionMode.RFCOMM) {
-            // RFCOMM mode - process template for text output
-            val processedString = TemplateProcessor.processTemplate(
-                string,
-                template,
-                TemplateProcessor.TemplateMode.RFCOMM,
-                from,
-                scanTimestamp,
-                scannerID,
-                barcodeType,
-                preserveUnsupported,  // Pass preference
-                imageName,
-                regexGroups
-            )
-            rfcommController.sendProcessedData(processedString)
-        } else {
-            // HID mode - process template for HID conversion.
-            // expandCode controls whether HID template tokens inside the barcode value (e.g.
-            // "{ENTER}" embedded in the scanned data) are expanded as real keypresses (true)
-            // or typed as literal text (false, the default).  This is handled entirely inside
-            // TemplateProcessor by escaping { } in the barcode value when expandCode=false;
-            // KeyboardSender no longer needs to know about it.
-            val processedString = TemplateProcessor.processTemplate(
-                string,
-                template,
-                TemplateProcessor.TemplateMode.HID,
-                from,
-                scanTimestamp,
-                scannerID,
-                barcodeType,
-                preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
-                scanImageFileName = imageName,
-                regexGroups = regexGroups,
-                expandCode = expand
-            )
-            // Store the precise typed-character count for undo (null = cancelled, not stored)
-            keyboardSender?.sendProcessedString(
-                processedString,
-                sendDelay.toLong(),
-                extraKeys,
-                layout.value
-            )?.let { charCount -> _lastSentCharCount.update { charCount } }
+            // Check connection mode - RFCOMM or HID using cached value
+            if (currentConnectionMode == ConnectionMode.RFCOMM) {
+                // RFCOMM mode - process template for text output
+                val processedString = TemplateProcessor.processTemplate(
+                    string,
+                    template,
+                    TemplateProcessor.TemplateMode.RFCOMM,
+                    from,
+                    scanTimestamp,
+                    scannerID,
+                    barcodeType,
+                    preserveUnsupported,  // Pass preference
+                    imageName,
+                    regexGroups
+                )
+                rfcommController.sendProcessedData(processedString)
+            } else {
+                // HID mode - process template for HID conversion.
+                // expandCode controls whether HID template tokens inside the barcode value (e.g.
+                // "{ENTER}" embedded in the scanned data) are expanded as real keypresses (true)
+                // or typed as literal text (false, the default).  This is handled entirely inside
+                // TemplateProcessor by escaping { } in the barcode value when expandCode=false;
+                // KeyboardSender no longer needs to know about it.
+                val processedString = TemplateProcessor.processTemplate(
+                    string,
+                    template,
+                    TemplateProcessor.TemplateMode.HID,
+                    from,
+                    scanTimestamp,
+                    scannerID,
+                    barcodeType,
+                    preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
+                    scanImageFileName = imageName,
+                    regexGroups = regexGroups,
+                    expandCode = expand
+                )
+                // Store the precise typed-character count for undo (null = cancelled, not stored)
+                keyboardSender?.sendProcessedString(
+                    processedString,
+                    sendDelay.toLong(),
+                    extraKeys,
+                    layout.value
+                )?.let { charCount -> _lastSentCharCount.update { charCount } }
+            }
+        } finally {
+            // Always release the sending lock — even if processTemplate or sendProcessedString
+            // throws (e.g. SecurityException from BluetoothHidDevice.sendReport).
+            // Without this, _isSending stays true and the app is permanently blocked.
+            _isSending.update { false }
         }
-
-        _isSending.update { false }
     }
 }
 

@@ -44,6 +44,9 @@ class KeyTranslator(context: Context) {
         val CAPS_LOCK_KEY = Key(0u, 0x39u)
         val BACKSPACE_KEY = Key(0u, 0x2Au)
 
+        /** Matches HID template tokens such as `{ENTER}`, `{+F1}`, `{WAIT:500}`. */
+        private val HID_TEMPLATE_REGEX = Regex("\\{([+^#@]*[\\w:]+)\\}")
+
         private const val CUSTOM_KEYMAP_FILE = "custom.layout"
         private var customKeyMapLoaded = false
         var CUSTOM_KEYMAP = mutableMapOf<Char, Pair<Key, Key?>>()
@@ -204,42 +207,43 @@ class KeyTranslator(context: Context) {
      * (when `expandCode = false`) back to their original `{` / `}` characters.
      *
      * This is called on the plain-text segments *between* HID template matches inside
-     * [translateStringWithTemplate], so that literal braces originating from barcode data are
-     * typed as real characters rather than remaining as unrecognised codepoints.
+     * [translateStringWithTemplateDetailed], so that literal braces originating from barcode
+     * data are typed as real characters rather than remaining as unrecognised codepoints.
      */
     private fun restoreEscapedBraces(text: String): String =
         text.replace(ESCAPED_OPEN_BRACE, '{').replace(ESCAPED_CLOSE_BRACE, '}')
 
-    // Translates a string into a list of keys using a template string
-    // Note: Basic templates (CODE, DATE, TIME, etc.) should be processed by TemplateProcessor first
-    fun translateStringWithTemplate(
+    /**
+     * Translates [processedString] — which may contain HID template tokens such as `{ENTER}`,
+     * `{F1}`, `{WAIT:ms}`, etc. — into a list of HID key events.  Each event carries a flag
+     * indicating whether it completes a visible character on the host, used by
+     * [dev.fabik.bluetoothhid.bt.KeyboardSender] to track the exact typed-character count
+     * in-loop (including after a partial cancel).
+     *
+     * Basic templates (`{CODE}`, `{DATE}`, `{TIME}`, …) must be substituted by
+     * [dev.fabik.bluetoothhid.utils.TemplateProcessor] before this method is called.
+     */
+    fun translateStringWithTemplateDetailed(
         processedString: String,
         locale: String,
-        expandedCode: List<Key>? = null
-    ): List<Key> {
-        val keys = mutableListOf<Key>()
-        val templateRegex = Regex("\\{([+^#@]*[\\w:]+)\\}")
+    ): List<Pair<Key, Boolean>> {
+        val result = mutableListOf<Pair<Key, Boolean>>()
 
         var startIdx = 0
-        templateRegex.findAll(processedString).forEach {
+        HID_TEMPLATE_REGEX.findAll(processedString).forEach {
             // Adds everything before the template, restoring any escaped braces that came
             // from barcode data (expandCode=false path in TemplateProcessor).
             val before = restoreEscapedBraces(processedString.substring(startIdx, it.range.first))
-            keys.addAll(translateString(before, locale))
+            result.addAll(translateStringDetailed(before, locale))
 
             // Process HID-specific template
             val template = it.groupValues[1]
             if (template.startsWith("CODE")) {
-                // Handle expandedCode mechanism (for complex template processing)
-                if (expandedCode != null) {
-                    keys.addAll(expandedCode)
-                } else {
-                    // This shouldn't happen if TemplateProcessor handled basic templates
-                    Log.w(TAG, "CODE template found in processed string: $template")
-                    keys.addAll(translateString(template, locale))
-                }
+                // {CODE} should always be substituted by TemplateProcessor before reaching here.
+                Log.w(TAG, "Unsubstituted CODE template in processed string — typing literally")
+                result.addAll(translateStringDetailed(template, locale))
             } else {
-                processHidSpecificTemplate(template, locale, keys)
+                result.addAll(processHidSpecificTemplateDetailed(template, locale))
             }
 
             startIdx = it.range.last + 1
@@ -247,17 +251,17 @@ class KeyTranslator(context: Context) {
 
         // Adds the rest of the template, also restoring any trailing escaped braces.
         val after = restoreEscapedBraces(processedString.substring(startIdx))
-        keys.addAll(translateString(after, locale))
+        result.addAll(translateStringDetailed(after, locale))
 
-        return keys
+        return result
     }
 
     // Process HID-specific templates (modifiers, F-keys, arrows, etc.)
-    private fun processHidSpecificTemplate(
+    private fun processHidSpecificTemplateDetailed(
         template: String,
-        locale: String,
-        keys: MutableList<Key>
-    ) {
+        locale: String
+    ): List<Pair<Key, Boolean>> {
+        val result = mutableListOf<Pair<Key, Boolean>>()
         var modifiers = 0.toUByte()
         var temp = template
         var wasModifier = true
@@ -276,69 +280,78 @@ class KeyTranslator(context: Context) {
             }
         } while (wasModifier)
 
+        if (temp.isEmpty()) {
+            Log.w(TAG, "Malformed HID template: modifier(s) with no key name (original: '$template')")
+            return result
+        }
+
         if (temp.isNotEmpty()) {
             Log.d(TAG, "HID template: $temp, modifiers: $modifiers")
 
             staticTemplates[temp]?.let { t ->
-                keys.add(t.first or modifiers to t.second)
+                // A static template key produces a visible character only when sent without
+                // extra modifiers.  {+ENTER} (Ctrl+Enter) is a control combo, not visible text.
+                result.add(Key(t.first or modifiers, t.second) to (isTextProducingKeycode(t.second) && modifiers == 0.toUByte()))
             } ?: dynamicTemplates[temp.substringBefore(':')]?.let { t ->
-                keys.addAll(t(locale, temp.substringAfter(':', "")))
-            } ?: translateString(temp, locale).forEach { t ->
-                keys.add(Key(t.first or modifiers, t.second))
+                t(locale, temp.substringAfter(':', "")).forEach { key ->
+                    result.add(key to false) // dynamic templates (WAIT, etc.) produce no visible chars
+                }
+            } ?: run {
+                // Fallback: unknown template — treat as plain text with optional extra modifiers.
+                // Extra modifier flags (e.g. {+A} = Ctrl+A) turn it into a control combo → not visible.
+                val hasExtraModifiers = modifiers != 0.toUByte()
+                translateStringDetailed(temp, locale).forEach { (key, completesChar) ->
+                    result.add(Key(key.first or modifiers, key.second) to (completesChar && !hasExtraModifiers))
+                }
             }
         }
+        return result
     }
 
     /**
-     * Counts the number of characters that will actually appear as typed text on the host
-     * for a given [processedString] going through [translateStringWithTemplate].
-     *
-     * - Regular chars: each counts as 1 (dead-key sequences still produce one visible char).
-     * - Text-producing HID templates ({ENTER}, {TAB}, {BKSP}, {SPACE}): count as 1 each.
-     * - Non-text HID templates ({F1}–{F24}, {LEFT}, {RIGHT}, {UP}, {DOWN}, {ESC}, {WAIT}): 0.
+     * Translates [string] into HID key events.  Each event carries a flag indicating whether
+     * For dead-key sequences (e.g. `é` = dead-accent key + `e` key): the dead-accent key has
+     * `completesChar = false`; the following `e` key has `completesChar = true`.
+     * For regular single-key characters: `completesChar = true`.
      */
-    fun countTypedChars(processedString: String, locale: String): Int {
-        val templateRegex = Regex("\\{([+^#@]*[\\w:]+)\\}")
-        // Templates that produce exactly one typed character on the host
-        val textProducingTemplates = setOf("ENTER", "TAB", "BKSP", "SPACE")
-
-        var count = 0
-        var startIdx = 0
-
-        templateRegex.findAll(processedString).forEach { match ->
-            // Count plain chars before this template
-            count += processedString.substring(startIdx, match.range.first).length
-            // Count the template itself if it produces text
-            val templateName = match.groupValues[1].trimStart('+', '^', '#', '@')
-                .substringBefore(':')
-            if (templateName in textProducingTemplates || templateName.startsWith("CODE")) {
-                count += 1
-            }
-            // Non-text templates (Fx, arrows, ESC, WAIT, …) contribute 0
-            startIdx = match.range.last + 1
-        }
-
-        // Count remaining plain chars after last template
-        count += processedString.substring(startIdx).length
-
-        return count
-    }
-
-    // Converts a normal string into a list of keys
-    fun translateString(string: String, locale: String): List<Key> {
-        val keys = mutableListOf<Key>()
+    internal fun translateStringDetailed(string: String, locale: String): List<Pair<Key, Boolean>> {
+        val result = mutableListOf<Pair<Key, Boolean>>()
 
         Log.d(TAG, "Translating: '$string' with locale '$locale'")
 
         string.forEach { chr ->
             translate(chr, locale)?.let { (key, dkey) ->
-                keys.add(key)
-                dkey?.let { keys.add(it) }
+                if (dkey != null) {
+                    result.add(key to false)  // dead key prefix — does not yet complete a char
+                    result.add(dkey to true)  // second key completes the visible character
+                } else {
+                    result.add(key to true)
+                }
             } ?: Log.w(TAG, "Unknown char: $chr (${chr.code})")
         }
 
-        return keys
+        return result
     }
+
+    /**
+     * Returns true if [keycode] adds a visible character on the host, meaning exactly one
+     * backspace is needed to undo it.  HID keycodes 0x04–0x38 cover all such keys: printable
+     * characters (letters, digits, punctuation), Space (0x2C), Tab (0x2B), and Enter (0x28).
+     *
+     * Explicitly excluded from the range:
+     * - ESC (0x29): no visible effect.
+     * - Backspace (0x2A): *removes* a character rather than adding one.  Counting it as a
+     *   visible char would cause undo to send one extra backspace per {BKSP} in the template,
+     *   deleting a character the user never typed.
+     *
+     * Note: this function only inspects the keycode.  Callers must additionally check that no
+     * modifier flags are set — a key combined with Ctrl/Alt/Meta becomes a control combo that
+     * produces no visible character (e.g. Ctrl+Enter, Ctrl+Tab).
+     */
+    private fun isTextProducingKeycode(keycode: UByte): Boolean =
+        keycode.toInt() in 0x04..0x38
+            && keycode != 0x29.toUByte()   // ESC
+            && keycode != 0x2A.toUByte()   // Backspace
 
     private fun translate(char: Char, locale: String): Pair<Key, Key?>? {
         val keymap = keyMaps[locale] ?: baseMap

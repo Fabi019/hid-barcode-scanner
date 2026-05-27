@@ -26,7 +26,7 @@ object TemplateProcessor {
      * Private Use Area sentinels used to escape literal `{` / `}` characters that originate
      * from barcode data when [expandCode] is false.  They are invisible to the HID template
      * regex in [KeyTranslator] (which only matches `{…}`) and are decoded back to `{` / `}`
-     * in the text segments of [KeyTranslator.translateStringWithTemplate] before keymap lookup.
+     * in the text segments of [KeyTranslator.translateStringWithTemplateDetailed] before keymap lookup.
      */
     internal const val ESCAPED_OPEN_BRACE  = '\uE001'  // Unicode Private Use Area U+E001
     internal const val ESCAPED_CLOSE_BRACE = '\uE002'  // Unicode Private Use Area U+E002
@@ -413,8 +413,8 @@ object TemplateProcessor {
         // NOTE: there is intentionally no "Phase 5" here.  A previous version prepended \uFFFD
         // to {TAB} and {ENTER} in HID mode, but that was harmful:
         //   \u2022 KeyTranslator cannot type \uFFFD (it's not in any keymap) \u2192 spurious warnings.
-        //   \u2022 countTypedChars counted the \uFFFD as an extra plain character \u2192 undo sent one
-        //     too many backspaces per {TAB}/{ENTER} in the user's template.
+        //   \u2022 The old countTypedChars() counted \uFFFD as an extra plain character \u2192 undo sent
+        //     one too many backspaces per {TAB}/{ENTER} in the user's template.
         // {TAB} and {ENTER} from the user's template are correctly handled by KeyTranslator as-is.
         // {TAB}/{ENTER} originating from the barcode value are now escaped in Phase 0 / Phase 3
         // when expandCode=false, so they are typed literally rather than expanded.
