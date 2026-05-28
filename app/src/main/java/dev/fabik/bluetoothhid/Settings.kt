@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -411,6 +412,8 @@ internal fun CameraSettings(strings: SettingsStrings) {
 internal fun ScannerSettings(strings: SettingsStrings) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
+    val isHidMode = connectionMode != ConnectionMode.RFCOMM
 
     CheckBoxPreference(
         title = strings[R.string.code_types],
@@ -536,6 +539,14 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         desc = strings[R.string.clear_after_send_desc],
         icon = Icons.Default.Clear,
         preference = PreferenceStore.CLEAR_AFTER_SEND
+    )
+
+    SwitchPreference(
+        title = strings[R.string.enable_undo_send],
+        desc = strings[R.string.enable_undo_send_desc],
+        icon = Icons.AutoMirrored.Filled.Undo,
+        enabled = isHidMode,
+        preference = PreferenceStore.ENABLE_UNDO_SEND
     )
 
     ComboBoxEnumPreference(

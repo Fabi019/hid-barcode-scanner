@@ -167,7 +167,7 @@
         • {CODE_TYPE} - typ kodu kreskowego (QR_CODE, CODE_128, itp.)\n
         • {SCAN_SOURCE} - źródło danych (SCAN, HISTORY, MANUAL)\n
         • {SCANNER_ID} - identyfikator skanera\n
-        • {SCAN_IMAGE_NAME} - name of the stored scan image\n\n
+        • {SCAN_IMAGE_NAME} - nazwa zapisanego obrazu skanu\n\n
         Uniwersalne kodowanie (działa z DOWOLNYM placeholderem danych):\n
         • Dodaj _HEX lub _B64 do dowolnego placeholdera w dowolnej kolejności\n
         • Przykłady: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
@@ -354,6 +354,9 @@
     <string name="ocr_results_selection">Zaznacz wszystkie wiersze, które mają zostać wysłane.</string>
     <string name="clear_after_send">Czyść bufor po wysłaniu</string>
     <string name="clear_after_send_desc">Kasuje wyświetlany kod po ręcznym wysłaniu</string>
+    <string name="enable_undo_send">Włącz cofanie ostatniego wysłania</string>
+    <string name="enable_undo_send_desc">Pokazuje przycisk cofania, który wysyła backspace za każdy znak ostatnio wysłanej wartości</string>
+    <string name="undo_last_sent">Cofnij ostatnie wysłanie</string>
     <string name="manual_input">Ręczne wprowadzanie</string>
     <string name="include_extra_keys">Użyj ekstra klawiszy</string>
     <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
