@@ -13,7 +13,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
-import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
+import dev.fabik.bluetoothhid.utils.rememberPreference
 
 
 @Composable
@@ -46,7 +46,7 @@ fun SwitchPreference(
     enabled: Boolean = true,
     preference: PreferenceStore.Preference<Boolean>
 ) {
-    var checked by rememberPreferenceNull(preference)
+    var checked by rememberPreference(preference)
 
     SwitchPreference(title, desc, icon, checked, enabled) {
         checked = it
@@ -140,7 +140,7 @@ fun SliderPreference(
     enabled: Boolean = true,
     preference: PreferenceStore.Preference<Float>
 ) {
-    var value by rememberPreferenceNull(preference)
+    var value by rememberPreference(preference)
 
     SliderPreference(
         title,
@@ -201,13 +201,13 @@ fun CheckBoxPreference(
     icon: ImageVector? = null,
     preference: PreferenceStore.Preference<Set<String>>
 ) {
-    var value by rememberPreferenceNull(preference)
+    var value by rememberPreference(preference)
 
     CheckBoxPreference(
         title,
         desc,
         descLong,
-        selectedValues = value?.map { v -> v.toInt() }?.toSet(),
+        selectedValues = value.map { v -> v.toInt() }.toSet(),
         valueStrings,
         icon,
         onReset = { value = preference.defaultValue }
@@ -257,7 +257,7 @@ fun TextBoxPreference(
     enabled: Boolean = true,
     preference: PreferenceStore.Preference<String>
 ) {
-    var value by rememberPreferenceNull(preference)
+    var value by rememberPreference(preference)
 
     TextBoxPreference(
         title,

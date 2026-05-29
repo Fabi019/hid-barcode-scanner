@@ -20,6 +20,8 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -55,6 +57,10 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.SmallFloatingActionButton
@@ -119,6 +125,7 @@ import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ConnectionMode
@@ -145,14 +152,24 @@ private fun Modifier.iconBackgroundModifier(): Modifier {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoxScope.ElevatedWarningCard(
     message: String,
     subMessage: String? = null,
     onClick: () -> Unit,
+    onDismiss: (() -> Unit)? = null,
     visible: Boolean
 ) {
     val scope = rememberCoroutineScope()
+
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            onDismiss?.invoke()
+        }
+    }
 
     AnimatedVisibility(
         visible = visible, // You will control visibility dynamically
@@ -160,19 +177,26 @@ fun BoxScope.ElevatedWarningCard(
             .padding(12.dp)
             .align(Alignment.TopCenter)
     ) {
-        ElevatedCard(
-            onClick = { scope.launch { onClick() } }
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {},
+            enableDismissFromStartToEnd = onDismiss != null,
+            enableDismissFromEndToStart = onDismiss != null,
         ) {
-            Row(
-                Modifier.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            ElevatedCard(
+                onClick = { scope.launch { onClick() } }
             ) {
-                Icon(Icons.Rounded.Warning, contentDescription = "Warning")
-                Column {
-                    Text(message)
-                    subMessage?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall)
+                Row(
+                    Modifier.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Warning, contentDescription = "Warning")
+                    Column {
+                        Text(message)
+                        subMessage?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -347,6 +371,50 @@ fun Scanner(
                 ZoomStateInfo(it)
             }
             KeepScreenOn()
+
+            // Multi-code picker: visible when multi-code detection is on but auto-send is off
+            val multiCodeDetection by context.getPreferenceState(PreferenceStore.MULTI_CODE_DETECTION)
+            val autoSend by context.getPreferenceState(PreferenceStore.AUTO_SEND)
+            if (multiCodeDetection == true && autoSend != true) {
+                val detectedBarcodes by cameraVM.detectedBarcodes.collectAsStateWithLifecycle()
+                if (detectedBarcodes.isNotEmpty()) {
+                    MultiCodePicker(
+                        barcodes = detectedBarcodes,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 80.dp),
+                        onSelect = { cameraVM.selectBarcode(it) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MultiCodePicker(
+    barcodes: List<Barcode>,
+    modifier: Modifier = Modifier,
+    onSelect: (Barcode) -> Unit
+) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.6f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(barcodes) { barcode ->
+            SuggestionChip(
+                onClick = { onSelect(barcode) },
+                label = {
+                    Text(
+                        text = barcode.value?.take(24) ?: "?",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            )
         }
     }
 }
@@ -825,6 +893,9 @@ fun BoxScope.DeviceStatusIndicator() {
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
 
+        // Dismissed state resets when the device changes or user leaves the scanner
+        var dismissed by remember(currentDevice) { mutableStateOf(false) }
+
         when {
             currentDevice == null -> {
                 // No device selected - show "No device connected" regardless of mode
@@ -834,7 +905,8 @@ fun BoxScope.DeviceStatusIndicator() {
                     onClick = {
                         navigation.navigateUp()
                     },
-                    visible = true
+                    onDismiss = { dismissed = true },
+                    visible = !dismissed
                 )
             }
 
@@ -850,7 +922,8 @@ fun BoxScope.DeviceStatusIndicator() {
                         // Do nothing - this is just an informational message
                         // User has already selected a device and server is listening
                     },
-                    visible = true
+                    onDismiss = { dismissed = true },
+                    visible = !dismissed
                 )
             }
         }

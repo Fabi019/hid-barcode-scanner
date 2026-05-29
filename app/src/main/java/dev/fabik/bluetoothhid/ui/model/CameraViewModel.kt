@@ -54,6 +54,7 @@ import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
+import dev.fabik.bluetoothhid.utils.ScanAreaData
 import dev.fabik.bluetoothhid.utils.ScanFrequency
 import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
@@ -110,6 +111,9 @@ class CameraViewModel : ViewModel() {
         { _, _, _, _ -> }
 
     var scanRect = Rect.Zero
+    // For CUSTOM overlay with multiple areas: individual rects for filtering, empty = use scanRect
+    var scanRects: List<Rect> = emptyList()
+    var scanAreas by mutableStateOf<List<ScanAreaData>>(emptyList())
     var overlayPosition by mutableStateOf<Offset?>(null)
     var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
 
@@ -404,7 +408,9 @@ class CameraViewModel : ViewModel() {
         scanSaveQuality: Int,
         saveScanFileName: String,
         clearAfterTime: Long?,
-        saveScanImageFormat: ScanImageFormat
+        saveScanImageFormat: ScanImageFormat,
+        multiCodeDetection: Boolean = false,
+        autoSend: Boolean = false
     ) {
         _scanDelay = frequency.delayMs
         barcodeAnalyzer?.scanDelay = _scanDelay
@@ -431,14 +437,50 @@ class CameraViewModel : ViewModel() {
         _saveScanImageFormat = saveScanImageFormat
 
         _clearAfterTime = clearAfterTime
+        this.multiCodeDetection = multiCodeDetection
+        _autoSend = autoSend
 
         Log.d(TAG, "Updated scan parameters")
+    }
+
+    // Called when the user manually selects a barcode from the multi-code picker.
+    // Runs through JS/regex processing and triggers onBarcodeDetected.
+    fun selectBarcode(barcode: Barcode) {
+        val rawValue = barcode.value ?: return
+        lastBarcode = null  // Bypass dedup so repeated taps on the same code work
+        _currentBarcode.update { barcode }
+
+        var value = rawValue
+        val regexGroups: List<String> = _scanRegex?.let { re ->
+            re.find(value)?.let { match ->
+                match.groupValues.getOrNull(1)?.let { group -> value = group }
+                match.groupValues.drop(1)
+            } ?: emptyList()
+        } ?: emptyList()
+
+        _jsEngineService?.let { s ->
+            viewModelScope.launch {
+                value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                onBarcodeDetected(value, barcode.format, null, regexGroups)
+            }
+        } ?: onBarcodeDetected(value, barcode.format, null, regexGroups)
     }
 
     var lastDetectionTime: Long? = null
     var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
+
+    // All barcodes detected in the current frame (multi-code mode visual)
+    private val _detectedBarcodes = MutableStateFlow<List<Barcode>>(emptyList())
+    val detectedBarcodes: StateFlow<List<Barcode>> = _detectedBarcodes.asStateFlow()
+
+    // Tracks which barcodes have already been queued in the current "scene"
+    // Cleared when the frame contains no barcodes (camera moved away)
+    private val sentInSession = mutableSetOf<String>()
+
+    var multiCodeDetection: Boolean = false
+    private var _autoSend: Boolean = false
 
     data class Barcode(
         var value: String?,
@@ -453,7 +495,7 @@ class CameraViewModel : ViewModel() {
     ) {
         detectorTrace.trigger()
 
-        val barcode = result.map {
+        val allBarcodes = result.map {
             val cornerPoints = listOf(
                 it.position.topLeft,
                 it.position.topRight,
@@ -476,41 +518,98 @@ class CameraViewModel : ViewModel() {
 
             Barcode(it.text, cornerPoints, it.format)
         }.filter {
-            when (_fullyInside) {
-                true -> true    // Automatically handled with setting cropRect
-                false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
+            if (scanRects.size > 1) {
+                // Multi-area: check each individual rect
+                if (_fullyInside)
+                    scanRects.any { r -> it.cornerPoints.all { p -> r.contains(Offset(p.x, p.y)) } }
+                else
+                    it.cornerPoints.any { p -> scanRects.any { r -> r.contains(Offset(p.x, p.y)) } }
+            } else {
+                when (_fullyInside) {
+                    true -> true    // Automatically handled with setting cropRect
+                    false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
+                }
             }
         }.filter {
             _scanRegex?.matches(it.value ?: return@filter true) != false
-        }.firstOrNull()
+        }
 
-        _currentBarcode.update { _ -> barcode }
+        // Always expose all detected barcodes for visual overlay and picker
+        _detectedBarcodes.update { allBarcodes }
 
-        barcode?.value?.let { v ->
-            var value = v
+        if (_autoSend) {
+            // Auto-send: queue all new barcodes in this frame (dedup within session)
+            if (allBarcodes.isEmpty()) {
+                sentInSession.clear()
+                if (lastBarcode != null) {
+                    _currentBarcode.update { null }
+                    onBarcodeDetected(null, BarcodeReader.Format.NONE, null, emptyList())
+                    lastBarcode = null
+                }
+                return
+            }
 
-            // Compute regex capture groups locally — passed directly through the callback chain
-            // instead of being stored as ViewModel state, to avoid threading issues.
-            val regexGroups: List<String> = _scanRegex?.let { re ->
-                re.find(value)?.let { match ->
-                    // Use first capture group as the main value (backward compat)
-                    match.groupValues.getOrNull(1)?.let { group ->
-                        value = group
-                    }
-                    // Return all capture groups (1..N) for {CODE%N} template support
-                    match.groupValues.drop(1)
+            val newBarcodes = allBarcodes.filter { !sentInSession.contains(it.value) }
+            newBarcodes.forEach { barcode ->
+                barcode.value?.let { v ->
+                    sentInSession.add(v)
+                    _currentBarcode.update { barcode }
+
+                    var value = v
+                    val regexGroups: List<String> = _scanRegex?.let { re ->
+                        re.find(value)?.let { match ->
+                            match.groupValues.getOrNull(1)?.let { group -> value = group }
+                            match.groupValues.drop(1)
+                        } ?: emptyList()
+                    } ?: emptyList()
+
+                    // Reset lastBarcode so onBarcodeDetected's dedup doesn't block this code
+                    lastBarcode = null
+                    _jsEngineService?.let { s ->
+                        runBlocking {
+                            value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                            onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                        }
+                    } ?: onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                }
+            }
+        } else if (multiCodeDetection) {
+            // Manual multi-code: barcodes are exposed via _detectedBarcodes for the picker UI.
+            // No auto-send — user selects from the picker. Clear session when frame is empty.
+            if (allBarcodes.isEmpty()) {
+                sentInSession.clear()
+                _currentBarcode.update { null }
+            }
+        } else {
+            // Single-code mode: existing behaviour, take first match
+            val barcode = allBarcodes.firstOrNull()
+            _currentBarcode.update { barcode }
+
+            barcode?.value?.let { v ->
+                var value = v
+
+                // Compute regex capture groups locally — passed directly through the callback chain
+                // instead of being stored as ViewModel state, to avoid threading issues.
+                val regexGroups: List<String> = _scanRegex?.let { re ->
+                    re.find(value)?.let { match ->
+                        // Use first capture group as the main value (backward compat)
+                        match.groupValues.getOrNull(1)?.let { group ->
+                            value = group
+                        }
+                        // Return all capture groups (1..N) for {CODE%N} template support
+                        match.groupValues.drop(1)
+                    } ?: emptyList()
                 } ?: emptyList()
-            } ?: emptyList()
 
-            _jsEngineService?.let { s ->
-                // Only blocks the analyzer thread
-                runBlocking {
-                    value =
-                        mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                _jsEngineService?.let { s ->
+                    // Only blocks the analyzer thread
+                    runBlocking {
+                        value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                        onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                    }
+                } ?: run {
                     onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
                 }
-            } ?: run {
-                onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
             }
         }
     }
@@ -538,7 +637,12 @@ class CameraViewModel : ViewModel() {
                         Offset(point.x, point.y)
                     }
 
-                    return@filter when (_fullyInside) {
+                    return@filter if (scanRects.size > 1) {
+                        if (_fullyInside)
+                            scanRects.any { r -> cornerPoints.all { p -> r.contains(p) } }
+                        else
+                            scanRects.any { r -> r.overlaps(Rect(cornerPoints[0], cornerPoints[2])) }
+                    } else when (_fullyInside) {
                         false -> scanRect.overlaps(Rect(cornerPoints[0], cornerPoints[2]))
                         true -> cornerPoints.all { scanRect.contains(it) }
                     }

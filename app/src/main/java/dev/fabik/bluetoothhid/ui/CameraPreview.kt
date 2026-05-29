@@ -253,7 +253,9 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.SAVE_SCAN_QUALITY,
         PreferenceStore.SAVE_SCAN_FILE_PATTERN,
         PreferenceStore.CLEAR_AFTER_TIME,
-        PreferenceStore.SAVE_SCAN_IMAGE_FORMAT
+        PreferenceStore.SAVE_SCAN_IMAGE_FORMAT,
+        PreferenceStore.MULTI_CODE_DETECTION,
+        PreferenceStore.AUTO_SEND
     )
 
     scanner?.let {
@@ -278,7 +280,9 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.SAVE_SCAN_QUALITY.extract(it),
                 PreferenceStore.SAVE_SCAN_FILE_PATTERN.extract(it),
                 PreferenceStore.CLEAR_AFTER_TIME.extractEnum(it).value,
-                PreferenceStore.SAVE_SCAN_IMAGE_FORMAT.extractEnum(it)
+                PreferenceStore.SAVE_SCAN_IMAGE_FORMAT.extractEnum(it),
+                PreferenceStore.MULTI_CODE_DETECTION.extract(it),
+                PreferenceStore.AUTO_SEND.extract(it)
             )
         }
     }
