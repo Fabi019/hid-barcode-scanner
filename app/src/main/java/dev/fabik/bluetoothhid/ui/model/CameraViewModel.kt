@@ -444,13 +444,21 @@ class CameraViewModel : ViewModel() {
     }
 
     // Called when the user manually selects a barcode from the multi-code picker.
-    // Runs through JS/regex processing and triggers onBarcodeDetected.
     fun selectBarcode(barcode: Barcode) {
-        val rawValue = barcode.value ?: return
-        lastBarcode = null  // Bypass dedup so repeated taps on the same code work
         _currentBarcode.update { barcode }
+        processAndDispatch(barcode, sourceImage = null)
+    }
 
+    // Applies regex extraction and JS mapping, then calls onBarcodeDetected.
+    // useRunBlocking=true is needed on the analyzer thread (auto-send) to preserve frame ordering.
+    private fun processAndDispatch(
+        barcode: Barcode,
+        sourceImage: ImageProxy?,
+        useRunBlocking: Boolean = false
+    ) {
+        val rawValue = barcode.value ?: return
         var value = rawValue
+
         val regexGroups: List<String> = _scanRegex?.let { re ->
             re.find(value)?.let { match ->
                 match.groupValues.getOrNull(1)?.let { group -> value = group }
@@ -459,11 +467,18 @@ class CameraViewModel : ViewModel() {
         } ?: emptyList()
 
         _jsEngineService?.let { s ->
-            viewModelScope.launch {
-                value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                onBarcodeDetected(value, barcode.format, null, regexGroups)
+            if (useRunBlocking) {
+                runBlocking {
+                    value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                }
+            } else {
+                viewModelScope.launch {
+                    value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                }
             }
-        } ?: onBarcodeDetected(value, barcode.format, null, regexGroups)
+        } ?: onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
     }
 
     var lastDetectionTime: Long? = null
@@ -551,26 +566,11 @@ class CameraViewModel : ViewModel() {
 
             val newBarcodes = allBarcodes.filter { !sentInSession.contains(it.value) }
             newBarcodes.forEach { barcode ->
-                barcode.value?.let { v ->
-                    sentInSession.add(v)
+                if (barcode.value != null) {
+                    sentInSession.add(barcode.value!!)
                     _currentBarcode.update { barcode }
-
-                    var value = v
-                    val regexGroups: List<String> = _scanRegex?.let { re ->
-                        re.find(value)?.let { match ->
-                            match.groupValues.getOrNull(1)?.let { group -> value = group }
-                            match.groupValues.drop(1)
-                        } ?: emptyList()
-                    } ?: emptyList()
-
-                    // Reset lastBarcode so onBarcodeDetected's dedup doesn't block this code
-                    lastBarcode = null
-                    _jsEngineService?.let { s ->
-                        runBlocking {
-                            value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                            onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
-                        }
-                    } ?: onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                    lastBarcode = null  // reset dedup so onBarcodeDetected accepts each new code
+                    processAndDispatch(barcode, sourceImage, useRunBlocking = true)
                 }
             }
         } else if (multiCodeDetection) {
@@ -585,31 +585,8 @@ class CameraViewModel : ViewModel() {
             val barcode = allBarcodes.firstOrNull()
             _currentBarcode.update { barcode }
 
-            barcode?.value?.let { v ->
-                var value = v
-
-                // Compute regex capture groups locally — passed directly through the callback chain
-                // instead of being stored as ViewModel state, to avoid threading issues.
-                val regexGroups: List<String> = _scanRegex?.let { re ->
-                    re.find(value)?.let { match ->
-                        // Use first capture group as the main value (backward compat)
-                        match.groupValues.getOrNull(1)?.let { group ->
-                            value = group
-                        }
-                        // Return all capture groups (1..N) for {CODE%N} template support
-                        match.groupValues.drop(1)
-                    } ?: emptyList()
-                } ?: emptyList()
-
-                _jsEngineService?.let { s ->
-                    // Only blocks the analyzer thread
-                    runBlocking {
-                        value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                        onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
-                    }
-                } ?: run {
-                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
-                }
+            if (barcode != null) {
+                processAndDispatch(barcode, sourceImage)
             }
         }
     }

@@ -62,7 +62,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -73,9 +72,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material3.ListItem
 import androidx.compose.ui.res.stringResource
 import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
 import dev.fabik.bluetoothhid.ui.ButtonPreference
@@ -671,20 +668,17 @@ internal fun AboutSettings(strings: SettingsStrings) {
 // Cached strings to avoid repeated resource lookups during scroll
 @Composable
 internal fun ProfileSettings() {
-    val context = LocalContext.current
     val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
-    var showManageDialog by remember { mutableStateOf(false) }
+    val dialogState = rememberDialogState()
 
-    ListItem(
-        headlineContent = { Text(activeProfile) },
-        supportingContent = { Text(stringResource(R.string.active_profile_desc)) },
-        leadingContent = { Icon(Icons.Default.Layers, contentDescription = null) },
-        modifier = Modifier.clickable { showManageDialog = true }
+    ProfileManageDialog(dialogState)
+
+    ButtonPreference(
+        title = activeProfile,
+        desc = stringResource(R.string.active_profile_desc),
+        icon = Icons.Default.Layers,
+        onClick = dialogState::open
     )
-
-    if (showManageDialog) {
-        ProfileManageDialog(onDismiss = { showManageDialog = false })
-    }
 }
 
 internal class SettingsStrings(private val context: Context) {

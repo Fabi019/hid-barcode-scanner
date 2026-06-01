@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +38,7 @@ import dev.fabik.bluetoothhid.utils.ProfileManager
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileManageDialog(onDismiss: () -> Unit) {
+fun ProfileManageDialog(dialogState: DialogState) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -55,114 +54,97 @@ fun ProfileManageDialog(onDismiss: () -> Unit) {
         profiles.sortedWith(compareBy({ it != ProfileManager.DEFAULT }, { it }))
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.manage_profiles)) },
-        text = {
-            Column {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(sortedProfiles) { profile ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (profile != activeProfile) {
-                                        scope.launch {
-                                            ProfileManager.switchProfile(context, profile)
-                                        }
+    InfoDialog(dialogState, stringResource(R.string.manage_profiles)) {
+        Column {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(sortedProfiles) { profile ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (profile != activeProfile) {
+                                    scope.launch {
+                                        ProfileManager.switchProfile(context, profile)
                                     }
                                 }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                RadioButton(
-                                    selected = profile == activeProfile,
-                                    onClick = {
-                                        if (profile != activeProfile) {
-                                            scope.launch {
-                                                ProfileManager.switchProfile(context, profile)
-                                            }
-                                        }
-                                    }
-                                )
-                                Text(profile, style = MaterialTheme.typography.bodyMedium)
                             }
-                            // Can't delete Default or active profile
-                            if (profile != ProfileManager.DEFAULT && profile != activeProfile) {
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            ProfileManager.deleteProfile(context, profile)
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.delete_profile),
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                        }
-                        HorizontalDivider()
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                if (showAddField) {
-                    OutlinedTextField(
-                        value = newProfileName,
-                        onValueChange = {
-                            newProfileName = it
-                            nameError = null
-                        },
-                        label = { Text(stringResource(R.string.profile_name)) },
-                        isError = nameError != null,
-                        supportingText = nameError?.let { { Text(it) } },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                val trimmed = newProfileName.trim()
-                                when {
-                                    trimmed.isEmpty() ->
-                                        nameError = context.getString(R.string.profile_name_empty)
-                                    profiles.contains(trimmed) ->
-                                        nameError = context.getString(R.string.profile_name_exists)
-                                    else -> {
-                                        scope.launch {
-                                            ProfileManager.createProfile(context, trimmed)
-                                        }
-                                        newProfileName = ""
-                                        showAddField = false
-                                    }
-                                }
-                            }) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                            }
-                        }
-                    )
-                } else {
-                    TextButton(
-                        onClick = { showAddField = true },
-                        modifier = Modifier.fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Text(stringResource(R.string.add_profile))
+                        RadioButton(
+                            selected = profile == activeProfile,
+                            onClick = null
+                        )
+                        Text(
+                            profile,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Can't delete Default or active profile
+                        if (profile != ProfileManager.DEFAULT && profile != activeProfile) {
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        ProfileManager.deleteProfile(context, profile)
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.delete_profile),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     }
+                    HorizontalDivider()
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
+
+            Spacer(Modifier.height(8.dp))
+
+            if (showAddField) {
+                OutlinedTextField(
+                    value = newProfileName,
+                    onValueChange = {
+                        newProfileName = it
+                        val trimmed = it.trim()
+                        nameError = when {
+                            trimmed.isEmpty() -> context.getString(R.string.profile_name_empty)
+                            profiles.contains(trimmed) -> context.getString(R.string.profile_name_exists)
+                            else -> null
+                        }
+                    },
+                    label = { Text(stringResource(R.string.profile_name)) },
+                    isError = nameError != null,
+                    supportingText = nameError?.let { { Text(it) } },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(
+                            enabled = nameError == null && newProfileName.isNotBlank(),
+                            onClick = {
+                                scope.launch {
+                                    ProfileManager.createProfile(context, newProfileName.trim())
+                                }
+                                newProfileName = ""
+                                showAddField = false
+                            }
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                        }
+                    }
+                )
+            } else {
+                TextButton(
+                    onClick = { showAddField = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Text(stringResource(R.string.add_profile))
+                }
             }
         }
-    )
+    }
 }

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.preferencesDataStoreFile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,10 +50,10 @@ object ProfileManager {
     private fun getOrCreateStoreById(context: Context, fileId: String): DataStore<Preferences> {
         return storeCache.getOrPut(fileId) {
             val appContext = context.applicationContext
-            // Default profile reuses the existing settings.preferences_pb (backward compat)
+            // Default profile reuses the existing "settings" store (backward compat)
             val fileName = if (fileId == DEFAULT_ID) "settings" else "settings_$fileId"
             PreferenceDataStoreFactory.create {
-                appContext.filesDir.resolve("datastore/$fileName.preferences_pb")
+                appContext.preferencesDataStoreFile(fileName)
             }
         }
     }
