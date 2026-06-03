@@ -446,17 +446,20 @@ class CameraViewModel : ViewModel() {
 
     // Called when the user manually selects a barcode from the multi-code picker.
     fun selectBarcode(barcode: Barcode) {
-        _currentBarcode.update { barcode }
-        processAndDispatch(barcode, sourceImage = null)
+        processAndDispatch(barcode, sourceImage = null, resetDedup = true)
     }
 
     // Applies regex extraction and JS mapping, then calls onBarcodeDetected.
     // useRunBlocking=true is needed on the analyzer thread (auto-send) to preserve frame ordering.
+    // resetDedup=true clears lastBarcode so the same value can be re-sent (used by selectBarcode and auto-send).
     private fun processAndDispatch(
         barcode: Barcode,
         sourceImage: ImageProxy?,
-        useRunBlocking: Boolean = false
+        useRunBlocking: Boolean = false,
+        resetDedup: Boolean = false
     ) {
+        if (resetDedup) lastBarcode = null
+        _currentBarcode.update { barcode }
         val rawValue = barcode.value ?: return
         var value = rawValue
 
@@ -569,9 +572,7 @@ class CameraViewModel : ViewModel() {
             newBarcodes.forEach { barcode ->
                 if (barcode.value != null) {
                     sentInSession.add(barcode.value!!)
-                    _currentBarcode.update { barcode }
-                    lastBarcode = null  // reset dedup so onBarcodeDetected accepts each new code
-                    processAndDispatch(barcode, sourceImage, useRunBlocking = true)
+                    processAndDispatch(barcode, sourceImage, useRunBlocking = true, resetDedup = true)
                 }
             }
         } else if (multiCodeDetection) {
@@ -584,10 +585,10 @@ class CameraViewModel : ViewModel() {
         } else {
             // Single-code mode: existing behaviour, take first match
             val barcode = allBarcodes.firstOrNull()
-            _currentBarcode.update { barcode }
-
             if (barcode != null) {
                 processAndDispatch(barcode, sourceImage)
+            } else {
+                _currentBarcode.update { null }
             }
         }
     }
