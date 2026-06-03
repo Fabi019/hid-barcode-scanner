@@ -1,6 +1,6 @@
 package dev.fabik.bluetoothhid.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Switch
@@ -23,13 +23,14 @@ fun ButtonPreference(
     icon: ImageVector? = null,
     extra: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit = {}
 ) {
     ListItem(
         headlineContent = { Text(title) },
         modifier = Modifier
             .alpha(if (enabled) 1f else 0.38f)
-            .clickable(enabled = enabled, onClick = onClick),
+            .combinedClickable(enabled, onClick = onClick, onLongClick = onLongClick),
         supportingContent = { Text(desc) },
         leadingContent = icon?.let {
             { Icon(icon, null) }
