@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.OpenInFull
@@ -18,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +64,31 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     val currentBarcode by viewModel.currentBarcode.collectAsStateWithLifecycle()
     val detectedBarcodes by viewModel.detectedBarcodes.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        val json = context.getPreference(PreferenceStore.SCAN_AREAS).first()
+        val loaded = if (json.isBlank()) {
+            // Migrate from legacy single-area prefs
+            val posX = context.getPreference(PreferenceStore.OVERLAY_POS_X).first()
+            val posY = context.getPreference(PreferenceStore.OVERLAY_POS_Y).first()
+            val sizeX = context.getPreference(PreferenceStore.OVERLAY_WIDTH).first()
+            val sizeY = context.getPreference(PreferenceStore.OVERLAY_HEIGHT).first()
+            listOf(ScanAreaData(posX, posY, sizeX, sizeY))
+        } else {
+            ScanAreaData.fromJsonArray(json).ifEmpty { listOf(ScanAreaData.DEFAULT) }
+        }
+        viewModel.areas.clear()
+        viewModel.areas.addAll(loaded)
+        // Keep legacy fields in sync with first area for debug overlay
+        viewModel.overlayPosition = Offset(viewModel.areas[0].posX, viewModel.areas[0].posY)
+        viewModel.overlaySize = Size(viewModel.areas[0].sizeX, viewModel.areas[0].sizeY)
+    }
+
+    fun saveState() {
+        runBlocking {
+            context.setPreference(PreferenceStore.SCAN_AREAS, ScanAreaData.toJsonArray(viewModel.areas))
+        }
+    }
+
     Canvas(
         Modifier
             .fillMaxSize()
@@ -93,7 +116,7 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
 
                 // Custom — user adjustable, supports multiple areas
                 OverlayType.CUSTOM -> {
-                    val rects = viewModel.scanAreas.map { it.toRect(this.size.width, this.size.height) }
+                    val rects = viewModel.areas.map { it.toRect(this.size.width, this.size.height) }
                     viewModel.scanRects = rects
                     when {
                         rects.isEmpty() -> Rect.Zero
@@ -155,7 +178,7 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     // Show the adjust buttons
     if (restrictArea && overlayType == OverlayType.CUSTOM) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CustomOverlayButtons(viewModel)
+            CustomOverlayButtons(viewModel, ::saveState)
         }
     }
 
@@ -166,40 +189,15 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
 }
 
 @Composable
-fun CustomOverlayButtons(viewModel: CameraViewModel) {
-    val context = LocalContext.current
-    val areas = remember { mutableStateListOf<ScanAreaData>() }
-
-    LaunchedEffect(Unit) {
-        val json = context.getPreference(PreferenceStore.SCAN_AREAS).first()
-        val loaded = if (json.isBlank()) {
-            // Migrate from legacy single-area prefs
-            val posX = context.getPreference(PreferenceStore.OVERLAY_POS_X).first()
-            val posY = context.getPreference(PreferenceStore.OVERLAY_POS_Y).first()
-            val sizeX = context.getPreference(PreferenceStore.OVERLAY_WIDTH).first()
-            val sizeY = context.getPreference(PreferenceStore.OVERLAY_HEIGHT).first()
-            listOf(ScanAreaData(posX, posY, sizeX, sizeY))
-        } else {
-            ScanAreaData.fromJsonArray(json).ifEmpty { listOf(ScanAreaData.DEFAULT) }
-        }
-        areas.clear()
-        areas.addAll(loaded)
-        viewModel.scanAreas = areas.toList()
-        // Keep legacy fields in sync with first area for debug overlay
-        viewModel.overlayPosition = Offset(areas[0].posX, areas[0].posY)
-        viewModel.overlaySize = Size(areas[0].sizeX, areas[0].sizeY)
-    }
-
-    fun saveState() {
-        runBlocking {
-            context.setPreference(PreferenceStore.SCAN_AREAS, ScanAreaData.toJsonArray(areas))
-        }
-    }
+fun CustomOverlayButtons(
+    viewModel: CameraViewModel,
+    saveState: () -> Unit
+) {
+    val areas = viewModel.areas
 
     fun reset() {
         areas.clear()
         areas.add(ScanAreaData.DEFAULT)
-        viewModel.scanAreas = areas.toList()
         viewModel.overlayPosition = Offset(ScanAreaData.DEFAULT.posX, ScanAreaData.DEFAULT.posY)
         viewModel.overlaySize = Size(ScanAreaData.DEFAULT.sizeX, ScanAreaData.DEFAULT.sizeY)
         saveState()
@@ -222,13 +220,12 @@ fun CustomOverlayButtons(viewModel: CameraViewModel) {
                     )
                 }
                 .pointerInput(areas.size) {
-                    detectDragGestures(onDragEnd = ::saveState) { change, dragAmount ->
+                    detectDragGestures(onDragEnd = saveState) { change, dragAmount ->
                         change.consume()
                         areas[index] = areas[index].copy(
                             sizeX = areas[index].sizeX + dragAmount.x,
                             sizeY = areas[index].sizeY + dragAmount.y
                         )
-                        viewModel.scanAreas = areas.toList()
                     }
                 }
         ) {
@@ -247,13 +244,12 @@ fun CustomOverlayButtons(viewModel: CameraViewModel) {
                     )
                 }
                 .pointerInput(areas.size) {
-                    detectDragGestures(onDragEnd = ::saveState) { change, dragAmount ->
+                    detectDragGestures(onDragEnd = saveState) { change, dragAmount ->
                         change.consume()
                         areas[index] = areas[index].copy(
                             posX = areas[index].posX + dragAmount.x,
                             posY = areas[index].posY + dragAmount.y
                         )
-                        viewModel.scanAreas = areas.toList()
                         // Keep legacy fields in sync with first area for debug overlay
                         if (index == 0) {
                             viewModel.overlayPosition = Offset(areas[0].posX, areas[0].posY)
@@ -270,7 +266,6 @@ fun CustomOverlayButtons(viewModel: CameraViewModel) {
             IconButton(
                 onClick = {
                     areas.removeAt(index)
-                    viewModel.scanAreas = areas.toList()
                     saveState()
                 },
                 colors = iconColors,
@@ -286,21 +281,6 @@ fun CustomOverlayButtons(viewModel: CameraViewModel) {
         }
     }
 
-    // Add area button — fixed offset from center so it doesn't overlap with handles
-    IconButton(
-        onClick = {
-            val offset = areas.size * 40f
-            areas.add(ScanAreaData(offset, offset, 100f, 100f))
-            viewModel.scanAreas = areas.toList()
-            saveState()
-        },
-        colors = IconButtonDefaults.iconButtonColors(
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-        ),
-        modifier = Modifier.absoluteOffset { IntOffset(-200, -200) }
-    ) {
-        Icon(Icons.Default.Add, "Add area")
-    }
 }
 
 @Composable

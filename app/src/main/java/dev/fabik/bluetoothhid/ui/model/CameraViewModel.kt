@@ -37,6 +37,7 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
@@ -113,7 +114,7 @@ class CameraViewModel : ViewModel() {
     var scanRect = Rect.Zero
     // For CUSTOM overlay with multiple areas: individual rects for filtering, empty = use scanRect
     var scanRects: List<Rect> = emptyList()
-    var scanAreas by mutableStateOf<List<ScanAreaData>>(emptyList())
+    val areas = mutableStateListOf<ScanAreaData>()
     var overlayPosition by mutableStateOf<Offset?>(null)
     var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
 

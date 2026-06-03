@@ -51,6 +51,7 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.rounded.Warning
@@ -64,6 +65,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -129,6 +131,9 @@ import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.OverlayType
+import dev.fabik.bluetoothhid.utils.ScanAreaData
+import dev.fabik.bluetoothhid.utils.setPreference
 import dev.fabik.bluetoothhid.utils.DeviceInfo
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.VolumeKeyAction
@@ -231,8 +236,13 @@ fun Scanner(
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
     AdaptSystemBarsColor(fullScreen)
 
+    val restrictArea by context.getPreferenceStateBlocking(PreferenceStore.RESTRICT_AREA)
+    val overlayTypeOrdinal by context.getPreferenceStateBlocking(PreferenceStore.OVERLAY_TYPE)
+    val overlayType = OverlayType.fromIndex(overlayTypeOrdinal)
+
     val keyboardDialog = rememberDialogState()
     val cameraVM = viewModel<CameraViewModel>()
+    val scope = rememberCoroutineScope()
 
     // Show a Snackbar when JavaScript evaluation fails
     LaunchedEffect(cameraVM) {
@@ -246,7 +256,18 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)
+            val onAddArea: (() -> Unit)? = if (restrictArea && overlayType == OverlayType.CUSTOM) {
+                {
+                    cameraVM.areas.add(ScanAreaData(0f, 0f, 100f, 100f))
+                    scope.launch {
+                        context.setPreference(
+                            PreferenceStore.SCAN_AREAS,
+                            ScanAreaData.toJsonArray(cameraVM.areas)
+                        )
+                    }
+                }
+            } else null
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog, onAddArea)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -728,7 +749,8 @@ private fun ScannerAppBar(
     info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
-    keyboardDialog: DialogState
+    keyboardDialog: DialogState,
+    onAddArea: (() -> Unit)?
 ) {
     val navigation = LocalNavigation.current
 
@@ -800,7 +822,18 @@ private fun ScannerAppBar(
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
 //                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
 //            }
-            Dropdown(transparent)
+            Dropdown(transparent) { hideMenu ->
+                if (onAddArea != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.add_scan_area)) },
+                        leadingIcon = { Icon(Icons.Default.Add, null) },
+                        onClick = {
+                            onAddArea()
+                            hideMenu()
+                        }
+                    )
+                }
+            }
         },
         colors = if (transparent) {
             TopAppBarDefaults.topAppBarColors(

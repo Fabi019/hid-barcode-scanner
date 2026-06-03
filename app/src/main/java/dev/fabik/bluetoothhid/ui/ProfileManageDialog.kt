@@ -125,8 +125,9 @@ fun ProfileManageDialog(dialogState: DialogState) {
                         IconButton(
                             enabled = nameError == null && newProfileName.isNotBlank(),
                             onClick = {
+                                val name = newProfileName.trim()
                                 scope.launch {
-                                    ProfileManager.createProfile(context, newProfileName.trim())
+                                    ProfileManager.createProfile(context, name)
                                 }
                                 newProfileName = ""
                                 showAddField = false
