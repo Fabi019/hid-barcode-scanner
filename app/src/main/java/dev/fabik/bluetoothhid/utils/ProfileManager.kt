@@ -114,7 +114,6 @@ object ProfileManager {
         storeCache.remove(id)
         val appContext = context.applicationContext
         val fileName = "settings_$id"
-        appContext.filesDir.resolve("datastore/$fileName.preferences_pb").delete()
-        appContext.filesDir.resolve("datastore/$fileName.preferences_pb.tmp").delete()
+        appContext.preferencesDataStoreFile(fileName).delete()
     }
 }
