@@ -59,7 +59,6 @@ import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
-import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -298,9 +297,30 @@ class CameraViewModel : ViewModel() {
         if (_fullyInside && barcodeAnalyzer?.currentScanRect != scanRect) {
             val topLeft = transformPoint(scanRect.topLeft.toPoint(), source, true).toPoint()
             val bottomRight = transformPoint(scanRect.bottomRight.toPoint(), source, true).toPoint()
-            barcodeAnalyzer?.cropRect = when (rotation == 0 || rotation == 180) {
-                true -> android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
-                false -> android.graphics.Rect(topLeft.y, topLeft.x, bottomRight.y, bottomRight.x)
+            val rect = android.graphics.Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
+            barcodeAnalyzer?.cropRect = when (rotation) {
+                90 -> android.graphics.Rect(
+                    rect.top,
+                    source.width - rect.right,
+                    rect.bottom,
+                    source.width - rect.left
+                )
+
+                180 -> android.graphics.Rect(
+                    source.width - rect.right,
+                    source.height - rect.bottom,
+                    source.width - rect.left,
+                    source.height - rect.top
+                )
+
+                270 -> android.graphics.Rect(
+                    source.height - rect.bottom,
+                    rect.left,
+                    source.height - rect.top,
+                    rect.right
+                )
+
+                else -> rect
             }
             barcodeAnalyzer?.currentScanRect = scanRect
         }
@@ -463,12 +483,26 @@ class CameraViewModel : ViewModel() {
                 if (_fullyInside) {
                     // Add offset from crop rect onto the position
                     val cropRect = barcodeAnalyzer?.cropRect ?: android.graphics.Rect()
-                    if (sourceImage.imageInfo.rotationDegrees == 0 || sourceImage.imageInfo.rotationDegrees == 180) {
-                        p.x += cropRect.left
-                        p.y += cropRect.top
-                    } else {
-                        p.y += cropRect.left
-                        p.x += cropRect.top
+                    when (sourceImage.imageInfo.rotationDegrees) {
+                        0 -> {
+                            p.x += cropRect.left
+                            p.y += cropRect.top
+                        }
+
+                        90 -> {
+                            p.y += cropRect.left
+                            p.x += source.width - cropRect.bottom
+                        }
+
+                        180 -> {
+                            p.x += source.width - cropRect.right
+                            p.y += source.height - cropRect.bottom
+                        }
+
+                        270 -> {
+                            p.y += source.height - cropRect.right
+                            p.x += cropRect.top
+                        }
                     }
                 }
                 transformPoint(p, source)
