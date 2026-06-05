@@ -46,15 +46,15 @@ fun ProfileManageDialog(dialogState: DialogState) {
         .collectAsStateWithLifecycle(initialValue = setOf(ProfileManager.DEFAULT))
     val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
 
-    var showAddField by remember { mutableStateOf(false) }
-    var newProfileName by remember { mutableStateOf("") }
-    var nameError by remember { mutableStateOf<String?>(null) }
-
     val sortedProfiles = remember(profiles) {
         profiles.sortedWith(compareBy({ it != ProfileManager.DEFAULT }, { it }))
     }
 
     InfoDialog(dialogState, stringResource(R.string.manage_profiles)) {
+        var showAddField by remember { mutableStateOf(false) }
+        var newProfileName by remember { mutableStateOf("") }
+        var nameError by remember { mutableStateOf<String?>(null) }
+
         Column {
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(sortedProfiles) { profile ->
@@ -68,13 +68,15 @@ fun ProfileManageDialog(dialogState: DialogState) {
                                     }
                                 }
                             }
+                            .height(56.dp)
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         RadioButton(
                             selected = profile == activeProfile,
-                            onClick = null
+                            onClick = null,
+                            modifier = Modifier.padding(4.dp)
                         )
                         Text(
                             profile,
