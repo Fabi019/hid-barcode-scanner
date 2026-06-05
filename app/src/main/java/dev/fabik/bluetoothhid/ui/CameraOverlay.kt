@@ -17,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -61,6 +60,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
     val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
 
+    UpdateScanAreas(viewModel, restrictArea, overlayType)
+
     val currentBarcode by viewModel.currentBarcode.collectAsStateWithLifecycle()
     val detectedBarcodes by viewModel.detectedBarcodes.collectAsStateWithLifecycle()
 
@@ -76,16 +77,16 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
         } else {
             ScanAreaData.fromJsonArray(json).ifEmpty { listOf(ScanAreaData.DEFAULT) }
         }
-        viewModel.areas.clear()
-        viewModel.areas.addAll(loaded)
-        // Keep legacy fields in sync with first area for debug overlay
-        viewModel.overlayPosition = Offset(viewModel.areas[0].posX, viewModel.areas[0].posY)
-        viewModel.overlaySize = Size(viewModel.areas[0].sizeX, viewModel.areas[0].sizeY)
+        viewModel.clearScanAreas()
+        viewModel.addScanAreas(*loaded.toTypedArray())
     }
 
     fun saveState() {
         runBlocking {
-            context.setPreference(PreferenceStore.SCAN_AREAS, ScanAreaData.toJsonArray(viewModel.areas))
+            context.setPreference(
+                PreferenceStore.SCAN_AREAS,
+                ScanAreaData.toJsonArray(viewModel.areas.value)
+            )
         }
     }
 
@@ -95,49 +96,10 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
             .onGloballyPositioned {
                 viewModel.viewSize = it.size
                 viewModel.lastScanSize = null
-            }) {
-        val x = this.size.width / 2
-        val y = this.size.height / 2
-        val landscape = this.size.width > this.size.height
-
+            }
+    ) {
         // Draws the scanner area
         if (restrictArea) {
-            viewModel.scanRect = when (overlayType) {
-                // Rectangle optimized for barcodes
-                OverlayType.RECTANGLE -> {
-                    viewModel.scanRects = emptyList()
-                    val length = this.size.width * 0.8f
-                    val height = (length * 0.45f).coerceAtMost(y * 0.8f)
-                    Rect(
-                        Offset(x - length / 2, y - height / 2),
-                        Size(length, height)
-                    )
-                }
-
-                // Custom — user adjustable, supports multiple areas
-                OverlayType.CUSTOM -> {
-                    val rects = viewModel.areas.map { it.toRect(this.size.width, this.size.height) }
-                    viewModel.scanRects = rects
-                    when {
-                        rects.isEmpty() -> Rect.Zero
-                        rects.size == 1 -> rects.first()
-                        else -> rects.fold(rects.first()) { acc, r ->
-                            Rect(
-                                minOf(acc.left, r.left), minOf(acc.top, r.top),
-                                maxOf(acc.right, r.right), maxOf(acc.bottom, r.bottom)
-                            )
-                        }
-                    }
-                }
-
-                // Square for scanning qr codes (default)
-                OverlayType.SQUARE -> {
-                    viewModel.scanRects = emptyList()
-                    val length = if (landscape) this.size.height * 0.6f else this.size.width * 0.8f
-                    Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
-                }
-            }
-
             val markerPath = Path().apply {
                 if (viewModel.scanRects.isNotEmpty()) {
                     // Draw each custom area as a separate rounded rect cutout
@@ -189,17 +151,70 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
 }
 
 @Composable
+fun UpdateScanAreas(
+    viewModel: CameraViewModel,
+    restrictArea: Boolean,
+    overlayType: OverlayType
+) {
+    LaunchedEffect(viewModel.viewSize, restrictArea, overlayType) {
+        if (!restrictArea) return@LaunchedEffect
+        viewModel.viewSize?.let {
+            val x = it.width / 2
+            val y = it.height / 2
+            val landscape = it.width > it.height
+
+            viewModel.areas.collect { scanAreas ->
+                viewModel.scanRect = when (overlayType) {
+                    // Rectangle optimized for barcodes
+                    OverlayType.RECTANGLE -> {
+                        viewModel.scanRects = emptyList()
+                        val length = it.width * 0.8f
+                        val height = (length * 0.45f).coerceAtMost(y * 0.8f)
+                        Rect(
+                            Offset(x - length / 2, y - height / 2),
+                            Size(length, height)
+                        )
+                    }
+
+                    // Custom — user adjustable, supports multiple areas
+                    OverlayType.CUSTOM -> {
+                        val rects =
+                            scanAreas.map { a -> a.toRect(it.width.toFloat(), it.height.toFloat()) }
+                        viewModel.scanRects = rects
+                        when {
+                            rects.isEmpty() -> Rect.Zero
+                            rects.size == 1 -> rects.first()
+                            else -> rects.fold(rects.first()) { acc, r ->
+                                Rect(
+                                    minOf(acc.left, r.left), minOf(acc.top, r.top),
+                                    maxOf(acc.right, r.right), maxOf(acc.bottom, r.bottom)
+                                )
+                            }
+                        }
+                    }
+
+                    // Square for scanning qr codes (default)
+                    OverlayType.SQUARE -> {
+                        viewModel.scanRects = emptyList()
+                        val length = if (landscape) it.height * 0.6f else it.width * 0.8f
+                        Rect(Offset(x - length / 2, y - length / 2), Size(length, length))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun CustomOverlayButtons(
     viewModel: CameraViewModel,
     saveState: () -> Unit
 ) {
-    val areas = viewModel.areas
+    val scanAreas by viewModel.areas.collectAsStateWithLifecycle()
 
     fun reset() {
-        areas.clear()
-        areas.add(ScanAreaData.DEFAULT)
-        viewModel.overlayPosition = Offset(ScanAreaData.DEFAULT.posX, ScanAreaData.DEFAULT.posY)
-        viewModel.overlaySize = Size(ScanAreaData.DEFAULT.sizeX, ScanAreaData.DEFAULT.sizeY)
+        viewModel.clearScanAreas()
+        viewModel.addScanAreas(ScanAreaData.DEFAULT)
         saveState()
     }
 
@@ -207,7 +222,7 @@ fun CustomOverlayButtons(
         MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
     )
 
-    areas.forEachIndexed { index, area ->
+    scanAreas.forEachIndexed { index, area ->
         // Resize handle — bottom-right corner of this area
         IconButton(
             onClick = ::reset,
@@ -219,12 +234,14 @@ fun CustomOverlayButtons(
                         (area.posY + area.sizeY.absoluteValue).roundToInt()
                     )
                 }
-                .pointerInput(areas.size) {
+                .pointerInput(scanAreas.size) {
                     detectDragGestures(onDragEnd = saveState) { change, dragAmount ->
                         change.consume()
-                        areas[index] = areas[index].copy(
-                            sizeX = areas[index].sizeX + dragAmount.x,
-                            sizeY = areas[index].sizeY + dragAmount.y
+                        viewModel.updateScanArea(
+                            index, scanAreas[index].copy(
+                                sizeX = scanAreas[index].sizeX + dragAmount.x,
+                                sizeY = scanAreas[index].sizeY + dragAmount.y
+                            )
                         )
                     }
                 }
@@ -243,18 +260,15 @@ fun CustomOverlayButtons(
                         (area.posY + area.sizeY.absoluteValue).roundToInt()
                     )
                 }
-                .pointerInput(areas.size) {
+                .pointerInput(scanAreas.size) {
                     detectDragGestures(onDragEnd = saveState) { change, dragAmount ->
                         change.consume()
-                        areas[index] = areas[index].copy(
-                            posX = areas[index].posX + dragAmount.x,
-                            posY = areas[index].posY + dragAmount.y
+                        viewModel.updateScanArea(
+                            index, scanAreas[index].copy(
+                                posX = scanAreas[index].posX + dragAmount.x,
+                                posY = scanAreas[index].posY + dragAmount.y
+                            )
                         )
-                        // Keep legacy fields in sync with first area for debug overlay
-                        if (index == 0) {
-                            viewModel.overlayPosition = Offset(areas[0].posX, areas[0].posY)
-                            viewModel.overlaySize = Size(areas[0].sizeX, areas[0].sizeY)
-                        }
                     }
                 }
         ) {
@@ -262,10 +276,10 @@ fun CustomOverlayButtons(
         }
 
         // Delete button — top-right corner, only shown when multiple areas exist
-        if (areas.size > 1) {
+        if (scanAreas.size > 1) {
             IconButton(
                 onClick = {
-                    areas.removeAt(index)
+                    viewModel.removeScanArea(index)
                     saveState()
                 },
                 colors = iconColors,

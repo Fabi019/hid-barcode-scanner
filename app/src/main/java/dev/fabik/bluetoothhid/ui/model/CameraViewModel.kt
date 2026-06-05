@@ -37,7 +37,6 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
@@ -56,6 +55,8 @@ import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
 import dev.fabik.bluetoothhid.utils.ScanAreaData
+import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlayOffset
+import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlaySize
 import dev.fabik.bluetoothhid.utils.ScanFrequency
 import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
@@ -113,7 +114,8 @@ class CameraViewModel : ViewModel() {
     var scanRect = Rect.Zero
     // For CUSTOM overlay with multiple areas: individual rects for filtering, empty = use scanRect
     var scanRects: List<Rect> = emptyList()
-    val areas = mutableStateListOf<ScanAreaData>()
+    private val _areas = MutableStateFlow<List<ScanAreaData>>(emptyList())
+    val areas = _areas.asStateFlow()
     var overlayPosition by mutableStateOf<Offset?>(null)
     var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
 
@@ -340,7 +342,7 @@ class CameraViewModel : ViewModel() {
         }
     }
 
-    var viewSize: IntSize? = null
+    var viewSize by mutableStateOf<IntSize?>(null)
     var lastScanSize: Size? = null
     private var scale = 1.0f
     private var translation = Offset(0.0f, 0.0f)
@@ -475,7 +477,6 @@ class CameraViewModel : ViewModel() {
     private fun processAndDispatch(
         barcode: Barcode,
         sourceImage: ImageProxy?,
-        useRunBlocking: Boolean = false,
         resetDedup: Boolean = false
     ) {
         if (resetDedup) lastBarcode = null
@@ -491,18 +492,13 @@ class CameraViewModel : ViewModel() {
         } ?: emptyList()
 
         _jsEngineService?.let { s ->
-            if (useRunBlocking) {
-                runBlocking {
-                    value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
-                }
-            } else {
-                viewModelScope.launch {
-                    value = mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
-                }
+            // This must be blocking otherwise the image might already be closed
+            // when trying to save it later in onBarcodeDetected
+            value = runBlocking {
+                mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
             }
-        } ?: onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+        }
+        onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
     }
 
     var lastDetectionTime: Long? = null
@@ -606,7 +602,11 @@ class CameraViewModel : ViewModel() {
             newBarcodes.forEach { barcode ->
                 if (barcode.value != null) {
                     sentInSession.add(barcode.value!!)
-                    processAndDispatch(barcode, sourceImage, useRunBlocking = true, resetDedup = true)
+                    processAndDispatch(
+                        barcode,
+                        sourceImage,
+                        resetDedup = true
+                    )
                 }
             }
         } else if (multiCodeDetection) {
@@ -876,4 +876,40 @@ class CameraViewModel : ViewModel() {
 
     fun Offset.toPoint() = Point(x.toInt(), y.toInt())
 
+    fun clearScanAreas() {
+        _areas.update { emptyList() }
+    }
+
+    fun addScanAreas(vararg area: ScanAreaData) {
+        _areas.update { it + area }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (areas.value.isNotEmpty()) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
+
+    fun updateScanArea(index: Int, area: ScanAreaData) {
+        if (index >= areas.value.size) return
+        _areas.update {
+            it.toMutableList().also { l -> l[index] = area }
+        }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (index == 0) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
+
+    fun removeScanArea(index: Int) {
+        if (index >= areas.value.size) return
+        _areas.update {
+            it.toMutableList().also { l -> l.removeAt(index) }
+        }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (areas.value.isNotEmpty()) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
 }
