@@ -14,6 +14,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -23,7 +25,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.BuildConfig
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-val Context.dataStore by preferencesDataStore("settings")
+// Active profile's DataStore — routes through ProfileManager so profile switches are reflected
+val Context.dataStore: DataStore<Preferences> get() = ProfileManager.currentStore(this)
+
+// CompositionLocal for reactive profile-aware DataStore access in composables
+val LocalDataStore = staticCompositionLocalOf<DataStore<Preferences>> {
+    error("LocalDataStore not provided — wrap your composable tree with CompositionLocalProvider(LocalDataStore provides ...)")
+}
 
 // Enums for type-safe preference values
 // Note: ordinal is used as index - no need for explicit val index
@@ -259,6 +266,7 @@ open class PreferenceStore {
         val FULL_INSIDE = booleanPreferencesKey("full_inside") defaultsTo true
         val OVERLAY_TYPE = intPreferencesKey("overlay_type").enumDefaultsTo(OverlayType::fromIndex)
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
+        val MULTI_CODE_DETECTION = booleanPreferencesKey("multi_code_detection") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val AUTO_COPY_TO_CLIPBOARD = booleanPreferencesKey("auto_copy_to_clipboard") defaultsTo false
@@ -302,6 +310,7 @@ open class PreferenceStore {
         val OVERLAY_POS_Y = floatPreferencesKey("overlay_pos_y") defaultsTo 0.0f
         val OVERLAY_WIDTH = floatPreferencesKey("overlay_width") defaultsTo 100.0f
         val OVERLAY_HEIGHT = floatPreferencesKey("overlay_height") defaultsTo 100.0f
+        val SCAN_AREAS = stringPreferencesKey("scan_areas") defaultsTo ""
         val FAVOURITE_DEVICES = stringSetPreferencesKey("favourite_devices") defaultsTo setOf()
     }
 }
@@ -385,8 +394,16 @@ fun Context.getPreferences(vararg prefs: PreferenceStore.Preference<*>): Flow<Ma
 
 @Composable
 fun Context.getMultiPreferenceState(vararg prefs: PreferenceStore.Preference<*>): State<Map<PreferenceStore.Preference<*>, *>?> {
-    // Use prefs array as key to ensure stable flow across recompositions
-    return remember(*prefs) { getPreferences(*prefs) }.collectAsStateWithLifecycle(null)
+    val dataStore = LocalDataStore.current
+    return remember(*prefs, dataStore) {
+        dataStore.data
+            .catch { e ->
+                Log.e("PreferenceStore", "Error reading preferences", e)
+                emit(emptyPreferences())
+            }
+            .map { preferences -> prefs.associateWith { pref -> preferences[pref.key] ?: pref.defaultValue } }
+            .flowOn(Dispatchers.IO)
+    }.collectAsStateWithLifecycle(null)
 }
 
 @Composable
@@ -394,23 +411,47 @@ fun <T> Context.getPreferenceStateDefault(
     pref: PreferenceStore.Preference<T>,
     initial: T = pref.defaultValue
 ): State<T> {
-    // Use pref.key to ensure stable flow across recompositions
-    val flow = remember(pref.key) { getPreference(pref) }
+    val dataStore = LocalDataStore.current
+    val flow = remember(pref.key, dataStore) {
+        dataStore.data
+            .catch { e ->
+                Log.e("PreferenceStore", "Error reading preference", e)
+                emit(preferencesOf(pref.key to pref.defaultValue))
+            }
+            .map { it[pref.key] ?: pref.defaultValue }
+            .flowOn(Dispatchers.IO)
+    }
     return flow.collectAsState(initial)
 }
 
 @Composable
 fun <T> Context.getPreferenceState(pref: PreferenceStore.Preference<T>): State<T?> {
-    // Use pref.key to ensure stable flow across recompositions
-    val flow = remember(pref.key) { getPreference(pref) }
+    val dataStore = LocalDataStore.current
+    val flow = remember(pref.key, dataStore) {
+        dataStore.data
+            .catch { e ->
+                Log.e("PreferenceStore", "Error reading preference", e)
+                emit(preferencesOf(pref.key to pref.defaultValue))
+            }
+            .map { it[pref.key] }
+            .flowOn(Dispatchers.IO)
+    }
     return flow.collectAsState(null)
 }
 
 @Composable
 fun <T> Context.getPreferenceStateBlocking(pref: PreferenceStore.Preference<T>): State<T> {
-    // Use pref.key to ensure stable flow and initial value across recompositions
-    val flow = remember(pref.key) { getPreference(pref) }
-    val initial = remember(pref.key) { runBlocking { flow.first() } }
+    val dataStore = LocalDataStore.current
+    val flow = remember(pref.key, dataStore) {
+        dataStore.data
+            .catch { e ->
+                Log.e("PreferenceStore", "Error reading preference", e)
+                emit(preferencesOf(pref.key to pref.defaultValue))
+            }
+            .map { it[pref.key] ?: pref.defaultValue }
+            .flowOn(Dispatchers.IO)
+    }
+    val initial = remember(pref.key, dataStore) { runBlocking { flow.first() } }
     return flow.collectAsState(initial)
 }
 
@@ -419,11 +460,11 @@ fun <T> rememberPreference(
     pref: PreferenceStore.Preference<T>,
 ): MutableState<T> {
     val context = LocalContext.current
+    val dataStore = LocalDataStore.current
     val scope = rememberCoroutineScope()
     val state = context.getPreferenceStateBlocking(pref)
 
-    // Use pref.key as remember key to ensure stable MutableState instance
-    return remember(pref.key) {
+    return remember(pref.key, dataStore) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value
@@ -444,11 +485,11 @@ fun <T> rememberPreferenceNull(
     pref: PreferenceStore.Preference<T>,
 ): MutableState<T?> {
     val context = LocalContext.current
+    val dataStore = LocalDataStore.current
     val scope = rememberCoroutineScope()
     val state = context.getPreferenceState(pref)
 
-    // Use pref.key as remember key to ensure stable MutableState instance
-    return remember(pref.key) {
+    return remember(pref.key, dataStore) {
         object : MutableState<T?> {
             override var value: T?
                 get() = state.value
@@ -469,12 +510,13 @@ fun <E : Enum<E>> rememberEnumPreference(
     pref: PreferenceStore.EnumPref<E>,
 ): MutableState<E> {
     val context = LocalContext.current
+    val dataStore = LocalDataStore.current
     val scope = rememberCoroutineScope()
     val intState = context.getPreferenceStateBlocking(pref)
 
-    // Use pref.key as remember key to ensure stable MutableState instance
-    // Using intState.value would recreate the object on every value change (race condition bug)
-    return remember(pref.key) {
+    // dataStore added as key so the object is recreated when profile switches,
+    // picking up the new intState from the new store
+    return remember(pref.key, dataStore) {
         object : MutableState<E> {
             override var value: E
                 get() = pref.fromOrdinal(intState.value)

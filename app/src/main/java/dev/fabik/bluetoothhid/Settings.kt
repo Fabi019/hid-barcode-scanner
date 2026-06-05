@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -74,12 +75,15 @@ import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.ui.res.stringResource
 import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxEnumPreference
 import dev.fabik.bluetoothhid.ui.CustomKeysDialog
 import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
+import dev.fabik.bluetoothhid.ui.ProfileManageDialog
 import dev.fabik.bluetoothhid.ui.SaveScanImageOptionsModal
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
@@ -88,9 +92,11 @@ import dev.fabik.bluetoothhid.ui.VolumeKeyOptionsModal
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.ProfileManager
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 
 @Composable
@@ -107,6 +113,12 @@ fun SettingsContent() {
             .fillMaxSize()
             .padding(0.dp, 0.dp)
     ) {
+        item(contentType = "section") {
+            SectionTitle(strings[R.string.profiles])
+            ProfileSettings()
+            ColoredDivider()
+        }
+
         item(contentType = "section") {
             SectionTitle(strings[R.string.connection])
             ConnectionSettings(strings)
@@ -574,6 +586,13 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         preference = PreferenceStore.PERSIST_HISTORY,
     )
 
+    SwitchPreference(
+        title = strings[R.string.multi_code_detection],
+        desc = strings[R.string.multi_code_detection_desc],
+        icon = Icons.Default.QrCode2,
+        preference = PreferenceStore.MULTI_CODE_DETECTION
+    )
+
     SaveScanImageOptionsModal()
 }
 
@@ -663,6 +682,21 @@ internal fun AboutSettings(strings: SettingsStrings) {
 }
 
 // Cached strings to avoid repeated resource lookups during scroll
+@Composable
+internal fun ProfileSettings() {
+    val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
+    val dialogState = rememberDialogState()
+
+    ProfileManageDialog(dialogState)
+
+    ButtonPreference(
+        title = activeProfile,
+        desc = stringResource(R.string.active_profile_desc),
+        icon = Icons.Default.Layers,
+        onClick = dialogState::open
+    )
+}
+
 internal class SettingsStrings(private val context: Context) {
     private val stringCache = mutableMapOf<Int, String>()
     private val arrayCache = mutableMapOf<Int, Array<String>>()

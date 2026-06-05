@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,7 @@ import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -98,8 +100,12 @@ fun NavGraph() {
             }
 
             composable(Routes.Main) {
-                Scanner(currentDevice) { result: BarcodeResult ->
-                    scope.launch {
+                // Unbounded channel ensures every barcode result is queued even during active sends
+                val sendQueue = remember { Channel<BarcodeResult>(Channel.UNLIMITED) }
+
+                // Sequential queue processor — each sendString awaits completion before next item
+                LaunchedEffect(controller) {
+                    for (result in sendQueue) {
                         val barcodeType = ZXingAnalyzer.index2String(result.format)
                         controller?.sendString(
                             result.text,
@@ -110,6 +116,16 @@ fun NavGraph() {
                             imageName = result.imageName,
                             regexGroups = result.regexGroups
                         )
+                    }
+                }
+
+                Scanner(currentDevice) { result: BarcodeResult ->
+                    sendQueue.trySend(result)
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        controller?.disconnect()
                     }
                 }
             }

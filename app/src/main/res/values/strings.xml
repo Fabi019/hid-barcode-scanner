@@ -254,6 +254,10 @@
     <string name="add">Add</string>
     <string name="persistent_history">Persistent history</string>
     <string name="persistent_history_desc">Remembers the scan history</string>
+    <string name="multi_code_detection">Multi-code detection</string>
+    <string name="multi_code_detection_desc">Detect and queue all barcodes visible in the frame at once</string>
+    <string name="add_scan_area">Add area</string>
+    <string name="delete_scan_area">Delete area</string>
     <string name="filter">Filter</string>
     <string name="date_range">Date range</string>
     <string name="select_types">Select Types</string>
@@ -424,4 +428,12 @@
         <item>Toggle zoom</item>
         <item>Trigger focus</item>
     </string-array>
+    <string name="profiles">Profiles</string>
+    <string name="active_profile_desc">Tap to manage profiles</string>
+    <string name="manage_profiles">Manage profiles</string>
+    <string name="add_profile">Add profile</string>
+    <string name="delete_profile">Delete profile</string>
+    <string name="profile_name">Profile name</string>
+    <string name="profile_name_empty">Profile name cannot be empty</string>
+    <string name="profile_name_exists">A profile with this name already exists</string>
 </resources>

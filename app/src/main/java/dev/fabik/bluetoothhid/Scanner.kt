@@ -2,6 +2,7 @@ package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.content.ClipData
 import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
@@ -20,6 +21,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -39,13 +41,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
@@ -53,21 +57,26 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -89,7 +98,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.luminance
-import android.content.ClipData
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -119,15 +127,19 @@ import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.DeviceInfo
+import dev.fabik.bluetoothhid.utils.OverlayType
 import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.ScanAreaData
 import dev.fabik.bluetoothhid.utils.VolumeKeyAction
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
+import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -145,14 +157,24 @@ private fun Modifier.iconBackgroundModifier(): Modifier {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoxScope.ElevatedWarningCard(
     message: String,
     subMessage: String? = null,
     onClick: () -> Unit,
+    onDismiss: (() -> Unit)? = null,
     visible: Boolean
 ) {
     val scope = rememberCoroutineScope()
+
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            onDismiss?.invoke()
+        }
+    }
 
     AnimatedVisibility(
         visible = visible, // You will control visibility dynamically
@@ -160,19 +182,26 @@ fun BoxScope.ElevatedWarningCard(
             .padding(12.dp)
             .align(Alignment.TopCenter)
     ) {
-        ElevatedCard(
-            onClick = { scope.launch { onClick() } }
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {},
+            enableDismissFromStartToEnd = onDismiss != null,
+            enableDismissFromEndToStart = onDismiss != null,
         ) {
-            Row(
-                Modifier.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            ElevatedCard(
+                onClick = { scope.launch { onClick() } }
             ) {
-                Icon(Icons.Rounded.Warning, contentDescription = "Warning")
-                Column {
-                    Text(message)
-                    subMessage?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall)
+                Row(
+                    Modifier.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Warning, contentDescription = "Warning")
+                    Column {
+                        Text(message)
+                        subMessage?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -207,8 +236,13 @@ fun Scanner(
     val fullScreen by context.getPreferenceStateBlocking(PreferenceStore.SCANNER_FULL_SCREEN)
     AdaptSystemBarsColor(fullScreen)
 
+    val restrictArea by context.getPreferenceStateBlocking(PreferenceStore.RESTRICT_AREA)
+    val overlayTypeOrdinal by context.getPreferenceStateBlocking(PreferenceStore.OVERLAY_TYPE)
+    val overlayType = OverlayType.fromIndex(overlayTypeOrdinal)
+
     val keyboardDialog = rememberDialogState()
     val cameraVM = viewModel<CameraViewModel>()
+    val scope = rememberCoroutineScope()
 
     // Show a Snackbar when JavaScript evaluation fails
     LaunchedEffect(cameraVM) {
@@ -222,7 +256,18 @@ fun Scanner(
 
     Scaffold(
         topBar = {
-            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog)
+            val onAddArea: (() -> Unit)? = if (restrictArea && overlayType == OverlayType.CUSTOM) {
+                {
+                    cameraVM.addScanAreas(ScanAreaData(0f, 0f, 100f, 100f))
+                    scope.launch {
+                        context.setPreference(
+                            PreferenceStore.SCAN_AREAS,
+                            ScanAreaData.toJsonArray(cameraVM.areas.value)
+                        )
+                    }
+                }
+            } else null
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog, onAddArea)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -347,6 +392,50 @@ fun Scanner(
                 ZoomStateInfo(it)
             }
             KeepScreenOn()
+
+            // Multi-code picker: visible when multi-code detection is on but auto-send is off
+            val multiCodeDetection by context.getPreferenceState(PreferenceStore.MULTI_CODE_DETECTION)
+            val autoSend by context.getPreferenceState(PreferenceStore.AUTO_SEND)
+            if (multiCodeDetection == true && autoSend != true) {
+                val detectedBarcodes by cameraVM.detectedBarcodes.collectAsStateWithLifecycle()
+                if (detectedBarcodes.isNotEmpty()) {
+                    MultiCodePicker(
+                        barcodes = detectedBarcodes,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 80.dp),
+                        onSelect = { cameraVM.selectBarcode(it) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MultiCodePicker(
+    barcodes: List<Barcode>,
+    modifier: Modifier = Modifier,
+    onSelect: (Barcode) -> Unit
+) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.6f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(barcodes) { barcode ->
+            SuggestionChip(
+                onClick = { onSelect(barcode) },
+                label = {
+                    Text(
+                        text = barcode.value?.take(24) ?: "?",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            )
         }
     }
 }
@@ -660,7 +749,8 @@ private fun ScannerAppBar(
     info: CameraInfo?,
     currentDevice: BluetoothDevice?,
     transparent: Boolean,
-    keyboardDialog: DialogState
+    keyboardDialog: DialogState,
+    onAddArea: (() -> Unit)?
 ) {
     val navigation = LocalNavigation.current
 
@@ -732,7 +822,18 @@ private fun ScannerAppBar(
 //            IconButton(onDisconnect, Modifier.tooltip(stringResource(R.string.disconnect))) {
 //                Icon(Icons.Default.BluetoothDisabled, "Disconnect")
 //            }
-            Dropdown(transparent)
+            Dropdown(transparent) { hideMenu ->
+                if (onAddArea != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.add_scan_area)) },
+                        leadingIcon = { Icon(Icons.Default.Add, null) },
+                        onClick = {
+                            onAddArea()
+                            hideMenu()
+                        }
+                    )
+                }
+            }
         },
         colors = if (transparent) {
             TopAppBarDefaults.topAppBarColors(
@@ -825,6 +926,9 @@ fun BoxScope.DeviceStatusIndicator() {
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
 
+        // Dismissed state resets when the device changes or user leaves the scanner
+        var dismissed by remember(currentDevice) { mutableStateOf(false) }
+
         when {
             currentDevice == null -> {
                 // No device selected - show "No device connected" regardless of mode
@@ -834,7 +938,8 @@ fun BoxScope.DeviceStatusIndicator() {
                     onClick = {
                         navigation.navigateUp()
                     },
-                    visible = true
+                    onDismiss = { dismissed = true },
+                    visible = !dismissed
                 )
             }
 
@@ -850,7 +955,8 @@ fun BoxScope.DeviceStatusIndicator() {
                         // Do nothing - this is just an informational message
                         // User has already selected a device and server is listening
                     },
-                    visible = true
+                    onDismiss = { dismissed = true },
+                    visible = !dismissed
                 )
             }
         }

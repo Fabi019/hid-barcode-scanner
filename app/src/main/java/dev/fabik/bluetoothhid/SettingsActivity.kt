@@ -20,11 +20,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.SettingsDropdown
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
 import dev.fabik.bluetoothhid.ui.theme.configureWindow
 import dev.fabik.bluetoothhid.ui.tooltip
+import dev.fabik.bluetoothhid.utils.LocalDataStore
+import dev.fabik.bluetoothhid.utils.ProfileManager
 
 class SettingsActivity : ComponentActivity() {
 
@@ -38,32 +44,37 @@ class SettingsActivity : ComponentActivity() {
         configureWindow(window)
 
         setContent {
-            BluetoothHIDTheme(window = window) {
-                Surface(Modifier.fillMaxSize()) {
-                    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+            val activeDataStore by remember { ProfileManager.activeStoreFlow(applicationContext) }
+                .collectAsStateWithLifecycle(initialValue = ProfileManager.currentStore(applicationContext))
 
-                    Scaffold(
-                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                        topBar = {
-                            TopAppBar(
-                                title = { Text(stringResource(R.string.settings)) },
-                                navigationIcon = {
-                                    IconButton(
-                                        onClick = { finishAfterTransition() },
-                                        Modifier.tooltip(stringResource(R.string.back))
-                                    ) {
-                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                                    }
-                                },
-                                actions = {
-                                    SettingsDropdown()
-                                },
-                                scrollBehavior = scrollBehavior
-                            )
-                        }
-                    ) { padding ->
-                        Box(Modifier.padding(padding)) {
-                            SettingsContent()
+            CompositionLocalProvider(LocalDataStore provides activeDataStore) {
+                BluetoothHIDTheme(window = window) {
+                    Surface(Modifier.fillMaxSize()) {
+                        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+                        Scaffold(
+                            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                            topBar = {
+                                TopAppBar(
+                                    title = { Text(stringResource(R.string.settings)) },
+                                    navigationIcon = {
+                                        IconButton(
+                                            onClick = { finishAfterTransition() },
+                                            Modifier.tooltip(stringResource(R.string.back))
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                                        }
+                                    },
+                                    actions = {
+                                        SettingsDropdown()
+                                    },
+                                    scrollBehavior = scrollBehavior
+                                )
+                            }
+                        ) { padding ->
+                            Box(Modifier.padding(padding)) {
+                                SettingsContent()
+                            }
                         }
                     }
                 }

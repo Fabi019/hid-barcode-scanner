@@ -54,6 +54,9 @@ import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
+import dev.fabik.bluetoothhid.utils.ScanAreaData
+import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlayOffset
+import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlaySize
 import dev.fabik.bluetoothhid.utils.ScanFrequency
 import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
@@ -109,6 +112,10 @@ class CameraViewModel : ViewModel() {
         { _, _, _, _ -> }
 
     var scanRect = Rect.Zero
+    // For CUSTOM overlay with multiple areas: individual rects for filtering, empty = use scanRect
+    var scanRects: List<Rect> = emptyList()
+    private val _areas = MutableStateFlow<List<ScanAreaData>>(emptyList())
+    val areas = _areas.asStateFlow()
     var overlayPosition by mutableStateOf<Offset?>(null)
     var overlaySize by mutableStateOf<androidx.compose.ui.geometry.Size?>(null)
 
@@ -335,7 +342,7 @@ class CameraViewModel : ViewModel() {
         }
     }
 
-    var viewSize: IntSize? = null
+    var viewSize by mutableStateOf<IntSize?>(null)
     var lastScanSize: Size? = null
     private var scale = 1.0f
     private var translation = Offset(0.0f, 0.0f)
@@ -424,7 +431,9 @@ class CameraViewModel : ViewModel() {
         scanSaveQuality: Int,
         saveScanFileName: String,
         clearAfterTime: Long?,
-        saveScanImageFormat: ScanImageFormat
+        saveScanImageFormat: ScanImageFormat,
+        multiCodeDetection: Boolean = false,
+        autoSend: Boolean = false
     ) {
         _scanDelay = frequency.delayMs
         barcodeAnalyzer?.scanDelay = _scanDelay
@@ -451,14 +460,62 @@ class CameraViewModel : ViewModel() {
         _saveScanImageFormat = saveScanImageFormat
 
         _clearAfterTime = clearAfterTime
+        this.multiCodeDetection = multiCodeDetection
+        _autoSend = autoSend
 
         Log.d(TAG, "Updated scan parameters")
+    }
+
+    // Called when the user manually selects a barcode from the multi-code picker.
+    fun selectBarcode(barcode: Barcode) {
+        processAndDispatch(barcode, sourceImage = null, resetDedup = true)
+    }
+
+    // Applies regex extraction and JS mapping, then calls onBarcodeDetected.
+    // useRunBlocking=true is needed on the analyzer thread (auto-send) to preserve frame ordering.
+    // resetDedup=true clears lastBarcode so the same value can be re-sent (used by selectBarcode and auto-send).
+    private fun processAndDispatch(
+        barcode: Barcode,
+        sourceImage: ImageProxy?,
+        resetDedup: Boolean = false
+    ) {
+        if (resetDedup) lastBarcode = null
+        _currentBarcode.update { barcode }
+        val rawValue = barcode.value ?: return
+        var value = rawValue
+
+        val regexGroups: List<String> = _scanRegex?.let { re ->
+            re.find(value)?.let { match ->
+                match.groupValues.getOrNull(1)?.let { group -> value = group }
+                match.groupValues.drop(1)
+            } ?: emptyList()
+        } ?: emptyList()
+
+        _jsEngineService?.let { s ->
+            // This must be blocking otherwise the image might already be closed
+            // when trying to save it later in onBarcodeDetected
+            value = runBlocking {
+                mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
+            }
+        }
+        onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
     }
 
     var lastDetectionTime: Long? = null
     var lastBarcode: String? = null
     private val _currentBarcode = MutableStateFlow<Barcode?>(null)
     val currentBarcode: StateFlow<Barcode?> = _currentBarcode.asStateFlow()
+
+    // All barcodes detected in the current frame (multi-code mode visual)
+    private val _detectedBarcodes = MutableStateFlow<List<Barcode>>(emptyList())
+    val detectedBarcodes: StateFlow<List<Barcode>> = _detectedBarcodes.asStateFlow()
+
+    // Tracks which barcodes have already been queued in the current "scene"
+    // Cleared when the frame contains no barcodes (camera moved away)
+    private val sentInSession = mutableSetOf<String>()
+
+    var multiCodeDetection: Boolean = false
+    private var _autoSend: Boolean = false
 
     data class Barcode(
         var value: String?,
@@ -473,7 +530,7 @@ class CameraViewModel : ViewModel() {
     ) {
         detectorTrace.trigger()
 
-        val barcode = result.map {
+        val allBarcodes = result.map {
             val cornerPoints = listOf(
                 it.position.topLeft,
                 it.position.topRight,
@@ -510,41 +567,62 @@ class CameraViewModel : ViewModel() {
 
             Barcode(it.text, cornerPoints, it.format)
         }.filter {
-            when (_fullyInside) {
-                true -> true    // Automatically handled with setting cropRect
-                false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
+            if (scanRects.size > 1) {
+                // Multi-area: check each individual rect
+                if (_fullyInside)
+                    scanRects.any { r -> it.cornerPoints.all { p -> r.contains(Offset(p.x, p.y)) } }
+                else
+                    it.cornerPoints.any { p -> scanRects.any { r -> r.contains(Offset(p.x, p.y)) } }
+            } else {
+                when (_fullyInside) {
+                    true -> true    // Automatically handled with setting cropRect
+                    false -> it.cornerPoints.any { scanRect.contains(Offset(it.x, it.y)) }
+                }
             }
         }.filter {
             _scanRegex?.matches(it.value ?: return@filter true) != false
-        }.firstOrNull()
+        }
 
-        _currentBarcode.update { _ -> barcode }
+        // Always expose all detected barcodes for visual overlay and picker
+        _detectedBarcodes.update { allBarcodes }
 
-        barcode?.value?.let { v ->
-            var value = v
-
-            // Compute regex capture groups locally — passed directly through the callback chain
-            // instead of being stored as ViewModel state, to avoid threading issues.
-            val regexGroups: List<String> = _scanRegex?.let { re ->
-                re.find(value)?.let { match ->
-                    // Use first capture group as the main value (backward compat)
-                    match.groupValues.getOrNull(1)?.let { group ->
-                        value = group
-                    }
-                    // Return all capture groups (1..N) for {CODE%N} template support
-                    match.groupValues.drop(1)
-                } ?: emptyList()
-            } ?: emptyList()
-
-            _jsEngineService?.let { s ->
-                // Only blocks the analyzer thread
-                runBlocking {
-                    value =
-                        mapJS(s, value, ZXingAnalyzer.format2String(barcode.format))
-                    onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+        if (_autoSend) {
+            // Auto-send: queue all new barcodes in this frame (dedup within session)
+            if (allBarcodes.isEmpty()) {
+                sentInSession.clear()
+                if (lastBarcode != null) {
+                    _currentBarcode.update { null }
+                    onBarcodeDetected(null, BarcodeReader.Format.NONE, null, emptyList())
+                    lastBarcode = null
                 }
-            } ?: run {
-                onBarcodeDetected(value, barcode.format, sourceImage, regexGroups)
+                return
+            }
+
+            val newBarcodes = allBarcodes.filter { !sentInSession.contains(it.value) }
+            newBarcodes.forEach { barcode ->
+                if (barcode.value != null) {
+                    sentInSession.add(barcode.value!!)
+                    processAndDispatch(
+                        barcode,
+                        sourceImage,
+                        resetDedup = true
+                    )
+                }
+            }
+        } else if (multiCodeDetection) {
+            // Manual multi-code: barcodes are exposed via _detectedBarcodes for the picker UI.
+            // No auto-send — user selects from the picker. Clear session when frame is empty.
+            if (allBarcodes.isEmpty()) {
+                sentInSession.clear()
+                _currentBarcode.update { null }
+            }
+        } else {
+            // Single-code mode: existing behaviour, take first match
+            val barcode = allBarcodes.firstOrNull()
+            if (barcode != null) {
+                processAndDispatch(barcode, sourceImage)
+            } else {
+                _currentBarcode.update { null }
             }
         }
     }
@@ -572,7 +650,12 @@ class CameraViewModel : ViewModel() {
                         Offset(point.x, point.y)
                     }
 
-                    return@filter when (_fullyInside) {
+                    return@filter if (scanRects.size > 1) {
+                        if (_fullyInside)
+                            scanRects.any { r -> cornerPoints.all { p -> r.contains(p) } }
+                        else
+                            scanRects.any { r -> r.overlaps(Rect(cornerPoints[0], cornerPoints[2])) }
+                    } else when (_fullyInside) {
                         false -> scanRect.overlaps(Rect(cornerPoints[0], cornerPoints[2]))
                         true -> cornerPoints.all { scanRect.contains(it) }
                     }
@@ -793,4 +876,40 @@ class CameraViewModel : ViewModel() {
 
     fun Offset.toPoint() = Point(x.toInt(), y.toInt())
 
+    fun clearScanAreas() {
+        _areas.update { emptyList() }
+    }
+
+    fun addScanAreas(vararg area: ScanAreaData) {
+        _areas.update { it + area }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (areas.value.isNotEmpty()) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
+
+    fun updateScanArea(index: Int, area: ScanAreaData) {
+        if (index >= areas.value.size) return
+        _areas.update {
+            it.toMutableList().also { l -> l[index] = area }
+        }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (index == 0) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
+
+    fun removeScanArea(index: Int) {
+        if (index >= areas.value.size) return
+        _areas.update {
+            it.toMutableList().also { l -> l.removeAt(index) }
+        }
+        // Keep legacy fields in sync with first area for debug overlay
+        if (areas.value.isNotEmpty()) {
+            overlayPosition = areas.value.first().toOverlayOffset()
+            overlaySize = areas.value.first().toOverlaySize()
+        }
+    }
 }

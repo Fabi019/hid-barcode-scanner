@@ -321,6 +321,10 @@
     <string name="add">Dodaj</string>
     <string name="persistent_history">Trwała historia skanowania</string>
     <string name="persistent_history_desc">Pamiętaj skanowane kody pomiędzy sesjami</string>
+    <string name="multi_code_detection">Wykrywanie wielu kodów</string>
+    <string name="multi_code_detection_desc">Wykrywa i kolejkuje wszystkie kody kreskowe widoczne w kadrze jednocześnie</string>
+    <string name="add_scan_area">Dodaj obszar</string>
+    <string name="delete_scan_area">Usuń obszar</string>
     <string name="filter">Filtr</string>
     <string name="date_range">Zakres dat</string>
     <string name="select_types">Wybierz typy</string>
