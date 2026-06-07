@@ -2,6 +2,8 @@ package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import android.content.ClipData
 import android.content.Context
 import android.media.AudioManager
@@ -267,11 +269,18 @@ fun Scanner(
                     }
                 }
             } else null
-            ScannerAppBar(cameraControl, cameraInfo, currentDevice, fullScreen, keyboardDialog, onAddArea)
+            val appBarController = LocalController.current
+            val isTCPConnectedAppBar by appBarController?.isTCPConnectedFlow?.collectAsStateWithLifecycle(false)
+                ?: remember { mutableStateOf(false) }
+            ScannerAppBar(cameraControl, cameraInfo, currentDevice, isTCPConnectedAppBar, fullScreen, keyboardDialog, onAddArea)
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            currentDevice?.let {
+            val controller = LocalController.current
+            val isTCPConnected by controller?.isTCPConnectedFlow?.collectAsStateWithLifecycle(false)
+                ?: remember { mutableStateOf(false) }
+
+            if (currentDevice != null || isTCPConnected) {
                 val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
 
                 currentResult?.let {
@@ -748,6 +757,7 @@ private fun ScannerAppBar(
     camera: CameraControl?,
     info: CameraInfo?,
     currentDevice: BluetoothDevice?,
+    isTCPConnected: Boolean,
     transparent: Boolean,
     keyboardDialog: DialogState,
     onAddArea: (() -> Unit)?
@@ -795,7 +805,7 @@ private fun ScannerAppBar(
                 ToggleFlashButton(camera, info, transparent)
             }
 
-            currentDevice?.let {
+            if (currentDevice != null || isTCPConnected) {
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
@@ -910,6 +920,18 @@ fun BoxScope.CapsLockWarning() {
     }
 }
 
+private fun localIpAddresses(): List<String> =
+    runCatching {
+        NetworkInterface.getNetworkInterfaces()
+            ?.asSequence()
+            ?.filter { it.isUp && !it.isLoopback }
+            ?.flatMap { it.inetAddresses.asSequence() }
+            ?.filterIsInstance<Inet4Address>()
+            ?.filter { !it.isLoopbackAddress }
+            ?.mapNotNull { it.hostAddress }
+            ?.toList()
+    }.getOrNull() ?: emptyList()
+
 /**
  * Component that shows device connection status for both HID and RFCOMM modes.
  * Priority: if no device selected (currentDevice == null) => always show "No device connected"
@@ -934,6 +956,10 @@ fun BoxScope.DeviceStatusIndicator() {
         val tcpClientHost by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_HOST)
         val tcpClientPort by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_PORT)
 
+        val localIps = remember(isTCPListening) {
+            if (isTCPListening) localIpAddresses() else emptyList()
+        }
+
         // Dismissed state resets when connection mode or TCP listening state changes
         var dismissed by remember(currentDevice, connectionMode, isTCPListening) { mutableStateOf(false) }
 
@@ -941,9 +967,14 @@ fun BoxScope.DeviceStatusIndicator() {
             // TCP modes: show status card, never show "No device connected"
             isTcpMode && isTCPListening -> {
                 if (connectionMode == ConnectionMode.TCP_SERVER.ordinal) {
+                    val addressLines = if (localIps.isEmpty()) {
+                        stringResource(R.string.tcp_server_listening_on_port, tcpServerPort)
+                    } else {
+                        localIps.joinToString("\n") { "$it : $tcpServerPort" }
+                    }
                     ElevatedWarningCard(
                         message = stringResource(R.string.tcp_server_listening),
-                        subMessage = stringResource(R.string.tcp_server_listening_on_port, tcpServerPort),
+                        subMessage = addressLines,
                         onClick = {},
                         onDismiss = { dismissed = true },
                         visible = !dismissed

@@ -54,7 +54,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -171,8 +170,6 @@ fun SectionTitle(text: String) {
 internal fun ConnectionSettings(strings: SettingsStrings) {
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
     val isHidOnly = connectionMode == ConnectionMode.HID
-    val isTcpServer = connectionMode == ConnectionMode.TCP_SERVER
-    val isTcpClient = connectionMode == ConnectionMode.TCP_CLIENT
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -224,42 +221,6 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         enabled = isHidOnly,
         onClick = customKeysDialog::open
     )
-
-    // TCP Server settings
-    if (isTcpServer) {
-        val portError = stringResource(R.string.tcp_port_error)
-        TextBoxPreference(
-            title = strings[R.string.tcp_server_port],
-            desc = strings[R.string.tcp_server_port_desc],
-            icon = Icons.Default.Wifi,
-            validator = { port ->
-                val p = port.toIntOrNull()
-                if (p == null || p !in 1..65535) portError else null
-            },
-            preference = PreferenceStore.TCP_SERVER_PORT
-        )
-    }
-
-    // TCP Client settings
-    if (isTcpClient) {
-        TextBoxPreference(
-            title = strings[R.string.tcp_client_host],
-            desc = strings[R.string.tcp_client_host_desc],
-            icon = Icons.Default.Wifi,
-            preference = PreferenceStore.TCP_CLIENT_HOST
-        )
-        val portError = stringResource(R.string.tcp_port_error)
-        TextBoxPreference(
-            title = strings[R.string.tcp_client_port],
-            desc = strings[R.string.tcp_client_port_desc],
-            icon = Icons.Default.Wifi,
-            validator = { port ->
-                val p = port.toIntOrNull()
-                if (p == null || p !in 1..65535) portError else null
-            },
-            preference = PreferenceStore.TCP_CLIENT_PORT
-        )
-    }
 
     ComboBoxEnumPreference(
         title = strings[R.string.extra_keys],

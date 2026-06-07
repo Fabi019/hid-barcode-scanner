@@ -231,6 +231,7 @@ open class PreferenceStore {
         val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
         val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
         val TCP_SERVER_PORT = stringPreferencesKey("tcp_server_port") defaultsTo "51000"
+        val TCP_SERVER_MAX_CLIENTS = intPreferencesKey("tcp_server_max_clients") defaultsTo 5
         val TCP_CLIENT_HOST = stringPreferencesKey("tcp_client_host") defaultsTo ""
         val TCP_CLIENT_PORT = stringPreferencesKey("tcp_client_port") defaultsTo "51000"
         val QOS_SERVICE_TYPE =

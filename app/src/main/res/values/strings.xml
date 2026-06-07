@@ -368,8 +368,12 @@
         <item quantity="other">Export %1$d items</item>
     </plurals>
     <string name="tcp_port_error">Invalid port (1–65535)</string>
+    <string name="tcp_server_settings">TCP Server Settings</string>
+    <string name="tcp_client_settings">TCP Client Settings</string>
     <string name="tcp_server_port">TCP Server Port</string>
     <string name="tcp_server_port_desc">Port to listen on for incoming TCP connections</string>
+    <string name="tcp_server_max_clients">Max Clients</string>
+    <string name="tcp_server_max_clients_desc">Maximum number of simultaneous TCP clients (1–10)</string>
     <string name="tcp_client_host">TCP Client Host</string>
     <string name="tcp_client_host_desc">IP address or hostname of the TCP server to connect to</string>
     <string name="tcp_client_port">TCP Client Port</string>

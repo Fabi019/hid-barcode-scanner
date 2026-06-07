@@ -92,6 +92,9 @@ class BluetoothController(var context: Context) {
     private var _isTCPListening: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isTCPListeningFlow = _isTCPListening.asStateFlow()
 
+    private var _isTCPConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isTCPConnectedFlow = _isTCPConnected.asStateFlow()
+
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var preferenceObserverJob: Job? = null
     private var bluetoothStateReceiver: BroadcastReceiver? = null
@@ -368,6 +371,11 @@ class BluetoothController(var context: Context) {
         // Setup TCP listening state callback
         tcpController.setListeningStateCallback { isListening ->
             _isTCPListening.update { isListening }
+        }
+
+        // Setup TCP connected state callback
+        tcpController.setConnectedStateCallback { connected ->
+            _isTCPConnected.update { connected }
         }
 
         // Auto-start TCP modes since they don't require Bluetooth device selection

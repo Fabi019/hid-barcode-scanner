@@ -257,7 +257,12 @@ fun SettingsDropdown() {
                 ConnectionMode.HID.ordinal -> {
                     QosOptionsModal()
                 }
-                // TCP_SERVER, TCP_CLIENT — no mode-specific developer options
+                ConnectionMode.TCP_SERVER.ordinal -> {
+                    TcpServerOptionsModal()
+                }
+                ConnectionMode.TCP_CLIENT.ordinal -> {
+                    TcpClientOptionsModal()
+                }
             }
 
             ImportExportDropdown()

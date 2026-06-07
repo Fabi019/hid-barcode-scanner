@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.random.Random
 
 class TcpController(private val context: Context) {
@@ -28,7 +29,10 @@ class TcpController(private val context: Context) {
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Shared active socket (accepted by server or opened by client)
+    // Active clients in server mode
+    private val connectedClients = CopyOnWriteArrayList<Socket>()
+
+    // Active socket in client mode
     private var activeSocket: Socket? = null
     @Volatile private var isConnected: Boolean = false
 
@@ -41,9 +45,14 @@ class TcpController(private val context: Context) {
     private var clientJob: Job? = null
 
     private var listeningStateCallback: ((Boolean) -> Unit)? = null
+    private var connectedStateCallback: ((Boolean) -> Unit)? = null
 
     fun setListeningStateCallback(callback: (Boolean) -> Unit) {
         listeningStateCallback = callback
+    }
+
+    fun setConnectedStateCallback(callback: (Boolean) -> Unit) {
+        connectedStateCallback = callback
     }
 
     // "Listening" = TCP loop is running but no active connection yet
@@ -51,6 +60,7 @@ class TcpController(private val context: Context) {
 
     private fun notifyListeningState() {
         listeningStateCallback?.invoke(isListening())
+        connectedStateCallback?.invoke(isConnected)
     }
 
     fun startServer() {
@@ -65,49 +75,87 @@ class TcpController(private val context: Context) {
                 try {
                     val port = context.getPreference(PreferenceStore.TCP_SERVER_PORT).first()
                         .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+                    val maxClients = context.getPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS).first()
+                        .coerceIn(1, 10)
 
                     if (!isServerStarted || serverSocket == null) {
-                        serverSocket = ServerSocket(port)
+                        // SO_REUSEADDR lets us rebind immediately after a connection closes
+                        // without waiting for the OS TIME_WAIT period to expire
+                        serverSocket = ServerSocket().apply {
+                            reuseAddress = true
+                            bind(java.net.InetSocketAddress(port))
+                        }
                         isServerStarted = true
-                        L("TCP server listening on port $port")
+                        L("TCP server listening on port $port (max $maxClients clients)")
                         notifyListeningState()
                         errorCount = 0
                     }
 
                     // Accept client (blocking)
                     val socket = serverSocket?.accept() ?: continue
-                    val clientAddr = socket.inetAddress.hostAddress
-                    L("TCP client connected from $clientAddr")
+                    val clientAddr = socket.inetAddress.hostAddress ?: socket.inetAddress.toString()
 
-                    // Close server socket temporarily while serving this client
-                    serverSocket?.close()
-                    serverSocket = null
-                    isServerStarted = false
+                    if (connectedClients.size >= maxClients) {
+                        L("TCP max clients ($maxClients) reached, rejecting $clientAddr")
+                        runCatching { socket.close() }
+                        continue
+                    }
 
-                    activeSocket = socket
+                    L("TCP client connected from $clientAddr (${connectedClients.size + 1}/$maxClients)")
+                    connectedClients.add(socket)
                     isConnected = true
                     notifyListeningState()
 
-                    withContext(Dispatchers.IO) {
-                        manageConnection(socket, "server")
+                    // Handle each client in a separate coroutine; server keeps accepting
+                    launch(Dispatchers.IO) {
+                        manageClientConnection(socket, clientAddr, maxClients)
                     }
 
                 } catch (e: IOException) {
+                    if (!isActive) break
                     errorCount++
                     LE("TCP server error (attempt $errorCount)", e)
                     serverSocket?.close()
                     serverSocket = null
                     isServerStarted = false
+                    connectedClients.forEach { runCatching { it.close() } }
+                    connectedClients.clear()
+                    isConnected = false
+                    notifyListeningState()
                     val backoff = minOf(250L * errorCount, 5000L) + Random.nextLong(0, 200)
                     delay(backoff)
-                } finally {
-                    isConnected = false
-                    activeSocket?.close()
-                    activeSocket = null
-                    notifyListeningState()
                 }
             }
+            // Cleanup on coroutine cancellation
+            serverSocket?.close()
+            serverSocket = null
+            isServerStarted = false
+            connectedClients.forEach { runCatching { it.close() } }
+            connectedClients.clear()
+            isConnected = false
+            notifyListeningState()
             L("TCP server loop terminated")
+        }
+    }
+
+    private fun manageClientConnection(socket: Socket, clientAddr: String, maxClients: Int) {
+        val input = socket.getInputStream()
+        L("TCP server: connection active from $clientAddr")
+        try {
+            val buffer = ByteArray(1024)
+            while (true) {
+                val bytes = input.read(buffer)
+                if (bytes == -1) break
+                L("TCP server received from $clientAddr: ${String(buffer, 0, bytes)}")
+            }
+        } catch (e: IOException) {
+            LE("TCP server: connection error from $clientAddr", e)
+        } finally {
+            runCatching { socket.close() }
+            connectedClients.remove(socket)
+            isConnected = connectedClients.isNotEmpty()
+            notifyListeningState()
+            L("TCP server: $clientAddr disconnected (${connectedClients.size}/$maxClients remaining)")
         }
     }
 
@@ -118,6 +166,8 @@ class TcpController(private val context: Context) {
         serverSocket?.close()
         serverSocket = null
         isServerStarted = false
+        connectedClients.forEach { runCatching { it.close() } }
+        connectedClients.clear()
 
         L("Starting TCP client")
         clientJob = controllerScope.launch {
@@ -157,7 +207,7 @@ class TcpController(private val context: Context) {
                     delay(backoff)
                 } finally {
                     isConnected = false
-                    activeSocket?.close()
+                    runCatching { activeSocket?.close() }
                     activeSocket = null
                     notifyListeningState()
                 }
@@ -174,11 +224,14 @@ class TcpController(private val context: Context) {
         clientJob?.cancel()
         clientJob = null
 
-        activeSocket?.close()
+        runCatching { activeSocket?.close() }
         activeSocket = null
+
+        connectedClients.forEach { runCatching { it.close() } }
+        connectedClients.clear()
         isConnected = false
 
-        serverSocket?.close()
+        runCatching { serverSocket?.close() }
         serverSocket = null
         isServerStarted = false
 
@@ -205,6 +258,20 @@ class TcpController(private val context: Context) {
     }
 
     fun sendProcessedData(processedString: String) {
+        // Server mode: broadcast to all connected clients
+        if (connectedClients.isNotEmpty()) {
+            val data = processedString.toByteArray(Charsets.UTF_8)
+            connectedClients.forEach { socket ->
+                runCatching {
+                    socket.getOutputStream().write(data)
+                }.onFailure { e ->
+                    LE("TCP broadcast send failed to ${socket.inetAddress.hostAddress ?: socket.inetAddress}", e)
+                }
+            }
+            L("TCP broadcast to ${connectedClients.size} client(s): $processedString")
+            return
+        }
+        // Client mode: single socket
         val socket = activeSocket
         if (socket == null || !isConnected) {
             L("TCP: no active connection — data dropped")
