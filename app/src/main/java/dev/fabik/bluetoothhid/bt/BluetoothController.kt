@@ -55,6 +55,9 @@ class BluetoothController(var context: Context) {
     // RFCOMM Controller integration
     private val rfcommController = RfcommController(context, bluetoothAdapter!!)
 
+    // TCP Controller integration
+    private val tcpController = TcpController(context)
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile
@@ -85,6 +88,9 @@ class BluetoothController(var context: Context) {
 
     private var _isRFCOMMListening: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRFCOMMListeningFlow = _isRFCOMMListening.asStateFlow()
+
+    private var _isTCPListening: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isTCPListeningFlow = _isTCPListening.asStateFlow()
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var preferenceObserverJob: Job? = null
@@ -237,16 +243,26 @@ class BluetoothController(var context: Context) {
                     when (mode) {
                         ConnectionMode.RFCOMM -> {
                             Log.d(TAG, "Switching to RFCOMM mode")
+                            tcpController.stop()
                             rfcommController.connectRFCOMM()
-                            // Note: HID remains registered but inactive in RFCOMM mode
+                        }
+
+                        ConnectionMode.TCP_SERVER -> {
+                            Log.d(TAG, "Switching to TCP Server mode")
+                            rfcommController.disconnectRFCOMM()
+                            tcpController.startServer()
+                        }
+
+                        ConnectionMode.TCP_CLIENT -> {
+                            Log.d(TAG, "Switching to TCP Client mode")
+                            rfcommController.disconnectRFCOMM()
+                            tcpController.startClient()
                         }
 
                         ConnectionMode.HID -> {
-                            Log.d(TAG, "Switching to HID mode - disconnecting RFCOMM")
+                            Log.d(TAG, "Switching to HID mode")
                             rfcommController.disconnectRFCOMM()
-                            // HID profile is already registered and will become active
-                            // Note: HID registration is handled by the serviceListener in getProfileProxy
-                            // Additional HID-specific setup could go in registerHid() if needed
+                            tcpController.stop()
                             registerHid()
                         }
                     }
@@ -349,6 +365,18 @@ class BluetoothController(var context: Context) {
             _isRFCOMMListening.update { isListening }
         }
 
+        // Setup TCP listening state callback
+        tcpController.setListeningStateCallback { isListening ->
+            _isTCPListening.update { isListening }
+        }
+
+        // Auto-start TCP modes since they don't require Bluetooth device selection
+        when (currentConnectionMode) {
+            ConnectionMode.TCP_SERVER -> tcpController.startServer()
+            ConnectionMode.TCP_CLIENT -> tcpController.startClient()
+            else -> {}
+        }
+
         return bluetoothAdapter?.getProfileProxy(
             context,
             serviceListener,
@@ -386,6 +414,9 @@ class BluetoothController(var context: Context) {
         // Disconnect RFCOMM
         rfcommController.disconnectRFCOMM()
 
+        // Stop TCP
+        tcpController.stop()
+
         // Unregister HID profile
         unregisterHid()
 
@@ -409,6 +440,11 @@ class BluetoothController(var context: Context) {
         cancelScan()
 
         Log.d(TAG, "connecting to $device")
+
+        // TCP modes manage their own connections — no device selection needed
+        if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
+            return
+        }
 
         // Check connection mode first using cached value
         if (currentConnectionMode == ConnectionMode.RFCOMM) {
@@ -513,6 +549,12 @@ class BluetoothController(var context: Context) {
             return true
         }
 
+        // In TCP modes, stop the controller
+        if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
+            tcpController.stop()
+            return true
+        }
+
         // In HID mode, disconnect the device
         return hostDevice.value?.let {
             hidDevice?.disconnect(it)
@@ -552,7 +594,7 @@ class BluetoothController(var context: Context) {
             val preserveUnsupported =
                 PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
 
-            // Check connection mode - RFCOMM or HID using cached value
+            // Check connection mode - RFCOMM, TCP, or HID using cached value
             if (currentConnectionMode == ConnectionMode.RFCOMM) {
                 // RFCOMM mode - process template for text output
                 val processedString = TemplateProcessor.processTemplate(
@@ -563,11 +605,26 @@ class BluetoothController(var context: Context) {
                     scanTimestamp,
                     scannerID,
                     barcodeType,
-                    preserveUnsupported,  // Pass preference
+                    preserveUnsupported,
                     imageName,
                     regexGroups
                 )
                 rfcommController.sendProcessedData(processedString)
+            } else if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
+                // TCP mode - same raw text output as RFCOMM
+                val processedString = TemplateProcessor.processTemplate(
+                    string,
+                    template,
+                    TemplateProcessor.TemplateMode.RFCOMM,
+                    from,
+                    scanTimestamp,
+                    scannerID,
+                    barcodeType,
+                    preserveUnsupported,
+                    imageName,
+                    regexGroups
+                )
+                tcpController.sendProcessedData(processedString)
             } else {
                 // HID mode - process template for HID conversion.
                 // expandCode controls whether HID template tokens inside the barcode value (e.g.

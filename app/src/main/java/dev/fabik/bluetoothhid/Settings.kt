@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -169,7 +170,9 @@ fun SectionTitle(text: String) {
 @Composable
 internal fun ConnectionSettings(strings: SettingsStrings) {
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isRfcomm = connectionMode == ConnectionMode.RFCOMM
+    val isHidOnly = connectionMode == ConnectionMode.HID
+    val isTcpServer = connectionMode == ConnectionMode.TCP_SERVER
+    val isTcpClient = connectionMode == ConnectionMode.TCP_CLIENT
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -199,7 +202,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         valueFormat = strings[R.string.send_delay_template],
         range = 0f..100f,
         icon = Icons.Default.Timer,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.SEND_DELAY
     )
 
@@ -208,7 +211,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         desc = strings[R.string.keyboard_layout_desc],
         icon = Icons.Default.Keyboard,
         values = strings.array(R.array.keyboard_layout_values),
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
 
@@ -218,9 +221,45 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.custom_keys],
         desc = strings[R.string.define_custom_keys],
         icon = Icons.Default.KeyboardCommandKey,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         onClick = customKeysDialog::open
     )
+
+    // TCP Server settings
+    if (isTcpServer) {
+        val portError = stringResource(R.string.tcp_port_error)
+        TextBoxPreference(
+            title = strings[R.string.tcp_server_port],
+            desc = strings[R.string.tcp_server_port_desc],
+            icon = Icons.Default.Wifi,
+            validator = { port ->
+                val p = port.toIntOrNull()
+                if (p == null || p !in 1..65535) portError else null
+            },
+            preference = PreferenceStore.TCP_SERVER_PORT
+        )
+    }
+
+    // TCP Client settings
+    if (isTcpClient) {
+        TextBoxPreference(
+            title = strings[R.string.tcp_client_host],
+            desc = strings[R.string.tcp_client_host_desc],
+            icon = Icons.Default.Wifi,
+            preference = PreferenceStore.TCP_CLIENT_HOST
+        )
+        val portError = stringResource(R.string.tcp_port_error)
+        TextBoxPreference(
+            title = strings[R.string.tcp_client_port],
+            desc = strings[R.string.tcp_client_port_desc],
+            icon = Icons.Default.Wifi,
+            validator = { port ->
+                val p = port.toIntOrNull()
+                if (p == null || p !in 1..65535) portError else null
+            },
+            preference = PreferenceStore.TCP_CLIENT_PORT
+        )
+    }
 
     ComboBoxEnumPreference(
         title = strings[R.string.extra_keys],
@@ -428,7 +467,7 @@ internal fun ScannerSettings(strings: SettingsStrings) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isHidMode = connectionMode != ConnectionMode.RFCOMM
+    val isHidMode = connectionMode == ConnectionMode.HID
 
     CheckBoxPreference(
         title = strings[R.string.code_types],

@@ -1,0 +1,220 @@
+package dev.fabik.bluetoothhid.bt
+
+import android.content.Context
+import android.util.Log
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
+import kotlin.random.Random
+
+class TcpController(private val context: Context) {
+    companion object {
+        private const val TAG = "TcpController"
+    }
+
+    private fun L(msg: String) = Log.i(TAG, msg)
+    private fun LE(msg: String, t: Throwable? = null) = Log.e(TAG, msg, t)
+
+    private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Shared active socket (accepted by server or opened by client)
+    private var activeSocket: Socket? = null
+    @Volatile private var isConnected: Boolean = false
+
+    // Server state
+    private var serverSocket: ServerSocket? = null
+    @Volatile private var isServerStarted: Boolean = false
+    private var serverJob: Job? = null
+
+    // Client state
+    private var clientJob: Job? = null
+
+    private var listeningStateCallback: ((Boolean) -> Unit)? = null
+
+    fun setListeningStateCallback(callback: (Boolean) -> Unit) {
+        listeningStateCallback = callback
+    }
+
+    // "Listening" = TCP loop is running but no active connection yet
+    fun isListening(): Boolean = !isConnected && (serverJob?.isActive == true || clientJob?.isActive == true)
+
+    private fun notifyListeningState() {
+        listeningStateCallback?.invoke(isListening())
+    }
+
+    fun startServer() {
+        if (serverJob?.isActive == true) return
+        clientJob?.cancel()
+        clientJob = null
+
+        L("Starting TCP server")
+        serverJob = controllerScope.launch {
+            var errorCount = 0
+            while (isActive) {
+                try {
+                    val port = context.getPreference(PreferenceStore.TCP_SERVER_PORT).first()
+                        .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+
+                    if (!isServerStarted || serverSocket == null) {
+                        serverSocket = ServerSocket(port)
+                        isServerStarted = true
+                        L("TCP server listening on port $port")
+                        notifyListeningState()
+                        errorCount = 0
+                    }
+
+                    // Accept client (blocking)
+                    val socket = serverSocket?.accept() ?: continue
+                    val clientAddr = socket.inetAddress.hostAddress
+                    L("TCP client connected from $clientAddr")
+
+                    // Close server socket temporarily while serving this client
+                    serverSocket?.close()
+                    serverSocket = null
+                    isServerStarted = false
+
+                    activeSocket = socket
+                    isConnected = true
+                    notifyListeningState()
+
+                    withContext(Dispatchers.IO) {
+                        manageConnection(socket, "server")
+                    }
+
+                } catch (e: IOException) {
+                    errorCount++
+                    LE("TCP server error (attempt $errorCount)", e)
+                    serverSocket?.close()
+                    serverSocket = null
+                    isServerStarted = false
+                    val backoff = minOf(250L * errorCount, 5000L) + Random.nextLong(0, 200)
+                    delay(backoff)
+                } finally {
+                    isConnected = false
+                    activeSocket?.close()
+                    activeSocket = null
+                    notifyListeningState()
+                }
+            }
+            L("TCP server loop terminated")
+        }
+    }
+
+    fun startClient() {
+        if (clientJob?.isActive == true) return
+        serverJob?.cancel()
+        serverJob = null
+        serverSocket?.close()
+        serverSocket = null
+        isServerStarted = false
+
+        L("Starting TCP client")
+        clientJob = controllerScope.launch {
+            var errorCount = 0
+            while (isActive) {
+                try {
+                    val host = context.getPreference(PreferenceStore.TCP_CLIENT_HOST).first()
+                    val port = context.getPreference(PreferenceStore.TCP_CLIENT_PORT).first()
+                        .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+
+                    if (host.isBlank()) {
+                        L("TCP client: no host configured, waiting...")
+                        notifyListeningState()
+                        delay(5000)
+                        continue
+                    }
+
+                    L("TCP client connecting to $host:$port")
+                    notifyListeningState()
+
+                    val socket = Socket(host, port)
+                    L("TCP client connected to $host:$port")
+
+                    activeSocket = socket
+                    isConnected = true
+                    errorCount = 0
+                    notifyListeningState()
+
+                    withContext(Dispatchers.IO) {
+                        manageConnection(socket, "client")
+                    }
+
+                } catch (e: IOException) {
+                    errorCount++
+                    LE("TCP client connect error (attempt $errorCount)", e)
+                    val backoff = minOf(250L * errorCount, 5000L) + Random.nextLong(0, 200)
+                    delay(backoff)
+                } finally {
+                    isConnected = false
+                    activeSocket?.close()
+                    activeSocket = null
+                    notifyListeningState()
+                }
+            }
+            L("TCP client loop terminated")
+        }
+    }
+
+    fun stop() {
+        L("Stopping TCP controller")
+
+        serverJob?.cancel()
+        serverJob = null
+        clientJob?.cancel()
+        clientJob = null
+
+        activeSocket?.close()
+        activeSocket = null
+        isConnected = false
+
+        serverSocket?.close()
+        serverSocket = null
+        isServerStarted = false
+
+        notifyListeningState()
+        L("TCP controller stopped")
+    }
+
+    private fun manageConnection(socket: Socket, role: String) {
+        val input = socket.getInputStream()
+        L("TCP $role: connection active")
+        try {
+            val buffer = ByteArray(1024)
+            while (true) {
+                val bytes = input.read(buffer)
+                if (bytes == -1) break
+                L("TCP $role received: ${String(buffer, 0, bytes)}")
+            }
+        } catch (e: IOException) {
+            LE("TCP $role: connection error", e)
+        } finally {
+            runCatching { socket.close() }
+            L("TCP $role: connection terminated")
+        }
+    }
+
+    fun sendProcessedData(processedString: String) {
+        val socket = activeSocket
+        if (socket == null || !isConnected) {
+            L("TCP: no active connection — data dropped")
+            return
+        }
+        runCatching {
+            socket.getOutputStream().write(processedString.toByteArray(Charsets.UTF_8))
+            L("TCP sent: $processedString")
+        }.onFailure { e ->
+            LE("TCP send failed", e)
+        }
+    }
+}

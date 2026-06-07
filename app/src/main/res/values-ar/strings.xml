@@ -137,7 +137,18 @@
     <string name="clear_after_send_desc">يحذف الكود المعروض بعد إرساله يدويا</string>
     <string name="manual_input">إدخال يدوي</string>
     <string name="connection_mode">طريقة الاتصال</string>
-    <string name="connection_mode_desc">يحاكي وضع HID إدخال لوحة المفاتيح، بينما يرسل RFCOMM البيانات عبر منفذ Bluetooth COM (قد يتطلب برامج إضافية). ستظهر الإعدادات غير المدعومة بلون باهت في وضع RFCOMM.</string>
+    <string name="connection_mode_desc">يحاكي وضع HID إدخال لوحة المفاتيح، بينما يرسل RFCOMM البيانات عبر منفذ Bluetooth COM، ويرسل خادم/عميل TCP البيانات عبر WiFi (RAW TCP). ستظهر الإعدادات غير المدعومة بلون باهت في الأوضاع غير HID.</string>
+    <string name="tcp_port_error">منفذ غير صالح (1–65535)</string>
+    <string name="tcp_server_port">منفذ خادم TCP</string>
+    <string name="tcp_server_port_desc">المنفذ للاستماع على اتصالات TCP الواردة</string>
+    <string name="tcp_client_host">مضيف عميل TCP</string>
+    <string name="tcp_client_host_desc">عنوان IP أو اسم المضيف لخادم TCP للاتصال به</string>
+    <string name="tcp_client_port">منفذ عميل TCP</string>
+    <string name="tcp_client_port_desc">منفذ خادم TCP للاتصال به</string>
+    <string name="tcp_server_listening">خادم TCP: يستمع</string>
+    <string name="tcp_server_listening_on_port">في انتظار الاتصال على المنفذ %s</string>
+    <string name="tcp_client_connecting">عميل TCP: يتصل</string>
+    <string name="tcp_client_connecting_to">جارٍ الاتصال بـ %1$s : %2$s</string>
     <string-array name="focus_mode_values">
         <item>تلقائي</item>
         <item>يدوي</item>

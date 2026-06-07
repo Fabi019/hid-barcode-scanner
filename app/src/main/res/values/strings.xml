@@ -299,7 +299,7 @@
     <string name="manual_input">Manual input</string>
     <string name="include_extra_keys">Include extra keys</string>
     <string name="connection_mode">Connection Mode</string>
-    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port (may require additional software). Unsupported settings will be greyed out in RFCOMM mode.</string>
+    <string name="connection_mode_desc">HID emulates keyboard input, RFCOMM sends data via Bluetooth COM port, TCP Server/Client sends data over WiFi (RAW TCP). Unsupported settings will be greyed out in non-HID modes.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Light</item>
@@ -360,11 +360,24 @@
     <string-array name="connection_mode_values">
         <item>HID Keyboard</item>
         <item>RFCOMM (SPP)</item>
+        <item>TCP Server (WiFi)</item>
+        <item>TCP Client (WiFi)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>
         <item quantity="other">Export %1$d items</item>
     </plurals>
+    <string name="tcp_port_error">Invalid port (1–65535)</string>
+    <string name="tcp_server_port">TCP Server Port</string>
+    <string name="tcp_server_port_desc">Port to listen on for incoming TCP connections</string>
+    <string name="tcp_client_host">TCP Client Host</string>
+    <string name="tcp_client_host_desc">IP address or hostname of the TCP server to connect to</string>
+    <string name="tcp_client_port">TCP Client Port</string>
+    <string name="tcp_client_port_desc">Port of the TCP server to connect to</string>
+    <string name="tcp_server_listening">TCP Server: Listening</string>
+    <string name="tcp_server_listening_on_port">Waiting for connection on port %s</string>
+    <string name="tcp_client_connecting">TCP Client: Connecting</string>
+    <string name="tcp_client_connecting_to">Connecting to %1$s:%2$s</string>
     <string name="insecure_rfcomm">Insecure RFCOMM</string>
     <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
     <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>

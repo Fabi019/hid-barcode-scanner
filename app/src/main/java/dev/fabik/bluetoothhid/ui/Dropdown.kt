@@ -220,40 +220,44 @@ fun SettingsDropdown() {
                 }
             )
 
-            if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.insecure_rfcomm)) },
-                    leadingIcon = { Icon(Icons.Default.Shield, null) },
-                    trailingIcon = {
-                        Checkbox(
-                            checked = insecureRfcomm,
-                            onCheckedChange = null
-                        )
-                    },
-                    onClick = {
-                        if (!insecureRfcomm) {
-                            insecureRfcommDialog.open()
+            when (connectionMode) {
+                ConnectionMode.RFCOMM.ordinal -> {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.insecure_rfcomm)) },
+                        leadingIcon = { Icon(Icons.Default.Shield, null) },
+                        trailingIcon = {
+                            Checkbox(
+                                checked = insecureRfcomm,
+                                onCheckedChange = null
+                            )
+                        },
+                        onClick = {
+                            if (!insecureRfcomm) {
+                                insecureRfcommDialog.open()
+                            }
+                            insecureRfcomm = !insecureRfcomm
                         }
-                        insecureRfcomm = !insecureRfcomm
-                    }
-                )
+                    )
 
-                var preserveUnsupportedPlaceholders by rememberPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS)
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.preserve_unsupported_placeholders)) },
-                    leadingIcon = { Icon(Icons.Default.DataObject, null) },
-                    trailingIcon = {
-                        Checkbox(
-                            checked = preserveUnsupportedPlaceholders,
-                            onCheckedChange = null
-                        )
-                    },
-                    onClick = {
-                        preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
-                    }
-                )
-            } else {
-                QosOptionsModal()
+                    var preserveUnsupportedPlaceholders by rememberPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS)
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preserve_unsupported_placeholders)) },
+                        leadingIcon = { Icon(Icons.Default.DataObject, null) },
+                        trailingIcon = {
+                            Checkbox(
+                                checked = preserveUnsupportedPlaceholders,
+                                onCheckedChange = null
+                            )
+                        },
+                        onClick = {
+                            preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
+                        }
+                    )
+                }
+                ConnectionMode.HID.ordinal -> {
+                    QosOptionsModal()
+                }
+                // TCP_SERVER, TCP_CLIENT — no mode-specific developer options
             }
 
             ImportExportDropdown()

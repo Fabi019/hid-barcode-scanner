@@ -300,7 +300,7 @@
     <string name="manual_input">手动输入</string>
     <string name="include_extra_keys">包含附加按键</string>
     <string name="connection_mode">连接模式</string>
-    <string name="connection_mode_desc">HID模式模拟键盘输入，RFCOMM模式通过蓝牙COM端口发送数据（可能需要额外软件）。不支持的设置在RFCOMM模式下将显示为灰色。</string>
+    <string name="connection_mode_desc">HID模式模拟键盘输入，RFCOMM模式通过蓝牙COM端口发送数据，TCP服务器/客户端通过WiFi发送数据（RAW TCP）。不支持的设置在非HID模式下将显示为灰色。</string>
     <string-array name="theme_values">
         <item>系统</item>
         <item>浅色</item>
@@ -361,6 +361,8 @@
     <string-array name="connection_mode_values">
         <item>HID键盘</item>
         <item>RFCOMM (串行端口)</item>
+        <item>TCP服务器 (WiFi)</item>
+        <item>TCP客户端 (WiFi)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">导出 %1$d 项</item>
@@ -370,6 +372,17 @@
     <string name="insecure_rfcomm_desc">此选项启用不安全的RFCOMM连接。仅适用于不支持使用蓝牙串行端口配置文件的安全连接的旧设备。</string>
     <string name="preserve_unsupported_placeholders">保留不支持的占位符</string>
     <string name="preserve_unsupported_placeholders_desc">在RFCOMM模式下，将HID特定占位符（例如 {F1}, {ESC}）保留为文本而非移除</string>
+    <string name="tcp_port_error">无效端口 (1–65535)</string>
+    <string name="tcp_server_port">TCP服务器端口</string>
+    <string name="tcp_server_port_desc">监听传入TCP连接的端口</string>
+    <string name="tcp_client_host">TCP客户端主机</string>
+    <string name="tcp_client_host_desc">要连接的TCP服务器的IP地址或主机名</string>
+    <string name="tcp_client_port">TCP客户端端口</string>
+    <string name="tcp_client_port_desc">要连接的TCP服务器端口</string>
+    <string name="tcp_server_listening">TCP服务器：监听中</string>
+    <string name="tcp_server_listening_on_port">等待连接，端口 %s</string>
+    <string name="tcp_client_connecting">TCP客户端：连接中</string>
+    <string name="tcp_client_connecting_to">正在连接到 %1$s : %2$s</string>
     <string name="save_scan_image">保存扫描图片</string>
     <string name="save_scan_desc">将扫描图片存储在设备上</string>
     <string name="crop_mode">裁剪模式</string>

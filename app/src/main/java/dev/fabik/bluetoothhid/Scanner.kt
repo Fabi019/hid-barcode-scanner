@@ -694,7 +694,7 @@ private fun SendToDeviceFAB(onClick: () -> Unit) {
         val lastSentCharCount by controller.lastSentCharCount.collectAsStateWithLifecycle()
         val enableUndoSend by context.getPreferenceStateDefault(PreferenceStore.ENABLE_UNDO_SEND)
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
-        val isHidMode = connectionMode != ConnectionMode.RFCOMM.ordinal
+        val isHidMode = connectionMode == ConnectionMode.HID.ordinal
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -925,36 +925,60 @@ fun BoxScope.DeviceStatusIndicator() {
         val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+        val isTCPListening by controller.isTCPListeningFlow.collectAsStateWithLifecycle()
 
-        // Dismissed state resets when the device changes or user leaves the scanner
-        var dismissed by remember(currentDevice) { mutableStateOf(false) }
+        val isTcpMode = connectionMode == ConnectionMode.TCP_SERVER.ordinal
+                || connectionMode == ConnectionMode.TCP_CLIENT.ordinal
+
+        val tcpServerPort by context.getPreferenceStateDefault(PreferenceStore.TCP_SERVER_PORT)
+        val tcpClientHost by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_HOST)
+        val tcpClientPort by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_PORT)
+
+        // Dismissed state resets when connection mode or TCP listening state changes
+        var dismissed by remember(currentDevice, connectionMode, isTCPListening) { mutableStateOf(false) }
 
         when {
-            currentDevice == null -> {
-                // No device selected - show "No device connected" regardless of mode
+            // TCP modes: show status card, never show "No device connected"
+            isTcpMode && isTCPListening -> {
+                if (connectionMode == ConnectionMode.TCP_SERVER.ordinal) {
+                    ElevatedWarningCard(
+                        message = stringResource(R.string.tcp_server_listening),
+                        subMessage = stringResource(R.string.tcp_server_listening_on_port, tcpServerPort),
+                        onClick = {},
+                        onDismiss = { dismissed = true },
+                        visible = !dismissed
+                    )
+                } else {
+                    ElevatedWarningCard(
+                        message = stringResource(R.string.tcp_client_connecting),
+                        subMessage = stringResource(R.string.tcp_client_connecting_to, tcpClientHost, tcpClientPort),
+                        onClick = {},
+                        onDismiss = { dismissed = true },
+                        visible = !dismissed
+                    )
+                }
+            }
+
+            // Non-TCP: no device selected
+            !isTcpMode && currentDevice == null -> {
                 ElevatedWarningCard(
                     message = stringResource(R.string.no_device),
                     subMessage = stringResource(R.string.click_to_connect),
-                    onClick = {
-                        navigation.navigateUp()
-                    },
+                    onClick = { navigation.navigateUp() },
                     onDismiss = { dismissed = true },
                     visible = !dismissed
                 )
             }
 
+            // RFCOMM: server is listening for device
             connectionMode == ConnectionMode.RFCOMM.ordinal && isRFCOMMListening -> {
-                // RFCOMM mode with device selected and server listening
                 ElevatedWarningCard(
                     message = stringResource(R.string.rfcomm_listening),
                     subMessage = stringResource(
                         R.string.rfcomm_listening_from_device,
                         currentDevice?.name ?: currentDevice?.address ?: ""
                     ),
-                    onClick = {
-                        // Do nothing - this is just an informational message
-                        // User has already selected a device and server is listening
-                    },
+                    onClick = {},
                     onDismiss = { dismissed = true },
                     visible = !dismissed
                 )

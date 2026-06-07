@@ -331,16 +331,29 @@
     <string name="manual_input">Manuelle Eingabe</string>
     <string name="include_extra_keys">Extra Tasten verwenden</string>
     <string name="connection_mode">Verbindungsmodus</string>
-    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port (kann zusätzliche Software erfordern). Nicht unterstützte Einstellungen werden im RFCOMM-Modus ausgegraut.</string>
+    <string name="connection_mode_desc">HID emuliert Tastatureingaben, RFCOMM sendet Daten über Bluetooth COM-Port, TCP-Server/Client sendet Daten über WLAN (RAW TCP). Nicht unterstützte Einstellungen werden in Nicht-HID-Modi ausgegraut.</string>
     <string-array name="connection_mode_values">
         <item>HID-Tastatur</item>
         <item>RFCOMM (SPP)</item>
+        <item>TCP-Server (WLAN)</item>
+        <item>TCP-Client (WLAN)</item>
     </string-array>
     <string name="insecure_rfcomm">Unsichere RFCOMM</string>
     <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
     <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
     <string name="preserve_unsupported_placeholders_desc">HID-spezifische Platzhalter (z.B. {F1}, {ESC}) als Text behalten, anstatt sie im RFCOMM-Modus zu entfernen</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
+    <string name="tcp_port_error">Ungültiger Port (1–65535)</string>
+    <string name="tcp_server_port">TCP-Server-Port</string>
+    <string name="tcp_server_port_desc">Port, auf dem eingehende TCP-Verbindungen empfangen werden</string>
+    <string name="tcp_client_host">TCP-Client-Host</string>
+    <string name="tcp_client_host_desc">IP-Adresse oder Hostname des TCP-Servers</string>
+    <string name="tcp_client_port">TCP-Client-Port</string>
+    <string name="tcp_client_port_desc">Port des TCP-Servers, mit dem verbunden werden soll</string>
+    <string name="tcp_server_listening">TCP-Server: Hört zu</string>
+    <string name="tcp_server_listening_on_port">Warte auf Verbindung auf Port %s</string>
+    <string name="tcp_client_connecting">TCP-Client: Verbinde…</string>
+    <string name="tcp_client_connecting_to">Verbinde mit %1$s : %2$s</string>
     <string name="save_scan_image">Scan-Bild speichern</string>
     <string name="save_scan_desc">Speichert das gescannte Bild auf dem Gerät</string>
     <string name="crop_mode">Zuschneidemodus</string>

@@ -49,7 +49,7 @@ val LocalDataStore = staticCompositionLocalOf<DataStore<Preferences>> {
 // Enums for type-safe preference values
 // Note: ordinal is used as index - no need for explicit val index
 enum class ConnectionMode {
-    HID, RFCOMM;
+    HID, RFCOMM, TCP_SERVER, TCP_CLIENT;
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HID
     }
@@ -230,6 +230,9 @@ open class PreferenceStore {
         val EXPAND_CODE = booleanPreferencesKey("expand_code") defaultsTo false
         val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
         val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
+        val TCP_SERVER_PORT = stringPreferencesKey("tcp_server_port") defaultsTo "51000"
+        val TCP_CLIENT_HOST = stringPreferencesKey("tcp_client_host") defaultsTo ""
+        val TCP_CLIENT_PORT = stringPreferencesKey("tcp_client_port") defaultsTo "51000"
         val QOS_SERVICE_TYPE =
             intPreferencesKey("qos_service_type") enumDefaultsTo QosServiceType::fromIndex
         val QOS_TOKEN_RATE = intPreferencesKey("qos_token_rate") defaultsTo 800

@@ -241,7 +241,7 @@
     <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
     <string name="developer_mode">Tryb dewelopera</string>
     <string name="connection_mode">Tryb połączenia</string>
-    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania). Nieobsługiwane ustawienia będą wyszarzone w trybie RFCOMM.</string>
+    <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth, serwer/klient TCP wysyła dane przez WiFi (RAW TCP). Nieobsługiwane ustawienia będą wyszarzone w trybach innych niż HID.</string>
     <string-array name="theme_values">
         <item>System</item>
         <item>Jasny</item>
@@ -302,6 +302,8 @@
     <string-array name="connection_mode_values">
         <item>Klawiatura HID</item>
         <item>RFCOMM (SPP)</item>
+        <item>Serwer TCP (WiFi)</item>
+        <item>Klient TCP (WiFi)</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>
@@ -368,6 +370,17 @@
     <string name="preserve_unsupported_placeholders">Zachowaj nieobsługiwane placeholdery</string>
     <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
     <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
+    <string name="tcp_port_error">Nieprawidłowy port (1–65535)</string>
+    <string name="tcp_server_port">Port serwera TCP</string>
+    <string name="tcp_server_port_desc">Port nasłuchu dla przychodzących połączeń TCP</string>
+    <string name="tcp_client_host">Host klienta TCP</string>
+    <string name="tcp_client_host_desc">Adres IP lub nazwa hosta serwera TCP</string>
+    <string name="tcp_client_port">Port klienta TCP</string>
+    <string name="tcp_client_port_desc">Port serwera TCP, z którym ma zostać nawiązane połączenie</string>
+    <string name="tcp_server_listening">Serwer TCP: Nasłuchuje</string>
+    <string name="tcp_server_listening_on_port">Oczekiwanie na połączenie na porcie %s</string>
+    <string name="tcp_client_connecting">Klient TCP: Łączenie…</string>
+    <string name="tcp_client_connecting_to">Łączenie z %1$s : %2$s</string>
     <string-array name="clear_after_time_values">
         <item>Nigdy</item>
         <item>1s</item>
