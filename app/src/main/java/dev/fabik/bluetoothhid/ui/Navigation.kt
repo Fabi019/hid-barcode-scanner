@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -84,7 +85,9 @@ fun NavGraph() {
     // Skip the first invocation — NavHost already starts at the right destination
     // (resolved synchronously via getPreferenceStateBlocking), and the shortcut
     // LaunchedEffect handles intent-based deep links independently.
-    var modeNavigationReady by remember { mutableStateOf(false) }
+    // rememberSaveable so a config change (e.g. rotation) doesn't reset the flag and
+    // re-trigger a spurious navigation on recomposition.
+    var modeNavigationReady by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isTcpMode) {
         if (!modeNavigationReady) {
             modeNavigationReady = true

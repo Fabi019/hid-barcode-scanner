@@ -649,7 +649,7 @@ class BluetoothController(var context: Context) {
             // Get scanner ID
             val scannerID = getScannerID()
 
-            // Get preserve unsupported placeholders preference (RFCOMM only)
+            // Get preserve unsupported placeholders preference (RFCOMM and TCP raw-text path)
             val preserveUnsupported =
                 PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
 
