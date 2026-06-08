@@ -138,8 +138,11 @@ class TcpController(private val context: Context) {
                 TcpStatusData(serverAddresses = serverAddrs, clientAddresses = clientAddrs)
             } ?: TcpStatusData()
             clientJob?.isActive == true -> {
-                val target = if (isConnected && activeSocket != null)
-                    activeSocket!!.run { "${inetAddress?.hostAddress ?: inetAddress}:$port" }
+                // Capture into a local — activeSocket is read from multiple threads and could be
+                // nulled between the check and use, which would NPE on a !! smart-cast.
+                val s = activeSocket
+                val target = if (isConnected && s != null)
+                    s.run { "${inetAddress?.hostAddress ?: inetAddress}:$port" }
                 else clientTarget
                 TcpStatusData(clientTarget = target)
             }
