@@ -14,10 +14,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import dev.fabik.bluetoothhid.utils.localIpAddresses
+import java.io.IOException
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketTimeoutException
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.random.Random
 
@@ -32,6 +34,10 @@ data class TcpStatusData(
 class TcpController(private val context: Context) {
     companion object {
         private const val TAG = "TcpController"
+
+        private const val DEFAULT_PORT = 51000
+        private val PORT_RANGE = 1..65535
+        private const val READ_BUFFER_SIZE = 1024
 
         // Sent to the peer right after a connection is established, mirroring RFCOMM.
         // Keeps the protocol intentionally trivial — just enough to verify send/receive
@@ -49,6 +55,28 @@ class TcpController(private val context: Context) {
         CoroutineScope(Dispatchers.Main).launch {
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
+    }
+
+    // Greeting written to the peer on connect (mirrors RFCOMM) — lets you verify the protocol.
+    private fun sendWelcome(socket: Socket) {
+        runCatching { socket.getOutputStream().apply { write(WELCOME_MESSAGE.toByteArray()); flush() } }
+    }
+
+    // Tear down all server-side resources and reset server connection flags. Idempotent.
+    private fun closeServerResources() {
+        runCatching { serverSocket?.close() }
+        serverSocket = null
+        isServerStarted = false
+        connectedClients.forEach { runCatching { it.close() } }
+        connectedClients.clear()
+        isConnected = false
+    }
+
+    // Tear down the client socket and reset client connection flags. Idempotent.
+    private fun closeClientResources() {
+        runCatching { activeSocket?.close() }
+        activeSocket = null
+        isConnected = false
     }
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -124,9 +152,7 @@ class TcpController(private val context: Context) {
         if (serverJob?.isActive == true) return
         clientJob?.cancel()
         clientJob = null
-        runCatching { activeSocket?.close() }
-        activeSocket = null
-        isConnected = false
+        closeClientResources()
         clientTarget = null
         notifyListeningState()
 
@@ -137,7 +163,7 @@ class TcpController(private val context: Context) {
             while (isActive) {
                 try {
                     val port = context.getPreference(PreferenceStore.TCP_SERVER_PORT).first()
-                        .toIntOrNull()?.coerceIn(1, 65535) ?: 51000
+                        .toIntOrNull()?.coerceIn(PORT_RANGE) ?: DEFAULT_PORT
                     val maxClients = context.getPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS).first()
                         .coerceIn(1, 10)
                     val idleTimeoutMs = context.getPreference(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS).first()
@@ -148,7 +174,7 @@ class TcpController(private val context: Context) {
                         // without waiting for the OS TIME_WAIT period to expire
                         serverSocket = ServerSocket().apply {
                             reuseAddress = true
-                            bind(java.net.InetSocketAddress(port))
+                            bind(InetSocketAddress(port))
                         }
                         serverPort = port
                         isServerStarted = true
@@ -181,12 +207,7 @@ class TcpController(private val context: Context) {
                     if (!isActive) break
                     errorCount++
                     LE("TCP server error (attempt $errorCount)", e)
-                    serverSocket?.close()
-                    serverSocket = null
-                    isServerStarted = false
-                    connectedClients.forEach { runCatching { it.close() } }
-                    connectedClients.clear()
-                    isConnected = false
+                    closeServerResources()
                     notifyListeningState()
                     val backoff = minOf(250L * errorCount, 5000L) + Random.nextLong(0, 200)
                     delay(backoff)
@@ -194,12 +215,7 @@ class TcpController(private val context: Context) {
             }
             // Cleanup on coroutine cancellation — skip if a newer epoch has taken over
             if (epoch == serverEpoch) {
-                serverSocket?.close()
-                serverSocket = null
-                isServerStarted = false
-                connectedClients.forEach { runCatching { it.close() } }
-                connectedClients.clear()
-                isConnected = false
+                closeServerResources()
                 notifyListeningState()
             }
             L("TCP server loop terminated")
@@ -211,9 +227,8 @@ class TcpController(private val context: Context) {
         val input = socket.getInputStream()
         L("TCP server: connection active from $clientAddr (idle timeout: ${if (idleTimeoutMs > 0) "${idleTimeoutMs}ms" else "disabled"})")
         try {
-            // Welcome message to the client (mirrors RFCOMM) — lets you verify the protocol
-            runCatching { socket.getOutputStream().apply { write(WELCOME_MESSAGE.toByteArray()); flush() } }
-            val buffer = ByteArray(1024)
+            sendWelcome(socket)
+            val buffer = ByteArray(READ_BUFFER_SIZE)
             while (true) {
                 val bytes = input.read(buffer)
                 if (bytes == -1) break
@@ -221,7 +236,7 @@ class TcpController(private val context: Context) {
                 L("TCP server received from $clientAddr: $received")
                 showReceivedMessage(received)
             }
-        } catch (e: java.net.SocketTimeoutException) {
+        } catch (e: SocketTimeoutException) {
             L("TCP server: $clientAddr idle timeout after ${idleTimeoutMs}ms — disconnecting")
         } catch (e: IOException) {
             LE("TCP server: connection error from $clientAddr", e)
@@ -238,13 +253,8 @@ class TcpController(private val context: Context) {
         if (clientJob?.isActive == true) return
         serverJob?.cancel()
         serverJob = null
-        serverSocket?.close()
-        serverSocket = null
-        isServerStarted = false
+        closeServerResources()
         serverPort = null
-        connectedClients.forEach { runCatching { it.close() } }
-        connectedClients.clear()
-        isConnected = false
         notifyListeningState()
 
         L("Starting TCP client")
@@ -252,10 +262,11 @@ class TcpController(private val context: Context) {
             var errorCount = 0
             while (isActive) {
                 var socket: Socket? = null
+                var connectionEndedAfterConnect = false
                 try {
                     val host = context.getPreference(PreferenceStore.TCP_CLIENT_HOST).first()
                     val port = context.getPreference(PreferenceStore.TCP_CLIENT_PORT).first()
-                        .toIntOrNull()?.coerceIn(1, 65535) ?: 51000
+                        .toIntOrNull()?.coerceIn(PORT_RANGE) ?: DEFAULT_PORT
                     val connectTimeoutMs = context.getPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS).first()
                         .coerceIn(500, 30_000)
 
@@ -273,7 +284,7 @@ class TcpController(private val context: Context) {
 
                     socket = Socket()
                     activeSocket = socket  // pre-assign so stop() can close it during connect
-                    socket.connect(java.net.InetSocketAddress(host, port), connectTimeoutMs)
+                    socket.connect(InetSocketAddress(host, port), connectTimeoutMs)
                     L("TCP client connected to $host:$port")
 
                     isConnected = true
@@ -283,16 +294,10 @@ class TcpController(private val context: Context) {
                     withContext(Dispatchers.IO) {
                         manageConnection(socket, "client")
                     }
-
-                    // Clean disconnect (read returned -1): manageConnection swallows IOException,
-                    // so the catch-block backoff below never runs for drops after a successful
-                    // connect. Without a delay here, a server that accepts then immediately closes
-                    // forces a tight reconnect loop. Apply a fixed minimal backoff with jitter.
-                    if (isActive) {
-                        val backoff = 1000L + Random.nextLong(0, 200)
-                        L("TCP client disconnected — reconnecting in ${backoff}ms")
-                        delay(backoff)
-                    }
+                    // Reached only when the connection ended after a successful connect —
+                    // manageConnection returns on read -1 AND swallows IOException internally,
+                    // so this covers any post-connect drop (not just a clean -1).
+                    connectionEndedAfterConnect = true
 
                 } catch (e: IOException) {
                     errorCount++
@@ -309,6 +314,16 @@ class TcpController(private val context: Context) {
                     }
                     notifyListeningState()
                 }
+
+                // Backoff after a post-connect disconnect runs AFTER finally has cleared the
+                // connection state and notified — otherwise the UI and sendProcessedData() would
+                // see a stale "connected" socket for the whole delay. Without it, a server that
+                // accepts then immediately closes would force a tight reconnect loop.
+                if (connectionEndedAfterConnect && isActive) {
+                    val backoff = 1000L + Random.nextLong(0, 200)
+                    L("TCP client disconnected — reconnecting in ${backoff}ms")
+                    delay(backoff)
+                }
             }
             L("TCP client loop terminated")
         }
@@ -317,12 +332,7 @@ class TcpController(private val context: Context) {
     fun restartServer() {
         serverJob?.cancel()
         serverJob = null
-        runCatching { serverSocket?.close() }
-        serverSocket = null
-        isServerStarted = false
-        connectedClients.forEach { runCatching { it.close() } }
-        connectedClients.clear()
-        isConnected = false
+        closeServerResources()
         notifyListeningState()
         startServer()
     }
@@ -330,9 +340,7 @@ class TcpController(private val context: Context) {
     fun restartClient() {
         clientJob?.cancel()
         clientJob = null
-        runCatching { activeSocket?.close() }
-        activeSocket = null
-        isConnected = false
+        closeClientResources()
         notifyListeningState()
         startClient()
     }
@@ -345,16 +353,8 @@ class TcpController(private val context: Context) {
         clientJob?.cancel()
         clientJob = null
 
-        runCatching { activeSocket?.close() }
-        activeSocket = null
-
-        connectedClients.forEach { runCatching { it.close() } }
-        connectedClients.clear()
-        isConnected = false
-
-        runCatching { serverSocket?.close() }
-        serverSocket = null
-        isServerStarted = false
+        closeClientResources()
+        closeServerResources()
         serverPort = null
         clientTarget = null
 
@@ -366,9 +366,8 @@ class TcpController(private val context: Context) {
         val input = socket.getInputStream()
         L("TCP $role: connection active")
         try {
-            // Welcome message to the peer (mirrors RFCOMM) — lets you verify the protocol
-            runCatching { socket.getOutputStream().apply { write(WELCOME_MESSAGE.toByteArray()); flush() } }
-            val buffer = ByteArray(1024)
+            sendWelcome(socket)
+            val buffer = ByteArray(READ_BUFFER_SIZE)
             while (true) {
                 val bytes = input.read(buffer)
                 if (bytes == -1) break
@@ -390,16 +389,20 @@ class TcpController(private val context: Context) {
         // Server mode: broadcast to all connected clients. A server can't force an absent
         // peer to reconnect (the peer connects to us), so there's nothing to retry against.
         if (serverJob?.isActive == true) {
-            if (connectedClients.isEmpty()) {
+            // Snapshot recipients so the delivered/attempted count is accurate even as
+            // failing sockets get pruned from connectedClients below.
+            val recipients = connectedClients.toList()
+            if (recipients.isEmpty()) {
                 L("TCP server: no clients connected — data dropped")
                 return
             }
-            connectedClients.forEach { socket ->
+            var delivered = 0
+            recipients.forEach { socket ->
                 runCatching {
                     val out = socket.getOutputStream()
                     out.write(data)
                     out.flush()
-                }.onFailure { e ->
+                }.onSuccess { delivered++ }.onFailure { e ->
                     LE("TCP broadcast send failed to ${socket.inetAddress.hostAddress ?: socket.inetAddress}", e)
                     // Prune the dead client immediately. Closing the socket also unblocks the
                     // reader coroutine (manageClientConnection), whose finally{} may remove it
@@ -410,12 +413,15 @@ class TcpController(private val context: Context) {
                     notifyListeningState()
                 }
             }
-            L("TCP broadcast to ${connectedClients.size} client(s): $processedString")
+            L("TCP broadcast to $delivered/${recipients.size} client(s): $processedString")
             return
         }
 
         // Client mode: single socket. Mirror RFCOMM — on no connection, trigger a reconnect
         // and retry once so a scan made during a brief drop isn't lost.
+        // NOTE: this retry is fire-and-forget — sendProcessedData() returns immediately and the
+        // caller's _isSending lock is released before the retry runs. The retry is bounded
+        // (waits for isConnected up to the connect timeout) but NOT awaited by the send queue.
         val socket = activeSocket
         if (socket == null || !isConnected) {
             L("TCP client: no active connection — triggering reconnect")

@@ -140,7 +140,10 @@ fun NavGraph() {
                 // Unbounded channel ensures every barcode result is queued even during active sends
                 val sendQueue = remember { Channel<BarcodeResult>(Channel.UNLIMITED) }
 
-                // Sequential queue processor — each sendString awaits completion before next item
+                // Sequential queue processor — each sendString returns before the next item.
+                // For HID this awaits the full type-out. For RFCOMM/TCP the normal send is
+                // synchronous, but a no-connection reconnect+retry is fire-and-forget (see
+                // TcpController.sendProcessedData), so those retries are NOT awaited here.
                 LaunchedEffect(controller) {
                     for (result in sendQueue) {
                         val barcodeType = ZXingAnalyzer.index2String(result.format)
