@@ -43,7 +43,7 @@ import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.bt.TcpStatusData
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
-import dev.fabik.bluetoothhid.utils.isTcpMode
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.OverlayType
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ScanAreaData
@@ -68,7 +68,9 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
     val showTcpStatus by context.getPreferenceState(PreferenceStore.SHOW_TCP_STATUS)
     val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
-    val isTcpMode = connectionMode.isTcpMode()
+    // Status overlay is a server-only dashboard (your address + connected clients).
+    // In client mode you already entered the target, so there's nothing useful to show.
+    val isTcpServer = connectionMode == ConnectionMode.TCP_SERVER.ordinal
     val controller = LocalController.current
     val tcpStatus by controller?.tcpStatusFlow?.collectAsStateWithLifecycle(TcpStatusData())
         ?: remember { mutableStateOf(TcpStatusData()) }
@@ -162,8 +164,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
         DebugOverlay(viewModel)
     }
 
-    // Draw TCP connection status overlay
-    if (showTcpStatus == true && isTcpMode && !tcpStatus.isEmpty) {
+    // Draw TCP connection status overlay (server mode only)
+    if (showTcpStatus == true && isTcpServer && !tcpStatus.isEmpty) {
         TcpStatusOverlay(tcpStatus)
     }
 }
@@ -421,14 +423,14 @@ fun TcpStatusOverlay(status: TcpStatusData) {
     val serverLabel = stringResource(R.string.tcp_status_overlay_server)
     val paintNormal = remember {
         Paint().apply {
-            textSize = 50f
+            textSize = 38f
             color = Color.White.toArgb()
             textAlign = Paint.Align.RIGHT
         }
     }
     val paintDim = remember {
         Paint().apply {
-            textSize = 40f
+            textSize = 30f
             color = Color.White.copy(alpha = 0.6f).toArgb()
             textAlign = Paint.Align.RIGHT
         }
@@ -438,27 +440,23 @@ fun TcpStatusOverlay(status: TcpStatusData) {
         val canvas = drawContext.canvas.nativeCanvas
         val x = size.width - 10f
         var y = size.height * 0.6f
-        val lineHeight = 50f
-        val dimLineHeight = 44f
+        val lineHeight = 40f
+        val dimLineHeight = 34f
 
-        if (status.clientTarget != null) {
-            // Client mode: show server address with label
-            canvas.drawText(serverLabel, x, y, paintDim)
+        // Server dashboard: "Server:" label, then server IPs, then clients section.
+        // (Overlay is gated to server mode, so there's no client-target rendering here.)
+        canvas.drawText(serverLabel, x, y, paintDim)
+        y += dimLineHeight
+        status.serverAddresses.forEach { addr ->
+            canvas.drawText(addr, x, y, paintNormal)
             y += lineHeight
-            canvas.drawText(status.clientTarget, x, y, paintNormal)
-        } else {
-            // Server mode: server IPs, then clients section
-            status.serverAddresses.forEach { addr ->
-                canvas.drawText(addr, x, y, paintNormal)
-                y += lineHeight
-            }
-            val clientCount = status.clientAddresses.size
-            canvas.drawText("$clientsLabel [$clientCount]", x, y, paintDim)
-            y += dimLineHeight
-            status.clientAddresses.forEach { addr ->
-                canvas.drawText(addr, x, y, paintNormal)
-                y += lineHeight
-            }
+        }
+        val clientCount = status.clientAddresses.size
+        canvas.drawText("$clientsLabel [$clientCount]", x, y, paintDim)
+        y += dimLineHeight
+        status.clientAddresses.forEach { addr ->
+            canvas.drawText(addr, x, y, paintNormal)
+            y += lineHeight
         }
     }
 }

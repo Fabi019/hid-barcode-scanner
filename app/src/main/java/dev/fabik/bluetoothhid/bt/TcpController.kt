@@ -115,14 +115,14 @@ class TcpController(private val context: Context) {
         connectedAddressesCallback = callback
     }
 
-    // "Listening" semantics differ per mode:
-    //  - Server: the accept loop is running (still accepting clients, even if some are
-    //    already connected) — not "no client yet", which was RFCOMM single-client logic.
-    //  - Client: the loop is running but no connection is established yet (connecting).
+    // "Listening" drives the status bubble, which is a "waiting for a connection" hint:
+    // it shows only while NO connection is active and hides once anything connects.
+    //  - Server: accept loop running but no client connected yet. (The loop keeps accepting
+    //    more clients regardless — this flag is purely UI state, not the functional state.)
+    //  - Client: loop running but not yet connected (connecting).
     fun isListening(): Boolean {
-        val serverListening = serverJob?.isActive == true && isServerStarted
-        val clientConnecting = clientJob?.isActive == true && !isConnected
-        return serverListening || clientConnecting
+        if (isConnected) return false
+        return (serverJob?.isActive == true && isServerStarted) || clientJob?.isActive == true
     }
 
     private fun notifyListeningState() {

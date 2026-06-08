@@ -258,7 +258,8 @@ fun SettingsDropdown() {
                 ConnectionMode.HID.ordinal -> {
                     QosOptionsModal()
                 }
-                ConnectionMode.TCP_SERVER.ordinal, ConnectionMode.TCP_CLIENT.ordinal -> {
+                ConnectionMode.TCP_SERVER.ordinal -> {
+                    // Status overlay toggle is server-only (the overlay is a server dashboard)
                     var showTcpStatus by rememberPreference(PreferenceStore.SHOW_TCP_STATUS)
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.show_tcp_status)) },
@@ -266,8 +267,10 @@ fun SettingsDropdown() {
                         trailingIcon = { Checkbox(checked = showTcpStatus, onCheckedChange = null) },
                         onClick = { showTcpStatus = !showTcpStatus }
                     )
-                    if (connectionMode == ConnectionMode.TCP_SERVER.ordinal) TcpServerOptionsModal()
-                    else TcpClientOptionsModal()
+                    TcpServerOptionsModal()
+                }
+                ConnectionMode.TCP_CLIENT.ordinal -> {
+                    TcpClientOptionsModal()
                 }
             }
 
