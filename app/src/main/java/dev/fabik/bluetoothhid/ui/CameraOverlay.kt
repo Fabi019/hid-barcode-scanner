@@ -41,8 +41,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.bt.TcpStatusData
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
-import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.isTcpMode
 import dev.fabik.bluetoothhid.utils.OverlayType
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ScanAreaData
@@ -67,9 +68,10 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
     val showTcpStatus by context.getPreferenceState(PreferenceStore.SHOW_TCP_STATUS)
     val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isTcpMode = connectionMode.isTcpMode()
     val controller = LocalController.current
-    val tcpAddresses by controller?.tcpAddressesFlow?.collectAsStateWithLifecycle(emptyList())
-        ?: remember { mutableStateOf(emptyList()) }
+    val tcpStatus by controller?.tcpStatusFlow?.collectAsStateWithLifecycle(TcpStatusData())
+        ?: remember { mutableStateOf(TcpStatusData()) }
 
     UpdateScanAreas(viewModel, restrictArea, overlayType)
 
@@ -161,8 +163,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     }
 
     // Draw TCP connection status overlay
-    if (showTcpStatus == true && tcpAddresses.isNotEmpty()) {
-        TcpStatusOverlay(tcpAddresses, connectionMode)
+    if (showTcpStatus == true && isTcpMode && !tcpStatus.isEmpty) {
+        TcpStatusOverlay(tcpStatus)
     }
 }
 
@@ -317,6 +319,18 @@ fun CustomOverlayButtons(
 fun DebugOverlay(viewModel: CameraViewModel) {
     val cameraTrace by viewModel.cameraTrace.state.collectAsStateWithLifecycle()
     val detectorTrace by viewModel.detectorTrace.state.collectAsStateWithLifecycle()
+    val textPaint = remember {
+        Paint().apply {
+            textSize = 50f
+            color = Color.White.toArgb()
+        }
+    }
+    val histogramDetectorPaint = remember {
+        Paint().apply { color = Color.Green.toArgb() }
+    }
+    val histogramCameraPaint = remember {
+        Paint().apply { color = Color.Red.toArgb() }
+    }
 
     Canvas(Modifier.fillMaxSize()) {
         val canvas = drawContext.canvas.nativeCanvas
@@ -329,10 +343,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
             "FPS: ${cameraTrace?.currentFps}, Frame latency: ${cameraTrace?.currentLatency} ms",
             10f,
             y,
-            Paint().apply {
-                textSize = 50f
-                color = Color.White.toArgb()
-            }
+            textPaint
         )
 
         // Draw the detector stats
@@ -344,10 +355,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
             } ms)",
             10f,
             y + 50f,
-            Paint().apply {
-                textSize = 50f
-                color = Color.White.toArgb()
-            }
+            textPaint
         )
 
         // Draw the input image size
@@ -355,10 +363,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
             "Image size: ${viewModel.lastScanSize?.width}x${viewModel.lastScanSize?.height}",
             10f,
             y + 100f,
-            Paint().apply {
-                color = Color.White.toArgb()
-                textSize = 50f
-            }
+            textPaint
         )
 
         // Draw the preview image size
@@ -366,10 +371,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
             "Preview size: ${viewModel.viewSize?.width}x${viewModel.viewSize?.height}",
             10f,
             y + 150f,
-            Paint().apply {
-                color = Color.White.toArgb()
-                textSize = 50f
-            }
+            textPaint
         )
 
         // Draw the custom selection
@@ -378,10 +380,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
                     "at (${viewModel.overlayPosition?.x?.roundToInt()}, ${viewModel.overlayPosition?.y?.roundToInt()})",
             10f,
             y + 200f,
-            Paint().apply {
-                color = Color.White.toArgb()
-                textSize = 50f
-            }
+            textPaint
         )
 
         // Draw the histogram
@@ -407,45 +406,59 @@ fun DebugOverlay(viewModel: CameraViewModel) {
         }
 
         detectorTrace?.let {
-            drawHistogram(
-                it.history,
-                size.width / (it.history.maxSize - 1),
-                Paint().apply {
-                    color = Color.Green.toArgb()
-                }
-            )
+            drawHistogram(it.history, size.width / (it.history.maxSize - 1), histogramDetectorPaint)
         }
 
         cameraTrace?.let {
-            drawHistogram(
-                it.history,
-                size.width / (it.history.maxSize - 1),
-                Paint().apply {
-                    color = Color.Red.toArgb()
-                }
-            )
+            drawHistogram(it.history, size.width / (it.history.maxSize - 1), histogramCameraPaint)
         }
     }
 }
 
 @Composable
-fun TcpStatusOverlay(addresses: List<String>, connectionMode: Int?) {
-    val isTcpServer = connectionMode == ConnectionMode.TCP_SERVER.ordinal
-    val label = if (isTcpServer) {
-        stringResource(R.string.tcp_status_overlay_clients)
-    } else {
-        stringResource(R.string.tcp_status_overlay_server)
+fun TcpStatusOverlay(status: TcpStatusData) {
+    val clientsLabel = stringResource(R.string.tcp_status_overlay_clients)
+    val serverLabel = stringResource(R.string.tcp_status_overlay_server)
+    val paintNormal = remember {
+        Paint().apply {
+            textSize = 50f
+            color = Color.White.toArgb()
+            textAlign = Paint.Align.RIGHT
+        }
+    }
+    val paintDim = remember {
+        Paint().apply {
+            textSize = 40f
+            color = Color.White.copy(alpha = 0.6f).toArgb()
+            textAlign = Paint.Align.RIGHT
+        }
     }
 
     Canvas(Modifier.fillMaxSize()) {
         val canvas = drawContext.canvas.nativeCanvas
-        val paint = Paint().apply {
-            textSize = 50f
-            color = Color.White.toArgb()
-        }
-        canvas.drawText(label, 10f, 60f, paint)
-        addresses.forEachIndexed { index, addr ->
-            canvas.drawText(addr, 10f, 60f + (index + 1) * 50f, paint)
+        val x = size.width - 10f
+        var y = size.height * 0.6f
+        val lineHeight = 50f
+        val dimLineHeight = 44f
+
+        if (status.clientTarget != null) {
+            // Client mode: show server address with label
+            canvas.drawText(serverLabel, x, y, paintDim)
+            y += lineHeight
+            canvas.drawText(status.clientTarget, x, y, paintNormal)
+        } else {
+            // Server mode: server IPs, then clients section
+            status.serverAddresses.forEach { addr ->
+                canvas.drawText(addr, x, y, paintNormal)
+                y += lineHeight
+            }
+            val clientCount = status.clientAddresses.size
+            canvas.drawText("$clientsLabel [$clientCount]", x, y, paintDim)
+            y += dimLineHeight
+            status.clientAddresses.forEach { addr ->
+                canvas.drawText(addr, x, y, paintNormal)
+                y += lineHeight
+            }
         }
     }
 }

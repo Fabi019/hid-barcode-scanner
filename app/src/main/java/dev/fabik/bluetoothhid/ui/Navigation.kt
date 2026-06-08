@@ -27,6 +27,7 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.isTcpMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import dev.fabik.bluetoothhid.utils.getPreferenceState
@@ -74,8 +75,7 @@ fun NavGraph() {
 
     val context = LocalContext.current
     val connectionMode by context.getPreferenceStateBlocking(PreferenceStore.CONNECTION_MODE)
-    val isTcpMode = connectionMode == ConnectionMode.TCP_SERVER.ordinal
-            || connectionMode == ConnectionMode.TCP_CLIENT.ordinal
+    val isTcpMode = connectionMode.isTcpMode()
 
     val currentDevice by controller?.currentDevice?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(null) }

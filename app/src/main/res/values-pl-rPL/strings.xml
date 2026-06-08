@@ -389,6 +389,9 @@
     <string name="tcp_server_listening_on_port">Oczekiwanie na połączenie na porcie %s</string>
     <string name="tcp_client_connecting">Klient TCP: Łączenie…</string>
     <string name="tcp_client_connecting_to">Łączenie z %1$s : %2$s</string>
+    <string name="show_tcp_status">Pokaż podłączone urządzenia TCP</string>
+    <string name="tcp_status_overlay_clients">Klienci</string>
+    <string name="tcp_status_overlay_server">Serwer</string>
     <string-array name="clear_after_time_values">
         <item>Nigdy</item>
         <item>1s</item>
@@ -449,4 +452,12 @@
     <string name="save_scan_image_hint">Uwaga: Nazwa pliku każdego skanu jest dostępna jako {SCAN_IMAGE_NAME} w szablonie niestandardowym. Można jej użyć np. do bezpośredniego pobrania obrazu z telefonu.</string>
     <string name="clear_after_time">Wyczyść po czasie</string>
     <string name="clear_after_time_desc">Czyści wyświetlany kod po braku wykrycia w określonym przedziale czasowym.</string>
+    <string name="profiles">Profile</string>
+    <string name="active_profile_desc">Dotknij, aby zarządzać profilami</string>
+    <string name="manage_profiles">Zarządzaj profilami</string>
+    <string name="add_profile">Dodaj profil</string>
+    <string name="delete_profile">Usuń profil</string>
+    <string name="profile_name">Nazwa profilu</string>
+    <string name="profile_name_empty">Nazwa profilu nie może być pusta</string>
+    <string name="profile_name_exists">Profil o tej nazwie już istnieje</string>
 </resources>

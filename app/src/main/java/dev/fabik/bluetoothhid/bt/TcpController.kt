@@ -14,12 +14,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.net.Inet4Address
-import java.net.NetworkInterface
+import dev.fabik.bluetoothhid.utils.localIpAddresses
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.random.Random
+
+data class TcpStatusData(
+    val serverAddresses: List<String> = emptyList(),
+    val clientAddresses: List<String> = emptyList(),
+    val clientTarget: String? = null,
+) {
+    val isEmpty get() = serverAddresses.isEmpty() && clientAddresses.isEmpty() && clientTarget == null
+}
 
 class TcpController(private val context: Context) {
     companion object {
@@ -44,7 +51,6 @@ class TcpController(private val context: Context) {
     private var serverJob: Job? = null
     @Volatile private var serverEpoch = 0
     @Volatile private var serverPort: Int? = null
-    @Volatile private var serverLocalAddresses: List<String> = emptyList()
 
     // Client state
     private var clientJob: Job? = null
@@ -52,7 +58,7 @@ class TcpController(private val context: Context) {
 
     private var listeningStateCallback: ((Boolean) -> Unit)? = null
     private var connectedStateCallback: ((Boolean) -> Unit)? = null
-    private var connectedAddressesCallback: ((List<String>) -> Unit)? = null
+    private var connectedAddressesCallback: ((TcpStatusData) -> Unit)? = null
 
     fun setListeningStateCallback(callback: (Boolean) -> Unit) {
         listeningStateCallback = callback
@@ -62,7 +68,7 @@ class TcpController(private val context: Context) {
         connectedStateCallback = callback
     }
 
-    fun setConnectedAddressesCallback(callback: (List<String>) -> Unit) {
+    fun setConnectedAddressesCallback(callback: (TcpStatusData) -> Unit) {
         connectedAddressesCallback = callback
     }
 
@@ -72,40 +78,26 @@ class TcpController(private val context: Context) {
     private fun notifyListeningState() {
         listeningStateCallback?.invoke(isListening())
         connectedStateCallback?.invoke(isConnected)
-        val addrs = buildList {
-            if (isServerStarted) {
-                // Show server's own reachable IPs so clients know where to connect
-                val port = serverPort
-                if (serverLocalAddresses.isNotEmpty()) {
-                    serverLocalAddresses.forEach { ip -> add("$ip:$port") }
-                } else {
-                    add(":$port")
-                }
-                // Append connected client IPs below
-                addAll(connectedClients.mapNotNull { it.inetAddress?.hostAddress })
-            } else if (clientJob?.isActive == true) {
-                if (isConnected && activeSocket != null) {
-                    activeSocket!!.run {
-                        add("${inetAddress?.hostAddress ?: inetAddress}:$port")
-                    }
-                } else {
-                    clientTarget?.let { add(it) }
-                }
+        val data = when {
+            isServerStarted -> {
+                val port = serverPort ?: return
+                val localAddrs = localIpAddresses()
+                val serverAddrs = if (localAddrs.isNotEmpty())
+                    localAddrs.map { "$it:$port" }
+                else listOf(":$port")
+                val clientAddrs = connectedClients.mapNotNull { it.inetAddress?.hostAddress }
+                TcpStatusData(serverAddresses = serverAddrs, clientAddresses = clientAddrs)
             }
+            clientJob?.isActive == true -> {
+                val target = if (isConnected && activeSocket != null)
+                    activeSocket!!.run { "${inetAddress?.hostAddress ?: inetAddress}:$port" }
+                else clientTarget
+                TcpStatusData(clientTarget = target)
+            }
+            else -> TcpStatusData()
         }
-        connectedAddressesCallback?.invoke(addrs)
+        connectedAddressesCallback?.invoke(data)
     }
-
-    private fun localIpAddresses(): List<String> = runCatching {
-        NetworkInterface.getNetworkInterfaces()
-            ?.asSequence()
-            ?.filter { it.isUp && !it.isLoopback }
-            ?.flatMap { it.inetAddresses.asSequence() }
-            ?.filterIsInstance<Inet4Address>()
-            ?.filter { !it.isLoopbackAddress }
-            ?.mapNotNull { it.hostAddress }
-            ?.toList()
-    }.getOrNull() ?: emptyList()
 
     fun startServer() {
         if (serverJob?.isActive == true) return
@@ -137,9 +129,8 @@ class TcpController(private val context: Context) {
                             reuseAddress = true
                             bind(java.net.InetSocketAddress(port))
                         }
-                        isServerStarted = true
                         serverPort = port
-                        serverLocalAddresses = localIpAddresses()
+                        isServerStarted = true
                         L("TCP server listening on port $port (max $maxClients clients)")
                         notifyListeningState()
                         errorCount = 0
@@ -226,7 +217,6 @@ class TcpController(private val context: Context) {
         serverSocket = null
         isServerStarted = false
         serverPort = null
-        serverLocalAddresses = emptyList()
         connectedClients.forEach { runCatching { it.close() } }
         connectedClients.clear()
         isConnected = false
@@ -331,7 +321,6 @@ class TcpController(private val context: Context) {
         serverSocket = null
         isServerStarted = false
         serverPort = null
-        serverLocalAddresses = emptyList()
         clientTarget = null
 
         notifyListeningState()

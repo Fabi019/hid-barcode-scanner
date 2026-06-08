@@ -2,8 +2,6 @@ package dev.fabik.bluetoothhid
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import android.content.ClipData
 import android.content.Context
 import android.media.AudioManager
@@ -139,6 +137,8 @@ import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ScanAreaData
 import dev.fabik.bluetoothhid.utils.VolumeKeyAction
 import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.isTcpMode
+import dev.fabik.bluetoothhid.utils.localIpAddresses
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import dev.fabik.bluetoothhid.utils.setPreference
@@ -921,18 +921,6 @@ fun BoxScope.CapsLockWarning() {
     }
 }
 
-private fun localIpAddresses(): List<String> =
-    runCatching {
-        NetworkInterface.getNetworkInterfaces()
-            ?.asSequence()
-            ?.filter { it.isUp && !it.isLoopback }
-            ?.flatMap { it.inetAddresses.asSequence() }
-            ?.filterIsInstance<Inet4Address>()
-            ?.filter { !it.isLoopbackAddress }
-            ?.mapNotNull { it.hostAddress }
-            ?.toList()
-    }.getOrNull() ?: emptyList()
-
 /**
  * Component that shows device connection status for both HID and RFCOMM modes.
  * Priority: if no device selected (currentDevice == null) => always show "No device connected"
@@ -950,8 +938,7 @@ fun BoxScope.DeviceStatusIndicator() {
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
         val isTCPListening by controller.isTCPListeningFlow.collectAsStateWithLifecycle()
 
-        val isTcpMode = connectionMode == ConnectionMode.TCP_SERVER.ordinal
-                || connectionMode == ConnectionMode.TCP_CLIENT.ordinal
+        val isTcpMode = connectionMode.isTcpMode()
 
         val tcpServerPort by context.getPreferenceStateDefault(PreferenceStore.TCP_SERVER_PORT)
         val tcpClientHost by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_HOST)
