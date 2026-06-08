@@ -170,6 +170,8 @@ fun SectionTitle(text: String) {
 internal fun ConnectionSettings(strings: SettingsStrings) {
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
     val isHidOnly = connectionMode == ConnectionMode.HID
+    val isTcpMode =
+        connectionMode == ConnectionMode.TCP_SERVER || connectionMode == ConnectionMode.TCP_CLIENT
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -183,6 +185,8 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.auto_connect],
         desc = strings[R.string.auto_connect_desc],
         icon = Icons.Default.Link,
+        // Auto-connect is a Bluetooth device concept — irrelevant in TCP modes
+        enabled = !isTcpMode,
         preference = PreferenceStore.AUTO_CONNECT
     )
 

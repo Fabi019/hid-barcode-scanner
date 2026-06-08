@@ -13,6 +13,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import dev.fabik.bluetoothhid.utils.localIpAddresses
 import java.io.IOException
@@ -80,6 +82,10 @@ class TcpController(private val context: Context) {
     }
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Serializes outgoing sends. sendProcessedData() now dispatches async (writes must be off
+    // the main thread), so without this two rapid scans could interleave bytes on one socket.
+    private val sendMutex = Mutex()
 
     // Active clients in server mode
     private val connectedClients = CopyOnWriteArrayList<Socket>()
@@ -387,53 +393,55 @@ class TcpController(private val context: Context) {
     }
 
     fun sendProcessedData(processedString: String) {
-        val data = processedString.toByteArray(Charsets.UTF_8)
+        // All socket I/O MUST run off the main thread. sendString() is invoked from the scan
+        // queue on the Main dispatcher, and a synchronous TCP write there throws
+        // NetworkOnMainThreadException (StrictMode) — which previously pruned the client and
+        // looked like the connection "resetting" on every scan. Dispatch onto the IO scope.
+        // (RFCOMM dodges this only because its BluetoothSocket stream isn't network-policed.)
+        controllerScope.launch { sendMutex.withLock {
+            val data = processedString.toByteArray(Charsets.UTF_8)
 
-        // Server mode: broadcast to all connected clients. A server can't force an absent
-        // peer to reconnect (the peer connects to us), so there's nothing to retry against.
-        if (serverJob?.isActive == true) {
-            // Snapshot recipients so the delivered/attempted count is accurate even as
-            // failing sockets get pruned from connectedClients below.
-            val recipients = connectedClients.toList()
-            if (recipients.isEmpty()) {
-                L("TCP server: no clients connected — data dropped")
-                return
-            }
-            var delivered = 0
-            recipients.forEach { socket ->
-                runCatching {
-                    val out = socket.getOutputStream()
-                    out.write(data)
-                    out.flush()
-                }.onSuccess { delivered++ }.onFailure { e ->
-                    LE("TCP broadcast send failed to ${socket.inetAddress.hostAddress ?: socket.inetAddress}", e)
-                    // Prune the dead client immediately. Closing the socket also unblocks the
-                    // reader coroutine (manageClientConnection), whose finally{} may remove it
-                    // again — CopyOnWriteArrayList.remove() is safe to call twice.
-                    runCatching { socket.close() }
-                    connectedClients.remove(socket)
-                    isConnected = connectedClients.isNotEmpty()
-                    notifyListeningState()
+            // Server mode: broadcast to all connected clients. A server can't force an absent
+            // peer to reconnect (the peer connects to us), so there's nothing to retry against.
+            if (serverJob?.isActive == true) {
+                // Snapshot recipients so the delivered/attempted count is accurate even as
+                // failing sockets get pruned from connectedClients below.
+                val recipients = connectedClients.toList()
+                if (recipients.isEmpty()) {
+                    L("TCP server: no clients connected — data dropped")
+                    return@launch
                 }
+                var delivered = 0
+                recipients.forEach { socket ->
+                    runCatching {
+                        val out = socket.getOutputStream()
+                        out.write(data)
+                        out.flush()
+                    }.onSuccess { delivered++ }.onFailure { e ->
+                        LE("TCP broadcast send failed to ${socket.inetAddress.hostAddress ?: socket.inetAddress}", e)
+                        // Prune the dead client immediately. Closing the socket also unblocks the
+                        // reader coroutine (manageClientConnection), whose finally{} may remove it
+                        // again — CopyOnWriteArrayList.remove() is safe to call twice.
+                        runCatching { socket.close() }
+                        connectedClients.remove(socket)
+                        isConnected = connectedClients.isNotEmpty()
+                        notifyListeningState()
+                    }
+                }
+                L("TCP broadcast to $delivered/${recipients.size} client(s): $processedString")
+                return@launch
             }
-            L("TCP broadcast to $delivered/${recipients.size} client(s): $processedString")
-            return
-        }
 
-        // Client mode: single socket. Mirror RFCOMM — on no connection, trigger a reconnect
-        // and retry once so a scan made during a brief drop isn't lost.
-        // NOTE: this retry is fire-and-forget — sendProcessedData() returns immediately and the
-        // caller's _isSending lock is released before the retry runs. The retry is bounded
-        // (waits for isConnected up to the connect timeout) but NOT awaited by the send queue.
-        val socket = activeSocket
-        if (socket == null || !isConnected) {
-            L("TCP client: no active connection — triggering reconnect")
-            controllerScope.launch {
+            // Client mode: single socket. Mirror RFCOMM — on no connection, trigger a reconnect
+            // and retry once so a scan made during a brief drop isn't lost. The retry is bounded
+            // (waits for isConnected up to the connect timeout) but not awaited by the send queue.
+            val socket = activeSocket
+            if (socket == null || !isConnected) {
+                L("TCP client: no active connection — triggering reconnect")
                 restartClient()
-                // Wait for the reconnect to actually establish, up to a bound, instead of a
-                // fixed sleep — otherwise "scan isn't lost" only holds on fast networks.
-                // Bound by the user's own connect timeout (+ small margin) so a slow
-                // network / DNS / connect still gets a fair chance before we give up.
+                // Wait for the reconnect to actually establish, up to a bound, instead of a fixed
+                // sleep — otherwise "scan isn't lost" only holds on fast networks. Bound by the
+                // user's connect timeout (+ margin) so slow network/DNS/connect still gets a chance.
                 val connectTimeoutMs = context.getPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS)
                     .first().coerceIn(500, 30_000)
                 val deadline = System.currentTimeMillis() + connectTimeoutMs + 300
@@ -451,18 +459,18 @@ class TcpController(private val context: Context) {
                 } else {
                     L("TCP reconnect didn't establish in time — data dropped")
                 }
+                return@launch
             }
-            return
-        }
 
-        runCatching {
-            val out = socket.getOutputStream()
-            out.write(data)
-            out.flush()
-            L("TCP sent: $processedString")
-        }.onFailure { e ->
-            LE("TCP send failed", e)
-            controllerScope.launch { restartClient() }
-        }
+            runCatching {
+                val out = socket.getOutputStream()
+                out.write(data)
+                out.flush()
+                L("TCP sent: $processedString")
+            }.onFailure { e ->
+                LE("TCP send failed", e)
+                restartClient()
+            }
+        } }
     }
 }
