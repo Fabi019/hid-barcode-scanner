@@ -144,6 +144,7 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /**
@@ -956,8 +957,9 @@ fun BoxScope.DeviceStatusIndicator() {
         val tcpClientHost by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_HOST)
         val tcpClientPort by context.getPreferenceStateDefault(PreferenceStore.TCP_CLIENT_PORT)
 
-        val localIps = remember(isTCPListening) {
-            if (isTCPListening) localIpAddresses() else emptyList()
+        var localIps by remember { mutableStateOf(emptyList<String>()) }
+        LaunchedEffect(isTCPListening) {
+            localIps = if (isTCPListening) withContext(Dispatchers.IO) { localIpAddresses() } else emptyList()
         }
 
         // Dismissed state resets when connection mode or TCP listening state changes

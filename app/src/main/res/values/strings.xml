@@ -374,10 +374,14 @@
     <string name="tcp_server_port_desc">Port to listen on for incoming TCP connections</string>
     <string name="tcp_server_max_clients">Max Clients</string>
     <string name="tcp_server_max_clients_desc">Maximum number of simultaneous TCP clients (1–10)</string>
+    <string name="tcp_server_client_idle_timeout">Client idle timeout (ms)</string>
+    <string name="tcp_server_client_idle_timeout_desc">Disconnect a client after this many ms of inactivity. 0 = disabled</string>
     <string name="tcp_client_host">TCP Client Host</string>
     <string name="tcp_client_host_desc">IP address or hostname of the TCP server to connect to</string>
     <string name="tcp_client_port">TCP Client Port</string>
     <string name="tcp_client_port_desc">Port of the TCP server to connect to</string>
+    <string name="tcp_client_connect_timeout">Connect timeout (ms)</string>
+    <string name="tcp_client_connect_timeout_desc">Time to wait for a connection attempt. Range: 500–30000 ms</string>
     <string name="tcp_server_listening">TCP Server: Listening</string>
     <string name="tcp_server_listening_on_port">Waiting for connection on port %s</string>
     <string name="tcp_client_connecting">TCP Client: Connecting</string>

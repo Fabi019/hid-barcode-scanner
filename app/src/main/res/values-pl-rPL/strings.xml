@@ -377,10 +377,14 @@
     <string name="tcp_server_port_desc">Port nasłuchu dla przychodzących połączeń TCP</string>
     <string name="tcp_server_max_clients">Maks. klientów</string>
     <string name="tcp_server_max_clients_desc">Maksymalna liczba jednoczesnych klientów TCP (1–10)</string>
+    <string name="tcp_server_client_idle_timeout">Timeout bezczynności klienta (ms)</string>
+    <string name="tcp_server_client_idle_timeout_desc">Rozłącz klienta po tym czasie braku aktywności. 0 = wyłączone</string>
     <string name="tcp_client_host">Host klienta TCP</string>
     <string name="tcp_client_host_desc">Adres IP lub nazwa hosta serwera TCP</string>
     <string name="tcp_client_port">Port klienta TCP</string>
     <string name="tcp_client_port_desc">Port serwera TCP, z którym ma zostać nawiązane połączenie</string>
+    <string name="tcp_client_connect_timeout">Timeout połączenia (ms)</string>
+    <string name="tcp_client_connect_timeout_desc">Czas oczekiwania na nawiązanie połączenia. Zakres: 500–30000 ms</string>
     <string name="tcp_server_listening">Serwer TCP: Nasłuchuje</string>
     <string name="tcp_server_listening_on_port">Oczekiwanie na połączenie na porcie %s</string>
     <string name="tcp_client_connecting">Klient TCP: Łączenie…</string>

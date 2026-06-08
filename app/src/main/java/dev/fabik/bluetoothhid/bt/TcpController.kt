@@ -40,6 +40,7 @@ class TcpController(private val context: Context) {
     private var serverSocket: ServerSocket? = null
     @Volatile private var isServerStarted: Boolean = false
     private var serverJob: Job? = null
+    @Volatile private var serverEpoch = 0
 
     // Client state
     private var clientJob: Job? = null
@@ -67,9 +68,14 @@ class TcpController(private val context: Context) {
         if (serverJob?.isActive == true) return
         clientJob?.cancel()
         clientJob = null
+        runCatching { activeSocket?.close() }
+        activeSocket = null
+        isConnected = false
+        notifyListeningState()
 
         L("Starting TCP server")
         serverJob = controllerScope.launch {
+            val epoch = ++serverEpoch
             var errorCount = 0
             while (isActive) {
                 try {
@@ -77,6 +83,8 @@ class TcpController(private val context: Context) {
                         .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
                     val maxClients = context.getPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS).first()
                         .coerceIn(1, 10)
+                    val idleTimeoutMs = context.getPreference(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS).first()
+                        .coerceIn(0, 300_000)
 
                     if (!isServerStarted || serverSocket == null) {
                         // SO_REUSEADDR lets us rebind immediately after a connection closes
@@ -108,7 +116,7 @@ class TcpController(private val context: Context) {
 
                     // Handle each client in a separate coroutine; server keeps accepting
                     launch(Dispatchers.IO) {
-                        manageClientConnection(socket, clientAddr, maxClients)
+                        manageClientConnection(socket, clientAddr, maxClients, idleTimeoutMs)
                     }
 
                 } catch (e: IOException) {
@@ -126,21 +134,24 @@ class TcpController(private val context: Context) {
                     delay(backoff)
                 }
             }
-            // Cleanup on coroutine cancellation
-            serverSocket?.close()
-            serverSocket = null
-            isServerStarted = false
-            connectedClients.forEach { runCatching { it.close() } }
-            connectedClients.clear()
-            isConnected = false
-            notifyListeningState()
+            // Cleanup on coroutine cancellation — skip if a newer epoch has taken over
+            if (epoch == serverEpoch) {
+                serverSocket?.close()
+                serverSocket = null
+                isServerStarted = false
+                connectedClients.forEach { runCatching { it.close() } }
+                connectedClients.clear()
+                isConnected = false
+                notifyListeningState()
+            }
             L("TCP server loop terminated")
         }
     }
 
-    private fun manageClientConnection(socket: Socket, clientAddr: String, maxClients: Int) {
+    private fun manageClientConnection(socket: Socket, clientAddr: String, maxClients: Int, idleTimeoutMs: Int) {
+        if (idleTimeoutMs > 0) socket.soTimeout = idleTimeoutMs
         val input = socket.getInputStream()
-        L("TCP server: connection active from $clientAddr")
+        L("TCP server: connection active from $clientAddr (idle timeout: ${if (idleTimeoutMs > 0) "${idleTimeoutMs}ms" else "disabled"})")
         try {
             val buffer = ByteArray(1024)
             while (true) {
@@ -148,6 +159,8 @@ class TcpController(private val context: Context) {
                 if (bytes == -1) break
                 L("TCP server received from $clientAddr: ${String(buffer, 0, bytes)}")
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            L("TCP server: $clientAddr idle timeout after ${idleTimeoutMs}ms — disconnecting")
         } catch (e: IOException) {
             LE("TCP server: connection error from $clientAddr", e)
         } finally {
@@ -168,15 +181,20 @@ class TcpController(private val context: Context) {
         isServerStarted = false
         connectedClients.forEach { runCatching { it.close() } }
         connectedClients.clear()
+        isConnected = false
+        notifyListeningState()
 
         L("Starting TCP client")
         clientJob = controllerScope.launch {
             var errorCount = 0
             while (isActive) {
+                var socket: Socket? = null
                 try {
                     val host = context.getPreference(PreferenceStore.TCP_CLIENT_HOST).first()
                     val port = context.getPreference(PreferenceStore.TCP_CLIENT_PORT).first()
                         .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+                    val connectTimeoutMs = context.getPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS).first()
+                        .coerceIn(500, 30_000)
 
                     if (host.isBlank()) {
                         L("TCP client: no host configured, waiting...")
@@ -188,10 +206,11 @@ class TcpController(private val context: Context) {
                     L("TCP client connecting to $host:$port")
                     notifyListeningState()
 
-                    val socket = Socket(host, port)
+                    socket = Socket()
+                    activeSocket = socket  // pre-assign so stop() can close it during connect
+                    socket.connect(java.net.InetSocketAddress(host, port), connectTimeoutMs)
                     L("TCP client connected to $host:$port")
 
-                    activeSocket = socket
                     isConnected = true
                     errorCount = 0
                     notifyListeningState()
@@ -207,13 +226,40 @@ class TcpController(private val context: Context) {
                     delay(backoff)
                 } finally {
                     isConnected = false
-                    runCatching { activeSocket?.close() }
-                    activeSocket = null
+                    // Only close/null if this iteration still owns activeSocket — prevents
+                    // clobbering a new socket assigned by restartClient() during teardown
+                    if (activeSocket === socket) {
+                        runCatching { socket?.close() }
+                        activeSocket = null
+                    }
                     notifyListeningState()
                 }
             }
             L("TCP client loop terminated")
         }
+    }
+
+    fun restartServer() {
+        serverJob?.cancel()
+        serverJob = null
+        runCatching { serverSocket?.close() }
+        serverSocket = null
+        isServerStarted = false
+        connectedClients.forEach { runCatching { it.close() } }
+        connectedClients.clear()
+        isConnected = false
+        notifyListeningState()
+        startServer()
+    }
+
+    fun restartClient() {
+        clientJob?.cancel()
+        clientJob = null
+        runCatching { activeSocket?.close() }
+        activeSocket = null
+        isConnected = false
+        notifyListeningState()
+        startClient()
     }
 
     fun stop() {
@@ -263,7 +309,9 @@ class TcpController(private val context: Context) {
             val data = processedString.toByteArray(Charsets.UTF_8)
             connectedClients.forEach { socket ->
                 runCatching {
-                    socket.getOutputStream().write(data)
+                    val out = socket.getOutputStream()
+                    out.write(data)
+                    out.flush()
                 }.onFailure { e ->
                     LE("TCP broadcast send failed to ${socket.inetAddress.hostAddress ?: socket.inetAddress}", e)
                 }
@@ -278,7 +326,9 @@ class TcpController(private val context: Context) {
             return
         }
         runCatching {
-            socket.getOutputStream().write(processedString.toByteArray(Charsets.UTF_8))
+            val out = socket.getOutputStream()
+            out.write(processedString.toByteArray(Charsets.UTF_8))
+            out.flush()
             L("TCP sent: $processedString")
         }.onFailure { e ->
             LE("TCP send failed", e)

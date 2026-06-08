@@ -70,6 +70,12 @@ class BluetoothController(var context: Context) {
 
     private var autoConnectEnabled: Boolean = false
     private var currentConnectionMode: ConnectionMode = ConnectionMode.HID
+    private var currentTcpServerPort: String = ""
+    private var currentTcpServerMaxClients: Int = -1
+    private var currentTcpClientHost: String = ""
+    private var currentTcpClientPort: String = ""
+    private var currentIdleTimeoutMs: Int = -1
+    private var currentConnectTimeoutMs: Int = -1
     private lateinit var preferences: Map<PreferenceStore.Preference<*>, *>
 
     var keyboardSender: KeyboardSender? = null
@@ -94,6 +100,9 @@ class BluetoothController(var context: Context) {
 
     private var _isTCPConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isTCPConnectedFlow = _isTCPConnected.asStateFlow()
+
+    private val isTcpMode get() =
+        currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var preferenceObserverJob: Job? = null
@@ -239,9 +248,21 @@ class BluetoothController(var context: Context) {
                 PreferenceStore.KEYBOARD_LAYOUT,
                 PreferenceStore.TEMPLATE_TEXT,
                 PreferenceStore.EXPAND_CODE,
-                PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS
+                PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS,
+                PreferenceStore.TCP_SERVER_PORT,
+                PreferenceStore.TCP_SERVER_MAX_CLIENTS,
+                PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS,
+                PreferenceStore.TCP_CLIENT_HOST,
+                PreferenceStore.TCP_CLIENT_PORT,
+                PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS
             ).distinctUntilChanged().debounce(200).collect {
                 val mode = PreferenceStore.CONNECTION_MODE.extractEnum(it)
+                val tcpServerPort = PreferenceStore.TCP_SERVER_PORT.extract(it)
+                val tcpServerMaxClients = PreferenceStore.TCP_SERVER_MAX_CLIENTS.extract(it)
+                val tcpClientHost = PreferenceStore.TCP_CLIENT_HOST.extract(it)
+                val tcpClientPort = PreferenceStore.TCP_CLIENT_PORT.extract(it)
+                val idleTimeoutMs = PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS.extract(it)
+                val connectTimeoutMs = PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS.extract(it)
                 if (currentConnectionMode != mode) {
                     when (mode) {
                         ConnectionMode.RFCOMM -> {
@@ -270,7 +291,24 @@ class BluetoothController(var context: Context) {
                         }
                     }
                     currentConnectionMode = mode
+                } else if (currentConnectionMode == ConnectionMode.TCP_SERVER
+                    && (tcpServerPort != currentTcpServerPort
+                        || tcpServerMaxClients != currentTcpServerMaxClients
+                        || idleTimeoutMs != currentIdleTimeoutMs)) {
+                    Log.d(TAG, "TCP Server settings changed — restarting")
+                    tcpController.restartServer()
+                } else if (currentConnectionMode == ConnectionMode.TCP_CLIENT
+                    && (tcpClientHost != currentTcpClientHost || tcpClientPort != currentTcpClientPort
+                        || connectTimeoutMs != currentConnectTimeoutMs)) {
+                    Log.d(TAG, "TCP Client settings changed — restarting")
+                    tcpController.restartClient()
                 }
+                currentTcpServerPort = tcpServerPort
+                currentTcpServerMaxClients = tcpServerMaxClients
+                currentTcpClientHost = tcpClientHost
+                currentTcpClientPort = tcpClientPort
+                currentIdleTimeoutMs = idleTimeoutMs
+                currentConnectTimeoutMs = connectTimeoutMs
                 autoConnectEnabled = PreferenceStore.AUTO_CONNECT.extract(it)
                 rfcommController.setAutoConnectEnabled(autoConnectEnabled)
 
@@ -349,6 +387,13 @@ class BluetoothController(var context: Context) {
         // Initialize cached connection mode
         val modeOrdinal = context.getPreference(PreferenceStore.CONNECTION_MODE).first()
         currentConnectionMode = ConnectionMode.fromIndex(modeOrdinal)
+        // Initialize TCP tracking fields so the first observer emit doesn't trigger spurious restarts
+        currentTcpServerPort = context.getPreference(PreferenceStore.TCP_SERVER_PORT).first()
+        currentTcpServerMaxClients = context.getPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS).first()
+        currentTcpClientHost = context.getPreference(PreferenceStore.TCP_CLIENT_HOST).first()
+        currentTcpClientPort = context.getPreference(PreferenceStore.TCP_CLIENT_PORT).first()
+        currentIdleTimeoutMs = context.getPreference(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS).first()
+        currentConnectTimeoutMs = context.getPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS).first()
         return register(autoConnect)
     }
 
@@ -450,9 +495,7 @@ class BluetoothController(var context: Context) {
         Log.d(TAG, "connecting to $device")
 
         // TCP modes manage their own connections — no device selection needed
-        if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
-            return
-        }
+        if (isTcpMode) return
 
         // Check connection mode first using cached value
         if (currentConnectionMode == ConnectionMode.RFCOMM) {
@@ -558,7 +601,7 @@ class BluetoothController(var context: Context) {
         }
 
         // In TCP modes, stop the controller
-        if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
+        if (isTcpMode) {
             tcpController.stop()
             return true
         }
@@ -603,8 +646,8 @@ class BluetoothController(var context: Context) {
                 PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
 
             // Check connection mode - RFCOMM, TCP, or HID using cached value
-            if (currentConnectionMode == ConnectionMode.RFCOMM) {
-                // RFCOMM mode - process template for text output
+            if (currentConnectionMode == ConnectionMode.RFCOMM || isTcpMode) {
+                // RFCOMM and TCP share the same raw-text template path
                 val processedString = TemplateProcessor.processTemplate(
                     string,
                     template,
@@ -617,22 +660,8 @@ class BluetoothController(var context: Context) {
                     imageName,
                     regexGroups
                 )
-                rfcommController.sendProcessedData(processedString)
-            } else if (currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT) {
-                // TCP mode - same raw text output as RFCOMM
-                val processedString = TemplateProcessor.processTemplate(
-                    string,
-                    template,
-                    TemplateProcessor.TemplateMode.RFCOMM,
-                    from,
-                    scanTimestamp,
-                    scannerID,
-                    barcodeType,
-                    preserveUnsupported,
-                    imageName,
-                    regexGroups
-                )
-                tcpController.sendProcessedData(processedString)
+                if (currentConnectionMode == ConnectionMode.RFCOMM) rfcommController.sendProcessedData(processedString)
+                else tcpController.sendProcessedData(processedString)
             } else {
                 // HID mode - process template for HID conversion.
                 // expandCode controls whether HID template tokens inside the barcode value (e.g.

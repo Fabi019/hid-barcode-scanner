@@ -232,8 +232,10 @@ open class PreferenceStore {
         val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
         val TCP_SERVER_PORT = stringPreferencesKey("tcp_server_port") defaultsTo "51000"
         val TCP_SERVER_MAX_CLIENTS = intPreferencesKey("tcp_server_max_clients") defaultsTo 5
+        val TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS = intPreferencesKey("tcp_server_client_idle_timeout_ms") defaultsTo 0
         val TCP_CLIENT_HOST = stringPreferencesKey("tcp_client_host") defaultsTo ""
         val TCP_CLIENT_PORT = stringPreferencesKey("tcp_client_port") defaultsTo "51000"
+        val TCP_CLIENT_CONNECT_TIMEOUT_MS = intPreferencesKey("tcp_client_connect_timeout_ms") defaultsTo 3000
         val QOS_SERVICE_TYPE =
             intPreferencesKey("qos_service_type") enumDefaultsTo QosServiceType::fromIndex
         val QOS_TOKEN_RATE = intPreferencesKey("qos_token_rate") defaultsTo 800

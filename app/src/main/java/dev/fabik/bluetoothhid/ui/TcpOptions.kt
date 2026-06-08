@@ -25,12 +25,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -40,7 +43,6 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.setPreference
-import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +65,7 @@ fun TcpServerOptionsModal() {
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 fun TcpServerOptionsContent() {
     val context = LocalContext.current
@@ -86,10 +89,10 @@ fun TcpServerOptionsContent() {
         LaunchedEffect(portPref) {
             if (portState.text != portPref) portState.setTextAndPlaceCursorAtEnd(portPref)
         }
-        DisposableEffect(Unit) {
-            onDispose {
-                val p = portState.text.toString().toIntOrNull()?.coerceIn(1, 65535)
-                if (p != null) runBlocking { context.setPreference(PreferenceStore.TCP_SERVER_PORT, p.toString()) }
+        LaunchedEffect(portState) {
+            snapshotFlow { portState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                val p = text.toIntOrNull()?.coerceIn(1, 65535)
+                if (p != null) context.setPreference(PreferenceStore.TCP_SERVER_PORT, p.toString())
             }
         }
         OutlinedTextField(
@@ -109,10 +112,10 @@ fun TcpServerOptionsContent() {
         LaunchedEffect(maxPref) {
             if (maxState.text.toString().toIntOrNull() != maxPref) maxState.setTextAndPlaceCursorAtEnd(maxPref.toString())
         }
-        DisposableEffect(Unit) {
-            onDispose {
-                val v = maxState.text.toString().toIntOrNull()?.coerceIn(1, 10)
-                if (v != null) runBlocking { context.setPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS, v) }
+        LaunchedEffect(maxState) {
+            snapshotFlow { maxState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                val v = text.toIntOrNull()?.coerceIn(1, 10)
+                if (v != null) context.setPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS, v)
             }
         }
         OutlinedTextField(
@@ -120,6 +123,29 @@ fun TcpServerOptionsContent() {
             label = { Text(stringResource(R.string.tcp_server_max_clients)) },
             inputTransformation = InputTransformation.byValue { _, proposed ->
                 if (proposed.isEmpty() || proposed.toString().toIntOrNull() != null) proposed else maxState.text
+            },
+            keyboardOptions = numberKeyboard,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            modifier = Modifier.fillMaxWidth().padding(2.dp)
+        )
+
+        // Client idle timeout
+        val idlePref by context.getPreferenceStateBlocking(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS)
+        val idleState = rememberTextFieldState(idlePref.toString())
+        LaunchedEffect(idlePref) {
+            if (idleState.text.toString().toIntOrNull() != idlePref) idleState.setTextAndPlaceCursorAtEnd(idlePref.toString())
+        }
+        LaunchedEffect(idleState) {
+            snapshotFlow { idleState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                val v = text.toIntOrNull()?.coerceIn(0, 300_000)
+                if (v != null) context.setPreference(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS, v)
+            }
+        }
+        OutlinedTextField(
+            state = idleState,
+            label = { Text(stringResource(R.string.tcp_server_client_idle_timeout)) },
+            inputTransformation = InputTransformation.byValue { _, proposed ->
+                if (proposed.isEmpty() || proposed.toString().toIntOrNull() != null) proposed else idleState.text
             },
             keyboardOptions = numberKeyboard,
             lineLimits = TextFieldLineLimits.SingleLine,
@@ -151,6 +177,7 @@ fun TcpClientOptionsModal() {
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
 fun TcpClientOptionsContent() {
     val context = LocalContext.current
@@ -174,9 +201,9 @@ fun TcpClientOptionsContent() {
         LaunchedEffect(hostPref) {
             if (hostState.text != hostPref) hostState.setTextAndPlaceCursorAtEnd(hostPref)
         }
-        DisposableEffect(Unit) {
-            onDispose {
-                runBlocking { context.setPreference(PreferenceStore.TCP_CLIENT_HOST, hostState.text.toString()) }
+        LaunchedEffect(hostState) {
+            snapshotFlow { hostState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                context.setPreference(PreferenceStore.TCP_CLIENT_HOST, text)
             }
         }
         OutlinedTextField(
@@ -192,10 +219,10 @@ fun TcpClientOptionsContent() {
         LaunchedEffect(portPref) {
             if (portState.text != portPref) portState.setTextAndPlaceCursorAtEnd(portPref)
         }
-        DisposableEffect(Unit) {
-            onDispose {
-                val p = portState.text.toString().toIntOrNull()?.coerceIn(1, 65535)
-                if (p != null) runBlocking { context.setPreference(PreferenceStore.TCP_CLIENT_PORT, p.toString()) }
+        LaunchedEffect(portState) {
+            snapshotFlow { portState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                val p = text.toIntOrNull()?.coerceIn(1, 65535)
+                if (p != null) context.setPreference(PreferenceStore.TCP_CLIENT_PORT, p.toString())
             }
         }
         OutlinedTextField(
@@ -203,6 +230,30 @@ fun TcpClientOptionsContent() {
             label = { Text(stringResource(R.string.tcp_client_port)) },
             inputTransformation = InputTransformation.byValue { _, proposed ->
                 if (proposed.isEmpty() || proposed.toString().toIntOrNull() != null) proposed else portState.text
+            },
+            keyboardOptions = numberKeyboard,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            modifier = Modifier.fillMaxWidth().padding(2.dp)
+        )
+
+        // Connect timeout
+        val connectTimeoutPref by context.getPreferenceStateBlocking(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS)
+        val connectTimeoutState = rememberTextFieldState(connectTimeoutPref.toString())
+        LaunchedEffect(connectTimeoutPref) {
+            if (connectTimeoutState.text.toString().toIntOrNull() != connectTimeoutPref)
+                connectTimeoutState.setTextAndPlaceCursorAtEnd(connectTimeoutPref.toString())
+        }
+        LaunchedEffect(connectTimeoutState) {
+            snapshotFlow { connectTimeoutState.text.toString() }.debounce(600).distinctUntilChanged().collect { text ->
+                val v = text.toIntOrNull()?.coerceIn(500, 30_000)
+                if (v != null) context.setPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS, v)
+            }
+        }
+        OutlinedTextField(
+            state = connectTimeoutState,
+            label = { Text(stringResource(R.string.tcp_client_connect_timeout)) },
+            inputTransformation = InputTransformation.byValue { _, proposed ->
+                if (proposed.isEmpty() || proposed.toString().toIntOrNull() != null) proposed else connectTimeoutState.text
             },
             keyboardOptions = numberKeyboard,
             lineLimits = TextFieldLineLimits.SingleLine,
