@@ -309,7 +309,7 @@ open class PreferenceStore {
             intPreferencesKey("save_scan_filetype") enumDefaultsTo ScanImageFormat::fromIndex
 
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode") defaultsTo BuildConfig.DEBUG
-        val SHOW_TCP_STATUS = booleanPreferencesKey("show_tcp_status") defaultsTo true
+        val SHOW_TCP_STATUS = booleanPreferencesKey("show_tcp_status") defaultsTo false
         val OCR_COMPAT = booleanPreferencesKey("ocr_compat") defaultsTo false
 
         // Utility preferences

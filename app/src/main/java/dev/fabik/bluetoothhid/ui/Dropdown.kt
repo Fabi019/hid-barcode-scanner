@@ -258,7 +258,7 @@ fun SettingsDropdown() {
                 ConnectionMode.HID.ordinal -> {
                     QosOptionsModal()
                 }
-                ConnectionMode.TCP_SERVER.ordinal -> {
+                ConnectionMode.TCP_SERVER.ordinal, ConnectionMode.TCP_CLIENT.ordinal -> {
                     var showTcpStatus by rememberPreference(PreferenceStore.SHOW_TCP_STATUS)
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.show_tcp_status)) },
@@ -266,17 +266,8 @@ fun SettingsDropdown() {
                         trailingIcon = { Checkbox(checked = showTcpStatus, onCheckedChange = null) },
                         onClick = { showTcpStatus = !showTcpStatus }
                     )
-                    TcpServerOptionsModal()
-                }
-                ConnectionMode.TCP_CLIENT.ordinal -> {
-                    var showTcpStatus by rememberPreference(PreferenceStore.SHOW_TCP_STATUS)
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.show_tcp_status)) },
-                        leadingIcon = { Icon(Icons.Default.Lan, null) },
-                        trailingIcon = { Checkbox(checked = showTcpStatus, onCheckedChange = null) },
-                        onClick = { showTcpStatus = !showTcpStatus }
-                    )
-                    TcpClientOptionsModal()
+                    if (connectionMode == ConnectionMode.TCP_SERVER.ordinal) TcpServerOptionsModal()
+                    else TcpClientOptionsModal()
                 }
             }
 

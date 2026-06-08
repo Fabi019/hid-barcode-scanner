@@ -14,6 +14,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
@@ -41,9 +43,12 @@ class TcpController(private val context: Context) {
     @Volatile private var isServerStarted: Boolean = false
     private var serverJob: Job? = null
     @Volatile private var serverEpoch = 0
+    @Volatile private var serverPort: Int? = null
+    @Volatile private var serverLocalAddresses: List<String> = emptyList()
 
     // Client state
     private var clientJob: Job? = null
+    @Volatile private var clientTarget: String? = null
 
     private var listeningStateCallback: ((Boolean) -> Unit)? = null
     private var connectedStateCallback: ((Boolean) -> Unit)? = null
@@ -67,15 +72,40 @@ class TcpController(private val context: Context) {
     private fun notifyListeningState() {
         listeningStateCallback?.invoke(isListening())
         connectedStateCallback?.invoke(isConnected)
-        val addrs = when {
-            connectedClients.isNotEmpty() -> connectedClients.mapNotNull { it.inetAddress?.hostAddress }
-            isConnected && activeSocket != null -> activeSocket!!.let {
-                listOf("${it.inetAddress?.hostAddress ?: it.inetAddress}:${it.port}")
+        val addrs = buildList {
+            if (isServerStarted) {
+                // Show server's own reachable IPs so clients know where to connect
+                val port = serverPort
+                if (serverLocalAddresses.isNotEmpty()) {
+                    serverLocalAddresses.forEach { ip -> add("$ip:$port") }
+                } else {
+                    add(":$port")
+                }
+                // Append connected client IPs below
+                addAll(connectedClients.mapNotNull { it.inetAddress?.hostAddress })
+            } else if (clientJob?.isActive == true) {
+                if (isConnected && activeSocket != null) {
+                    activeSocket!!.run {
+                        add("${inetAddress?.hostAddress ?: inetAddress}:$port")
+                    }
+                } else {
+                    clientTarget?.let { add(it) }
+                }
             }
-            else -> emptyList()
         }
         connectedAddressesCallback?.invoke(addrs)
     }
+
+    private fun localIpAddresses(): List<String> = runCatching {
+        NetworkInterface.getNetworkInterfaces()
+            ?.asSequence()
+            ?.filter { it.isUp && !it.isLoopback }
+            ?.flatMap { it.inetAddresses.asSequence() }
+            ?.filterIsInstance<Inet4Address>()
+            ?.filter { !it.isLoopbackAddress }
+            ?.mapNotNull { it.hostAddress }
+            ?.toList()
+    }.getOrNull() ?: emptyList()
 
     fun startServer() {
         if (serverJob?.isActive == true) return
@@ -84,6 +114,7 @@ class TcpController(private val context: Context) {
         runCatching { activeSocket?.close() }
         activeSocket = null
         isConnected = false
+        clientTarget = null
         notifyListeningState()
 
         L("Starting TCP server")
@@ -93,7 +124,7 @@ class TcpController(private val context: Context) {
             while (isActive) {
                 try {
                     val port = context.getPreference(PreferenceStore.TCP_SERVER_PORT).first()
-                        .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+                        .toIntOrNull()?.coerceIn(1, 65535) ?: 51000
                     val maxClients = context.getPreference(PreferenceStore.TCP_SERVER_MAX_CLIENTS).first()
                         .coerceIn(1, 10)
                     val idleTimeoutMs = context.getPreference(PreferenceStore.TCP_SERVER_CLIENT_IDLE_TIMEOUT_MS).first()
@@ -107,6 +138,8 @@ class TcpController(private val context: Context) {
                             bind(java.net.InetSocketAddress(port))
                         }
                         isServerStarted = true
+                        serverPort = port
+                        serverLocalAddresses = localIpAddresses()
                         L("TCP server listening on port $port (max $maxClients clients)")
                         notifyListeningState()
                         errorCount = 0
@@ -192,6 +225,8 @@ class TcpController(private val context: Context) {
         serverSocket?.close()
         serverSocket = null
         isServerStarted = false
+        serverPort = null
+        serverLocalAddresses = emptyList()
         connectedClients.forEach { runCatching { it.close() } }
         connectedClients.clear()
         isConnected = false
@@ -205,17 +240,19 @@ class TcpController(private val context: Context) {
                 try {
                     val host = context.getPreference(PreferenceStore.TCP_CLIENT_HOST).first()
                     val port = context.getPreference(PreferenceStore.TCP_CLIENT_PORT).first()
-                        .toIntOrNull()?.coerceIn(1, 65535) ?: 9100
+                        .toIntOrNull()?.coerceIn(1, 65535) ?: 51000
                     val connectTimeoutMs = context.getPreference(PreferenceStore.TCP_CLIENT_CONNECT_TIMEOUT_MS).first()
                         .coerceIn(500, 30_000)
 
                     if (host.isBlank()) {
                         L("TCP client: no host configured, waiting...")
+                        clientTarget = null
                         notifyListeningState()
                         delay(5000)
                         continue
                     }
 
+                    clientTarget = "$host:$port"
                     L("TCP client connecting to $host:$port")
                     notifyListeningState()
 
@@ -293,6 +330,9 @@ class TcpController(private val context: Context) {
         runCatching { serverSocket?.close() }
         serverSocket = null
         isServerStarted = false
+        serverPort = null
+        serverLocalAddresses = emptyList()
+        clientTarget = null
 
         notifyListeningState()
         L("TCP controller stopped")

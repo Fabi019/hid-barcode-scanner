@@ -80,8 +80,16 @@ fun NavGraph() {
     val currentDevice by controller?.currentDevice?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(null) }
 
-    // Navigate to the correct root screen whenever connection mode changes
+    // Navigate to the correct root screen on runtime mode changes.
+    // Skip the first invocation — NavHost already starts at the right destination
+    // (resolved synchronously via getPreferenceStateBlocking), and the shortcut
+    // LaunchedEffect handles intent-based deep links independently.
+    var modeNavigationReady by remember { mutableStateOf(false) }
     LaunchedEffect(isTcpMode) {
+        if (!modeNavigationReady) {
+            modeNavigationReady = true
+            return@LaunchedEffect
+        }
         if (isTcpMode) {
             navController.navigate(Routes.Main) {
                 popUpTo(Routes.Devices) { inclusive = true }
