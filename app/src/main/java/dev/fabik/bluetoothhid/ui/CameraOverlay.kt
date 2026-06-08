@@ -17,6 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -36,7 +39,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fabik.bluetoothhid.LocalController
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
+import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.OverlayType
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ScanAreaData
@@ -59,6 +65,11 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     // val showPossible by rememberPreference(PreferenceStore.SHOW_POSSIBLE)
     // val highlightType by rememberPreferenceNull(PreferenceStore.HIGHLIGHT_TYPE)
     val developerMode by context.getPreferenceState(PreferenceStore.DEVELOPER_MODE)
+    val showTcpStatus by context.getPreferenceState(PreferenceStore.SHOW_TCP_STATUS)
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val controller = LocalController.current
+    val tcpAddresses by controller?.tcpAddressesFlow?.collectAsStateWithLifecycle(emptyList())
+        ?: remember { mutableStateOf(emptyList()) }
 
     UpdateScanAreas(viewModel, restrictArea, overlayType)
 
@@ -147,6 +158,11 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
     // Draw debug overlay
     if (developerMode == true) {
         DebugOverlay(viewModel)
+    }
+
+    // Draw TCP connection status overlay
+    if (showTcpStatus == true && tcpAddresses.isNotEmpty()) {
+        TcpStatusOverlay(tcpAddresses, connectionMode)
     }
 }
 
@@ -408,6 +424,28 @@ fun DebugOverlay(viewModel: CameraViewModel) {
                     color = Color.Red.toArgb()
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun TcpStatusOverlay(addresses: List<String>, connectionMode: Int?) {
+    val isTcpServer = connectionMode == ConnectionMode.TCP_SERVER.ordinal
+    val label = if (isTcpServer) {
+        stringResource(R.string.tcp_status_overlay_clients)
+    } else {
+        stringResource(R.string.tcp_status_overlay_server)
+    }
+
+    Canvas(Modifier.fillMaxSize()) {
+        val canvas = drawContext.canvas.nativeCanvas
+        val paint = Paint().apply {
+            textSize = 50f
+            color = Color.White.toArgb()
+        }
+        canvas.drawText(label, 10f, 60f, paint)
+        addresses.forEachIndexed { index, addr ->
+            canvas.drawText(addr, 10f, 60f + (index + 1) * 50f, paint)
         }
     }
 }

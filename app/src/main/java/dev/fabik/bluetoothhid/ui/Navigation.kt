@@ -3,6 +3,7 @@ package dev.fabik.bluetoothhid.ui
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -25,7 +26,11 @@ import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
+import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -67,17 +72,38 @@ fun NavGraph() {
         }
     }
 
+    val context = LocalContext.current
+    val connectionMode by context.getPreferenceStateBlocking(PreferenceStore.CONNECTION_MODE)
+    val isTcpMode = connectionMode == ConnectionMode.TCP_SERVER.ordinal
+            || connectionMode == ConnectionMode.TCP_CLIENT.ordinal
+
     val currentDevice by controller?.currentDevice?.collectAsStateWithLifecycle()
         ?: remember { mutableStateOf(null) }
+
+    // Navigate to the correct root screen whenever connection mode changes
+    LaunchedEffect(isTcpMode) {
+        if (isTcpMode) {
+            navController.navigate(Routes.Main) {
+                popUpTo(Routes.Devices) { inclusive = true }
+                launchSingleTop = true
+            }
+        } else {
+            navController.navigate(Routes.Devices) {
+                popUpTo(Routes.Main) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     CompositionLocalProvider(LocalNavigation provides navController) {
         NavHost(
             navController,
-            Routes.Devices
+            if (isTcpMode) Routes.Main else Routes.Devices
         ) {
             composable(Routes.Devices) {
                 LaunchedEffect(Unit) {
-                    controller?.disconnect()
+                    // Don't disconnect in TCP modes — TCP controller manages its own lifecycle
+                    if (!isTcpMode) controller?.disconnect()
                 }
 
                 Devices {
@@ -123,9 +149,25 @@ fun NavGraph() {
                     sendQueue.trySend(result)
                 }
 
+                // In TCP modes back exits the app instead of returning to Devices
+                if (isTcpMode) {
+                    BackHandler {
+                        if (canExit) {
+                            activity?.finishAfterTransition()
+                        } else {
+                            canExit = true
+                            Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                delay(2000)
+                                canExit = false
+                            }
+                        }
+                    }
+                }
+
                 DisposableEffect(Unit) {
                     onDispose {
-                        controller?.disconnect()
+                        if (!isTcpMode) controller?.disconnect()
                     }
                 }
             }

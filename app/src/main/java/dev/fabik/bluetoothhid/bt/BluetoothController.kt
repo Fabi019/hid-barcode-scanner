@@ -101,6 +101,9 @@ class BluetoothController(var context: Context) {
     private var _isTCPConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isTCPConnectedFlow = _isTCPConnected.asStateFlow()
 
+    private var _tcpAddresses: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
+    val tcpAddressesFlow = _tcpAddresses.asStateFlow()
+
     private val isTcpMode get() =
         currentConnectionMode == ConnectionMode.TCP_SERVER || currentConnectionMode == ConnectionMode.TCP_CLIENT
 
@@ -421,6 +424,11 @@ class BluetoothController(var context: Context) {
         // Setup TCP connected state callback
         tcpController.setConnectedStateCallback { connected ->
             _isTCPConnected.update { connected }
+        }
+
+        // Setup TCP addresses callback
+        tcpController.setConnectedAddressesCallback { addresses ->
+            _tcpAddresses.update { addresses }
         }
 
         // Auto-start TCP modes since they don't require Bluetooth device selection

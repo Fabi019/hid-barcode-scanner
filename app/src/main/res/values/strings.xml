@@ -386,6 +386,9 @@
     <string name="tcp_server_listening_on_port">Waiting for connection on port %s</string>
     <string name="tcp_client_connecting">TCP Client: Connecting</string>
     <string name="tcp_client_connecting_to">Connecting to %1$s:%2$s</string>
+    <string name="show_tcp_status">Show connected TCP devices</string>
+    <string name="tcp_status_overlay_clients">Clients</string>
+    <string name="tcp_status_overlay_server">Server</string>
     <string name="insecure_rfcomm">Insecure RFCOMM</string>
     <string name="insecure_rfcomm_desc">This option enables insecure RFCOMM connections. Only use for legacy devices that don\'t support secure connections using Bluetooth Serial Port Profile.</string>
     <string name="preserve_unsupported_placeholders">Preserve unsupported placeholders</string>

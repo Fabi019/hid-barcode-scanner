@@ -47,6 +47,7 @@ class TcpController(private val context: Context) {
 
     private var listeningStateCallback: ((Boolean) -> Unit)? = null
     private var connectedStateCallback: ((Boolean) -> Unit)? = null
+    private var connectedAddressesCallback: ((List<String>) -> Unit)? = null
 
     fun setListeningStateCallback(callback: (Boolean) -> Unit) {
         listeningStateCallback = callback
@@ -56,12 +57,24 @@ class TcpController(private val context: Context) {
         connectedStateCallback = callback
     }
 
+    fun setConnectedAddressesCallback(callback: (List<String>) -> Unit) {
+        connectedAddressesCallback = callback
+    }
+
     // "Listening" = TCP loop is running but no active connection yet
     fun isListening(): Boolean = !isConnected && (serverJob?.isActive == true || clientJob?.isActive == true)
 
     private fun notifyListeningState() {
         listeningStateCallback?.invoke(isListening())
         connectedStateCallback?.invoke(isConnected)
+        val addrs = when {
+            connectedClients.isNotEmpty() -> connectedClients.mapNotNull { it.inetAddress?.hostAddress }
+            isConnected && activeSocket != null -> activeSocket!!.let {
+                listOf("${it.inetAddress?.hostAddress ?: it.inetAddress}:${it.port}")
+            }
+            else -> emptyList()
+        }
+        connectedAddressesCallback?.invoke(addrs)
     }
 
     fun startServer() {

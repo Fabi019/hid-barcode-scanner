@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
@@ -258,9 +259,23 @@ fun SettingsDropdown() {
                     QosOptionsModal()
                 }
                 ConnectionMode.TCP_SERVER.ordinal -> {
+                    var showTcpStatus by rememberPreference(PreferenceStore.SHOW_TCP_STATUS)
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.show_tcp_status)) },
+                        leadingIcon = { Icon(Icons.Default.Lan, null) },
+                        trailingIcon = { Checkbox(checked = showTcpStatus, onCheckedChange = null) },
+                        onClick = { showTcpStatus = !showTcpStatus }
+                    )
                     TcpServerOptionsModal()
                 }
                 ConnectionMode.TCP_CLIENT.ordinal -> {
+                    var showTcpStatus by rememberPreference(PreferenceStore.SHOW_TCP_STATUS)
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.show_tcp_status)) },
+                        leadingIcon = { Icon(Icons.Default.Lan, null) },
+                        trailingIcon = { Checkbox(checked = showTcpStatus, onCheckedChange = null) },
+                        onClick = { showTcpStatus = !showTcpStatus }
+                    )
                     TcpClientOptionsModal()
                 }
             }
