@@ -361,6 +361,7 @@
     <string-array name="connection_mode_values">
         <item>HID键盘</item>
         <item>RFCOMM (串行端口)</item>
+        <item>仅外部插件</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">导出 %1$d 项</item>

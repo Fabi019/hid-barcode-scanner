@@ -49,7 +49,7 @@ val LocalDataStore = staticCompositionLocalOf<DataStore<Preferences>> {
 // Enums for type-safe preference values
 // Note: ordinal is used as index - no need for explicit val index
 enum class ConnectionMode {
-    HID, RFCOMM;
+    HID, RFCOMM, EXTERNAL;
     companion object {
         fun fromIndex(index: Int) = entries.getOrNull(index) ?: HID
     }
@@ -213,6 +213,15 @@ open class PreferenceStore {
         // Connection
         val AUTO_CONNECT = booleanPreferencesKey("auto_connect") defaultsTo false
         val CONNECTION_MODE = intPreferencesKey("connection_mode").enumDefaultsTo(ConnectionMode::fromIndex)
+
+        // Package names of external transport extensions that should receive scan broadcasts.
+        // Discovered via ExternalProtocol.discover().
+        val ENABLED_EXTERNAL_PLUGINS =
+            stringSetPreferencesKey("enabled_external_plugins") defaultsTo setOf()
+
+        // Parallel external output: when true, scans are ALSO forwarded to enabled plugins
+        // while in HID/RFCOMM mode (in EXTERNAL mode external output is implied/always on).
+        val ENABLE_EXTERNAL_OUTPUT = booleanPreferencesKey("enable_external_output") defaultsTo false
         //val SHOW_UNNAMED = booleanPreferencesKey("show_unnamed") defaultsTo false // Removed
         val SEND_WITH_VOLUME = booleanPreferencesKey("send_vol_key") defaultsTo false
         val VOLUME_ACTION_UP =

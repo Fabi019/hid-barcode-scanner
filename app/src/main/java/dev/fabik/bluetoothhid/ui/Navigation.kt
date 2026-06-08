@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -25,7 +26,10 @@ import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
+import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
+import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -52,6 +56,12 @@ fun NavGraph() {
     var canExit by remember { mutableStateOf(false) }
     val exitString = stringResource(R.string.exit_confirm)
 
+    // External mode has no Bluetooth device, so it starts directly on the scanner and the
+    // controller manages its own lifecycle (no disconnect on navigation).
+    val context = LocalContext.current
+    val connectionMode by context.getPreferenceStateBlocking(PreferenceStore.CONNECTION_MODE)
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+
     // Handles shortcut to scanner/history
     val startDestination = remember {
         when (activity?.intent?.dataString) {
@@ -73,11 +83,12 @@ fun NavGraph() {
     CompositionLocalProvider(LocalNavigation provides navController) {
         NavHost(
             navController,
-            Routes.Devices
+            if (isExternal) Routes.Main else Routes.Devices
         ) {
             composable(Routes.Devices) {
                 LaunchedEffect(Unit) {
-                    controller?.disconnect()
+                    // Don't disconnect in External mode — it manages its own lifecycle
+                    if (!isExternal) controller?.disconnect()
                 }
 
                 Devices {
@@ -119,13 +130,29 @@ fun NavGraph() {
                     }
                 }
 
+                // In External mode back exits the app instead of returning to Devices
+                if (isExternal) {
+                    BackHandler {
+                        if (canExit) {
+                            activity?.finishAfterTransition()
+                        } else {
+                            canExit = true
+                            Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                delay(2000)
+                                canExit = false
+                            }
+                        }
+                    }
+                }
+
                 Scanner(currentDevice) { result: BarcodeResult ->
                     sendQueue.trySend(result)
                 }
 
                 DisposableEffect(Unit) {
                     onDispose {
-                        controller?.disconnect()
+                        if (!isExternal) controller?.disconnect()
                     }
                 }
             }
@@ -159,6 +186,15 @@ fun NavGraph() {
             navController.navigate(Routes.Main) {
                 popUpTo(Routes.Devices)
                 launchSingleTop = true
+            }
+        }
+    }
+
+    // Surface external-output delivery status reported back by extensions (sent/failed)
+    LaunchedEffect(controller) {
+        controller?.externalLastResultFlow?.collect { result ->
+            result?.let { msg ->
+                activity?.let { Toast.makeText(it, msg, Toast.LENGTH_SHORT).show() }
             }
         }
     }

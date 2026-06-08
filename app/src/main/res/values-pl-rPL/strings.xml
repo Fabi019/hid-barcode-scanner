@@ -302,6 +302,7 @@
     <string-array name="connection_mode_values">
         <item>Klawiatura HID</item>
         <item>RFCOMM (SPP)</item>
+        <item>Tylko zewnętrzne wtyczki</item>
     </string-array>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>

@@ -271,7 +271,10 @@ fun Scanner(
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            currentDevice?.let {
+            val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+            val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+            // External has no Bluetooth device but still needs a manual send button
+            if (currentDevice != null || isExternal) {
                 val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
 
                 currentResult?.let {
@@ -753,6 +756,9 @@ private fun ScannerAppBar(
     onAddArea: (() -> Unit)?
 ) {
     val navigation = LocalNavigation.current
+    val context = LocalContext.current
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
     // Shadow for text in fullscreen mode
     val textShadow = Shadow(
@@ -795,7 +801,7 @@ private fun ScannerAppBar(
                 ToggleFlashButton(camera, info, transparent)
             }
 
-            currentDevice?.let {
+            if (currentDevice != null || isExternal) {
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
@@ -925,11 +931,23 @@ fun BoxScope.DeviceStatusIndicator() {
         val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+        val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
-        // Dismissed state resets when the device changes or user leaves the scanner
-        var dismissed by remember(currentDevice) { mutableStateOf(false) }
+        // Dismissed state resets when the device or mode changes or user leaves the scanner
+        var dismissed by remember(currentDevice, connectionMode) { mutableStateOf(false) }
 
         when {
+            // External mode has no Bluetooth device — show output status, not "No device"
+            isExternal -> {
+                ElevatedWarningCard(
+                    message = stringResource(R.string.external_active),
+                    subMessage = stringResource(R.string.external_active_desc),
+                    onClick = {},
+                    onDismiss = { dismissed = true },
+                    visible = !dismissed
+                )
+            }
+
             currentDevice == null -> {
                 // No device selected - show "No device connected" regardless of mode
                 ElevatedWarningCard(

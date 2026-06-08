@@ -169,7 +169,8 @@ fun SectionTitle(text: String) {
 @Composable
 internal fun ConnectionSettings(strings: SettingsStrings) {
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isRfcomm = connectionMode == ConnectionMode.RFCOMM
+    val isHidOnly = connectionMode == ConnectionMode.HID
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -183,6 +184,8 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.auto_connect],
         desc = strings[R.string.auto_connect_desc],
         icon = Icons.Default.Link,
+        // Auto-connect is a Bluetooth device concept — irrelevant for External output
+        enabled = !isExternal,
         preference = PreferenceStore.AUTO_CONNECT
     )
 
@@ -199,7 +202,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         valueFormat = strings[R.string.send_delay_template],
         range = 0f..100f,
         icon = Icons.Default.Timer,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.SEND_DELAY
     )
 
@@ -208,7 +211,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         desc = strings[R.string.keyboard_layout_desc],
         icon = Icons.Default.Keyboard,
         values = strings.array(R.array.keyboard_layout_values),
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
 
@@ -218,7 +221,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.custom_keys],
         desc = strings[R.string.define_custom_keys],
         icon = Icons.Default.KeyboardCommandKey,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         onClick = customKeysDialog::open
     )
 
