@@ -370,6 +370,8 @@
     <string name="external_active_desc">Scans are forwarded to the enabled plugins</string>
     <string name="enable_external_output">Enable external output</string>
     <string name="enable_external_output_desc">Also forward scans to enabled plugins (in HID/RFCOMM mode)</string>
+    <string name="external_long_press_hint">Long-press a plugin to open its settings</string>
+    <string name="external_plugin_no_settings">This plugin has no settings</string>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>
         <item quantity="other">Export %1$d items</item>

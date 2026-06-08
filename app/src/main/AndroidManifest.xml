@@ -35,10 +35,14 @@
         android:name="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS"
         android:protectionLevel="normal" />
 
-    <!-- Lets the app discover installed extensions (receivers of BARCODE_SCANNED) on Android 11+ -->
+    <!-- Lets the app discover installed extensions (receivers of BARCODE_SCANNED) on Android 11+
+         and resolve their optional settings activity. -->
     <queries>
         <intent>
             <action android:name="dev.fabik.bluetoothhid.action.BARCODE_SCANNED" />
+        </intent>
+        <intent>
+            <action android:name="dev.fabik.bluetoothhid.plugin.action.SETTINGS" />
         </intent>
     </queries>
 

@@ -7,7 +7,13 @@ import android.content.pm.PackageManager
 /**
  * A discovered external transport extension (an app with a receiver for [ExternalProtocol.ACTION_BARCODE_SCANNED]).
  */
-data class ExternalPlugin(val packageName: String, val label: String)
+data class ExternalPlugin(
+    val packageName: String,
+    val label: String,
+    val author: String? = null,
+    val version: String? = null,
+    val hasSettings: Boolean = false,
+)
 
 /**
  * Broadcast contract between the core scanner app and external transport extensions.
@@ -30,6 +36,13 @@ object ExternalProtocol {
     const val ACTION_SEND_RESULT = "dev.fabik.bluetoothhid.action.SEND_RESULT"
 
     /**
+     * Optional settings entry-point. An extension that has a settings screen declares an
+     * <activity> with an <intent-filter> for this action; the core opens it (targeted by package)
+     * when the user long-presses the plugin. Plugins without it simply have no settings.
+     */
+    const val ACTION_PLUGIN_SETTINGS = "dev.fabik.bluetoothhid.plugin.action.SETTINGS"
+
+    /**
      * Permission an extension must hold to receive scan broadcasts. Declared by the core
      * (see AndroidManifest). protectionLevel is "normal" for an open plugin ecosystem; switch
      * to "signature" if only first-party extensions should be allowed.
@@ -38,6 +51,9 @@ object ExternalProtocol {
 
     /** Optional <meta-data> on the extension's receiver giving a human-friendly display name. */
     const val META_PLUGIN_LABEL = "dev.fabik.bluetoothhid.plugin.label"
+
+    /** Optional <meta-data> on the extension's receiver giving the plugin's author. */
+    const val META_PLUGIN_AUTHOR = "dev.fabik.bluetoothhid.plugin.author"
 
     // ── Extras for ACTION_BARCODE_SCANNED ───────────────────────────────────────────────────
     /**
@@ -86,7 +102,16 @@ object ExternalProtocol {
                 if (!requestsReceivePermission(pm, info.packageName)) return@mapNotNull null
                 val label = info.metaData?.getString(META_PLUGIN_LABEL)
                     ?: info.loadLabel(pm).toString()
-                ExternalPlugin(info.packageName, label)
+                val author = info.metaData?.getString(META_PLUGIN_AUTHOR)
+                val version = runCatching {
+                    pm.getPackageInfo(info.packageName, 0).versionName
+                }.getOrNull()
+                val hasSettings = runCatching {
+                    pm.resolveActivity(
+                        Intent(ACTION_PLUGIN_SETTINGS).setPackage(info.packageName), 0
+                    ) != null
+                }.getOrDefault(false)
+                ExternalPlugin(info.packageName, label, author, version, hasSettings)
             }
             .distinctBy { it.packageName }
             .sortedBy { it.label.lowercase() }
