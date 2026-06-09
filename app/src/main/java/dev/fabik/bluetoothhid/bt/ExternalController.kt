@@ -12,9 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -26,13 +28,28 @@ import java.util.UUID
  * the core app while still being usable: install the matching extension, pick "External" mode,
  * and enable it in the plugin list.
  *
- * Two-way contract:
- *  - core → extension: targeted [ExternalProtocol.ACTION_BARCODE_SCANNED] per enabled package,
- *  - extension → core: optional [ExternalProtocol.ACTION_SEND_RESULT] surfaced via [lastResultFlow].
+ * Channels (all targeted by package + permission-protected for core→extension):
+ *  - core → extension: [ExternalProtocol.ACTION_BARCODE_SCANNED] per enabled package,
+ *  - core → extension: [ExternalProtocol.ACTION_PLUGIN_SET_ENABLED] lifecycle (warm up / release),
+ *  - core → extension: [ExternalProtocol.ACTION_PLUGIN_PING] liveness probe,
+ *  - extension → core: optional [ExternalProtocol.ACTION_SEND_RESULT] surfaced via [lastResultFlow],
+ *  - extension → core: optional [ExternalProtocol.ACTION_PLUGIN_STATUS] surfaced via [pluginHealthFlow].
+ *
+ * Self-healing: a plugin's transport lives in its own (foreground) service, which the OS can kill.
+ * The core can't observe that directly, so it pings each enabled plugin on an interval; a missing
+ * reply (or running=false) triggers a fresh SET_ENABLED(true) to revive it. Sending any of these
+ * targeted broadcasts also cold-starts a dead plugin process and grants it the short FGS-start
+ * window it needs to (re)spawn its service.
  */
 class ExternalController(private val context: Context) {
     companion object {
         private const val TAG = "ExternalController"
+
+        // How often to ping enabled plugins for liveness.
+        private const val HEARTBEAT_INTERVAL_MS = 20_000L
+        // A plugin not heard from within this window is considered dead and revived. ~2.5 intervals
+        // tolerates one dropped/late reply before we act.
+        private const val HEALTH_DEADLINE_MS = 50_000L
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -41,12 +58,23 @@ class ExternalController(private val context: Context) {
     @Volatile
     private var enabledPackages: Set<String> = emptySet()
     private var enabledObserverJob: Job? = null
+    private var heartbeatJob: Job? = null
 
     // Last delivery status reported back by an extension (null = nothing reported yet).
     // Fire-and-forget broadcasts have no return value, so this is only populated if an
     // extension opts into the ACTION_SEND_RESULT channel.
     private val _lastResult = MutableStateFlow<String?>(null)
     val lastResultFlow = _lastResult.asStateFlow()
+
+    /** Per-package liveness snapshot, keyed by plugin package name. Updated from ACTION_PLUGIN_STATUS. */
+    data class PluginHealth(
+        val running: Boolean,
+        val detail: String?,
+        val lastSeen: Long,
+    )
+
+    private val _pluginHealth = MutableStateFlow<Map<String, PluginHealth>>(emptyMap())
+    val pluginHealthFlow = _pluginHealth.asStateFlow()
 
     private val _isActive = MutableStateFlow(false)
     val isActiveFlow = _isActive.asStateFlow()
@@ -56,26 +84,31 @@ class ExternalController(private val context: Context) {
     fun start() {
         if (resultReceiver != null) return
 
-        // Keep the enabled-packages cache in sync so publishScan() stays non-suspending.
+        // Keep the enabled-packages cache in sync so publishScan() stays non-suspending, AND drive
+        // the lifecycle channel: newly-enabled plugins get SET_ENABLED(true) to warm up, removed
+        // ones get SET_ENABLED(false). The first emission treats every enabled plugin as "added",
+        // so simply starting external output warms up whatever is already enabled.
         enabledObserverJob = scope.launch {
-            context.getPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS).collect {
-                enabledPackages = it
-                Log.i(TAG, "Enabled external plugins: $it")
+            context.getPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS).collect { next ->
+                val previous = enabledPackages
+                enabledPackages = next
+                Log.i(TAG, "Enabled external plugins: $next")
+
+                (next - previous).forEach { sendSetEnabled(it, true) }
+                (previous - next).forEach { pkg ->
+                    sendSetEnabled(pkg, false)
+                    _pluginHealth.update { it - pkg } // stop tracking a disabled plugin
+                }
             }
         }
 
-        // Listen for delivery status reported back by extensions.
+        // Listen for delivery status (ACTION_SEND_RESULT) and liveness replies (ACTION_PLUGIN_STATUS).
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
-                if (intent?.action != ExternalProtocol.ACTION_SEND_RESULT) return
-                val scanId = intent.getStringExtra(ExternalProtocol.EXTRA_SCAN_ID)
-                val ok = intent.getBooleanExtra(ExternalProtocol.EXTRA_RESULT_OK, false)
-                val detail = intent.getStringExtra(ExternalProtocol.EXTRA_RESULT_DETAIL)
-                // scan_id is for correlation/logs only — NOT user-facing. Show the plugin's
-                // human-readable detail (or a plain sent/failed) to the user.
-                val status = detail ?: if (ok) "sent" else "failed"
-                _lastResult.update { status }
-                Log.i(TAG, "External send result: scan=$scanId ok=$ok detail=$detail")
+                when (intent?.action) {
+                    ExternalProtocol.ACTION_SEND_RESULT -> onSendResult(intent)
+                    ExternalProtocol.ACTION_PLUGIN_STATUS -> onPluginStatus(intent)
+                }
             }
         }
         // Exported: the result comes from another app. Could be hardened with a dedicated
@@ -83,22 +116,93 @@ class ExternalController(private val context: Context) {
         ContextCompat.registerReceiver(
             context,
             receiver,
-            IntentFilter(ExternalProtocol.ACTION_SEND_RESULT),
+            IntentFilter().apply {
+                addAction(ExternalProtocol.ACTION_SEND_RESULT)
+                addAction(ExternalProtocol.ACTION_PLUGIN_STATUS)
+            },
             ContextCompat.RECEIVER_EXPORTED
         )
         resultReceiver = receiver
+
+        heartbeatJob = scope.launch { heartbeatLoop() }
+
         _isActive.update { true }
         Log.i(TAG, "External output active — scans will be broadcast to enabled extensions")
     }
 
     fun stop() {
         if (resultReceiver == null) return // already stopped — keep idempotent (no log spam)
+        // Tell currently-enabled plugins to release their transport (best-effort).
+        enabledPackages.forEach { sendSetEnabled(it, false) }
+
         enabledObserverJob?.cancel()
         enabledObserverJob = null
+        heartbeatJob?.cancel()
+        heartbeatJob = null
         resultReceiver?.let { runCatching { context.unregisterReceiver(it) } }
         resultReceiver = null
+        _pluginHealth.update { emptyMap() }
         _isActive.update { false }
         Log.i(TAG, "External output stopped")
+    }
+
+    private fun onSendResult(intent: Intent) {
+        val scanId = intent.getStringExtra(ExternalProtocol.EXTRA_SCAN_ID)
+        val ok = intent.getBooleanExtra(ExternalProtocol.EXTRA_RESULT_OK, false)
+        val detail = intent.getStringExtra(ExternalProtocol.EXTRA_RESULT_DETAIL)
+        // scan_id is for correlation/logs only — NOT user-facing. Show the plugin's
+        // human-readable detail (or a plain sent/failed) to the user.
+        val status = detail ?: if (ok) "sent" else "failed"
+        _lastResult.update { status }
+        Log.i(TAG, "External send result: scan=$scanId ok=$ok detail=$detail")
+    }
+
+    private fun onPluginStatus(intent: Intent) {
+        val pkg = intent.getStringExtra(ExternalProtocol.EXTRA_PACKAGE) ?: return
+        val running = intent.getBooleanExtra(ExternalProtocol.EXTRA_RUNNING, false)
+        val detail = intent.getStringExtra(ExternalProtocol.EXTRA_STATUS_DETAIL)
+        _pluginHealth.update { it + (pkg to PluginHealth(running, detail, System.currentTimeMillis())) }
+        Log.i(TAG, "Plugin status: $pkg running=$running detail=$detail")
+    }
+
+    /**
+     * Pings every enabled plugin on an interval and revives any that are silent or report
+     * running=false. Reviving = SET_ENABLED(true), which the plugin's lifecycle receiver turns
+     * back into a (re)start of its transport service.
+     */
+    private suspend fun heartbeatLoop() {
+        while (scope.isActive) {
+            delay(HEARTBEAT_INTERVAL_MS)
+            val targets = enabledPackages
+            if (targets.isEmpty()) continue
+
+            val now = System.currentTimeMillis()
+            val health = _pluginHealth.value
+            targets.forEach { pkg ->
+                sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
+
+                val last = health[pkg]
+                val stale = last == null || (now - last.lastSeen) > HEALTH_DEADLINE_MS
+                val down = last != null && !last.running
+                if (stale || down) {
+                    Log.w(TAG, "Plugin $pkg looks dead (stale=$stale down=$down) — reviving")
+                    sendSetEnabled(pkg, true)
+                }
+            }
+        }
+    }
+
+    private fun sendSetEnabled(pkg: String, enabled: Boolean) {
+        sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_SET_ENABLED) {
+            putExtra(ExternalProtocol.EXTRA_ENABLED, enabled)
+        }
+        Log.i(TAG, "Sent SET_ENABLED($enabled) to $pkg")
+    }
+
+    /** Targeted, permission-protected control broadcast to a single plugin package. */
+    private inline fun sendControl(pkg: String, action: String, extras: Intent.() -> Unit = {}) {
+        val intent = Intent(action).setPackage(pkg).apply(extras)
+        context.sendBroadcast(intent, ExternalProtocol.PERMISSION_RECEIVE_SCANS)
     }
 
     /**

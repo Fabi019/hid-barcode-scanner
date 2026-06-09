@@ -31,9 +31,30 @@ object ExternalProtocol {
     /** A barcode was scanned. Broadcast to any extension holding [PERMISSION_RECEIVE_SCANS]. */
     const val ACTION_BARCODE_SCANNED = "dev.fabik.bluetoothhid.action.BARCODE_SCANNED"
 
+    /**
+     * Lifecycle signal: the core toggled this plugin on/off (enabled in the picker, or external
+     * output as a whole started/stopped). Lets a plugin warm up its transport ahead of the first
+     * scan (or release it when disabled) instead of cold-starting on the first ACTION_BARCODE_SCANNED.
+     * Carries [EXTRA_ENABLED]. Sent targeted + permission-protected, like scans.
+     */
+    const val ACTION_PLUGIN_SET_ENABLED = "dev.fabik.bluetoothhid.plugin.action.SET_ENABLED"
+
+    /**
+     * Health probe. The core periodically pings each enabled plugin; the plugin answers with
+     * [ACTION_PLUGIN_STATUS]. No reply (or a reply with running=false) within the deadline makes the
+     * core re-send [ACTION_PLUGIN_SET_ENABLED] to revive the plugin's service (self-healing).
+     */
+    const val ACTION_PLUGIN_PING = "dev.fabik.bluetoothhid.plugin.action.PING"
+
     // ── Extension → core (optional status channel) ──────────────────────────────────────────
     /** Result of forwarding a scan, so the core can show "sent / failed" instead of just "published". */
     const val ACTION_SEND_RESULT = "dev.fabik.bluetoothhid.action.SEND_RESULT"
+
+    /**
+     * Health/liveness reply (answer to [ACTION_PLUGIN_PING], or sent proactively when the plugin's
+     * transport state changes). Carries [EXTRA_PACKAGE], [EXTRA_RUNNING] and [EXTRA_STATUS_DETAIL].
+     */
+    const val ACTION_PLUGIN_STATUS = "dev.fabik.bluetoothhid.plugin.action.STATUS"
 
     /**
      * Optional settings entry-point. An extension that has a settings screen declares an
@@ -84,6 +105,18 @@ object ExternalProtocol {
     const val EXTRA_RESULT_OK = "result_ok"
     /** String? — human-readable status detail (e.g. "TCP 192.168.0.5:51000"). */
     const val EXTRA_RESULT_DETAIL = "result_detail"
+
+    // ── Extras for ACTION_PLUGIN_SET_ENABLED ────────────────────────────────────────────────
+    /** Boolean — true = plugin enabled (warm up transport), false = disabled (release transport). */
+    const val EXTRA_ENABLED = "enabled"
+
+    // ── Extras for ACTION_PLUGIN_STATUS ─────────────────────────────────────────────────────
+    /** String — the plugin's own package name, so the core can correlate the reply to a plugin. */
+    const val EXTRA_PACKAGE = "package"
+    /** Boolean — whether the plugin's transport/service is currently up. */
+    const val EXTRA_RUNNING = "running"
+    /** String? — human-readable transport status (e.g. "TCP server :51000 (connected)"). */
+    const val EXTRA_STATUS_DETAIL = "status_detail"
 
     /**
      * Finds installed extensions that declare a receiver for [ACTION_BARCODE_SCANNED] AND request

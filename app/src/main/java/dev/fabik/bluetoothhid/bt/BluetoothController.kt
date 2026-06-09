@@ -61,6 +61,9 @@ class BluetoothController(var context: Context) {
     // Last delivery status reported back by an extension (for optional UI feedback)
     val externalLastResultFlow = externalController.lastResultFlow
 
+    // Per-plugin liveness (running + transport detail), driven by the heartbeat (for optional UI)
+    val externalPluginHealthFlow = externalController.pluginHealthFlow
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile
