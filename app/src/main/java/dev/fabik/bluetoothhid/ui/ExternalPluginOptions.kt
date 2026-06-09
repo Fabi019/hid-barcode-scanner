@@ -125,15 +125,24 @@ fun ExternalPluginsContent() {
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // Master toggle. In EXTERNAL mode external output is implied (always on, can't disable).
-        SwitchPreference(
-            title = stringResource(R.string.enable_external_output),
-            desc = stringResource(R.string.enable_external_output_desc),
-            icon = Icons.Default.Lan,
-            checked = isExternalMode || externalOutputEnabled,
-            enabled = !isExternalMode,
-            onToggle = { externalOutputEnabled = it }
-        )
+        // Master toggle only applies to the HID/RFCOMM "parallel output" case. In EXTERNAL mode
+        // external output IS the mode (always on), so show an info note instead of a dead toggle.
+        if (isExternalMode) {
+            Text(
+                stringResource(R.string.external_output_always_on),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        } else {
+            SwitchPreference(
+                title = stringResource(R.string.enable_external_output),
+                desc = stringResource(R.string.enable_external_output_desc),
+                icon = Icons.Default.Lan,
+                checked = externalOutputEnabled,
+                onToggle = { externalOutputEnabled = it }
+            )
+        }
 
         if (plugins.isEmpty()) {
             Text(

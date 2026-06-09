@@ -126,6 +126,7 @@ import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
+import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
@@ -164,12 +165,13 @@ private fun Modifier.iconBackgroundModifier(): Modifier {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.ElevatedWarningCard(
+fun ElevatedWarningCard(
     message: String,
     subMessage: String? = null,
     onClick: () -> Unit,
     onDismiss: (() -> Unit)? = null,
-    visible: Boolean
+    visible: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
 
@@ -183,9 +185,7 @@ fun BoxScope.ElevatedWarningCard(
 
     AnimatedVisibility(
         visible = visible, // You will control visibility dynamically
-        modifier = Modifier
-            .padding(12.dp)
-            .align(Alignment.TopCenter)
+        modifier = modifier
     ) {
         SwipeToDismissBox(
             state = dismissState,
@@ -412,8 +412,19 @@ fun Scanner(
         ) {
 
             BarcodeValue(currentResult?.text)
-            CapsLockWarning()
-            DeviceStatusIndicator()
+
+            // Warning cards share one top-center column so they stack instead of overlapping.
+            Column(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CapsLockWarning()
+                DeviceStatusIndicator()
+                ExternalPluginIndicator()
+            }
 
             cameraInfo?.let {
                 ZoomStateInfo(it)
@@ -916,7 +927,7 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
  * connected device and disables it.
  */
 @Composable
-fun BoxScope.CapsLockWarning() {
+fun CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
@@ -946,7 +957,7 @@ fun BoxScope.CapsLockWarning() {
  * Otherwise in RFCOMM mode: show "Listening for connection from [ device ] when server is listening"
  */
 @Composable
-fun BoxScope.DeviceStatusIndicator() {
+fun DeviceStatusIndicator() {
     val controller = LocalController.current
     val context = LocalContext.current
     val navigation = LocalNavigation.current
@@ -956,51 +967,14 @@ fun BoxScope.DeviceStatusIndicator() {
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
         val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
-        // Real runtime state of the external output (receiver + heartbeat), not just the mode
-        val isExternalActive by controller.externalActiveFlow.collectAsStateWithLifecycle()
-        // No enabled plugin => external mode is on but scans go nowhere
-        val enabledPlugins by context.getPreferenceState(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
 
         // Dismissed state resets when the device or mode changes or user leaves the scanner
         var dismissed by remember(currentDevice, connectionMode) { mutableStateOf(false) }
 
         when {
-            // External mode has no Bluetooth device — show plugin readiness, not "No device"
-            isExternal -> {
-                val enabled = enabledPlugins ?: emptySet()
-                val pluginHealth by controller.externalPluginHealthFlow.collectAsStateWithLifecycle()
-                val anyRunning = enabled.any { pluginHealth[it]?.running == true }
-
-                // Give the plugin a grace window to come up before declaring it unresponsive.
-                var graceExpired by remember(enabled, isExternalActive) { mutableStateOf(false) }
-                LaunchedEffect(enabled, isExternalActive, anyRunning) {
-                    graceExpired = false
-                    if (enabled.isNotEmpty() && isExternalActive && !anyRunning) {
-                        delay(EXTERNAL_INIT_GRACE_MS)
-                        graceExpired = true
-                    }
-                }
-
-                val notResponding = enabled.isNotEmpty() && isExternalActive && !anyRunning && graceExpired
-                val (msgRes, subRes) = when {
-                    enabled.isEmpty() ->
-                        R.string.external_no_plugin_active to R.string.external_no_plugin_active_desc
-                    anyRunning ->
-                        R.string.external_active to R.string.external_active_desc
-                    notResponding ->
-                        R.string.external_not_responding to R.string.external_not_responding_desc
-                    else ->
-                        R.string.external_waiting to R.string.external_waiting_desc
-                }
-                ElevatedWarningCard(
-                    message = stringResource(msgRes),
-                    subMessage = stringResource(subRes),
-                    // Tap to retry only makes sense in the "not responding" state
-                    onClick = { if (notResponding) controller.warmUpExternalPlugins() },
-                    onDismiss = { dismissed = true },
-                    visible = !dismissed
-                )
-            }
+            // External mode has no Bluetooth device — plugin readiness is shown by
+            // ExternalPluginIndicator instead, so suppress the "No device" card here.
+            isExternal -> Unit
 
             currentDevice == null -> {
                 // No device selected - show "No device connected" regardless of mode
@@ -1033,6 +1007,69 @@ fun BoxScope.DeviceStatusIndicator() {
             }
         }
     }
+}
+
+/**
+ * Plugin-readiness card for external output. Shown both in EXTERNAL mode (where it's the primary
+ * status) and when external output is enabled in parallel with HID/RFCOMM (hybrid). It's placed in
+ * the shared warning-card column, so it stacks cleanly below the device card without overlapping.
+ *
+ * States: no plugin enabled → waiting (within grace) → not responding (tap to retry) → active.
+ */
+@Composable
+fun ExternalPluginIndicator() {
+    val controller = LocalController.current ?: return
+    val context = LocalContext.current
+
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+    val externalOutputEnabled by context.getPreferenceState(PreferenceStore.ENABLE_EXTERNAL_OUTPUT)
+    // Only engaged as the sole mode (EXTERNAL) or in parallel with HID/RFCOMM (the toggle).
+    if (!isExternal && externalOutputEnabled != true) return
+
+    val isExternalActive by controller.externalActiveFlow.collectAsStateWithLifecycle()
+    val enabledPlugins by context.getPreferenceState(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
+    // "Enabled" is just stored package names — intersect with what's actually installed so a stale
+    // entry (plugin uninstalled while still enabled) doesn't masquerade as "waiting for a plugin".
+    val installed = remember { ExternalProtocol.discover(context).map { it.packageName }.toSet() }
+    val enabled = (enabledPlugins ?: emptySet()) intersect installed
+    val pluginHealth by controller.externalPluginHealthFlow.collectAsStateWithLifecycle()
+    val anyRunning = enabled.any { pluginHealth[it]?.running == true }
+
+    // Give the plugin a grace window to come up before declaring it unresponsive.
+    var graceExpired by remember(enabled, isExternalActive) { mutableStateOf(false) }
+    LaunchedEffect(enabled, isExternalActive, anyRunning) {
+        graceExpired = false
+        if (enabled.isNotEmpty() && isExternalActive && !anyRunning) {
+            delay(EXTERNAL_INIT_GRACE_MS)
+            graceExpired = true
+        }
+    }
+
+    val notResponding = enabled.isNotEmpty() && isExternalActive && !anyRunning && graceExpired
+    val (msgRes, subRes) = when {
+        installed.isEmpty() ->
+            R.string.external_no_plugins to R.string.external_no_plugins_desc
+        enabled.isEmpty() ->
+            R.string.external_no_plugin_active to R.string.external_no_plugin_active_desc
+        anyRunning ->
+            R.string.external_active to R.string.external_active_desc
+        notResponding ->
+            R.string.external_not_responding to R.string.external_not_responding_desc
+        else ->
+            R.string.external_waiting to R.string.external_waiting_desc
+    }
+
+    var dismissed by remember(connectionMode, enabled) { mutableStateOf(false) }
+
+    ElevatedWarningCard(
+        message = stringResource(msgRes),
+        subMessage = stringResource(subRes),
+        // Tap to retry only makes sense in the "not responding" state
+        onClick = { if (notResponding) controller.warmUpExternalPlugins() },
+        onDismiss = { dismissed = true },
+        visible = !dismissed
+    )
 }
 
 /**

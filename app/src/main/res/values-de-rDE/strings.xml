@@ -340,6 +340,7 @@
     <string name="external_output">Externe Ausgabe-Plugins</string>
     <string name="external_output_desc">Installierte Erweiterungs-Apps, die gescannte Werte empfangen</string>
     <string name="external_no_plugins">Keine Erweiterungs-Apps installiert</string>
+    <string name="external_no_plugins_desc">Installiere eine Plugin-App, um Scans extern weiterzuleiten</string>
     <string name="external_last_result">Letztes Ergebnis: %1$s</string>
     <string name="external_active">Externe Ausgabe aktiv</string>
     <string name="external_active_desc">Scans werden an die aktivierten Plugins weitergeleitet</string>
@@ -351,6 +352,7 @@
     <string name="external_not_responding_desc">Das externe Plugin ist nicht gestartet. Zum Wiederholen tippen, oder einmal öffnen, falls gerade installiert</string>
     <string name="enable_external_output">Externe Ausgabe aktivieren</string>
     <string name="enable_external_output_desc">Scans zusätzlich an aktivierte Plugins weiterleiten (im HID-/RFCOMM-Modus)</string>
+    <string name="external_output_always_on">Externe Ausgabe ist im Modus „Nur externe Plugins“ immer aktiv</string>
     <string name="external_long_press_hint">Lange auf ein Plugin drücken, um dessen Einstellungen zu öffnen</string>
     <string name="external_plugin_no_settings">Dieses Plugin hat keine Einstellungen</string>
     <string name="insecure_rfcomm">Unsichere RFCOMM</string>

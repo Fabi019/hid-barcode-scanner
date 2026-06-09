@@ -306,6 +306,7 @@
     <string name="external_output">Wyjście do wtyczek</string>
     <string name="external_output_desc">Zainstalowane aplikacje-rozszerzenia, które odbierają zeskanowane wartości</string>
     <string name="external_no_plugins">Brak zainstalowanych wtyczek</string>
+    <string name="external_no_plugins_desc">Zainstaluj wtyczkę, aby przekazywać skany na zewnątrz</string>
     <string name="external_last_result">Ostatni wynik: %1$s</string>
     <string name="external_active">Wyjście do wtyczek aktywne</string>
     <string name="external_active_desc">Skany są przekazywane do włączonych rozszerzeń</string>
@@ -317,6 +318,7 @@
     <string name="external_not_responding_desc">Wtyczka zewnętrzna nie wystartowała. Dotknij, aby ponowić, lub otwórz ją raz, jeśli dopiero zainstalowana</string>
     <string name="enable_external_output">Włącz wyjście do wtyczek</string>
     <string name="enable_external_output_desc">Przekazuj skany do włączonych wtyczek także w trybie HID/RFCOMM</string>
+    <string name="external_output_always_on">W trybie „Tylko zewnętrzne wtyczki” wyjście do wtyczek jest zawsze włączone</string>
     <string name="external_long_press_hint">Przytrzymaj wtyczkę, aby otworzyć jej ustawienia</string>
     <string name="external_plugin_no_settings">Ta wtyczka nie posiada ustawień</string>
     <plurals name="export_items">

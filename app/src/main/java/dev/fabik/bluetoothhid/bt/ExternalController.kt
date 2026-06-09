@@ -1,6 +1,7 @@
 package dev.fabik.bluetoothhid.bt
 
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -92,16 +93,20 @@ class ExternalController(private val context: Context) {
         if (resultReceiver != null) return
 
         // Keep the enabled-packages cache in sync so publishScan() stays non-suspending, AND drive
-        // the lifecycle channel: newly-enabled plugins get SET_ENABLED(true) to warm up, removed
-        // ones get SET_ENABLED(false). The first emission treats every enabled plugin as "added",
-        // so simply starting external output warms up whatever is already enabled.
+        // the lifecycle channel: newly-enabled plugins get SET_ENABLED(true) to warm up (plus a PING
+        // so their status comes back right away instead of at the next poll), removed ones get
+        // SET_ENABLED(false). The first emission treats every enabled plugin as "added", so simply
+        // starting external output warms up whatever is already enabled.
         enabledObserverJob = scope.launch {
             context.getPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS).collect { next ->
                 val previous = enabledPackages
                 enabledPackages = next
                 Log.i(TAG, "Enabled external plugins: $next")
 
-                (next - previous).forEach { sendSetEnabled(it, true) }
+                (next - previous).forEach { pkg ->
+                    sendSetEnabled(pkg, true)
+                    sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
+                }
                 (previous - next).forEach { pkg ->
                     sendSetEnabled(pkg, false)
                     _pluginHealth.update { it - pkg } // stop tracking a disabled plugin
@@ -229,10 +234,44 @@ class ExternalController(private val context: Context) {
         Log.i(TAG, "Sent SET_ENABLED($enabled) to $pkg")
     }
 
-    /** Targeted, permission-protected control broadcast to a single plugin package. */
+    /** Targeted, permission-protected control broadcast to a single plugin. */
     private inline fun sendControl(pkg: String, action: String, extras: Intent.() -> Unit = {}) {
-        val intent = Intent(action).setPackage(pkg).apply(extras)
-        context.sendBroadcast(intent, ExternalProtocol.PERMISSION_RECEIVE_SCANS)
+        dispatch(pkg, Intent(action).apply(extras))
+    }
+
+    // Resolved receiver components per "pkg|action". A plugin's receiver class rarely changes, so we
+    // cache it; getOrPut still resolves newly-installed plugins lazily.
+    private val receiverCache = java.util.concurrent.ConcurrentHashMap<String, List<ComponentName>>()
+
+    private fun resolveReceivers(pkg: String, action: String): List<ComponentName> =
+        receiverCache.getOrPut("$pkg|$action") {
+            runCatching {
+                context.packageManager
+                    .queryBroadcastReceivers(Intent(action).setPackage(pkg), 0)
+                    .mapNotNull { it.activityInfo?.let { ai -> ComponentName(ai.packageName, ai.name) } }
+            }.getOrDefault(emptyList())
+        }
+
+    /**
+     * Delivers [intent] to [pkg] by EXPLICIT receiver component(s). Targeting the component — not
+     * just the package — is REQUIRED to deliver to (and cold-start) a plugin in Android's "stopped"
+     * state (fresh install, force-stopped, or its process died): a package-only broadcast is
+     * silently dropped for stopped apps. FLAG_INCLUDE_STOPPED_PACKAGES is the documented companion.
+     * Falls back to package targeting if the receiver can't be resolved.
+     */
+    private fun dispatch(pkg: String, intent: Intent) {
+        intent.setPackage(pkg).addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+        val components = resolveReceivers(pkg, intent.action ?: return)
+        if (components.isEmpty()) {
+            context.sendBroadcast(intent, ExternalProtocol.PERMISSION_RECEIVE_SCANS)
+        } else {
+            components.forEach { comp ->
+                context.sendBroadcast(
+                    Intent(intent).setComponent(comp),
+                    ExternalProtocol.PERMISSION_RECEIVE_SCANS
+                )
+            }
+        }
     }
 
     /**
@@ -271,10 +310,9 @@ class ExternalController(private val context: Context) {
             imageName?.let { putExtra(ExternalProtocol.EXTRA_IMAGE_NAME, it) }
         }
         targets.forEach { pkg ->
-            // Per-package copy so each delivery is an explicit broadcast. Permission-protected
-            // so only extensions holding PERMISSION_RECEIVE_SCANS get the (sensitive) data.
-            val intent = Intent(base).setPackage(pkg)
-            context.sendBroadcast(intent, ExternalProtocol.PERMISSION_RECEIVE_SCANS)
+            // Per-package copy delivered by explicit component (see dispatch) so even a stopped
+            // plugin is woken; permission-protected so only PERMISSION_RECEIVE_SCANS holders get it.
+            dispatch(pkg, Intent(base))
         }
         Log.i(TAG, "Published scan $scanId to ${targets.size} plugin(s): $processedValue")
     }
