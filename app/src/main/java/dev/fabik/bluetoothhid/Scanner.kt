@@ -68,6 +68,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
@@ -141,8 +142,12 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+
+// Grace period after entering the scanner before a silent external plugin is shown as "not responding".
+private const val EXTERNAL_INIT_GRACE_MS = 6_000L
 
 /**
  * Helper function to create a circular background modifier for icons in fullscreen mode.
@@ -252,6 +257,25 @@ fun Scanner(
                 withDismissAction = true
             )
         }
+    }
+
+    // Surface external-output delivery status reported back by extensions (sent/failed).
+    // A Snackbar on the scanner sits clear of the Send button (unlike a Toast).
+    val controller = LocalController.current
+    LaunchedEffect(controller) {
+        controller?.externalLastResultFlow?.collect { result ->
+            snackbarHostState.showSnackbar(
+                message = context.getString(R.string.external_last_result, result),
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    // Entering the scanner kicks enabled plugins right away (SET_ENABLED + ping) so a down transport
+    // starts immediately instead of waiting for the next heartbeat — the readiness card below then
+    // shows "waiting → not responding → active" as their status comes back.
+    LaunchedEffect(controller) {
+        controller?.warmUpExternalPlugins()
     }
 
     Scaffold(
@@ -932,17 +956,47 @@ fun BoxScope.DeviceStatusIndicator() {
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
         val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+        // Real runtime state of the external output (receiver + heartbeat), not just the mode
+        val isExternalActive by controller.externalActiveFlow.collectAsStateWithLifecycle()
+        // No enabled plugin => external mode is on but scans go nowhere
+        val enabledPlugins by context.getPreferenceState(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
 
         // Dismissed state resets when the device or mode changes or user leaves the scanner
         var dismissed by remember(currentDevice, connectionMode) { mutableStateOf(false) }
 
         when {
-            // External mode has no Bluetooth device — show output status, not "No device"
+            // External mode has no Bluetooth device — show plugin readiness, not "No device"
             isExternal -> {
+                val enabled = enabledPlugins ?: emptySet()
+                val pluginHealth by controller.externalPluginHealthFlow.collectAsStateWithLifecycle()
+                val anyRunning = enabled.any { pluginHealth[it]?.running == true }
+
+                // Give the plugin a grace window to come up before declaring it unresponsive.
+                var graceExpired by remember(enabled, isExternalActive) { mutableStateOf(false) }
+                LaunchedEffect(enabled, isExternalActive, anyRunning) {
+                    graceExpired = false
+                    if (enabled.isNotEmpty() && isExternalActive && !anyRunning) {
+                        delay(EXTERNAL_INIT_GRACE_MS)
+                        graceExpired = true
+                    }
+                }
+
+                val notResponding = enabled.isNotEmpty() && isExternalActive && !anyRunning && graceExpired
+                val (msgRes, subRes) = when {
+                    enabled.isEmpty() ->
+                        R.string.external_no_plugin_active to R.string.external_no_plugin_active_desc
+                    anyRunning ->
+                        R.string.external_active to R.string.external_active_desc
+                    notResponding ->
+                        R.string.external_not_responding to R.string.external_not_responding_desc
+                    else ->
+                        R.string.external_waiting to R.string.external_waiting_desc
+                }
                 ElevatedWarningCard(
-                    message = stringResource(R.string.external_active),
-                    subMessage = stringResource(R.string.external_active_desc),
-                    onClick = {},
+                    message = stringResource(msgRes),
+                    subMessage = stringResource(subRes),
+                    // Tap to retry only makes sense in the "not responding" state
+                    onClick = { if (notResponding) controller.warmUpExternalPlugins() },
                     onDismiss = { dismissed = true },
                     visible = !dismissed
                 )

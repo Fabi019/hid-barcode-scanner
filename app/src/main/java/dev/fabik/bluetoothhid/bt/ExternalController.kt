@@ -12,8 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -60,11 +63,15 @@ class ExternalController(private val context: Context) {
     private var enabledObserverJob: Job? = null
     private var heartbeatJob: Job? = null
 
-    // Last delivery status reported back by an extension (null = nothing reported yet).
-    // Fire-and-forget broadcasts have no return value, so this is only populated if an
-    // extension opts into the ACTION_SEND_RESULT channel.
-    private val _lastResult = MutableStateFlow<String?>(null)
-    val lastResultFlow = _lastResult.asStateFlow()
+    // Delivery statuses reported back by extensions. An *event* stream (not a StateFlow): two
+    // consecutive identical statuses ("sent", "sent") must both reach the UI, which a StateFlow
+    // would swallow as a no-op. Only populated if an extension opts into the ACTION_SEND_RESULT
+    // channel (fire-and-forget broadcasts have no return value).
+    private val _lastResult = MutableSharedFlow<String>(
+        extraBufferCapacity = 8,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val lastResultFlow = _lastResult.asSharedFlow()
 
     /** Per-package liveness snapshot, keyed by plugin package name. Updated from ACTION_PLUGIN_STATUS. */
     data class PluginHealth(
@@ -153,7 +160,7 @@ class ExternalController(private val context: Context) {
         // scan_id is for correlation/logs only — NOT user-facing. Show the plugin's
         // human-readable detail (or a plain sent/failed) to the user.
         val status = detail ?: if (ok) "sent" else "failed"
-        _lastResult.update { status }
+        _lastResult.tryEmit(status)
         Log.i(TAG, "External send result: scan=$scanId ok=$ok detail=$detail")
     }
 
@@ -166,29 +173,52 @@ class ExternalController(private val context: Context) {
     }
 
     /**
+     * Pings enabled plugins on demand so their STATUS reply refreshes the UI right away, without
+     * waiting for the next heartbeat. Used by the plugin picker for snappy/live status (ping-only:
+     * no revive, that stays the heartbeat's job).
+     */
+    fun requestStatus() {
+        enabledPackages.forEach { sendControl(it, ExternalProtocol.ACTION_PLUGIN_PING) }
+    }
+
+    /**
+     * Kicks every enabled plugin NOW: SET_ENABLED(true) cold-starts/(re)starts a down transport,
+     * PING asks it to report status right away. Used on entering the scanner and on the user's
+     * "plugin not responding → retry" tap, so we don't wait up to a full heartbeat for revival.
+     * Idempotent (the plugin's start is), so it's safe to call repeatedly.
+     */
+    fun warmUpEnabled() {
+        enabledPackages.forEach { pkg ->
+            sendSetEnabled(pkg, true)
+            sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
+        }
+    }
+
+    /**
      * Pings every enabled plugin on an interval and revives any that are silent or report
      * running=false. Reviving = SET_ENABLED(true), which the plugin's lifecycle receiver turns
-     * back into a (re)start of its transport service.
+     * back into a (re)start of its transport service. The first pass runs immediately (delay is at
+     * the end) so a freshly-activated output checks/revives at t=0 instead of after a full interval.
      */
     private suspend fun heartbeatLoop() {
         while (scope.isActive) {
-            delay(HEARTBEAT_INTERVAL_MS)
             val targets = enabledPackages
-            if (targets.isEmpty()) continue
+            if (targets.isNotEmpty()) {
+                val now = System.currentTimeMillis()
+                val health = _pluginHealth.value
+                targets.forEach { pkg ->
+                    sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
 
-            val now = System.currentTimeMillis()
-            val health = _pluginHealth.value
-            targets.forEach { pkg ->
-                sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
-
-                val last = health[pkg]
-                val stale = last == null || (now - last.lastSeen) > HEALTH_DEADLINE_MS
-                val down = last != null && !last.running
-                if (stale || down) {
-                    Log.w(TAG, "Plugin $pkg looks dead (stale=$stale down=$down) — reviving")
-                    sendSetEnabled(pkg, true)
+                    val last = health[pkg]
+                    val stale = last == null || (now - last.lastSeen) > HEALTH_DEADLINE_MS
+                    val down = last != null && !last.running
+                    if (stale || down) {
+                        Log.w(TAG, "Plugin $pkg looks dead (stale=$stale down=$down) — reviving")
+                        sendSetEnabled(pkg, true)
+                    }
                 }
             }
+            delay(HEARTBEAT_INTERVAL_MS)
         }
     }
 

@@ -37,6 +37,15 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.ProfileManager
 import kotlinx.coroutines.launch
 
+/**
+ * Localized label for a profile. The built-in "Default" profile is stored under the stable,
+ * untranslated key [ProfileManager.DEFAULT] (it doubles as a persistence id), so only its
+ * *display* is localized here; custom profile names are shown verbatim.
+ */
+@Composable
+fun profileDisplayName(name: String): String =
+    if (name == ProfileManager.DEFAULT) stringResource(R.string.profile_default) else name
+
 @Composable
 fun ProfileManageDialog(dialogState: DialogState) {
     val context = LocalContext.current
@@ -79,7 +88,7 @@ fun ProfileManageDialog(dialogState: DialogState) {
                             modifier = Modifier.padding(4.dp)
                         )
                         Text(
-                            profile,
+                            profileDisplayName(profile),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )

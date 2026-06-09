@@ -337,6 +337,22 @@
         <item>RFCOMM (SPP)</item>
         <item>Nur externe Plugins</item>
     </string-array>
+    <string name="external_output">Externe Ausgabe-Plugins</string>
+    <string name="external_output_desc">Installierte Erweiterungs-Apps, die gescannte Werte empfangen</string>
+    <string name="external_no_plugins">Keine Erweiterungs-Apps installiert</string>
+    <string name="external_last_result">Letztes Ergebnis: %1$s</string>
+    <string name="external_active">Externe Ausgabe aktiv</string>
+    <string name="external_active_desc">Scans werden an die aktivierten Plugins weitergeleitet</string>
+    <string name="external_no_plugin_active">Kein Plugin aktiviert</string>
+    <string name="external_no_plugin_active_desc">Externer Modus ist an, aber Scans werden nicht weitergeleitet — aktiviere ein Plugin im Menü</string>
+    <string name="external_waiting">Warte auf Plugin…</string>
+    <string name="external_waiting_desc">Externes Plugin wird gestartet — einen Moment</string>
+    <string name="external_not_responding">Plugin antwortet nicht</string>
+    <string name="external_not_responding_desc">Das externe Plugin ist nicht gestartet. Zum Wiederholen tippen, oder einmal öffnen, falls gerade installiert</string>
+    <string name="enable_external_output">Externe Ausgabe aktivieren</string>
+    <string name="enable_external_output_desc">Scans zusätzlich an aktivierte Plugins weiterleiten (im HID-/RFCOMM-Modus)</string>
+    <string name="external_long_press_hint">Lange auf ein Plugin drücken, um dessen Einstellungen zu öffnen</string>
+    <string name="external_plugin_no_settings">Dieses Plugin hat keine Einstellungen</string>
     <string name="insecure_rfcomm">Unsichere RFCOMM</string>
     <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
     <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
@@ -386,5 +402,6 @@
     <string name="favourite_devices">Favorisierte Geräte</string>
     <string name="reset_favourites">Favoriten zurücksetzen</string>
     <string name="toggle_favourite">Favorisierung umschalten</string>
+    <string name="profile_default">Standard</string>
 
 </resources>

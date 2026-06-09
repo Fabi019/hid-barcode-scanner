@@ -11,3 +11,8 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val Neutral95 = Color(244, 239, 244)
+
+// External plugin transport status dots
+val StatusDown = Color(0xFFE53935)       // red — service not running
+val StatusConnected = Color(0xFF43A047)  // green — peer connected
+val StatusWaiting = Color(0xFFFB8C00)    // amber — up but no peer yet

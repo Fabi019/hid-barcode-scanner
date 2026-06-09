@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Translated by: Marcin Golesz (WinLin97) @ 10.10.2024 -->
 <resources>
     <string name="app_name">BT Scanner</string>
     <string name="scanner">Skaner</string>
@@ -24,7 +23,7 @@
     <string name="overlay_type_desc">Określ kształt ramki</string>
     <string name="full_inside">Cały kod w ramce</string>
     <string name="full_inside_desc">Kody kreskowe muszą być w pełni widoczne w obszarze ramki</string>
-    <string name="scan_freq">Częstość skanowania</string>
+    <string name="scan_freq">Częstotliwość skanowania</string>
     <string name="scan_freq_desc">Interwał, w którym analizowany jest obraz. Wyższa częstotliwość = wyższe wykorzystanie procesora.</string>
     <string name="scan_res">Rozdzielczość skanera</string>
     <string name="scan_res_desc">Rozdzielczość analizowanego obrazu. Wyższa rozdzielczość = dłuższy czas analizy.</string>
@@ -281,10 +280,10 @@
         <item>Turecki Q (TR)</item>
         <item>Polski Programisty (PL)</item>
         <item>Czech (CZ)</item>
-        <item>Portuguese (PO)</item>
-        <item>Portuguese (BR)</item>
+        <item>Portugalski (PO)</item>
+        <item>Portugalski (BR)</item>
         <item>Francuski (BE)</item>
-        <item>Hungarian (HU)</item>
+        <item>Węgierski (HU)</item>
     </string-array>
     <string-array name="highlight_values">
         <item>Ramka</item>
@@ -302,8 +301,24 @@
     <string-array name="connection_mode_values">
         <item>Klawiatura HID</item>
         <item>RFCOMM (SPP)</item>
-        <item>Tylko zewnętrzne wtyczki</item>
+        <item>Wyjście tylko do wtyczek</item>
     </string-array>
+    <string name="external_output">Wyjście do wtyczek</string>
+    <string name="external_output_desc">Zainstalowane aplikacje-rozszerzenia, które odbierają zeskanowane wartości</string>
+    <string name="external_no_plugins">Brak zainstalowanych wtyczek</string>
+    <string name="external_last_result">Ostatni wynik: %1$s</string>
+    <string name="external_active">Wyjście do wtyczek aktywne</string>
+    <string name="external_active_desc">Skany są przekazywane do włączonych rozszerzeń</string>
+    <string name="external_no_plugin_active">Skany nie są przekazywane</string>
+    <string name="external_no_plugin_active_desc">Wyjście do wtyczek jest włączone, ale żadne rozszerzenie nie jest aktywne</string>
+    <string name="external_waiting">Czekam na wtyczkę…</string>
+    <string name="external_waiting_desc">Uruchamiam wtyczkę zewnętrzną — chwila</string>
+    <string name="external_not_responding">Wtyczka nie odpowiada</string>
+    <string name="external_not_responding_desc">Wtyczka zewnętrzna nie wystartowała. Dotknij, aby ponowić, lub otwórz ją raz, jeśli dopiero zainstalowana</string>
+    <string name="enable_external_output">Włącz wyjście do wtyczek</string>
+    <string name="enable_external_output_desc">Przekazuj skany do włączonych wtyczek także w trybie HID/RFCOMM</string>
+    <string name="external_long_press_hint">Przytrzymaj wtyczkę, aby otworzyć jej ustawienia</string>
+    <string name="external_plugin_no_settings">Ta wtyczka nie posiada ustawień</string>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>
         <item quantity="other">Eksport %1$d elementów</item>
@@ -351,7 +366,7 @@
     <string name="downscale_threshold">Próg downscalingu (px)</string>
     <string name="parser">Parser</string>
     <string name="text_mode">Tryb tekstowy</string>
-    <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
+    <string name="ocr_note_desc">Rozszerzenie OCR wymaga zewnętrznej aplikacji, aby zapewnić funkcję wykrywania. Jeśli chcesz korzystać z tej funkcji, musisz zainstalować na swoim urządzeniu osobną aplikację.\nMożesz wybrać wersję aplikacji opartą na ML-Kit lub Tesseract.\n(Pamiętaj, że jest to aplikacja innej firmy, nad którą twórca aplikacji nie ma żadnej kontroli).</string>
     <string name="ocr_note_bottom">Następnie można użyć nowego przycisku w prawym dolnym rogu skanera, aby uruchomić wykrywanie.</string>
     <string name="note">Uwaga</string>
     <string name="ext_ocr_support">Zewn. wsparcie OCR</string>
@@ -429,4 +444,13 @@
     <string name="save_scan_image_hint">Uwaga: Nazwa pliku każdego skanu jest dostępna jako {SCAN_IMAGE_NAME} w szablonie niestandardowym. Można jej użyć np. do bezpośredniego pobrania obrazu z telefonu.</string>
     <string name="clear_after_time">Wyczyść po czasie</string>
     <string name="clear_after_time_desc">Czyści wyświetlany kod po braku wykrycia w określonym przedziale czasowym.</string>
+    <string name="profiles">Profile</string>
+    <string name="active_profile_desc">Dotknij, aby zarządzać profilami</string>
+    <string name="manage_profiles">Zarządzaj profilami</string>
+    <string name="add_profile">Dodaj profil</string>
+    <string name="delete_profile">Usuń profil</string>
+    <string name="profile_name">Nazwa profilu</string>
+    <string name="profile_name_empty">Nazwa profilu nie może być pusta</string>
+    <string name="profile_name_exists">Profil o tej nazwie już istnieje</string>
+    <string name="profile_default">Domyślny</string>
 </resources>

@@ -30,6 +30,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -48,10 +48,17 @@ import dev.fabik.bluetoothhid.bt.ExternalController
 import dev.fabik.bluetoothhid.bt.ExternalPlugin
 import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
+import dev.fabik.bluetoothhid.ui.theme.StatusConnected
+import dev.fabik.bluetoothhid.ui.theme.StatusDown
+import dev.fabik.bluetoothhid.ui.theme.StatusWaiting
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import kotlinx.coroutines.delay
+
+// How often to ping plugins for status while the picker sheet is open (snappy, but light).
+private const val STATUS_POLL_INTERVAL_MS = 2_000L
 
 /**
  * Dropdown entry + bottom-sheet "External Plugin Picker": a master toggle for parallel external
@@ -94,6 +101,16 @@ fun ExternalPluginsContent() {
     val health by (controller?.externalPluginHealthFlow
         ?.collectAsState(initial = emptyMap())
         ?: remember { mutableStateOf(emptyMap<String, ExternalController.PluginHealth>()) })
+
+    // While the picker is open, poll plugin status for near-live dots: ping immediately (fresh on
+    // open) then every few seconds. Auto-cancels when the sheet closes (effect leaves composition),
+    // so it never runs in the background or drains the battery.
+    LaunchedEffect(controller) {
+        while (controller != null) {
+            controller.requestExternalStatus()
+            delay(STATUS_POLL_INTERVAL_MS)
+        }
+    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -208,9 +225,9 @@ private fun PluginRow(
 private fun PluginStatusLine(health: ExternalController.PluginHealth) {
     val connected = health.detail?.contains("connected", ignoreCase = true) == true
     val (color, fallback) = when {
-        !health.running -> Color(0xFFE53935) to "down"        // red — service not running
-        connected -> Color(0xFF43A047) to "connected"          // green — peer connected
-        else -> Color(0xFFFB8C00) to "waiting"                 // amber — up but no peer yet
+        !health.running -> StatusDown to "down"        // red — service not running
+        connected -> StatusConnected to "connected"     // green — peer connected
+        else -> StatusWaiting to "waiting"              // amber — up but no peer yet
     }
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
         Box(

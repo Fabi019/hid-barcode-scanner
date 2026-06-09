@@ -84,6 +84,7 @@ import dev.fabik.bluetoothhid.ui.ComboBoxEnumPreference
 import dev.fabik.bluetoothhid.ui.CustomKeysDialog
 import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
 import dev.fabik.bluetoothhid.ui.ProfileManageDialog
+import dev.fabik.bluetoothhid.ui.profileDisplayName
 import dev.fabik.bluetoothhid.ui.SaveScanImageOptionsModal
 import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
@@ -693,7 +694,7 @@ internal fun ProfileSettings() {
     ProfileManageDialog(dialogState)
 
     ButtonPreference(
-        title = activeProfile,
+        title = profileDisplayName(activeProfile),
         desc = stringResource(R.string.active_profile_desc),
         icon = Icons.Default.Layers,
         onClick = dialogState::open

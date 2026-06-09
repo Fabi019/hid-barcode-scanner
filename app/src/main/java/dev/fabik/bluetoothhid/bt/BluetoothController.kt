@@ -64,6 +64,16 @@ class BluetoothController(var context: Context) {
     // Per-plugin liveness (running + transport detail), driven by the heartbeat (for optional UI)
     val externalPluginHealthFlow = externalController.pluginHealthFlow
 
+    // Whether external output is actually running (receiver registered + heartbeat live), so the
+    // UI can reflect real runtime state instead of just the mode/preference.
+    val externalActiveFlow = externalController.isActiveFlow
+
+    /** Ping enabled external plugins now to refresh their reported status (used by the picker UI). */
+    fun requestExternalStatus() = externalController.requestStatus()
+
+    /** Kick enabled external plugins now (SET_ENABLED + ping) to start/revive their transport. */
+    fun warmUpExternalPlugins() = externalController.warmUpEnabled()
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile

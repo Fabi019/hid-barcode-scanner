@@ -131,17 +131,15 @@ fun NavGraph() {
                 }
 
                 // In External mode back exits the app instead of returning to Devices
-                if (isExternal) {
-                    BackHandler {
-                        if (canExit) {
-                            activity?.finishAfterTransition()
-                        } else {
-                            canExit = true
-                            Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
-                            scope.launch {
-                                delay(2000)
-                                canExit = false
-                            }
+                BackHandler(enabled = isExternal) {
+                    if (canExit) {
+                        activity?.finishAfterTransition()
+                    } else {
+                        canExit = true
+                        Toast.makeText(activity, exitString, Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            delay(2000)
+                            canExit = false
                         }
                     }
                 }
@@ -190,12 +188,4 @@ fun NavGraph() {
         }
     }
 
-    // Surface external-output delivery status reported back by extensions (sent/failed)
-    LaunchedEffect(controller) {
-        controller?.externalLastResultFlow?.collect { result ->
-            result?.let { msg ->
-                activity?.let { Toast.makeText(it, msg, Toast.LENGTH_SHORT).show() }
-            }
-        }
-    }
 }
