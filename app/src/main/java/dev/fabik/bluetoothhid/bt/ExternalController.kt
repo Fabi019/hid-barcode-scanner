@@ -137,19 +137,24 @@ class ExternalController(private val context: Context) {
         )
         resultReceiver = receiver
 
-        // Invalidate cached receiver components when a plugin package is removed so stale
-        // component references don't cause silent broadcast drops.
+        // Invalidate cached receiver components when a plugin package is removed, (re)installed or
+        // updated so stale component references don't cause silent broadcast drops.
         val pkgReceiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
                 val pkg = intent?.data?.schemeSpecificPart ?: return
                 receiverCache.keys.removeAll { it.startsWith("$pkg|") }
-                Log.i(TAG, "Package $pkg removed — cleared receiver cache")
+                Log.i(TAG, "Package $pkg changed (${intent.action}) — cleared receiver cache")
             }
         }
         ContextCompat.registerReceiver(
             context,
             pkgReceiver,
-            IntentFilter(Intent.ACTION_PACKAGE_REMOVED).apply { addDataScheme("package") },
+            IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED)
+                addDataScheme("package")
+            },
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         packageReceiver = pkgReceiver
@@ -267,14 +272,23 @@ class ExternalController(private val context: Context) {
     // cache it; getOrPut still resolves newly-installed plugins lazily.
     private val receiverCache = java.util.concurrent.ConcurrentHashMap<String, List<ComponentName>>()
 
-    private fun resolveReceivers(pkg: String, action: String): List<ComponentName> =
-        receiverCache.getOrPut("$pkg|$action") {
-            runCatching {
-                context.packageManager
-                    .queryBroadcastReceivers(Intent(action).setPackage(pkg), 0)
-                    .mapNotNull { it.activityInfo?.let { ai -> ComponentName(ai.packageName, ai.name) } }
-            }.getOrDefault(emptyList())
-        }
+    private fun resolveReceivers(pkg: String, action: String): List<ComponentName> {
+        receiverCache["$pkg|$action"]?.let { return it }
+        val resolved = runCatching {
+            context.packageManager
+                .queryBroadcastReceivers(
+                    // INCLUDE_STOPPED so a freshly-installed (stopped) plugin still resolves.
+                    Intent(action).setPackage(pkg).addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES),
+                    0
+                )
+                .mapNotNull { it.activityInfo?.let { ai -> ComponentName(ai.packageName, ai.name) } }
+        }.getOrDefault(emptyList())
+        // Never cache a miss: while a plugin is uninstalled the heartbeat keeps resolving, and a
+        // cached empty list would pin dispatch() to the setPackage fallback forever — which can't
+        // wake the plugin once it's reinstalled (stopped state). Retry on every send instead.
+        if (resolved.isNotEmpty()) receiverCache["$pkg|$action"] = resolved
+        return resolved
+    }
 
     /**
      * Delivers [intent] to [pkg] by EXPLICIT receiver component(s). Targeting the component — not
