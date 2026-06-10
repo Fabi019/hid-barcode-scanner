@@ -144,6 +144,14 @@ object ExternalProtocol {
                         Intent(ACTION_PLUGIN_SETTINGS).setPackage(info.packageName), 0
                     ) != null
                 }.getOrDefault(false)
+                // A plugin that doesn't declare a receiver for PING will never reply to liveness
+                // probes — the health monitor would perpetually see it as dead and keep reviving it.
+                val hasLifecycle = runCatching {
+                    pm.queryBroadcastReceivers(
+                        Intent(ACTION_PLUGIN_PING).setPackage(info.packageName), 0
+                    ).isNotEmpty()
+                }.getOrDefault(false)
+                if (!hasLifecycle) return@mapNotNull null
                 ExternalPlugin(info.packageName, label, author, version, hasSettings)
             }
             .distinctBy { it.packageName }

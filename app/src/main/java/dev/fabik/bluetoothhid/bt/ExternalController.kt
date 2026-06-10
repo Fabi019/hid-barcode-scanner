@@ -88,6 +88,7 @@ class ExternalController(private val context: Context) {
     val isActiveFlow = _isActive.asStateFlow()
 
     private var resultReceiver: BroadcastReceiver? = null
+    private var packageReceiver: BroadcastReceiver? = null
 
     fun start() {
         if (resultReceiver != null) return
@@ -136,6 +137,23 @@ class ExternalController(private val context: Context) {
         )
         resultReceiver = receiver
 
+        // Invalidate cached receiver components when a plugin package is removed so stale
+        // component references don't cause silent broadcast drops.
+        val pkgReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                val pkg = intent?.data?.schemeSpecificPart ?: return
+                receiverCache.keys.removeAll { it.startsWith("$pkg|") }
+                Log.i(TAG, "Package $pkg removed — cleared receiver cache")
+            }
+        }
+        ContextCompat.registerReceiver(
+            context,
+            pkgReceiver,
+            IntentFilter(Intent.ACTION_PACKAGE_REMOVED).apply { addDataScheme("package") },
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        packageReceiver = pkgReceiver
+
         heartbeatJob = scope.launch { heartbeatLoop() }
 
         _isActive.update { true }
@@ -153,6 +171,8 @@ class ExternalController(private val context: Context) {
         heartbeatJob = null
         resultReceiver?.let { runCatching { context.unregisterReceiver(it) } }
         resultReceiver = null
+        packageReceiver?.let { runCatching { context.unregisterReceiver(it) } }
+        packageReceiver = null
         _pluginHealth.update { emptyMap() }
         _isActive.update { false }
         Log.i(TAG, "External output stopped")
@@ -171,6 +191,10 @@ class ExternalController(private val context: Context) {
 
     private fun onPluginStatus(intent: Intent) {
         val pkg = intent.getStringExtra(ExternalProtocol.EXTRA_PACKAGE) ?: return
+        if (pkg !in enabledPackages) {
+            Log.w(TAG, "Ignoring STATUS from non-enabled package: $pkg")
+            return
+        }
         val running = intent.getBooleanExtra(ExternalProtocol.EXTRA_RUNNING, false)
         val detail = intent.getStringExtra(ExternalProtocol.EXTRA_STATUS_DETAIL)
         _pluginHealth.update { it + (pkg to PluginHealth(running, detail, System.currentTimeMillis())) }
@@ -309,11 +333,16 @@ class ExternalController(private val context: Context) {
                 putExtra(ExternalProtocol.EXTRA_REGEX_GROUPS, regexGroups.toTypedArray())
             imageName?.let { putExtra(ExternalProtocol.EXTRA_IMAGE_NAME, it) }
         }
-        targets.forEach { pkg ->
-            // Per-package copy delivered by explicit component (see dispatch) so even a stopped
-            // plugin is woken; permission-protected so only PERMISSION_RECEIVE_SCANS holders get it.
-            dispatch(pkg, Intent(base))
+        // Dispatch off the caller's thread: resolveReceivers() can hit PackageManager on the first
+        // call per plugin, which may block briefly. sendBroadcast itself is async, but the PM
+        // query is not — running it on IO keeps the scanner/camera thread free.
+        scope.launch(Dispatchers.IO) {
+            targets.forEach { pkg ->
+                // Per-package copy delivered by explicit component (see dispatch) so even a stopped
+                // plugin is woken; permission-protected so only PERMISSION_RECEIVE_SCANS holders get it.
+                dispatch(pkg, Intent(base))
+            }
+            Log.i(TAG, "Published scan $scanId to ${targets.size} plugin(s): $processedValue")
         }
-        Log.i(TAG, "Published scan $scanId to ${targets.size} plugin(s): $processedValue")
     }
 }

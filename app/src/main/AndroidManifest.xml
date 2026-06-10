@@ -44,6 +44,9 @@
         <intent>
             <action android:name="dev.fabik.bluetoothhid.plugin.action.SETTINGS" />
         </intent>
+        <intent>
+            <action android:name="dev.fabik.bluetoothhid.plugin.action.PING" />
+        </intent>
     </queries>
 
     <uses-permission

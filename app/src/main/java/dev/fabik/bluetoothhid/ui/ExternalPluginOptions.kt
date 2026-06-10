@@ -1,6 +1,9 @@
 package dev.fabik.bluetoothhid.ui
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -30,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -93,7 +97,24 @@ fun ExternalPluginsContent() {
 
     var externalOutputEnabled by rememberPreference(PreferenceStore.ENABLE_EXTERNAL_OUTPUT)
     var enabledPlugins by rememberPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
-    val plugins = remember { ExternalProtocol.discover(context) }
+    var plugins by remember { mutableStateOf(ExternalProtocol.discover(context)) }
+
+    // Re-run discover() when a package is installed, removed, or updated while the sheet is open.
+    DisposableEffect(context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                plugins = ExternalProtocol.discover(context)
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+        context.registerReceiver(receiver, filter)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     // Bind (without starting) the already-running BT service to read live plugin liveness reported
     // by the heartbeat. Null binder (service not up) → empty map → rows just show no status dot.
