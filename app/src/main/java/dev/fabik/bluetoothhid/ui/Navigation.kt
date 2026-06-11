@@ -5,7 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,8 +86,7 @@ fun NavGraph() {
         ) {
             composable(Routes.Devices) {
                 LaunchedEffect(Unit) {
-                    // Don't disconnect in External mode — it manages its own lifecycle
-                    if (!isExternal) controller?.disconnect()
+                    controller?.disconnect()
                 }
 
                 Devices {
@@ -146,12 +144,6 @@ fun NavGraph() {
 
                 Scanner(currentDevice) { result: BarcodeResult ->
                     sendQueue.trySend(result)
-                }
-
-                DisposableEffect(Unit) {
-                    onDispose {
-                        if (!isExternal) controller?.disconnect()
-                    }
                 }
             }
 

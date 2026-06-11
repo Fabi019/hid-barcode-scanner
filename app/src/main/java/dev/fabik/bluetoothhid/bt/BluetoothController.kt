@@ -431,6 +431,11 @@ class BluetoothController(var context: Context) {
         // Disconnect RFCOMM
         rfcommController.disconnectRFCOMM()
 
+        // In External mode there is no device — just stop forwarding
+        if (isExternalMode || PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(preferences)) {
+            externalController.stop()
+        }
+
         // Unregister HID profile
         unregisterHid()
 
@@ -555,12 +560,6 @@ class BluetoothController(var context: Context) {
         if (currentConnectionMode == ConnectionMode.RFCOMM) {
             rfcommController.disconnectRFCOMM()
             hostDevice.update { null }
-            return true
-        }
-
-        // In External mode there is no device — just stop forwarding
-        if (isExternalMode) {
-            externalController.stop()
             return true
         }
 
