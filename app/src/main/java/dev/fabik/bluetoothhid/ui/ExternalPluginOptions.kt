@@ -18,19 +18,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Lan
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -46,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.bt.ExternalController
@@ -59,6 +60,7 @@ import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberPreference
+import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import kotlinx.coroutines.delay
 
 // How often to ping plugins for status while the picker sheet is open (snappy, but light).
@@ -71,13 +73,40 @@ private const val STATUS_POLL_INTERVAL_MS = 2_000L
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExternalPluginsModal() {
+    val context = LocalContext.current
+
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isExternalMode = connectionMode == ConnectionMode.EXTERNAL.ordinal
+    var externalOutputEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_EXTERNAL_OUTPUT)
+
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
-    DropdownMenuItem(
-        text = { Text(stringResource(R.string.external_output)) },
-        leadingIcon = { Icon(Icons.Default.Extension, null) },
-        onClick = { showSheet = true }
+    ButtonPreference(
+        title = stringResource(R.string.external_output),
+        desc = stringResource(R.string.enable_external_output_desc),
+        icon = Icons.Default.Extension,
+        onClick = { showSheet = true },
+        extra = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                VerticalDivider(
+                    Modifier
+                        .height(32.dp)
+                        .padding(horizontal = 24.dp)
+                )
+                externalOutputEnabled?.let { c ->
+                    Switch(
+                        c || isExternalMode,
+                        enabled = !isExternalMode,
+                        onCheckedChange = {
+                            externalOutputEnabled = it
+                        }, modifier = Modifier.semantics(mergeDescendants = true) {
+                            stateDescription =
+                                "External output enabled is ${if (c) "On" else "Off"}"
+                        })
+                }
+            }
+        },
     )
 
     if (showSheet) {
@@ -92,10 +121,6 @@ fun ExternalPluginsModal() {
 @Composable
 fun ExternalPluginsContent() {
     val context = LocalContext.current
-    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
-    val isExternalMode = connectionMode == ConnectionMode.EXTERNAL.ordinal
-
-    var externalOutputEnabled by rememberPreference(PreferenceStore.ENABLE_EXTERNAL_OUTPUT)
     var enabledPlugins by rememberPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
     var plugins by remember { mutableStateOf(ExternalProtocol.discover(context)) }
 
@@ -145,25 +170,6 @@ fun ExternalPluginsContent() {
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(vertical = 8.dp)
         )
-
-        // Master toggle only applies to the HID/RFCOMM "parallel output" case. In EXTERNAL mode
-        // external output IS the mode (always on), so show an info note instead of a dead toggle.
-        if (isExternalMode) {
-            Text(
-                stringResource(R.string.external_output_always_on),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        } else {
-            SwitchPreference(
-                title = stringResource(R.string.enable_external_output),
-                desc = stringResource(R.string.enable_external_output_desc),
-                icon = Icons.Default.Lan,
-                checked = externalOutputEnabled,
-                onToggle = { externalOutputEnabled = it }
-            )
-        }
 
         if (plugins.isEmpty()) {
             Text(

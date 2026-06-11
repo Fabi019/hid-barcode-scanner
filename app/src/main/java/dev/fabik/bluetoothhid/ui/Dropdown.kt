@@ -256,10 +256,6 @@ fun SettingsDropdown() {
                 QosOptionsModal()
             }
 
-            // External output plugin picker — available in every mode (parallel output toggle
-            // for HID/RFCOMM lives inside it).
-            ExternalPluginsModal()
-
             ImportExportDropdown()
         }
     }
