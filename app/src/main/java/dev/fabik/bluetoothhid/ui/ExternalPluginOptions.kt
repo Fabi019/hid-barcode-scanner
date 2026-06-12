@@ -52,6 +52,7 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.bt.ExternalController
 import dev.fabik.bluetoothhid.bt.ExternalPlugin
 import dev.fabik.bluetoothhid.bt.ExternalProtocol
+import dev.fabik.bluetoothhid.bt.PluginState
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
 import dev.fabik.bluetoothhid.ui.theme.StatusConnected
 import dev.fabik.bluetoothhid.ui.theme.StatusDown
@@ -259,11 +260,23 @@ private fun PluginRow(
 /** A colored dot + the plugin's reported transport status (connected / waiting / down). */
 @Composable
 private fun PluginStatusLine(health: ExternalController.PluginHealth) {
-    val connected = health.detail?.contains("connected", ignoreCase = true) == true
-    val (color, fallback) = when {
-        !health.running -> StatusDown to "down"        // red — service not running
-        connected -> StatusConnected to "connected"     // green — peer connected
-        else -> StatusWaiting to "waiting"              // amber — up but no peer yet
+    // The dot is driven by the machine-readable state; detail is display-only (localized by the
+    // plugin — parsing it is exactly the bug the versioned contract removed). The version check
+    // guards future drift: one side updated without the other renders as "update the plugin".
+    val versionMismatch = health.protocolVersion != ExternalProtocol.PROTOCOL_VERSION
+    val (color, text) = when {
+        versionMismatch ->
+            StatusDown to stringResource(R.string.external_plugin_update_required)
+        health.state == PluginState.NO_PERMISSION ->
+            StatusDown to stringResource(R.string.external_plugin_no_permission)
+        health.state == PluginState.BLOCKED ->
+            StatusDown to stringResource(R.string.external_plugin_blocked)
+        !health.running || health.state == PluginState.ERROR || health.state == PluginState.IDLE ->
+            StatusDown to (health.detail ?: stringResource(R.string.external_status_down))
+        health.state == PluginState.CONNECTED ->
+            StatusConnected to (health.detail ?: stringResource(R.string.external_status_connected))
+        else -> // STARTING / CONNECTING / LISTENING — up, waiting for a peer
+            StatusWaiting to (health.detail ?: stringResource(R.string.external_status_waiting))
     }
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
         Box(
@@ -274,7 +287,7 @@ private fun PluginStatusLine(health: ExternalController.PluginHealth) {
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            health.detail ?: fallback,
+            text,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

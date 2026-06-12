@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
 import androidx.core.content.ContextCompat
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import kotlinx.coroutines.CoroutineScope
@@ -41,9 +42,10 @@ import java.util.UUID
  *
  * Self-healing: a plugin's transport lives in its own (foreground) service, which the OS can kill.
  * The core can't observe that directly, so it pings each enabled plugin on an interval; a missing
- * reply (or running=false) triggers a fresh SET_ENABLED(true) to revive it. Sending any of these
- * targeted broadcasts also cold-starts a dead plugin process and grants it the short FGS-start
- * window it needs to (re)spawn its service.
+ * reply (or running=false) triggers a fresh SET_ENABLED(true) to revive it. Sending a targeted
+ * broadcast cold-starts a dead plugin PROCESS, but on Android 12+ it does NOT exempt the plugin
+ * from foreground-service-start-from-background restrictions — the plugin catches the denial and
+ * reports state=BLOCKED so the UI can show the remedy (Autostart / battery exemption).
  */
 class ExternalController(private val context: Context) {
     companion object {
@@ -79,6 +81,14 @@ class ExternalController(private val context: Context) {
         val running: Boolean,
         val detail: String?,
         val lastSeen: Long,
+        /** Machine-readable transport state; UNKNOWN for a state name this core doesn't know yet. */
+        val state: PluginState = PluginState.UNKNOWN,
+        /**
+         * Plugin's [ExternalProtocol.PROTOCOL_VERSION]. Versioning shipped with the contract
+         * itself, so every plugin sends it — anything ≠ ours (incl. a defensive 0 for "absent")
+         * means the two apps drifted apart and renders as "update the plugin".
+         */
+        val protocolVersion: Int = 0,
     )
 
     private val _pluginHealth = MutableStateFlow<Map<String, PluginHealth>>(emptyMap())
@@ -105,6 +115,9 @@ class ExternalController(private val context: Context) {
                 Log.i(TAG, "Enabled external plugins: $next")
 
                 (next - previous).forEach { pkg ->
+                    // Pre-warm the display label here (IO dispatcher) so onSendResult — which
+                    // runs on the main thread — always hits the cache instead of querying PM.
+                    pluginShortLabel(pkg)
                     sendSetEnabled(pkg, true)
                     sendControl(pkg, ExternalProtocol.ACTION_PLUGIN_PING)
                 }
@@ -143,6 +156,7 @@ class ExternalController(private val context: Context) {
             override fun onReceive(ctx: Context?, intent: Intent?) {
                 val pkg = intent?.data?.schemeSpecificPart ?: return
                 receiverCache.keys.removeAll { it.startsWith("$pkg|") }
+                labelCache.remove(pkg) // a reinstall/update may change the display label too
                 Log.i(TAG, "Package $pkg changed (${intent.action}) — cleared receiver cache")
             }
         }
@@ -185,13 +199,46 @@ class ExternalController(private val context: Context) {
 
     private fun onSendResult(intent: Intent) {
         val scanId = intent.getStringExtra(ExternalProtocol.EXTRA_SCAN_ID)
+        // Contract v1: results carry the sender package — with several plugins enabled every
+        // result must be attributable ("which transport failed?"), same as the STATUS channel.
+        val pkg = intent.getStringExtra(ExternalProtocol.EXTRA_PACKAGE)
+        if (pkg == null || pkg !in enabledPackages) {
+            Log.w(TAG, "Ignoring SEND_RESULT from non-enabled/unknown package: $pkg")
+            return
+        }
         val ok = intent.getBooleanExtra(ExternalProtocol.EXTRA_RESULT_OK, false)
         val detail = intent.getStringExtra(ExternalProtocol.EXTRA_RESULT_DETAIL)
-        // scan_id is for correlation/logs only — NOT user-facing. Show the plugin's
-        // human-readable detail (or a plain sent/failed) to the user.
-        val status = detail ?: if (ok) "sent" else "failed"
-        _lastResult.tryEmit(status)
-        Log.i(TAG, "External send result: scan=$scanId ok=$ok detail=$detail")
+        // scan_id is for correlation/logs only — NOT user-facing. Show "Plugin <short name>:
+        // <the plugin's human-readable detail>" (or a localized sent/failed when detail is absent).
+        val status = detail ?: context.getString(
+            if (ok) R.string.external_result_sent else R.string.external_result_failed
+        )
+        // Assembled in code on purpose: the resource holds only the translated noun, so
+        // translations carry no positional placeholders to get corrupted.
+        _lastResult.tryEmit(
+            "${context.getString(R.string.external_result_prefix)} ${pluginShortLabel(pkg)}: $status"
+        )
+        Log.i(TAG, "External send result: plugin=$pkg scan=$scanId ok=$ok detail=$detail")
+    }
+
+    // Short display names for attributing results, resolved once per package: the receiver's
+    // shortLabel meta-data (e.g. "TCP"), falling back to the full picker label, the app label,
+    // then the bare package name.
+    private val labelCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun pluginShortLabel(pkg: String): String = labelCache.getOrPut(pkg) {
+        runCatching {
+            val pm = context.packageManager
+            pm.queryBroadcastReceivers(
+                Intent(ExternalProtocol.ACTION_BARCODE_SCANNED).setPackage(pkg),
+                android.content.pm.PackageManager.GET_META_DATA
+            ).firstNotNullOfOrNull {
+                it.activityInfo?.metaData?.let { meta ->
+                    meta.getString(ExternalProtocol.META_PLUGIN_SHORT_LABEL)
+                        ?: meta.getString(ExternalProtocol.META_PLUGIN_LABEL)
+                }
+            } ?: pm.getApplicationInfo(pkg, 0).loadLabel(pm).toString()
+        }.getOrDefault(pkg)
     }
 
     private fun onPluginStatus(intent: Intent) {
@@ -202,8 +249,12 @@ class ExternalController(private val context: Context) {
         }
         val running = intent.getBooleanExtra(ExternalProtocol.EXTRA_RUNNING, false)
         val detail = intent.getStringExtra(ExternalProtocol.EXTRA_STATUS_DETAIL)
-        _pluginHealth.update { it + (pkg to PluginHealth(running, detail, System.currentTimeMillis())) }
-        Log.i(TAG, "Plugin status: $pkg running=$running detail=$detail")
+        val state = PluginState.fromExtra(intent.getStringExtra(ExternalProtocol.EXTRA_STATE))
+        val version = intent.getIntExtra(ExternalProtocol.EXTRA_PROTOCOL_VERSION, 0)
+        _pluginHealth.update {
+            it + (pkg to PluginHealth(running, detail, System.currentTimeMillis(), state, version))
+        }
+        Log.i(TAG, "Plugin status: $pkg running=$running state=$state v=$version detail=$detail")
     }
 
     /**
@@ -299,6 +350,8 @@ class ExternalController(private val context: Context) {
      */
     private fun dispatch(pkg: String, intent: Intent) {
         intent.setPackage(pkg).addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+        // Single choke point for ALL core→plugin messages — every one carries the contract version.
+        intent.putExtra(ExternalProtocol.EXTRA_PROTOCOL_VERSION, ExternalProtocol.PROTOCOL_VERSION)
         val components = resolveReceivers(pkg, intent.action ?: return)
         if (components.isEmpty()) {
             context.sendBroadcast(intent, ExternalProtocol.PERMISSION_RECEIVE_SCANS)

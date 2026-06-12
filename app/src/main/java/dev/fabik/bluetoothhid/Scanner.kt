@@ -261,11 +261,13 @@ fun Scanner(
 
     // Surface external-output delivery status reported back by extensions (sent/failed).
     // A Snackbar on the scanner sits clear of the Send button (unlike a Toast).
+    // The flow value is already fully formatted ("Plugin TCP: <detail>" — attribution added in
+    // ExternalController), so no extra wrapper here: a second prefix just made it noisy.
     val controller = LocalController.current
     LaunchedEffect(controller) {
         controller?.externalLastResultFlow?.collect { result ->
             snackbarHostState.showSnackbar(
-                message = context.getString(R.string.external_last_result, result),
+                message = result,
                 duration = SnackbarDuration.Short
             )
         }

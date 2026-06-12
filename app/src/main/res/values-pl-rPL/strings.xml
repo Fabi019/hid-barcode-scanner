@@ -307,7 +307,6 @@
     <string name="external_output_desc">Zainstalowane aplikacje-rozszerzenia, które odbierają zeskanowane wartości</string>
     <string name="external_no_plugins">Brak zainstalowanych wtyczek</string>
     <string name="external_no_plugins_desc">Zainstaluj wtyczkę, aby przekazywać skany na zewnątrz</string>
-    <string name="external_last_result">Ostatni wynik: %1$s</string>
     <string name="external_active">Wyjście do wtyczek aktywne</string>
     <string name="external_active_desc">Skany są przekazywane do włączonych rozszerzeń</string>
     <string name="external_no_plugin_active">Skany nie są przekazywane</string>
@@ -321,6 +320,15 @@
     <string name="external_output_always_on">W trybie „Tylko zewnętrzne wtyczki” wyjście do wtyczek jest zawsze włączone</string>
     <string name="external_long_press_hint">Przytrzymaj wtyczkę, aby otworzyć jej ustawienia</string>
     <string name="external_plugin_no_settings">Ta wtyczka nie posiada ustawień</string>
+    <string name="external_plugin_update_required">Niezgodna wersja wtyczki — zaktualizuj wtyczkę</string>
+    <string name="external_plugin_no_permission">Wtyczka utraciła uprawnienie — przeinstaluj wtyczkę</string>
+    <string name="external_plugin_blocked">Start zablokowany przez system — zezwól wtyczce na Autostart</string>
+    <string name="external_status_down">nieaktywna</string>
+    <string name="external_status_connected">połączona</string>
+    <string name="external_status_waiting">oczekuje</string>
+    <string name="external_result_prefix">Wtyczka</string>
+    <string name="external_result_sent">wysłano</string>
+    <string name="external_result_failed">niepowodzenie</string>
     <plurals name="export_items">
         <item quantity="one">Eksport %1$d elementu</item>
         <item quantity="other">Eksport %1$d elementów</item>

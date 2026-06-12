@@ -618,7 +618,11 @@ class BluetoothController(var context: Context) {
                     preserveUnsupported,
                     imageName,
                     regexGroups
-                )
+                    // External receives the final text exactly like HID does: the simple extra-key
+                    // suffixes (ENTER/TAB/SPACE) apply here too — they double as the line
+                    // terminator for plugins, which forward the text verbatim. CUSTOM keeps using
+                    // the template ({ENTER} → \r\n there); NONE/CUSTOM have a null suffix.
+                ).let { text -> extraKeys.suffix?.let { text + it } ?: text }
                 externalController.publishScan(
                     rawValue = string,
                     processedValue = externalText,

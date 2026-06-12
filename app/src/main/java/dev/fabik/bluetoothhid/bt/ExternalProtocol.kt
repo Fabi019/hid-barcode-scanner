@@ -16,6 +16,28 @@ data class ExternalPlugin(
 )
 
 /**
+ * Machine-readable transport state reported by a plugin in [ExternalProtocol.EXTRA_STATE].
+ * [ExternalProtocol.EXTRA_STATUS_DETAIL] stays human-only and must never be parsed (it's
+ * localized by the plugin). [UNKNOWN] = extra absent or an unrecognized value (old/foreign plugin).
+ */
+enum class PluginState {
+    IDLE, STARTING, CONNECTING, CONNECTED, LISTENING, ERROR,
+
+    /** OS denied the plugin's background service start — user must allow Autostart for it. */
+    BLOCKED,
+
+    /** Plugin lost its RECEIVE_SCANS grant (core reinstall) — reinstalling the plugin fixes it. */
+    NO_PERMISSION,
+
+    UNKNOWN;
+
+    companion object {
+        fun fromExtra(value: String?): PluginState =
+            entries.firstOrNull { it.name == value } ?: UNKNOWN
+    }
+}
+
+/**
  * Broadcast contract between the core scanner app and external transport extensions.
  *
  * Rationale: the core app stays focused on scanning + Bluetooth HID. Any non-Bluetooth
@@ -27,6 +49,17 @@ data class ExternalPlugin(
  * Keep this file in sync with the companion/extension apps (it IS the public API).
  */
 object ExternalProtocol {
+    /**
+     * Contract version: a single int sent as [EXTRA_PROTOCOL_VERSION] on every message in both
+     * directions and compared for equality only. Bumped (together with the plugins) whenever
+     * message semantics change. No backward-compat fallbacks by design: a status reply without
+     * the current version renders as "update plugin".
+     */
+    const val PROTOCOL_VERSION = 1
+
+    /** Int — [PROTOCOL_VERSION] of the sender, attached to every message in both directions. */
+    const val EXTRA_PROTOCOL_VERSION = "protocol_version"
+
     // ── Core → extension ────────────────────────────────────────────────────────────────────
     /** A barcode was scanned. Broadcast to any extension holding [PERMISSION_RECEIVE_SCANS]. */
     const val ACTION_BARCODE_SCANNED = "dev.fabik.bluetoothhid.action.BARCODE_SCANNED"
@@ -73,6 +106,13 @@ object ExternalProtocol {
     /** Optional <meta-data> on the extension's receiver giving a human-friendly display name. */
     const val META_PLUGIN_LABEL = "dev.fabik.bluetoothhid.plugin.label"
 
+    /**
+     * Optional <meta-data> on the extension's receiver: a SHORT name (e.g. "TCP") used where
+     * space is scarce — the per-scan result snackbar ("Plugin TCP: sent"). Falls back to
+     * [META_PLUGIN_LABEL], then the app label.
+     */
+    const val META_PLUGIN_SHORT_LABEL = "dev.fabik.bluetoothhid.plugin.shortLabel"
+
     /** Optional <meta-data> on the extension's receiver giving the plugin's author. */
     const val META_PLUGIN_AUTHOR = "dev.fabik.bluetoothhid.plugin.author"
 
@@ -101,6 +141,8 @@ object ExternalProtocol {
     const val EXTRA_IMAGE_NAME = "image_name"
 
     // ── Extras for ACTION_SEND_RESULT ───────────────────────────────────────────────────────
+    // Also carries [EXTRA_PACKAGE]: with several plugins enabled, every result must be
+    // attributable to the transport that produced it.
     /** Boolean — whether the extension actually delivered the value. */
     const val EXTRA_RESULT_OK = "result_ok"
     /** String? — human-readable status detail (e.g. "TCP 192.168.0.5:51000"). */
@@ -115,8 +157,13 @@ object ExternalProtocol {
     const val EXTRA_PACKAGE = "package"
     /** Boolean — whether the plugin's transport/service is currently up. */
     const val EXTRA_RUNNING = "running"
-    /** String? — human-readable transport status (e.g. "TCP server :51000 (connected)"). */
+    /**
+     * String? — human-readable transport status (e.g. "TCP server :51000 (connected)").
+     * Localized by the plugin — display only, NEVER parse it; machine state is [EXTRA_STATE].
+     */
     const val EXTRA_STATUS_DETAIL = "status_detail"
+    /** String — [PluginState].name; the machine-readable transport state. */
+    const val EXTRA_STATE = "state"
 
     /**
      * Finds installed extensions that declare a receiver for [ACTION_BARCODE_SCANNED] AND request
