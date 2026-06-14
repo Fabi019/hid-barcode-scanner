@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
+import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -158,6 +159,23 @@ class ExternalController(private val context: Context) {
                 receiverCache.keys.removeAll { it.startsWith("$pkg|") }
                 labelCache.remove(pkg) // a reinstall/update may change the display label too
                 Log.i(TAG, "Package $pkg changed (${intent.action}) — cleared receiver cache")
+
+                // Real uninstall (not the REMOVED half of an update): drop the gone plugin from the
+                // enabled set so it stops being the source of truth for the picker and the heartbeat
+                // doesn't keep "reviving" a package that no longer exists. The enabled-observer turns
+                // this preference write into the usual disable path — SET_ENABLED(false) (a no-op for
+                // the gone app) and pruning its _pluginHealth entry — so no extra cleanup is needed.
+                val replacing = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)
+                if (intent.action == Intent.ACTION_PACKAGE_REMOVED && !replacing &&
+                    pkg in enabledPackages
+                ) {
+                    scope.launch {
+                        context.setPreference(
+                            PreferenceStore.ENABLED_EXTERNAL_PLUGINS, enabledPackages - pkg
+                        )
+                        Log.i(TAG, "Plugin $pkg uninstalled — pruned from enabled plugins")
+                    }
+                }
             }
         }
         ContextCompat.registerReceiver(
