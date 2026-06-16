@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -110,6 +111,12 @@ class ExternalController(private val context: Context) {
         // SET_ENABLED(false). The first emission treats every enabled plugin as "added", so simply
         // starting external output warms up whatever is already enabled.
         enabledObserverJob = scope.launch {
+            // Reconcile before observing: the runtime ACTION_PACKAGE_REMOVED prune (below) only fires
+            // while the app is alive, so a plugin uninstalled in the meantime lingers as a ghost in
+            // the enabled set — the heartbeat would keep trying to "revive" a package that's gone.
+            // Drop any enabled package that's no longer installed; the write-back becomes collect()'s
+            // first emission, so we never even warm up a ghost.
+            pruneUninstalledPlugins()
             context.getPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS).collect { next ->
                 val previous = enabledPackages
                 enabledPackages = next
@@ -214,6 +221,27 @@ class ExternalController(private val context: Context) {
         _isActive.update { false }
         Log.i(TAG, "External output stopped")
     }
+
+    /**
+     * Startup reconciliation for the runtime [Intent.ACTION_PACKAGE_REMOVED] prune, which can't run
+     * while the app is dead: drops every enabled package that is no longer installed. Same semantics
+     * as the runtime path — only a fully-gone package is pruned (a still-installed plugin is left
+     * alone), so we never silently disable a plugin that's merely momentarily mis-detected.
+     */
+    private suspend fun pruneUninstalledPlugins() {
+        val enabled = context.getPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS).first()
+        val survivors = enabled.filterTo(mutableSetOf()) { isInstalled(it) }
+        if (survivors.size != enabled.size) {
+            Log.i(TAG, "Pruning uninstalled plugins on start: ${enabled - survivors}")
+            context.setPreference(PreferenceStore.ENABLED_EXTERNAL_PLUGINS, survivors)
+        }
+    }
+
+    // True if [pkg] is currently installed (and visible to us); NameNotFoundException ⇒ gone.
+    private fun isInstalled(pkg: String): Boolean = runCatching {
+        context.packageManager.getApplicationInfo(pkg, 0)
+        true
+    }.getOrDefault(false)
 
     private fun onSendResult(intent: Intent) {
         val scanId = intent.getStringExtra(ExternalProtocol.EXTRA_SCAN_ID)
