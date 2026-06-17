@@ -68,6 +68,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
@@ -125,6 +126,7 @@ import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
+import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
@@ -141,8 +143,12 @@ import dev.fabik.bluetoothhid.utils.getPreferenceStateBlocking
 import dev.fabik.bluetoothhid.utils.getPreferenceStateDefault
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+
+// Grace period after entering the scanner before a silent external plugin is shown as "not responding".
+private const val EXTERNAL_INIT_GRACE_MS = 6_000L
 
 /**
  * Helper function to create a circular background modifier for icons in fullscreen mode.
@@ -159,12 +165,13 @@ private fun Modifier.iconBackgroundModifier(): Modifier {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.ElevatedWarningCard(
+fun ElevatedWarningCard(
     message: String,
     subMessage: String? = null,
     onClick: () -> Unit,
     onDismiss: (() -> Unit)? = null,
-    visible: Boolean
+    visible: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
 
@@ -178,9 +185,7 @@ fun BoxScope.ElevatedWarningCard(
 
     AnimatedVisibility(
         visible = visible, // You will control visibility dynamically
-        modifier = Modifier
-            .padding(12.dp)
-            .align(Alignment.TopCenter)
+        modifier = modifier
     ) {
         SwipeToDismissBox(
             state = dismissState,
@@ -254,6 +259,27 @@ fun Scanner(
         }
     }
 
+    // Surface external-output delivery status reported back by extensions (sent/failed).
+    // A Snackbar on the scanner sits clear of the Send button (unlike a Toast).
+    // The flow value is already fully formatted ("Plugin TCP: <detail>" — attribution added in
+    // ExternalController), so no extra wrapper here: a second prefix just made it noisy.
+    val controller = LocalController.current
+    LaunchedEffect(controller) {
+        controller?.externalLastResultFlow?.collect { result ->
+            snackbarHostState.showSnackbar(
+                message = result,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    // Entering the scanner kicks enabled plugins right away (SET_ENABLED + ping) so a down transport
+    // starts immediately instead of waiting for the next heartbeat — the readiness card below then
+    // shows "waiting → not responding → active" as their status comes back.
+    LaunchedEffect(controller) {
+        controller?.warmUpExternalPlugins()
+    }
+
     Scaffold(
         topBar = {
             val onAddArea: (() -> Unit)? = if (restrictArea && overlayType == OverlayType.CUSTOM) {
@@ -271,7 +297,10 @@ fun Scanner(
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            currentDevice?.let {
+            val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+            val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+            // External has no Bluetooth device but still needs a manual send button
+            if (currentDevice != null || isExternal) {
                 val clearAfterSend by context.getPreferenceState(PreferenceStore.CLEAR_AFTER_SEND)
 
                 currentResult?.let {
@@ -385,8 +414,19 @@ fun Scanner(
         ) {
 
             BarcodeValue(currentResult?.text)
-            CapsLockWarning()
-            DeviceStatusIndicator()
+
+            // Warning cards share one top-center column so they stack instead of overlapping.
+            Column(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                CapsLockWarning()
+                DeviceStatusIndicator()
+                ExternalPluginIndicator()
+            }
 
             cameraInfo?.let {
                 ZoomStateInfo(it)
@@ -753,6 +793,9 @@ private fun ScannerAppBar(
     onAddArea: (() -> Unit)?
 ) {
     val navigation = LocalNavigation.current
+    val context = LocalContext.current
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
     // Shadow for text in fullscreen mode
     val textShadow = Shadow(
@@ -795,7 +838,7 @@ private fun ScannerAppBar(
                 ToggleFlashButton(camera, info, transparent)
             }
 
-            currentDevice?.let {
+            if (currentDevice != null || isExternal) {
                 IconButton(onClick = {
                     keyboardDialog.open()
                 }, Modifier.tooltip(stringResource(R.string.manual_input))) {
@@ -886,7 +929,7 @@ fun ToggleFlashButton(camera: CameraControl?, info: CameraInfo, transparent: Boo
  * connected device and disables it.
  */
 @Composable
-fun BoxScope.CapsLockWarning() {
+fun CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
@@ -916,7 +959,7 @@ fun BoxScope.CapsLockWarning() {
  * Otherwise in RFCOMM mode: show "Listening for connection from [ device ] when server is listening"
  */
 @Composable
-fun BoxScope.DeviceStatusIndicator() {
+fun DeviceStatusIndicator() {
     val controller = LocalController.current
     val context = LocalContext.current
     val navigation = LocalNavigation.current
@@ -925,11 +968,16 @@ fun BoxScope.DeviceStatusIndicator() {
         val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+        val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
-        // Dismissed state resets when the device changes or user leaves the scanner
-        var dismissed by remember(currentDevice) { mutableStateOf(false) }
+        // Dismissed state resets when the device or mode changes or user leaves the scanner
+        var dismissed by remember(currentDevice, connectionMode) { mutableStateOf(false) }
 
         when {
+            // External mode has no Bluetooth device — plugin readiness is shown by
+            // ExternalPluginIndicator instead, so suppress the "No device" card here.
+            isExternal -> Unit
+
             currentDevice == null -> {
                 // No device selected - show "No device connected" regardless of mode
                 ElevatedWarningCard(
@@ -961,6 +1009,69 @@ fun BoxScope.DeviceStatusIndicator() {
             }
         }
     }
+}
+
+/**
+ * Plugin-readiness card for external output. Shown both in EXTERNAL mode (where it's the primary
+ * status) and when external output is enabled in parallel with HID/RFCOMM (hybrid). It's placed in
+ * the shared warning-card column, so it stacks cleanly below the device card without overlapping.
+ *
+ * States: no plugin enabled → waiting (within grace) → not responding (tap to retry) → active.
+ */
+@Composable
+fun ExternalPluginIndicator() {
+    val controller = LocalController.current ?: return
+    val context = LocalContext.current
+
+    val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
+    val externalOutputEnabled by context.getPreferenceState(PreferenceStore.ENABLE_EXTERNAL_OUTPUT)
+    // Only engaged as the sole mode (EXTERNAL) or in parallel with HID/RFCOMM (the toggle).
+    if (!isExternal && externalOutputEnabled != true) return
+
+    val isExternalActive by controller.externalActiveFlow.collectAsStateWithLifecycle()
+    val enabledPlugins by context.getPreferenceState(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
+    // "Enabled" is just stored package names — intersect with what's actually installed so a stale
+    // entry (plugin uninstalled while still enabled) doesn't masquerade as "waiting for a plugin".
+    val installed = remember { ExternalProtocol.discover(context).map { it.packageName }.toSet() }
+    val enabled = (enabledPlugins ?: emptySet()) intersect installed
+    val pluginHealth by controller.externalPluginHealthFlow.collectAsStateWithLifecycle()
+    val anyRunning = enabled.any { pluginHealth[it]?.running == true }
+
+    // Give the plugin a grace window to come up before declaring it unresponsive.
+    var graceExpired by remember(enabled, isExternalActive) { mutableStateOf(false) }
+    LaunchedEffect(enabled, isExternalActive, anyRunning) {
+        graceExpired = false
+        if (enabled.isNotEmpty() && isExternalActive && !anyRunning) {
+            delay(EXTERNAL_INIT_GRACE_MS)
+            graceExpired = true
+        }
+    }
+
+    val notResponding = enabled.isNotEmpty() && isExternalActive && !anyRunning && graceExpired
+    val (msgRes, subRes) = when {
+        installed.isEmpty() ->
+            R.string.external_no_plugins to R.string.external_no_plugins_desc
+        enabled.isEmpty() ->
+            R.string.external_no_plugin_active to R.string.external_no_plugin_active_desc
+        anyRunning ->
+            R.string.external_active to R.string.external_active_desc
+        notResponding ->
+            R.string.external_not_responding to R.string.external_not_responding_desc
+        else ->
+            R.string.external_waiting to R.string.external_waiting_desc
+    }
+
+    var dismissed by remember(connectionMode, enabled) { mutableStateOf(false) }
+
+    ElevatedWarningCard(
+        message = stringResource(msgRes),
+        subMessage = stringResource(subRes),
+        // Tap to retry only makes sense in the "not responding" state
+        onClick = { if (notResponding) controller.warmUpExternalPlugins() },
+        onDismiss = { dismissed = true },
+        visible = !dismissed
+    )
 }
 
 /**

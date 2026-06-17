@@ -55,6 +55,25 @@ class BluetoothController(var context: Context) {
     // RFCOMM Controller integration
     private val rfcommController = RfcommController(context, bluetoothAdapter!!)
 
+    // External-output integration: forwards scans to companion/extension apps via broadcast
+    private val externalController = ExternalController(context)
+
+    // Last delivery status reported back by an extension (for optional UI feedback)
+    val externalLastResultFlow = externalController.lastResultFlow
+
+    // Per-plugin liveness (running + transport detail), driven by the heartbeat (for optional UI)
+    val externalPluginHealthFlow = externalController.pluginHealthFlow
+
+    // Whether external output is actually running (receiver registered + heartbeat live), so the
+    // UI can reflect real runtime state instead of just the mode/preference.
+    val externalActiveFlow = externalController.isActiveFlow
+
+    /** Ping enabled external plugins now to refresh their reported status (used by the picker UI). */
+    fun requestExternalStatus() = externalController.requestStatus()
+
+    /** Kick enabled external plugins now (SET_ENABLED + ping) to start/revive their transport. */
+    fun warmUpExternalPlugins() = externalController.warmUpEnabled()
+
     private var deviceListener: MutableList<Listener> = mutableListOf()
 
     @Volatile
@@ -67,6 +86,8 @@ class BluetoothController(var context: Context) {
 
     private var autoConnectEnabled: Boolean = false
     private var currentConnectionMode: ConnectionMode = ConnectionMode.HID
+
+    private val isExternalMode get() = currentConnectionMode == ConnectionMode.EXTERNAL
     private lateinit var preferences: Map<PreferenceStore.Preference<*>, *>
 
     var keyboardSender: KeyboardSender? = null
@@ -230,7 +251,8 @@ class BluetoothController(var context: Context) {
                 PreferenceStore.KEYBOARD_LAYOUT,
                 PreferenceStore.TEMPLATE_TEXT,
                 PreferenceStore.EXPAND_CODE,
-                PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS
+                PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS,
+                PreferenceStore.ENABLE_EXTERNAL_OUTPUT
             ).distinctUntilChanged().debounce(200).collect {
                 val mode = PreferenceStore.CONNECTION_MODE.extractEnum(it)
                 if (currentConnectionMode != mode) {
@@ -239,6 +261,16 @@ class BluetoothController(var context: Context) {
                             Log.d(TAG, "Switching to RFCOMM mode")
                             rfcommController.connectRFCOMM()
                             // Note: HID remains registered but inactive in RFCOMM mode
+                        }
+
+                        ConnectionMode.EXTERNAL -> {
+                            Log.d(TAG, "Switching to External mode")
+                            rfcommController.disconnectRFCOMM()
+                            // External has no Bluetooth peer — tear down any active HID device
+                            // connection and clear the device state so the UI stops showing
+                            // "connected to <device>".
+                            hostDevice.value?.let { hidDevice?.disconnect(it) }
+                            hostDevice.update { null }
                         }
 
                         ConnectionMode.HID -> {
@@ -252,6 +284,14 @@ class BluetoothController(var context: Context) {
                     }
                     currentConnectionMode = mode
                 }
+
+                // External output lifecycle — active in EXTERNAL mode OR when the parallel-output
+                // toggle is on (HID/RFCOMM + "also send to external plugins"). Reacts to both the
+                // mode and the toggle changing; start()/stop() are idempotent.
+                val externalActive = mode == ConnectionMode.EXTERNAL ||
+                    PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(it)
+                if (externalActive) externalController.start() else externalController.stop()
+
                 autoConnectEnabled = PreferenceStore.AUTO_CONNECT.extract(it)
                 rfcommController.setAutoConnectEnabled(autoConnectEnabled)
 
@@ -349,6 +389,11 @@ class BluetoothController(var context: Context) {
             _isRFCOMMListening.update { isListening }
         }
 
+        // Auto-start External output since it doesn't require Bluetooth device selection
+        if (currentConnectionMode == ConnectionMode.EXTERNAL) {
+            externalController.start()
+        }
+
         return bluetoothAdapter?.getProfileProxy(
             context,
             serviceListener,
@@ -385,6 +430,11 @@ class BluetoothController(var context: Context) {
 
         // Disconnect RFCOMM
         rfcommController.disconnectRFCOMM()
+
+        // In External mode there is no device — just stop forwarding
+        if (isExternalMode || PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(preferences)) {
+            externalController.stop()
+        }
 
         // Unregister HID profile
         unregisterHid()
@@ -548,14 +598,16 @@ class BluetoothController(var context: Context) {
             // Get scanner ID
             val scannerID = getScannerID()
 
-            // Get preserve unsupported placeholders preference (RFCOMM only)
+            // Get preserve unsupported placeholders preference (RFCOMM and External raw-text path)
             val preserveUnsupported =
                 PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS.extract(preferences)
 
-            // Check connection mode - RFCOMM or HID using cached value
-            if (currentConnectionMode == ConnectionMode.RFCOMM) {
-                // RFCOMM mode - process template for text output
-                val processedString = TemplateProcessor.processTemplate(
+            // External output: active in EXTERNAL mode, or as a parallel "also send to external"
+            // toggle in HID/RFCOMM mode. Uses the raw-text (RFCOMM) template path.
+            val externalOutputEnabled = isExternalMode ||
+                PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(preferences)
+            if (externalOutputEnabled) {
+                val externalText = TemplateProcessor.processTemplate(
                     string,
                     template,
                     TemplateProcessor.TemplateMode.RFCOMM,
@@ -563,38 +615,74 @@ class BluetoothController(var context: Context) {
                     scanTimestamp,
                     scannerID,
                     barcodeType,
-                    preserveUnsupported,  // Pass preference
+                    preserveUnsupported,
                     imageName,
                     regexGroups
-                )
-                rfcommController.sendProcessedData(processedString)
-            } else {
-                // HID mode - process template for HID conversion.
-                // expandCode controls whether HID template tokens inside the barcode value (e.g.
-                // "{ENTER}" embedded in the scanned data) are expanded as real keypresses (true)
-                // or typed as literal text (false, the default).  This is handled entirely inside
-                // TemplateProcessor by escaping { } in the barcode value when expandCode=false;
-                // KeyboardSender no longer needs to know about it.
-                val processedString = TemplateProcessor.processTemplate(
-                    string,
-                    template,
-                    TemplateProcessor.TemplateMode.HID,
-                    from,
-                    scanTimestamp,
-                    scannerID,
-                    barcodeType,
-                    preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
-                    scanImageFileName = imageName,
+                    // External receives the final text exactly like HID does: the simple extra-key
+                    // suffixes (ENTER/TAB/SPACE) apply here too — they double as the line
+                    // terminator for plugins, which forward the text verbatim. CUSTOM keeps using
+                    // the template ({ENTER} → \r\n there); NONE/CUSTOM have a null suffix.
+                ).let { text -> extraKeys.suffix?.let { text + it } ?: text }
+                externalController.publishScan(
+                    rawValue = string,
+                    processedValue = externalText,
+                    format = barcodeType,
+                    timestamp = scanTimestamp ?: System.currentTimeMillis(),
+                    source = from,
+                    scannerId = scannerID,
                     regexGroups = regexGroups,
-                    expandCode = expand
+                    imageName = imageName,
                 )
-                // Store the precise typed-character count for undo (null = cancelled, not stored)
-                keyboardSender?.sendProcessedString(
-                    processedString,
-                    sendDelay.toLong(),
-                    extraKeys,
-                    layout.value
-                )?.let { charCount -> _lastSentCharCount.update { charCount } }
+            }
+
+            // Bluetooth output, by connection mode (EXTERNAL has no Bluetooth peer)
+            when (currentConnectionMode) {
+                ConnectionMode.RFCOMM -> {
+                    val processedString = TemplateProcessor.processTemplate(
+                        string,
+                        template,
+                        TemplateProcessor.TemplateMode.RFCOMM,
+                        from,
+                        scanTimestamp,
+                        scannerID,
+                        barcodeType,
+                        preserveUnsupported,
+                        imageName,
+                        regexGroups
+                    )
+                    rfcommController.sendProcessedData(processedString)
+                }
+
+                ConnectionMode.HID -> {
+                    // expandCode controls whether HID template tokens inside the barcode value
+                    // (e.g. "{ENTER}") are expanded as real keypresses (true) or typed as literal
+                    // text (false, default). Handled inside TemplateProcessor by escaping { } when
+                    // expandCode=false; KeyboardSender no longer needs to know about it.
+                    val processedString = TemplateProcessor.processTemplate(
+                        string,
+                        template,
+                        TemplateProcessor.TemplateMode.HID,
+                        from,
+                        scanTimestamp,
+                        scannerID,
+                        barcodeType,
+                        preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
+                        scanImageFileName = imageName,
+                        regexGroups = regexGroups,
+                        expandCode = expand
+                    )
+                    // Store the precise typed-character count for undo (null = cancelled, not stored)
+                    keyboardSender?.sendProcessedString(
+                        processedString,
+                        sendDelay.toLong(),
+                        extraKeys,
+                        layout.value
+                    )?.let { charCount -> _lastSentCharCount.update { charCount } }
+                }
+
+                ConnectionMode.EXTERNAL -> {
+                    // No Bluetooth output — the scan was already published to plugins above.
+                }
             }
         } finally {
             // Always release the sending lock — even if processTemplate or sendProcessedString

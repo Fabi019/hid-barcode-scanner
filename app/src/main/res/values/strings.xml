@@ -360,7 +360,34 @@
     <string-array name="connection_mode_values">
         <item>HID Keyboard</item>
         <item>RFCOMM (SPP)</item>
+        <item>Output to external plugins only</item>
     </string-array>
+    <string name="external_output">External output plugins</string>
+    <string name="external_output_desc">Installed extension apps that receive scanned values</string>
+    <string name="external_no_plugins">No extension apps installed</string>
+    <string name="external_no_plugins_desc">Install a plugin app to forward scans externally</string>
+    <string name="external_active">External output active</string>
+    <string name="external_active_desc">Scans are forwarded to the enabled plugins</string>
+    <string name="external_no_plugin_active">Scans aren\'t forwarded</string>
+    <string name="external_no_plugin_active_desc">External output mode is on, but no plugin enabled</string>
+    <string name="external_waiting">Waiting for plugin…</string>
+    <string name="external_waiting_desc">Starting the external plugin — hang on a moment</string>
+    <string name="external_not_responding">Plugin not responding</string>
+    <string name="external_not_responding_desc">The external plugin didn\'t start. Tap to retry, or open it once if just installed</string>
+    <string name="enable_external_output">Enable external output</string>
+    <string name="enable_external_output_desc">Forward scans to enabled plugins also in HID/RFCOMM mode</string>
+    <string name="external_output_always_on">External output is always on in External-plugins mode</string>
+    <string name="external_long_press_hint">Long-press a plugin to open its settings</string>
+    <string name="external_plugin_no_settings">This plugin has no settings</string>
+    <string name="external_plugin_update_required">Incompatible plugin version — update the plugin</string>
+    <string name="external_plugin_no_permission">Plugin lost its permission — reinstall the plugin</string>
+    <string name="external_plugin_blocked">Start blocked by the system — allow Autostart for the plugin</string>
+    <string name="external_status_down">down</string>
+    <string name="external_status_connected">connected</string>
+    <string name="external_status_waiting">waiting</string>
+    <string name="external_result_prefix">Plugin</string>
+    <string name="external_result_sent">sent</string>
+    <string name="external_result_failed">failed</string>
     <plurals name="export_items">
         <item quantity="one">Export %1$d item</item>
         <item quantity="other">Export %1$d items</item>
@@ -436,4 +463,5 @@
     <string name="profile_name">Profile name</string>
     <string name="profile_name_empty">Profile name cannot be empty</string>
     <string name="profile_name_exists">A profile with this name already exists</string>
+    <string name="profile_default">Default</string>
 </resources>

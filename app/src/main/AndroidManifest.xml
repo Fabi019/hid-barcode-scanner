@@ -28,6 +28,31 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Permission that external transport extensions must hold to receive scan broadcasts.
+         "normal" allows any installed extension to request it; use "signature" to restrict
+         to first-party extensions only. -->
+    <permission
+        android:name="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS"
+        android:protectionLevel="normal" />
+    <!-- Defining a permission does NOT grant it: plugin receivers are gated on the SENDER holding
+         RECEIVE_SCANS, so the core must request its own permission or every control/scan broadcast
+         is silently dropped by the system. -->
+    <uses-permission android:name="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS" />
+
+    <!-- Lets the app discover installed extensions (receivers of BARCODE_SCANNED) on Android 11+
+         and resolve their optional settings activity. -->
+    <queries>
+        <intent>
+            <action android:name="dev.fabik.bluetoothhid.action.BARCODE_SCANNED" />
+        </intent>
+        <intent>
+            <action android:name="dev.fabik.bluetoothhid.plugin.action.SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="dev.fabik.bluetoothhid.plugin.action.PING" />
+        </intent>
+    </queries>
+
     <uses-permission
         android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />

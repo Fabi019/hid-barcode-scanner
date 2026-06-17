@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.HdrAuto
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.KeyboardCommandKey
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PhonelinkSetup
@@ -56,7 +57,6 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -72,16 +72,17 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.toClipEntry
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
 import dev.fabik.bluetoothhid.ui.ButtonPreference
 import dev.fabik.bluetoothhid.ui.CheckBoxPreference
 import dev.fabik.bluetoothhid.ui.ComboBoxEnumPreference
 import dev.fabik.bluetoothhid.ui.CustomKeysDialog
+import dev.fabik.bluetoothhid.ui.ExternalPluginsModal
 import dev.fabik.bluetoothhid.ui.JavaScriptEditorDialog
 import dev.fabik.bluetoothhid.ui.ProfileManageDialog
 import dev.fabik.bluetoothhid.ui.SaveScanImageOptionsModal
@@ -89,6 +90,7 @@ import dev.fabik.bluetoothhid.ui.SliderPreference
 import dev.fabik.bluetoothhid.ui.SwitchPreference
 import dev.fabik.bluetoothhid.ui.TextBoxPreference
 import dev.fabik.bluetoothhid.ui.VolumeKeyOptionsModal
+import dev.fabik.bluetoothhid.ui.profileDisplayName
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -96,7 +98,6 @@ import dev.fabik.bluetoothhid.utils.ProfileManager
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 
 @Composable
@@ -169,7 +170,8 @@ fun SectionTitle(text: String) {
 @Composable
 internal fun ConnectionSettings(strings: SettingsStrings) {
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isRfcomm = connectionMode == ConnectionMode.RFCOMM
+    val isHidOnly = connectionMode == ConnectionMode.HID
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL
 
     ComboBoxEnumPreference(
         title = strings[R.string.connection_mode],
@@ -183,6 +185,8 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.auto_connect],
         desc = strings[R.string.auto_connect_desc],
         icon = Icons.Default.Link,
+        // Auto-connect is a Bluetooth device concept — irrelevant for External output
+        enabled = !isExternal,
         preference = PreferenceStore.AUTO_CONNECT
     )
 
@@ -199,7 +203,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         valueFormat = strings[R.string.send_delay_template],
         range = 0f..100f,
         icon = Icons.Default.Timer,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.SEND_DELAY
     )
 
@@ -208,7 +212,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         desc = strings[R.string.keyboard_layout_desc],
         icon = Icons.Default.Keyboard,
         values = strings.array(R.array.keyboard_layout_values),
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         preference = PreferenceStore.KEYBOARD_LAYOUT
     )
 
@@ -218,7 +222,7 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         title = strings[R.string.custom_keys],
         desc = strings[R.string.define_custom_keys],
         icon = Icons.Default.KeyboardCommandKey,
-        enabled = !isRfcomm,
+        enabled = isHidOnly,
         onClick = customKeysDialog::open
     )
 
@@ -308,6 +312,10 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
         onClick = jsDialog::open
     )
     JavaScriptEditorDialog(jsDialog)
+
+    // External output plugin picker — available in every mode (parallel output toggle
+    // for HID/RFCOMM lives inside it).
+    ExternalPluginsModal()
 }
 
 @Composable
@@ -690,7 +698,7 @@ internal fun ProfileSettings() {
     ProfileManageDialog(dialogState)
 
     ButtonPreference(
-        title = activeProfile,
+        title = profileDisplayName(activeProfile),
         desc = stringResource(R.string.active_profile_desc),
         icon = Icons.Default.Layers,
         onClick = dialogState::open
