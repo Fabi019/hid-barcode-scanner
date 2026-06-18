@@ -12,17 +12,16 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.SettingsDropdown
@@ -31,6 +30,7 @@ import dev.fabik.bluetoothhid.ui.theme.configureWindow
 import dev.fabik.bluetoothhid.ui.tooltip
 import dev.fabik.bluetoothhid.utils.LocalDataStore
 import dev.fabik.bluetoothhid.utils.ProfileManager
+import kotlinx.coroutines.runBlocking
 
 class SettingsActivity : ComponentActivity() {
 
@@ -42,6 +42,9 @@ class SettingsActivity : ComponentActivity() {
 
         // Configure window for high refresh rate and transparency
         configureWindow(window)
+
+        // Load saved active profile before first composition to avoid a flash of wrong settings
+        runBlocking { ProfileManager.initialize(applicationContext) }
 
         setContent {
             val activeDataStore by remember { ProfileManager.activeStoreFlow(applicationContext) }
