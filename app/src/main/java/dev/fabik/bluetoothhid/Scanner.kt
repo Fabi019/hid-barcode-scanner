@@ -117,6 +117,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
@@ -126,7 +127,6 @@ import dev.fabik.bluetoothhid.ui.InfoDialog
 import dev.fabik.bluetoothhid.ui.LocalNavigation
 import dev.fabik.bluetoothhid.ui.RequiresCameraPermission
 import dev.fabik.bluetoothhid.ui.Routes
-import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel
 import dev.fabik.bluetoothhid.ui.model.CameraViewModel.Barcode
@@ -970,8 +970,7 @@ fun DeviceStatusIndicator() {
         val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
         val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
-        // Dismissed state resets when the device or mode changes or user leaves the scanner
-        var dismissed by remember(currentDevice, connectionMode) { mutableStateOf(false) }
+        var dismissed by rememberSaveable { mutableStateOf(false) }
 
         when {
             // External mode has no Bluetooth device — plugin readiness is shown by
@@ -1062,7 +1061,7 @@ fun ExternalPluginIndicator() {
             R.string.external_waiting to R.string.external_waiting_desc
     }
 
-    var dismissed by remember(connectionMode, enabled) { mutableStateOf(false) }
+    var dismissed by rememberSaveable { mutableStateOf(false) }
 
     ElevatedWarningCard(
         message = stringResource(msgRes),
