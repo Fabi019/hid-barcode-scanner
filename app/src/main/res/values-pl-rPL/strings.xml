@@ -425,6 +425,7 @@
     <string-array name="zoom_gesture_values">
         <item>Szczypnięcie (pinch)</item>
         <item>Przeciągnięcie (swipe)</item>
+        <item>Dwukrotne dotknięcie (double-tap)</item>
     </string-array>
     <string name="qos_settings">Ustawienia L2CAP QoS</string>
     <string name="qos_description">Uwaga: Te parametry zazwyczaj nie wymagają zmian. W przypadku niestabilności połączenia pomocne może być zwiększenie szybkości tokenu/szczytowej przepustowości lub zmniejszenie opóźnienia. Zmiany są stosowane po ponownym uruchomieniu aplikacji. Więcej informacji w specyfikacji Bluetooth HID v1.1.1, rozdział 5.2 i dodatek D.</string>

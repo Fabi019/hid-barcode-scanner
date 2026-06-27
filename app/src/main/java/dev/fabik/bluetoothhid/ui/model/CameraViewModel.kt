@@ -139,6 +139,8 @@ class CameraViewModel : ViewModel() {
                 }
             }
 
+    private var _initialZoom = 1.0f
+
     @OptIn(ExperimentalCamera2Interop::class)
     suspend fun bindToCamera(
         appContext: Context,
@@ -156,6 +158,7 @@ class CameraViewModel : ViewModel() {
         Log.d(TAG, "Binding camera...")
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
+        _initialZoom = initialZoom
         onBarcodeDetected = { value, format, image, regexGroups ->
             lastDetectionTime = System.currentTimeMillis()
             if (value == null) {
@@ -271,11 +274,7 @@ class CameraViewModel : ViewModel() {
         cameraControl = camera.cameraControl
         cameraInfo = camera.cameraInfo
 
-        camera.cameraInfo.zoomState.value?.let { zoomState ->
-            camera.cameraControl.setZoomRatio(
-                initialZoom.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
-            )
-        }
+        resetZoom()
 
         onCameraReady(camera.cameraControl, camera.cameraInfo, imageCapture)
         Log.d(TAG, "Camera is ready!")
@@ -872,6 +871,14 @@ class CameraViewModel : ViewModel() {
             currentZoom.maxZoomRatio
         )
         cameraControl?.setZoomRatio(newZoomRatio)
+    }
+
+    fun resetZoom() {
+        cameraInfo?.zoomState?.value?.let { zoomState ->
+            cameraControl?.setZoomRatio(
+                _initialZoom.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
+            )
+        }
     }
 
     fun Offset.toPoint() = Point(x.toInt(), y.toInt())

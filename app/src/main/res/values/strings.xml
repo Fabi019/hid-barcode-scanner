@@ -441,6 +441,7 @@
     <string-array name="zoom_gesture_values">
         <item>Pinch to zoom</item>
         <item>Swipe to zoom</item>
+        <item>Double-Tap to reset zoom</item>
     </string-array>
     <string name="favourite_devices">Favourite devices</string>
     <string name="reset_favourites">Reset favourites</string>

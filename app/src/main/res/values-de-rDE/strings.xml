@@ -408,6 +408,7 @@
     <string-array name="zoom_gesture_values">
         <item>Pinch-Zoom</item>
         <item>Wisch-Zoom</item>
+        <item>Doppelklick</item>
     </string-array>
     <string name="favourite_devices">Favorisierte Geräte</string>
     <string name="reset_favourites">Favoriten zurücksetzen</string>

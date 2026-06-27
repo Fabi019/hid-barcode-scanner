@@ -44,6 +44,7 @@
     <string-array name="zoom_gesture_values">
         <item>قرص (Pinch)</item>
         <item>سحب (Swipe)</item>
+        <item>النقر المزدوج (Double-Tap)</item>
     </string-array>
     <string name="click_to_connect">اضغط للرجوع.</string>
     <string name="code_types_desc">فعّل الأنواع المطلوبة فقط لتحسين سرعة الفحص. إذا لم تحدد شيئًا، سيتم تفعيل كل الأنواع.</string>

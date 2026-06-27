@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
@@ -77,6 +78,7 @@ import dev.fabik.bluetoothhid.utils.getPreferenceState
 import kotlinx.coroutines.launch
 import org.totschnig.ocr.Text
 import zxingcpp.BarcodeReader
+import kotlin.math.abs
 
 @Composable
 fun CameraPreviewContent(
@@ -140,8 +142,9 @@ fun CameraPreviewContent(
     CameraPreviewPreferences(viewModel)
 
     val zoomGestures by context.getPreferenceState(PreferenceStore.ZOOM_GESTURES)
-    val pinchZoom = zoomGestures?.contains("0") != false
+    val pinchZoom = zoomGestures?.contains("0") == true
     val swipeZoom = zoomGestures?.contains("1") == true
+    val doubleTap = zoomGestures?.contains("2") == true
 
     val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
     surfaceRequest?.let { request ->
@@ -149,12 +152,16 @@ fun CameraPreviewContent(
         var autofocusCoords by remember { mutableStateOf(Offset.Unspecified) }
 
         val coordinateTransformer = remember { MutableCoordinateTransformer() }
+        val resources = LocalResources.current
 
         CameraXViewfinder(surfaceRequest = request,
             coordinateTransformer = coordinateTransformer,
             modifier = Modifier
                 .pointerInput(viewModel, coordinateTransformer) {
-                    detectTapGestures { tapCoords ->
+                    detectTapGestures(
+                        onDoubleTap = if (doubleTap) {
+                            { viewModel.resetZoom() }
+                        } else null) { tapCoords ->
                         if (!isFocusing) {
                             scope.launch {
                                 autofocusCoords = tapCoords
@@ -173,15 +180,15 @@ fun CameraPreviewContent(
                         pinchZoom,
                         swipeZoom
                     ) {
-                        val screenHeight = context.resources.displayMetrics.heightPixels
-                        val swipeThreshold = 10f * context.resources.displayMetrics.density
+                        val screenHeight = resources.displayMetrics.heightPixels
+                        val swipeThreshold = 4f * resources.displayMetrics.density
                         awaitEachGesture {
                             var isMultiTouch = false
-                            var prevY = 0f
-                            var prevDist = 0f
 
                             val first = awaitFirstDown(requireUnconsumed = false)
-                            prevY = first.position.y
+                            val startY = first.position.y
+                            var prevY = startY
+                            var prevDist = 0f
 
                             do {
                                 val event = awaitPointerEvent()
@@ -200,7 +207,7 @@ fun CameraPreviewContent(
                                     active.size == 1 && swipeZoom && !isMultiTouch -> {
                                         val dy = active[0].position.y - prevY
                                         prevY = active[0].position.y
-                                        if (kotlin.math.abs(dy) > swipeThreshold) {
+                                        if (abs(prevY - startY) > swipeThreshold) {
                                             viewModel.swipeToZoom(dy, screenHeight)
                                             event.changes.forEach { it.consume() }
                                         }

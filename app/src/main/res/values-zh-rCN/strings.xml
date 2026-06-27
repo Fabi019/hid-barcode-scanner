@@ -68,6 +68,7 @@
     <string-array name="zoom_gesture_values">
         <item>双指捏合缩放</item>
         <item>单指滑动缩放</item>
+        <item>双击以重置缩放</item>
     </string-array>
     <string name="connected_with">已连接: %s</string>
     <string name="click_to_connect">点击返回。</string>
