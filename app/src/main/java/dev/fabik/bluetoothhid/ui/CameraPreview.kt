@@ -17,9 +17,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -167,7 +168,11 @@ fun CameraPreviewContent(
                     }
                 }
                 .then(
-                    if (pinchZoom || swipeZoom) Modifier.pointerInput(viewModel, pinchZoom, swipeZoom) {
+                    if (pinchZoom || swipeZoom) Modifier.pointerInput(
+                        viewModel,
+                        pinchZoom,
+                        swipeZoom
+                    ) {
                         val screenHeight = context.resources.displayMetrics.heightPixels
                         val swipeThreshold = 10f * context.resources.displayMetrics.density
                         awaitEachGesture {
@@ -185,11 +190,13 @@ fun CameraPreviewContent(
                                 when {
                                     active.size >= 2 && pinchZoom -> {
                                         isMultiTouch = true
-                                        val dist = (active[0].position - active[1].position).getDistance()
+                                        val dist =
+                                            (active[0].position - active[1].position).getDistance()
                                         if (prevDist > 0f) viewModel.pinchToZoom(dist / prevDist)
                                         prevDist = dist
                                         event.changes.forEach { it.consume() }
                                     }
+
                                     active.size == 1 && swipeZoom && !isMultiTouch -> {
                                         val dy = active[0].position.y - prevY
                                         prevY = active[0].position.y
@@ -405,7 +412,11 @@ private fun OcrDetectionFAB(viewModel: CameraViewModel) {
 
     // For debugging use "android.intent.action.VIEW"
     val intent = remember { Intent("org.totschnig.ocr.action.RECOGNIZE") }
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
         val scope = rememberCoroutineScope()
 
         // Needed to trigger the detection as volume key action from Scanner
