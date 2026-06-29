@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.compose'
     id 'org.jetbrains.kotlin.plugin.parcelize'
 }
@@ -36,12 +35,12 @@ kotlin {
 
 android {
     namespace = 'dev.fabik.bluetoothhid'
-    compileSdkVersion 36
+    compileSdkVersion 37
 
     defaultConfig {
         applicationId "dev.fabik.bluetoothhid"
         minSdk 28
-        targetSdk 36
+        targetSdk 37
         versionCode 57
         versionName "2.2.1"
 
@@ -67,7 +66,7 @@ android {
         }
     }
 
-    final def isBuildingBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains("bundle") }
+    final def isBuildingBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains("bundle") || it.toLowerCase().contains("extract") }
 
     splits {
         abi {

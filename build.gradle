@@ -11,8 +11,8 @@ buildscript {
         compose_mat_version = '1.7.8'
         camerax_version = '1.6.1'
         accomp_version = '0.37.3'
-        agp_version = '8.13.2'
-        kotlin_version = '2.1.0'
+        agp_version = '9.2.1'
+        kotlin_version = '2.2.20'
     }
 }
 
