@@ -26,7 +26,7 @@
     <string name="request_again">إعادة المحاولة</string>
     <string name="exit">خروج</string>
     <string name="send_delay">تأخير الإرسال</string>
-    <string name="send_delay_desc">الفاصل الزمني بين كل حرف أو رقم أثناء إرسال النص.</string>
+    <string name="send_delay_desc">الفاصل الزمني بين كل حرف أو رقم أثناء إرسال الرسالة النصية. تحذير: قد يؤدي ضبط مدة التأخير على قيمة منخفضة إلى زيادة خطر فقدان الأحرف أو تعطل المفاتيح بسبب فقدان الحزم.</string>
     <string name="request_permission">طلب الإذن</string>
     <string name="bluetooth_permission">يتطلب هذا التطبيق أذونات بلوتوث للتواصل مع الأجهزة الأخرى. يُرجى منح التطبيق إذن الوصول إلى \'الأجهزة القريبة\'.</string>
     <string name="camera_permission">الكاميرا مطلوبة لعرض المعاينة وقراءة الأكواد. يُرجى السماح للتطبيق بإذن \'الكاميرا\'.</string>

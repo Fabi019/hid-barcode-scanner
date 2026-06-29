@@ -45,7 +45,7 @@
     <string name="request_again">Erneut anfragen</string>
     <string name="exit">Beenden</string>
     <string name="send_delay">Sendeverzögerung</string>
-    <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben oder Zahl</string>
+    <string name="send_delay_desc">Zeit zwischen jedem gesendeten Buchstaben oder Zahl. Achtung: Wenn die Verzögerung zu niedrig ist, kann es aufgrund von Paketverlust zu fehlenden Zeichen kommen oder Tasten hängen bleiben.</string>
     <string name="send_delay_template">Verzögerung (ms): %.0f</string>
     <string name="request_permission">Berechtigung anfragen</string>
     <string name="bluetooth_permission">Diese App benötigt Bluetooth-Berechtigungen, um mit anderen Geräten zu kommunizieren. Bitte erlauben Sie der App den Zugriff auf \'Nearby Devices\'.</string>

@@ -48,7 +48,7 @@
     <string name="request_again">Poproś ponownie</string>
     <string name="exit">Wyjście</string>
     <string name="send_delay">Opóźnienie transmisji</string>
-    <string name="send_delay_desc">Określa czas pomiędzy poszczególnymi znakami/cyframi podczas wysyłania tekstu</string>
+    <string name="send_delay_desc">Określa czas pomiędzy poszczególnymi znakami/cyframi podczas wysyłania tekstu. Ostrzeżenie: Ustawienie zbyt krótkiego opóźnienia może zwiększyć ryzyko pominięcia znaków lub zablokowania klawiszy z powodu utraty pakietów.</string>
     <string name="send_delay_template">Opóźnienie (ms): %.0f</string>
     <string name="request_permission">Prośba o zezwolenie</string>
     <string name="bluetooth_permission">Ta aplikacja wymaga uprawnień Bluetooth do komunikacji z innymi urządzeniami. Zezwól aplikacji na dostęp do \'Urządzeń w pobliżu\'.</string>

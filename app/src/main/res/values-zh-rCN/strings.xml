@@ -47,7 +47,7 @@
     <string name="request_again">重新请求</string>
     <string name="exit">退出</string>
     <string name="send_delay">发送延迟</string>
-    <string name="send_delay_desc">发送文本时每个字符/数字之间的间隔时间</string>
+    <string name="send_delay_desc">发送文本时每个字符/数字之间的间隔时间。警告：将延迟设置得过低可能会因数据包丢失而增加漏发字符或按键卡住的风险。</string>
     <string name="send_delay_template">延迟 (毫秒): %.0f</string>
     <string name="request_permission">请求权限</string>
     <string name="bluetooth_permission">此应用需要蓝牙权限以与其他设备通信。请允许应用访问\"附近设备\"。</string>
