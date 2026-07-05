@@ -1,0 +1,11 @@
+- Add Chinese localization
+- Support high FPS capture/preview stabilization
+- Default zoom and new zoom gestures
+- Favorites in device list
+- Support for accent/dead keys
+- Add Cancel & Undo of sent text
+- Add preference profile selection
+- Multiple scan areas and multi-code picker
+- Support for external transport plugins
+- Autocomplete for JavaScript
+- Access regex capture groups in custom template
