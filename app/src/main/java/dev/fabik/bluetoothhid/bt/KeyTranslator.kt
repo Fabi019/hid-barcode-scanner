@@ -262,7 +262,7 @@ class KeyTranslator(context: Context) {
         locale: String
     ): List<Pair<Key, Boolean>> {
         val result = mutableListOf<Pair<Key, Boolean>>()
-        var modifiers = 0.toUByte()
+        var modifiers: UByte = 0u
         var temp = template
         var wasModifier = true
 
@@ -291,7 +291,12 @@ class KeyTranslator(context: Context) {
             staticTemplates[temp]?.let { t ->
                 // A static template key produces a visible character only when sent without
                 // extra modifiers.  {+ENTER} (Ctrl+Enter) is a control combo, not visible text.
-                result.add(Key(t.first or modifiers, t.second) to (isTextProducingKeycode(t.second) && modifiers == 0.toUByte()))
+                result.add(
+                    Key(
+                        t.first or modifiers,
+                        t.second
+                    ) to (isTextProducingKeycode(t.second) && modifiers.toInt() == 0)
+                )
             } ?: dynamicTemplates[temp.substringBefore(':')]?.let { t ->
                 t(locale, temp.substringAfter(':', "")).forEach { key ->
                     result.add(key to false) // dynamic templates (WAIT, etc.) produce no visible chars
@@ -299,7 +304,7 @@ class KeyTranslator(context: Context) {
             } ?: run {
                 // Fallback: unknown template — treat as plain text with optional extra modifiers.
                 // Extra modifier flags (e.g. {+A} = Ctrl+A) turn it into a control combo → not visible.
-                val hasExtraModifiers = modifiers != 0.toUByte()
+                val hasExtraModifiers = modifiers.toInt() != 0
                 translateStringDetailed(temp, locale).forEach { (key, completesChar) ->
                     result.add(Key(key.first or modifiers, key.second) to (completesChar && !hasExtraModifiers))
                 }
@@ -350,8 +355,8 @@ class KeyTranslator(context: Context) {
      */
     private fun isTextProducingKeycode(keycode: UByte): Boolean =
         keycode.toInt() in 0x04..0x38
-            && keycode != 0x29.toUByte()   // ESC
-            && keycode != 0x2A.toUByte()   // Backspace
+                && keycode.toInt() != 0x29   // ESC
+                && keycode.toInt() != 0x2A   // Backspace
 
     private fun translate(char: Char, locale: String): Pair<Key, Key?>? {
         val keymap = keyMaps[locale] ?: baseMap

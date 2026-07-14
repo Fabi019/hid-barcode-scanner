@@ -284,7 +284,7 @@ class KeyTranslatorTest {
         assertEquals(
             "Surrounding space chars must be completesChar=true",
             2,
-            result.count { (key, completesChar) -> key.second == 0x2C.toUByte() && completesChar }
+            result.count { (key, completesChar) -> key.second.toInt() == 0x2C && completesChar }
         )
     }
 

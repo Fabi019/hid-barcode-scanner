@@ -104,12 +104,13 @@ fun CustomKeysDialog(dialogState: DialogState) {
 }
 
 @Composable
+@Preview
 fun AddCustomKeyDialog(
-    dialogState: DialogState,
+    dialogState: DialogState = rememberDialogState(true),
     initialChar: String = "",
     initialHID: UByte? = null,
     initialModifier: UByte? = null,
-    onAddKey: (Pair<Char, Key>) -> Unit
+    onAddKey: (Pair<Char, Key>) -> Unit = {}
 ) {
     var valueChar by rememberSaveable(dialogState.openState) { mutableStateOf(initialChar) }
     var valueHID by rememberSaveable(dialogState.openState) { mutableStateOf(initialHID) }
@@ -429,8 +430,8 @@ private fun ImportExportButtons(keyMap: Keymap, onImportKeys: (Keymap) -> Unit) 
 @Composable
 fun PreviewCustomKeys() {
     val keyMap = mapOf(
-        'a' to ((0x12.toUByte() to 0x1.toUByte()) to (0x44.toUByte() to 0x55.toUByte())),
-        'b' to ((0x22.toUByte() to 0x2.toUByte()) to null),
+        'a' to (Key(0x12u, 0x1u) to Key(0x44u, 0x55u)),
+        'b' to (Key(0x22u, 0x2u) to null),
     )
 
     Surface {
