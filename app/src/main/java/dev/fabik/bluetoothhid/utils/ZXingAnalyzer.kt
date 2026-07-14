@@ -34,10 +34,10 @@ class ZXingAnalyzer(
             BarcodeReader.Format.PDF_417 to "PDF417",
             BarcodeReader.Format.AZTEC to "AZTEC",
             BarcodeReader.Format.DATA_BAR to "DATA_BAR",
-            BarcodeReader.Format.DATA_BAR_EXPANDED to "DATA_BAR_EXPANDED",
-            BarcodeReader.Format.DATA_BAR_LIMITED to "DATA_BAR_LIMITED",
+            BarcodeReader.Format.DATA_BAR_EXP to "DATA_BAR_EXPANDED",
+            BarcodeReader.Format.DATA_BAR_LTD to "DATA_BAR_LIMITED",
             BarcodeReader.Format.DX_FILM_EDGE to "DX_FILM_EDGE",
-            BarcodeReader.Format.MAXICODE to "MAXICODE",
+            BarcodeReader.Format.MAXI_CODE to "MAXICODE",
             BarcodeReader.Format.MICRO_QR_CODE to "MICRO_QR_CODE",
             BarcodeReader.Format.RMQR_CODE to "RMQR_CODE"
         )
