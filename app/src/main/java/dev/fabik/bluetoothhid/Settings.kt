@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -69,9 +70,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -95,11 +98,13 @@ import dev.fabik.bluetoothhid.ui.VolumeKeyOptionsModal
 import dev.fabik.bluetoothhid.ui.profileDisplayName
 import dev.fabik.bluetoothhid.ui.rememberDialogState
 import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.LocalDataStore
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ProfileManager
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
 import dev.fabik.bluetoothhid.utils.rememberPreferenceNull
 import dev.fabik.bluetoothhid.utils.setPreference
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -110,46 +115,56 @@ fun SettingsContent() {
     }
     val listState = rememberLazyListState()
 
+    val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
+    val isHidOnly = connectionMode == ConnectionMode.HID
+    val isExternal = connectionMode == ConnectionMode.EXTERNAL
+
+    val connectionSettings = buildConnectionSettings(strings, isHidOnly, isExternal)
+    val appearanceSettings = buildAppearanceSettings(strings)
+    val cameraSettings = buildCameraSettings(strings)
+    val scannerSettings = buildScannerSettings(strings, isHidOnly)
+    val aboutSettings = buildAboutSettings(strings)
+
     LazyColumn(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
             .padding(0.dp, 0.dp)
     ) {
-        item(contentType = "section") {
+        item {
             SectionTitle(strings[R.string.profiles])
             ProfileSettings()
-            ColoredDivider()
         }
 
         item(contentType = "section") {
+            ColoredDivider()
             SectionTitle(strings[R.string.connection])
-            ConnectionSettings(strings)
-            ColoredDivider()
         }
+        items(connectionSettings) { it() }
 
         item(contentType = "section") {
+            ColoredDivider()
             SectionTitle(strings[R.string.appearance])
-            AppearanceSettings(strings)
-            ColoredDivider()
         }
+        items(appearanceSettings) { it() }
 
         item(contentType = "section") {
+            ColoredDivider()
             SectionTitle(strings[R.string.camera])
-            CameraSettings(strings)
-            ColoredDivider()
         }
+        items(cameraSettings) { it() }
 
         item(contentType = "section") {
+            ColoredDivider()
             SectionTitle(strings[R.string.scanner])
-            ScannerSettings(strings)
-            ColoredDivider()
         }
+        items(scannerSettings) { it() }
 
         item(contentType = "section") {
+            ColoredDivider()
             SectionTitle(strings[R.string.about])
-            AboutSettings(strings)
         }
+        items(aboutSettings) { it() }
     }
 }
 
@@ -170,27 +185,46 @@ fun SectionTitle(text: String) {
 }
 
 @Composable
-internal fun ConnectionSettings(strings: SettingsStrings) {
-    val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isHidOnly = connectionMode == ConnectionMode.HID
-    val isExternal = connectionMode == ConnectionMode.EXTERNAL
+internal fun ProfileSettings() {
+    val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
+    val dialogState = rememberDialogState()
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.connection_mode],
-        desc = strings[R.string.connection_mode_desc],
-        icon = Icons.Default.PhonelinkSetup,
-        values = strings.array(R.array.connection_mode_values),
-        preference = PreferenceStore.CONNECTION_MODE
-    )
+    ProfileManageDialog(dialogState)
 
-    SwitchPreference(
-        title = strings[R.string.auto_connect],
-        desc = strings[R.string.auto_connect_desc],
-        icon = Icons.Default.Link,
-        // Auto-connect is a Bluetooth device concept — irrelevant for External output
-        enabled = !isExternal,
-        preference = PreferenceStore.AUTO_CONNECT
+    ButtonPreference(
+        title = profileDisplayName(activeProfile),
+        desc = stringResource(R.string.active_profile_desc),
+        icon = Icons.Default.Layers,
+        onClick = dialogState::open
     )
+}
+
+@Composable
+internal fun buildConnectionSettings(
+    strings: SettingsStrings,
+    isHidOnly: Boolean,
+    isExternal: Boolean
+): List<@Composable () -> Unit> = buildList {
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.connection_mode],
+            desc = strings[R.string.connection_mode_desc],
+            icon = Icons.Default.PhonelinkSetup,
+            values = strings.array(R.array.connection_mode_values),
+            preference = PreferenceStore.CONNECTION_MODE
+        )
+    }
+
+    add {
+        SwitchPreference(
+            title = strings[R.string.auto_connect],
+            desc = strings[R.string.auto_connect_desc],
+            icon = Icons.Default.Link,
+            // Auto-connect is a Bluetooth device concept — irrelevant for External output
+            enabled = !isExternal,
+            preference = PreferenceStore.AUTO_CONNECT
+        )
+    }
 
     /*SwitchPreference(
             title = strings[R.string.show_unnamed],
@@ -199,87 +233,106 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
             preference = PreferenceStore.SHOW_UNNAMED
     )*/
 
-    SliderPreference(
-        title = strings[R.string.send_delay],
-        desc = strings[R.string.send_delay_desc],
-        valueFormat = strings[R.string.send_delay_template],
-        range = 0f..100f,
-        icon = Icons.Default.Timer,
-        enabled = isHidOnly,
-        preference = PreferenceStore.SEND_DELAY
-    )
+    add {
+        SliderPreference(
+            title = strings[R.string.send_delay],
+            desc = strings[R.string.send_delay_desc],
+            valueFormat = strings[R.string.send_delay_template],
+            range = 0f..100f,
+            icon = Icons.Default.Timer,
+            enabled = isHidOnly,
+            preference = PreferenceStore.SEND_DELAY
+        )
+    }
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.keyboard_layout],
-        desc = strings[R.string.keyboard_layout_desc],
-        icon = Icons.Default.Keyboard,
-        values = strings.array(R.array.keyboard_layout_values),
-        enabled = isHidOnly,
-        preference = PreferenceStore.KEYBOARD_LAYOUT
-    )
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.keyboard_layout],
+            desc = strings[R.string.keyboard_layout_desc],
+            icon = Icons.Default.Keyboard,
+            values = strings.array(R.array.keyboard_layout_values),
+            enabled = isHidOnly,
+            preference = PreferenceStore.KEYBOARD_LAYOUT
+        )
+    }
 
-    val customKeysDialog = rememberDialogState()
-    CustomKeysDialog(customKeysDialog)
-    ButtonPreference(
-        title = strings[R.string.custom_keys],
-        desc = strings[R.string.define_custom_keys],
-        icon = Icons.Default.KeyboardCommandKey,
-        enabled = isHidOnly,
-        onClick = customKeysDialog::open
-    )
+    add {
+        val customKeysDialog = rememberDialogState()
+        CustomKeysDialog(customKeysDialog)
+        ButtonPreference(
+            title = strings[R.string.custom_keys],
+            desc = strings[R.string.define_custom_keys],
+            icon = Icons.Default.KeyboardCommandKey,
+            enabled = isHidOnly,
+            onClick = customKeysDialog::open
+        )
+    }
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.extra_keys],
-        desc = strings[R.string.extra_keys_desc],
-        icon = Icons.Default.AddCircle,
-        values = strings.array(R.array.extra_keys_values),
-        preference = PreferenceStore.EXTRA_KEYS
-    )
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.extra_keys],
+            desc = strings[R.string.extra_keys_desc],
+            icon = Icons.Default.AddCircle,
+            values = strings.array(R.array.extra_keys_values),
+            preference = PreferenceStore.EXTRA_KEYS
+        )
+    }
 
-    val errorString = strings.errorTemplate
-    val codeRegex = remember { Regex("\\{[^{}]*CODE[^{}]*\\}") }
-    TextBoxPreference(
-        title = strings[R.string.custom_template],
-        desc = strings[R.string.custom_templ_desc],
-        descLong = strings[R.string.custom_templ_desc_long],
-        validator = { template ->
-            // Check if template contains at least one CODE placeholder (flexible format)
-            if (!codeRegex.containsMatchIn(template))
-                return@TextBoxPreference errorString
+    add {
+        val errorString = strings.errorTemplate
+        val codeRegex = remember { Regex("\\{[^{}]*CODE[^{}]*\\}") }
+        TextBoxPreference(
+            title = strings[R.string.custom_template],
+            desc = strings[R.string.custom_templ_desc],
+            descLong = strings[R.string.custom_templ_desc_long],
+            validator = { template ->
+                // Check if template contains at least one CODE placeholder (flexible format)
+                if (!codeRegex.containsMatchIn(template))
+                    return@TextBoxPreference errorString
 
-            // Check each CODE placeholder for conflicts
-            val matches = codeRegex.findAll(template)
-            for (match in matches) {
-                val content = match.value.removePrefix("{").removeSuffix("}")
-                val parts = content.split("_")
+                // Check each CODE placeholder for conflicts
+                val matches = codeRegex.findAll(template)
+                for (match in matches) {
+                    val content = match.value.removePrefix("{").removeSuffix("}")
+                    val parts = content.split("_")
 
-                // Check for duplicate components
-                val uniqueParts = parts.toSet()
-                if (uniqueParts.size != parts.size) {
-                    val duplicates = parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
-                    return@TextBoxPreference strings.templateErrorDuplicates(duplicates.joinToString(", "))
+                    // Check for duplicate components
+                    val uniqueParts = parts.toSet()
+                    if (uniqueParts.size != parts.size) {
+                        val duplicates =
+                            parts.groupingBy { it }.eachCount().filter { it.value > 1 }.keys
+                        return@TextBoxPreference strings.templateErrorDuplicates(
+                            duplicates.joinToString(
+                                ", "
+                            )
+                        )
+                    }
                 }
-            }
 
-            null
-        },
-        icon = Icons.Default.LibraryAdd,
-        preference = PreferenceStore.TEMPLATE_TEXT
-    )
+                null
+            },
+            icon = Icons.Default.LibraryAdd,
+            preference = PreferenceStore.TEMPLATE_TEXT
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.templates_in_value],
-        desc = strings[R.string.template_in_value_desc],
-        icon = Icons.Default.Expand,
-        preference = PreferenceStore.EXPAND_CODE
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.templates_in_value],
+            desc = strings[R.string.template_in_value_desc],
+            icon = Icons.Default.Expand,
+            preference = PreferenceStore.EXPAND_CODE
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.auto_send],
-        desc = strings[R.string.auto_send_desc],
-        icon = Icons.AutoMirrored.Filled.Send,
-        preference = PreferenceStore.AUTO_SEND
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.auto_send],
+            desc = strings[R.string.auto_send_desc],
+            icon = Icons.AutoMirrored.Filled.Send,
+            preference = PreferenceStore.AUTO_SEND
+        )
+    }
 
 //    SwitchPreference(
 //        title = strings[R.string.send_with_volume_keys],
@@ -287,143 +340,177 @@ internal fun ConnectionSettings(strings: SettingsStrings) {
 //        icon = Icons.AutoMirrored.Filled.VolumeMute,
 //        preference = PreferenceStore.SEND_WITH_VOLUME
 //    )
-    VolumeKeyOptionsModal()
+    add {
+        VolumeKeyOptionsModal()
+    }
 
-    val jsDialog = rememberDialogState()
-    var jsEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_JS)
-    ButtonPreference(
-        title = strings[R.string.custom_javascript],
-        desc = strings[R.string.custom_js_desc],
-        icon = Icons.Default.Code,
-        extra = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                VerticalDivider(
-                    Modifier
-                        .height(32.dp)
-                        .padding(horizontal = 24.dp)
-                )
-                jsEnabled?.let { c ->
-                    Switch(c, onCheckedChange = {
-                        jsEnabled = it
-                    }, modifier = Modifier.semantics(mergeDescendants = true) {
-                        stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
-                    })
+    add {
+        val jsDialog = rememberDialogState()
+        var jsEnabled by rememberPreferenceNull(PreferenceStore.ENABLE_JS)
+        ButtonPreference(
+            title = strings[R.string.custom_javascript],
+            desc = strings[R.string.custom_js_desc],
+            icon = Icons.Default.Code,
+            extra = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    VerticalDivider(
+                        Modifier
+                            .height(32.dp)
+                            .padding(horizontal = 24.dp)
+                    )
+                    jsEnabled?.let { c ->
+                        Switch(c, onCheckedChange = {
+                            jsEnabled = it
+                        }, modifier = Modifier.semantics(mergeDescendants = true) {
+                            stateDescription = "Custom JavaScript is ${if (c) "On" else "Off"}"
+                        })
+                    }
                 }
-            }
-        },
-        onClick = jsDialog::open
-    )
-    JavaScriptEditorDialog(jsDialog)
-
-    // External output plugin picker — available in every mode (parallel output toggle
-    // for HID/RFCOMM lives inside it).
-    ExternalPluginsModal()
-}
-
-@Composable
-internal fun AppearanceSettings(strings: SettingsStrings) {
-    SwitchPreference(
-        title = strings[R.string.keep_screen_on],
-        desc = strings[R.string.keep_screen_on_desc],
-        icon = Icons.Default.ScreenLockPortrait,
-        preference = PreferenceStore.KEEP_SCREEN_ON
-    )
-
-    SwitchPreference(
-        title = strings[R.string.allow_screen_rotation],
-        desc = strings[R.string.allow_screen_rotation_desc],
-        icon = Icons.Default.ScreenRotation,
-        preference = PreferenceStore.ALLOW_SCREEN_ROTATION
-    )
-
-    SwitchPreference(
-        title = strings[R.string.full_screen_scanner],
-        desc = strings[R.string.full_screen_scanner_desc],
-        icon = Icons.Default.Fullscreen,
-        preference = PreferenceStore.SCANNER_FULL_SCREEN
-    )
-
-    ComboBoxEnumPreference(
-        title = strings[R.string.theme],
-        desc = strings[R.string.theme_desc],
-        icon = Icons.Default.AutoFixHigh,
-        values = strings.array(R.array.theme_values),
-        preference = PreferenceStore.THEME
-    )
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        SwitchPreference(
-            title = strings[R.string.dynamic_theme],
-            desc = strings[R.string.dynamic_theme_desc],
-            icon = Icons.Default.AutoAwesome,
-            preference = PreferenceStore.DYNAMIC_THEME
+            },
+            onClick = jsDialog::open
         )
+        JavaScriptEditorDialog(jsDialog)
+    }
+
+    add {
+        // External output plugin picker — available in every mode (parallel output toggle
+        // for HID/RFCOMM lives inside it).
+        ExternalPluginsModal()
     }
 }
 
 @Composable
-internal fun CameraSettings(strings: SettingsStrings) {
-    SwitchPreference(
-        title = strings[R.string.front_camera],
-        desc = strings[R.string.front_camera_desc],
-        icon = Icons.Default.FlipCameraAndroid,
-        preference = PreferenceStore.FRONT_CAMERA
-    )
+internal fun buildAppearanceSettings(strings: SettingsStrings): List<@Composable () -> Unit> =
+    buildList {
+        add {
+            SwitchPreference(
+                title = strings[R.string.keep_screen_on],
+                desc = strings[R.string.keep_screen_on_desc],
+                icon = Icons.Default.ScreenLockPortrait,
+                preference = PreferenceStore.KEEP_SCREEN_ON
+            )
+        }
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.focus_mode],
-        desc = strings[R.string.focus_mode_desc],
-        values = strings.array(R.array.focus_mode_values),
-        icon = Icons.Default.HdrAuto,
-        preference = PreferenceStore.FOCUS_MODE
-    )
+        add {
+            SwitchPreference(
+                title = strings[R.string.allow_screen_rotation],
+                desc = strings[R.string.allow_screen_rotation_desc],
+                icon = Icons.Default.ScreenRotation,
+                preference = PreferenceStore.ALLOW_SCREEN_ROTATION
+            )
+        }
 
-    SwitchPreference(
-        title = strings[R.string.fix_exposure],
-        desc = strings[R.string.fix_exposure_desc],
-        icon = Icons.Default.Exposure,
-        preference = PreferenceStore.FIX_EXPOSURE
-    )
+        add {
+            SwitchPreference(
+                title = strings[R.string.full_screen_scanner],
+                desc = strings[R.string.full_screen_scanner_desc],
+                icon = Icons.Default.Fullscreen,
+                preference = PreferenceStore.SCANNER_FULL_SCREEN
+            )
+        }
 
-    SwitchPreference(
-        title = strings[R.string.preview_performance_mode],
-        desc = strings[R.string.preview_mode_desc],
-        icon = Icons.Default.Bolt,
-        preference = PreferenceStore.PREVIEW_PERFORMANCE_MODE
-    )
+        add {
+            ComboBoxEnumPreference(
+                title = strings[R.string.theme],
+                desc = strings[R.string.theme_desc],
+                icon = Icons.Default.AutoFixHigh,
+                values = strings.array(R.array.theme_values),
+                preference = PreferenceStore.THEME
+            )
+        }
 
-    SwitchPreference(
-        title = strings[R.string.preview_stabilization],
-        desc = strings[R.string.preview_stabilization_desc],
-        icon = Icons.Default.VideoStable,
-        preference = PreferenceStore.PREVIEW_STABILIZATION
-    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        add {
+            SwitchPreference(
+                title = strings[R.string.dynamic_theme],
+                desc = strings[R.string.dynamic_theme_desc],
+                icon = Icons.Default.AutoAwesome,
+                preference = PreferenceStore.DYNAMIC_THEME
+            )
+        }
+    }
+}
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.scan_res],
-        desc = strings[R.string.scan_res_desc],
-        icon = Icons.Default.Hd,
-        values = strings.array(R.array.scan_res_values),
-        preference = PreferenceStore.SCAN_RESOLUTION
-    )
+@Composable
+internal fun buildCameraSettings(strings: SettingsStrings): List<@Composable () -> Unit> =
+    buildList {
+        add {
+            SwitchPreference(
+                title = strings[R.string.front_camera],
+                desc = strings[R.string.front_camera_desc],
+                icon = Icons.Default.FlipCameraAndroid,
+                preference = PreferenceStore.FRONT_CAMERA
+            )
+        }
 
-    SliderPreference(
-        title = strings[R.string.initial_zoom],
-        desc = strings[R.string.initial_zoom_desc],
-        valueFormat = "%.1fx",
-        range = 1.0f..10.0f,
-        steps = 8,
-        icon = Icons.Default.ZoomIn,
-        preference = PreferenceStore.INITIAL_ZOOM
-    )
+        add {
+            ComboBoxEnumPreference(
+                title = strings[R.string.focus_mode],
+                desc = strings[R.string.focus_mode_desc],
+                values = strings.array(R.array.focus_mode_values),
+                icon = Icons.Default.HdrAuto,
+                preference = PreferenceStore.FOCUS_MODE
+            )
+        }
 
-    CheckBoxPreference(
-        title = strings[R.string.zoom_gesture],
-        desc = strings[R.string.zoom_gesture_desc],
-        valueStrings = strings.array(R.array.zoom_gesture_values),
-        icon = Icons.Default.ZoomIn,
-        preference = PreferenceStore.ZOOM_GESTURES
-    )
+        add {
+            SwitchPreference(
+                title = strings[R.string.fix_exposure],
+                desc = strings[R.string.fix_exposure_desc],
+                icon = Icons.Default.Exposure,
+                preference = PreferenceStore.FIX_EXPOSURE
+            )
+        }
+
+        add {
+            SwitchPreference(
+                title = strings[R.string.preview_performance_mode],
+                desc = strings[R.string.preview_mode_desc],
+                icon = Icons.Default.Bolt,
+                preference = PreferenceStore.PREVIEW_PERFORMANCE_MODE
+            )
+        }
+
+        add {
+            SwitchPreference(
+                title = strings[R.string.preview_stabilization],
+                desc = strings[R.string.preview_stabilization_desc],
+                icon = Icons.Default.VideoStable,
+                preference = PreferenceStore.PREVIEW_STABILIZATION
+            )
+        }
+
+        add {
+            ComboBoxEnumPreference(
+                title = strings[R.string.scan_res],
+                desc = strings[R.string.scan_res_desc],
+                icon = Icons.Default.Hd,
+                values = strings.array(R.array.scan_res_values),
+                preference = PreferenceStore.SCAN_RESOLUTION
+            )
+        }
+
+        add {
+            SliderPreference(
+                title = strings[R.string.initial_zoom],
+                desc = strings[R.string.initial_zoom_desc],
+                valueFormat = "%.1fx",
+                range = 1.0f..10.0f,
+                steps = 8,
+                icon = Icons.Default.ZoomIn,
+                preference = PreferenceStore.INITIAL_ZOOM
+            )
+        }
+
+        add {
+            CheckBoxPreference(
+                title = strings[R.string.zoom_gesture],
+                desc = strings[R.string.zoom_gesture_desc],
+                valueStrings = strings.array(R.array.zoom_gesture_values),
+                icon = Icons.Default.ZoomIn,
+                preference = PreferenceStore.ZOOM_GESTURES
+            )
+        }
 
     /*SwitchPreference(
             title = strings[R.string.auto_zoom],
@@ -434,72 +521,82 @@ internal fun CameraSettings(strings: SettingsStrings) {
 }
 
 @Composable
-internal fun ScannerSettings(strings: SettingsStrings) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
-    val isHidMode = connectionMode != ConnectionMode.RFCOMM
+internal fun buildScannerSettings(
+    strings: SettingsStrings,
+    isHidMode: Boolean,
+    context: Context = LocalContext.current,
+    scope: CoroutineScope = rememberCoroutineScope()
+): List<@Composable () -> Unit> = buildList {
+    add {
+        CheckBoxPreference(
+            title = strings[R.string.code_types],
+            desc = strings[R.string.code_types_desc_short],
+            descLong = strings[R.string.code_types_desc],
+            valueStrings = strings.array(R.array.code_types_values),
+            icon = Icons.Default.QrCode2,
+            preference = PreferenceStore.CODE_TYPES
+        )
+    }
 
-    CheckBoxPreference(
-        title = strings[R.string.code_types],
-        desc = strings[R.string.code_types_desc_short],
-        descLong = strings[R.string.code_types_desc],
-        valueStrings = strings.array(R.array.code_types_values),
-        icon = Icons.Default.QrCode2,
-        preference = PreferenceStore.CODE_TYPES
-    )
+    add {
+        AdvancedOptionsModal()
+    }
 
-    AdvancedOptionsModal()
+    add {
+        SwitchPreference(
+            title = strings[R.string.restrict_area],
+            desc = strings[R.string.restrict_area_desc],
+            icon = Icons.Default.CropFree,
+            preference = PreferenceStore.RESTRICT_AREA
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.restrict_area],
-        desc = strings[R.string.restrict_area_desc],
-        icon = Icons.Default.CropFree,
-        preference = PreferenceStore.RESTRICT_AREA
-    )
+    add {
+        val errorString = strings.errorRegex
+        TextBoxPreference(
+            title = strings[R.string.filter_regex],
+            desc = strings[R.string.filter_regex_desc],
+            descLong = strings[R.string.filter_desc_long],
+            validator = {
+                val result = runCatching { it.toRegex() }
+                if (!it.isBlank() && result.isFailure)
+                    return@TextBoxPreference result.exceptionOrNull()?.message ?: errorString
+                null
+            },
+            icon = Icons.Default.FilterAlt,
+            preference = PreferenceStore.SCAN_REGEX
+        )
+    }
 
-    val errorString = strings.errorRegex
-    TextBoxPreference(
-        title = strings[R.string.filter_regex],
-        desc = strings[R.string.filter_regex_desc],
-        descLong = strings[R.string.filter_desc_long],
-        validator = {
-            val result = runCatching { it.toRegex() }
-            if (!it.isBlank() && result.isFailure)
-                return@TextBoxPreference result.exceptionOrNull()?.message ?: errorString
-            null
-        },
-        icon = Icons.Default.FilterAlt,
-        preference = PreferenceStore.SCAN_REGEX
-    )
-
-    ComboBoxEnumPreference(
-        title = strings[R.string.overlay_type],
-        desc = strings[R.string.overlay_type_desc],
-        icon = Icons.Default.CenterFocusWeak,
-        values = strings.array(R.array.overlay_values),
-        preference = PreferenceStore.OVERLAY_TYPE,
-        onReset = {
-            scope.launch {
-                context.setPreference(
-                    PreferenceStore.OVERLAY_POS_X,
-                    PreferenceStore.OVERLAY_POS_X.defaultValue
-                )
-                context.setPreference(
-                    PreferenceStore.OVERLAY_POS_Y,
-                    PreferenceStore.OVERLAY_POS_Y.defaultValue
-                )
-                context.setPreference(
-                    PreferenceStore.OVERLAY_WIDTH,
-                    PreferenceStore.OVERLAY_WIDTH.defaultValue
-                )
-                context.setPreference(
-                    PreferenceStore.OVERLAY_HEIGHT,
-                    PreferenceStore.OVERLAY_HEIGHT.defaultValue
-                )
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.overlay_type],
+            desc = strings[R.string.overlay_type_desc],
+            icon = Icons.Default.CenterFocusWeak,
+            values = strings.array(R.array.overlay_values),
+            preference = PreferenceStore.OVERLAY_TYPE,
+            onReset = {
+                scope.launch {
+                    context.setPreference(
+                        PreferenceStore.OVERLAY_POS_X,
+                        PreferenceStore.OVERLAY_POS_X.defaultValue
+                    )
+                    context.setPreference(
+                        PreferenceStore.OVERLAY_POS_Y,
+                        PreferenceStore.OVERLAY_POS_Y.defaultValue
+                    )
+                    context.setPreference(
+                        PreferenceStore.OVERLAY_WIDTH,
+                        PreferenceStore.OVERLAY_WIDTH.defaultValue
+                    )
+                    context.setPreference(
+                        PreferenceStore.OVERLAY_HEIGHT,
+                        PreferenceStore.OVERLAY_HEIGHT.defaultValue
+                    )
+                }
             }
-        }
-    )
+        )
+    }
 
     /*ComboBoxEnumPreference(
         title = strings[R.string.highlight_type],
@@ -516,41 +613,51 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         preference = PreferenceStore.SHOW_POSSIBLE
     )*/
 
-    SwitchPreference(
-        title = strings[R.string.full_inside],
-        desc = strings[R.string.full_inside_desc],
-        icon = Icons.Default.QrCodeScanner,
-        preference = PreferenceStore.FULL_INSIDE
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.full_inside],
+            desc = strings[R.string.full_inside_desc],
+            icon = Icons.Default.QrCodeScanner,
+            preference = PreferenceStore.FULL_INSIDE
+        )
+    }
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.scan_freq],
-        desc = strings[R.string.scan_freq_desc],
-        icon = Icons.Default.ShutterSpeed,
-        values = strings.array(R.array.scan_freq_values),
-        preference = PreferenceStore.SCAN_FREQUENCY
-    )
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.scan_freq],
+            desc = strings[R.string.scan_freq_desc],
+            icon = Icons.Default.ShutterSpeed,
+            values = strings.array(R.array.scan_freq_values),
+            preference = PreferenceStore.SCAN_FREQUENCY
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.play_sound],
-        desc = strings[R.string.play_sound_desc],
-        icon = Icons.AutoMirrored.Filled.VolumeUp,
-        preference = PreferenceStore.PLAY_SOUND
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.play_sound],
+            desc = strings[R.string.play_sound_desc],
+            icon = Icons.AutoMirrored.Filled.VolumeUp,
+            preference = PreferenceStore.PLAY_SOUND
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.haptic_feedback],
-        desc = strings[R.string.haptic_feedback_desc],
-        icon = Icons.Default.Vibration,
-        preference = PreferenceStore.VIBRATE
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.haptic_feedback],
+            desc = strings[R.string.haptic_feedback_desc],
+            icon = Icons.Default.Vibration,
+            preference = PreferenceStore.VIBRATE
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.auto_copy_to_clipboard],
-        desc = strings[R.string.auto_copy_to_clipboard_desc],
-        icon = Icons.Default.ContentCopy,
-        preference = PreferenceStore.AUTO_COPY_TO_CLIPBOARD
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.auto_copy_to_clipboard],
+            desc = strings[R.string.auto_copy_to_clipboard_desc],
+            icon = Icons.Default.ContentCopy,
+            preference = PreferenceStore.AUTO_COPY_TO_CLIPBOARD
+        )
+    }
 
     /*SwitchPreference(
         title = strings[R.string.raw_value],
@@ -559,108 +666,131 @@ internal fun ScannerSettings(strings: SettingsStrings) {
         preference = PreferenceStore.RAW_VALUE
     )*/
 
-    SwitchPreference(
-        title = strings[R.string.clear_after_send],
-        desc = strings[R.string.clear_after_send_desc],
-        icon = Icons.Default.Clear,
-        preference = PreferenceStore.CLEAR_AFTER_SEND
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.clear_after_send],
+            desc = strings[R.string.clear_after_send_desc],
+            icon = Icons.Default.Clear,
+            preference = PreferenceStore.CLEAR_AFTER_SEND
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.enable_undo_send],
-        desc = strings[R.string.enable_undo_send_desc],
-        icon = Icons.AutoMirrored.Filled.Undo,
-        enabled = isHidMode,
-        preference = PreferenceStore.ENABLE_UNDO_SEND
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.enable_undo_send],
+            desc = strings[R.string.enable_undo_send_desc],
+            icon = Icons.AutoMirrored.Filled.Undo,
+            enabled = isHidMode,
+            preference = PreferenceStore.ENABLE_UNDO_SEND
+        )
+    }
 
-    ComboBoxEnumPreference(
-        title = strings[R.string.clear_after_time],
-        desc = strings[R.string.clear_after_time_desc],
-        values = strings.array(R.array.clear_after_time_values),
-        icon = Icons.Default.Timer,
-        preference = PreferenceStore.CLEAR_AFTER_TIME
-    )
+    add {
+        ComboBoxEnumPreference(
+            title = strings[R.string.clear_after_time],
+            desc = strings[R.string.clear_after_time_desc],
+            values = strings.array(R.array.clear_after_time_values),
+            icon = Icons.Default.Timer,
+            preference = PreferenceStore.CLEAR_AFTER_TIME
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.private_mode],
-        desc = strings[R.string.private_mode_desc],
-        icon = Icons.Default.Shield,
-        preference = PreferenceStore.PRIVATE_MODE,
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.private_mode],
+            desc = strings[R.string.private_mode_desc],
+            icon = Icons.Default.Shield,
+            preference = PreferenceStore.PRIVATE_MODE,
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.persistent_history],
-        desc = strings[R.string.persistent_history_desc],
-        icon = Icons.Default.Save,
-        preference = PreferenceStore.PERSIST_HISTORY,
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.persistent_history],
+            desc = strings[R.string.persistent_history_desc],
+            icon = Icons.Default.Save,
+            preference = PreferenceStore.PERSIST_HISTORY,
+        )
+    }
 
-    SwitchPreference(
-        title = strings[R.string.multi_code_detection],
-        desc = strings[R.string.multi_code_detection_desc],
-        icon = Icons.Default.QrCode2,
-        preference = PreferenceStore.MULTI_CODE_DETECTION
-    )
+    add {
+        SwitchPreference(
+            title = strings[R.string.multi_code_detection],
+            desc = strings[R.string.multi_code_detection_desc],
+            icon = Icons.Default.QrCode2,
+            preference = PreferenceStore.MULTI_CODE_DETECTION
+        )
+    }
 
-    SaveScanImageOptionsModal()
+    add {
+        SaveScanImageOptionsModal()
+    }
 }
 
 @Composable
-internal fun AboutSettings(strings: SettingsStrings) {
-    val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
-
-    ButtonPreference(
-        title = strings[R.string.source_code],
-        desc = strings[R.string.source_code_desc],
-        icon = Icons.Default.Code,
-    ) {
-        uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
-    }
-
-    ButtonPreference(
-        title = strings[R.string.report_issue],
-        desc = strings[R.string.report_issue_desc],
-        icon = Icons.Default.BugReport,
-    ) {
-        uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner/issues/new")
-    }
-
-    ButtonPreference(
-        title = strings[R.string.rate],
-        desc = strings[R.string.rate_desc],
-        icon = Icons.Default.Star,
-    ) {
-        uriHandler.openUri("market://details?id=${context.packageName}")
-    }
-
-    val shareVia = strings[R.string.share_via]
-    ButtonPreference(
-        title = strings[R.string.share],
-        desc = strings[R.string.share_desc],
-        icon = Icons.Default.Share,
-    ) {
-        runCatching {
-            context.startActivity(
-                Intent.createChooser(
-                    Intent(Intent.ACTION_SEND).apply {
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            "https://play.google.com/store/apps/details?id=${context.packageName}"
-                        )
-                        type = "text/plain"
-                    }, shareVia
-                )
-            )
-        }.onFailure {
-            // Open page in browser instead
-            uriHandler.openUri("https://play.google.com/store/apps/details?id=${context.packageName}")
+internal fun buildAboutSettings(
+    strings: SettingsStrings,
+    context: Context = LocalContext.current,
+    uriHandler: UriHandler = LocalUriHandler.current,
+    clipboard: Clipboard = LocalClipboard.current,
+    scope: CoroutineScope = rememberCoroutineScope()
+): List<@Composable () -> Unit> = buildList {
+    add {
+        ButtonPreference(
+            title = strings[R.string.source_code],
+            desc = strings[R.string.source_code_desc],
+            icon = Icons.Default.Code,
+        ) {
+            uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner")
         }
     }
 
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
+    add {
+        ButtonPreference(
+            title = strings[R.string.report_issue],
+            desc = strings[R.string.report_issue_desc],
+            icon = Icons.Default.BugReport,
+        ) {
+            uriHandler.openUri("https://github.com/Fabi019/hid-barcode-scanner/issues/new")
+        }
+    }
+
+    add {
+        ButtonPreference(
+            title = strings[R.string.rate],
+            desc = strings[R.string.rate_desc],
+            icon = Icons.Default.Star,
+        ) {
+            uriHandler.openUri("market://details?id=${context.packageName}")
+        }
+    }
+
+    add {
+        val shareVia = strings[R.string.share_via]
+        ButtonPreference(
+            title = strings[R.string.share],
+            desc = strings[R.string.share_desc],
+            icon = Icons.Default.Share,
+        ) {
+            runCatching {
+                context.startActivity(
+                    Intent.createChooser(
+                        Intent(Intent.ACTION_SEND).apply {
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "https://play.google.com/store/apps/details?id=${context.packageName}"
+                            )
+                            type = "text/plain"
+                        }, shareVia
+                    )
+                )
+            }.onFailure {
+                // Open page in browser instead
+                uriHandler.openUri("https://play.google.com/store/apps/details?id=${context.packageName}")
+            }
+        }
+    }
+
     val versionString = remember {
         strings.buildVersionDescription(
             BuildConfig.BUILD_TYPE,
@@ -670,43 +800,30 @@ internal fun AboutSettings(strings: SettingsStrings) {
         )
     }
 
-    ButtonPreference(
-        title = strings[R.string.build_version],
-        desc = versionString,
-        icon = Icons.Default.Info,
-        onLongClick = {
-            scope.launch {
-                clipboard.setClipEntry(
-                    ClipData.newPlainText("Version", versionString).toClipEntry()
-                )
+    add {
+        ButtonPreference(
+            title = strings[R.string.build_version],
+            desc = versionString,
+            icon = Icons.Default.Info,
+            onLongClick = {
+                scope.launch {
+                    clipboard.setClipEntry(
+                        ClipData.newPlainText("Version", versionString).toClipEntry()
+                    )
+                }
             }
-        }
-    ) {
-        context.startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.fromParts("package", context.packageName, null)
+        ) {
+            context.startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", context.packageName, null)
+                )
             )
-        )
+        }
     }
 }
 
 // Cached strings to avoid repeated resource lookups during scroll
-@Composable
-internal fun ProfileSettings() {
-    val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
-    val dialogState = rememberDialogState()
-
-    ProfileManageDialog(dialogState)
-
-    ButtonPreference(
-        title = profileDisplayName(activeProfile),
-        desc = stringResource(R.string.active_profile_desc),
-        icon = Icons.Default.Layers,
-        onClick = dialogState::open
-    )
-}
-
 internal class SettingsStrings(private val context: Context) {
     private val stringCache = mutableMapOf<Int, String>()
     private val arrayCache = mutableMapOf<Int, Array<String>>()
