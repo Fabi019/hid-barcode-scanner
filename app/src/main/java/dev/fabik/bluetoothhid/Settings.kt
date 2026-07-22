@@ -62,6 +62,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,6 +76,7 @@ import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fabik.bluetoothhid.ui.AdvancedOptionsModal
@@ -734,4 +736,15 @@ internal class SettingsStrings(private val context: Context) {
             commitHash,
             versionCode
         )
+}
+
+@Composable
+@Preview
+private fun Preview() {
+    val context = LocalContext.current
+    val activeDataStore by remember { ProfileManager.activeStoreFlow(context) }
+        .collectAsStateWithLifecycle(initialValue = ProfileManager.currentStore(context))
+    CompositionLocalProvider(LocalDataStore provides activeDataStore) {
+        SettingsContent()
+    }
 }
