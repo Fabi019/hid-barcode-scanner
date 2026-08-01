@@ -134,7 +134,7 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax_version")
     implementation("androidx.camera:camera-compose:$camerax_version")
 
-    implementation("io.github.zxing-cpp:android:3.1.0")
+    implementation("io.github.zxing-cpp:android:3.1.1")
 
     implementation("com.google.accompanist:accompanist-permissions:$accomp_version")
 
