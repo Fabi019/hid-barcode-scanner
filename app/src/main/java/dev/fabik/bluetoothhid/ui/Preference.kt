@@ -3,6 +3,8 @@ package dev.fabik.bluetoothhid.ui
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
@@ -30,7 +33,10 @@ fun ButtonPreference(
         headlineContent = { Text(title) },
         modifier = Modifier
             .alpha(if (enabled) 1f else 0.38f)
-            .combinedClickable(enabled, onClick = onClick, onLongClick = onLongClick),
+            .combinedClickable(enabled, onClick = onClick, onLongClick = onLongClick)
+            .clip(MaterialTheme.shapes.extraSmall),
+        colors = ListItemDefaults.colors()
+            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         supportingContent = { Text(desc) },
         leadingContent = icon?.let {
             { Icon(icon, null) }

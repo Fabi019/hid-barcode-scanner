@@ -8,6 +8,8 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Undo
@@ -57,7 +59,6 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoStable
 import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -70,7 +71,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -110,101 +111,86 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsContent() {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
+
     val strings = remember {
         SettingsStrings(context)
     }
-    val listState = rememberLazyListState()
 
     val connectionMode by rememberEnumPreference(PreferenceStore.CONNECTION_MODE)
     val isHidOnly = connectionMode == ConnectionMode.HID
     val isExternal = connectionMode == ConnectionMode.EXTERNAL
 
-    val connectionSettings = buildConnectionSettings(strings, isHidOnly, isExternal)
-    val appearanceSettings = buildAppearanceSettings(strings)
-    val cameraSettings = buildCameraSettings(strings)
-    val scannerSettings = buildScannerSettings(strings, isHidOnly)
-    val aboutSettings = buildAboutSettings(strings)
+    val profileSettings = remember { buildProfileSettings() }
+    val connectionSettings = remember(isHidOnly, isExternal) {
+        buildConnectionSettings(strings, isHidOnly, isExternal)
+    }
+    val appearanceSettings = remember { buildAppearanceSettings(strings) }
+    val cameraSettings = remember { buildCameraSettings(strings) }
+    val scannerSettings =
+        remember(isHidOnly) { buildScannerSettings(strings, isHidOnly, context, scope) }
+    val aboutSettings = remember { buildAboutSettings(strings, context, uriHandler, scope) }
 
     LazyColumn(
-        state = listState,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier
             .fillMaxSize()
-            .padding(0.dp, 0.dp)
+            .padding(16.dp, 0.dp)
     ) {
-        item {
-            SectionTitle(strings[R.string.profiles])
-            ProfileSettings()
-        }
+        item { SectionTitle(strings[R.string.profiles], true) }
+        items(profileSettings) { it() }
 
-        item(contentType = "section") {
-            ColoredDivider()
-            SectionTitle(strings[R.string.connection])
-        }
+        item { SectionTitle(strings[R.string.connection]) }
         items(connectionSettings) { it() }
 
-        item(contentType = "section") {
-            ColoredDivider()
-            SectionTitle(strings[R.string.appearance])
-        }
+        item { SectionTitle(strings[R.string.appearance]) }
         items(appearanceSettings) { it() }
 
-        item(contentType = "section") {
-            ColoredDivider()
-            SectionTitle(strings[R.string.camera])
-        }
+        item { SectionTitle(strings[R.string.camera]) }
         items(cameraSettings) { it() }
 
-        item(contentType = "section") {
-            ColoredDivider()
-            SectionTitle(strings[R.string.scanner])
-        }
+        item { SectionTitle(strings[R.string.scanner]) }
         items(scannerSettings) { it() }
 
-        item(contentType = "section") {
-            ColoredDivider()
-            SectionTitle(strings[R.string.about])
-        }
+        item { SectionTitle(strings[R.string.about]) }
         items(aboutSettings) { it() }
     }
 }
 
 @Composable
-fun ColoredDivider() =
-    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-
-@Composable
-fun SectionTitle(text: String) {
-    Spacer(Modifier.height(8.dp))
+fun SectionTitle(text: String, isStart: Boolean = false) {
+    Spacer(Modifier.height(if (isStart) 8.dp else 16.dp))
     Text(
         text,
-        Modifier.padding(start = 16.dp),
+        Modifier.padding(start = 4.dp),
         color = MaterialTheme.colorScheme.primary,
         style = MaterialTheme.typography.titleSmall
     )
     Spacer(Modifier.height(4.dp))
 }
 
-@Composable
-internal fun ProfileSettings() {
-    val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
-    val dialogState = rememberDialogState()
+internal fun buildProfileSettings(): List<@Composable () -> Unit> = buildSettings {
+    add {
+        val activeProfile by ProfileManager.activeProfile.collectAsStateWithLifecycle()
+        val dialogState = rememberDialogState()
 
-    ProfileManageDialog(dialogState)
+        ProfileManageDialog(dialogState)
 
-    ButtonPreference(
-        title = profileDisplayName(activeProfile),
-        desc = stringResource(R.string.active_profile_desc),
-        icon = Icons.Default.Layers,
-        onClick = dialogState::open
-    )
+        ButtonPreference(
+            title = profileDisplayName(activeProfile),
+            desc = stringResource(R.string.active_profile_desc),
+            icon = Icons.Default.Layers,
+            onClick = dialogState::open
+        )
+    }
 }
 
-@Composable
 internal fun buildConnectionSettings(
     strings: SettingsStrings,
     isHidOnly: Boolean,
     isExternal: Boolean
-): List<@Composable () -> Unit> = buildList {
+): List<@Composable () -> Unit> = buildSettings {
     add {
         ComboBoxEnumPreference(
             title = strings[R.string.connection_mode],
@@ -379,9 +365,8 @@ internal fun buildConnectionSettings(
     }
 }
 
-@Composable
 internal fun buildAppearanceSettings(strings: SettingsStrings): List<@Composable () -> Unit> =
-    buildList {
+    buildSettings {
         add {
             SwitchPreference(
                 title = strings[R.string.keep_screen_on],
@@ -431,9 +416,8 @@ internal fun buildAppearanceSettings(strings: SettingsStrings): List<@Composable
     }
 }
 
-@Composable
 internal fun buildCameraSettings(strings: SettingsStrings): List<@Composable () -> Unit> =
-    buildList {
+    buildSettings {
         add {
             SwitchPreference(
                 title = strings[R.string.front_camera],
@@ -520,13 +504,12 @@ internal fun buildCameraSettings(strings: SettingsStrings): List<@Composable () 
     )*/
 }
 
-@Composable
 internal fun buildScannerSettings(
     strings: SettingsStrings,
     isHidMode: Boolean,
-    context: Context = LocalContext.current,
-    scope: CoroutineScope = rememberCoroutineScope()
-): List<@Composable () -> Unit> = buildList {
+    context: Context,
+    scope: CoroutineScope
+): List<@Composable () -> Unit> = buildSettings {
     add {
         CheckBoxPreference(
             title = strings[R.string.code_types],
@@ -727,14 +710,12 @@ internal fun buildScannerSettings(
     }
 }
 
-@Composable
 internal fun buildAboutSettings(
     strings: SettingsStrings,
-    context: Context = LocalContext.current,
-    uriHandler: UriHandler = LocalUriHandler.current,
-    clipboard: Clipboard = LocalClipboard.current,
-    scope: CoroutineScope = rememberCoroutineScope()
-): List<@Composable () -> Unit> = buildList {
+    context: Context,
+    uriHandler: UriHandler,
+    scope: CoroutineScope
+): List<@Composable () -> Unit> = buildSettings {
     add {
         ButtonPreference(
             title = strings[R.string.source_code],
@@ -791,16 +772,18 @@ internal fun buildAboutSettings(
         }
     }
 
-    val versionString = remember {
-        strings.buildVersionDescription(
-            BuildConfig.BUILD_TYPE,
-            BuildConfig.VERSION_NAME,
-            BuildConfig.GIT_COMMIT_HASH,
-            BuildConfig.VERSION_CODE
-        )
-    }
-
     add {
+        val versionString = remember {
+            strings.buildVersionDescription(
+                BuildConfig.BUILD_TYPE,
+                BuildConfig.VERSION_NAME,
+                BuildConfig.GIT_COMMIT_HASH,
+                BuildConfig.VERSION_CODE
+            )
+        }
+
+        val clipboard = LocalClipboard.current
+
         ButtonPreference(
             title = strings[R.string.build_version],
             desc = versionString,
@@ -854,6 +837,38 @@ internal class SettingsStrings(private val context: Context) {
             versionCode
         )
 }
+
+internal class SettingsBuilder {
+    private val items = mutableListOf<@Composable () -> Unit>()
+
+    fun add(content: @Composable () -> Unit) {
+        items += content
+    }
+
+    fun build(): List<@Composable () -> Unit> =
+        items.mapIndexed { index, content ->
+            @Composable {
+                val shape = when {
+                    items.size == 1 -> RoundedCornerShape(16.dp)
+                    index == 0 ->
+                        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+
+                    index == items.lastIndex ->
+                        RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+
+                    else -> null
+                }
+
+                when (shape) {
+                    null -> content()
+                    else -> Box(Modifier.clip(shape)) { content() }
+                }
+            }
+        }
+}
+
+private fun buildSettings(block: SettingsBuilder.() -> Unit): List<@Composable () -> Unit> =
+    SettingsBuilder().apply(block).build()
 
 @Composable
 @Preview
