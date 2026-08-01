@@ -90,6 +90,8 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
         }
     }
 
+    val scanAreas by viewModel.areas.collectAsStateWithLifecycle()
+
     Canvas(
         Modifier
             .fillMaxSize()
@@ -103,8 +105,13 @@ fun OverlayCanvas(viewModel: CameraViewModel) {
             val markerPath = Path().apply {
                 if (viewModel.scanRects.isNotEmpty()) {
                     // Draw each custom area as a separate rounded rect cutout
-                    viewModel.scanRects.forEach { rect ->
-                        addRoundRect(RoundRect(rect, CornerRadius(30f)))
+                    scanAreas.forEach { area ->
+                        addRoundRect(
+                            RoundRect(
+                                area.toRect(size.width, size.height),
+                                CornerRadius(30f)
+                            )
+                        )
                     }
                 } else {
                     addRoundRect(RoundRect(viewModel.scanRect, CornerRadius(30f)))
