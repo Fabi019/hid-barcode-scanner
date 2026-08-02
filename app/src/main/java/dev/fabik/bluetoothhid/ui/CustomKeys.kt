@@ -294,7 +294,7 @@ fun CustomKeys(
             }
         }
 
-        items(keyMap.toList(), key = { i -> i.first }) { item ->
+        items(keyMap.toList(), key = { i -> i.first.toString() }) { item ->
             ListItem(
                 headlineContent = { Text(item.first.toString()) },
                 supportingContent = {

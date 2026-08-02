@@ -1,6 +1,10 @@
 package dev.fabik.bluetoothhid.ui
 
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -10,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -33,15 +38,26 @@ fun ButtonPreference(
         headlineContent = { Text(title) },
         modifier = Modifier
             .alpha(if (enabled) 1f else 0.38f)
+            .height(IntrinsicSize.Min)
             .combinedClickable(enabled, onClick = onClick, onLongClick = onLongClick)
             .clip(MaterialTheme.shapes.extraSmall),
         colors = ListItemDefaults.colors()
             .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         supportingContent = { Text(desc) },
         leadingContent = icon?.let {
-            { Icon(icon, null) }
+            {
+                Box(Modifier.fillMaxHeight(), Alignment.Center) {
+                    Icon(icon, null)
+                }
+            }
         },
-        trailingContent = extra
+        trailingContent = extra?.let {
+            {
+                Box(Modifier.fillMaxHeight(), Alignment.Center) {
+                    it()
+                }
+            }
+        }
     )
 }
 
