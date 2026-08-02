@@ -10,6 +10,7 @@ import zxingcpp.BarcodeReader
 class ZXingAnalyzer(
     initialOptions: BarcodeReader.Options = BarcodeReader.Options(),
     var scanDelay: Int,
+    private val onError: (error: Throwable) -> Unit,
     private val onAnalyze: (source: Size, rotation: Int) -> Unit,
     private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy, source: Size) -> Unit,
 ) : ImageAnalysis.Analyzer {
@@ -110,6 +111,7 @@ class ZXingAnalyzer(
                 }
             }.onFailure {
                 Log.e(TAG, "Error analyzing image!", it)
+                onError(it)
             }
         }
 

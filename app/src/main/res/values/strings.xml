@@ -465,4 +465,8 @@
     <string name="profile_name_empty">Profile name cannot be empty</string>
     <string name="profile_name_exists">A profile with this name already exists</string>
     <string name="profile_default">Default</string>
+    <string name="manual_input_desc">Text is sent after pressing OK.</string>
+    <string name="detector_error">Detector error: %s</string>
+    <string name="unexpected_error">Unexpected error</string>
+    <string name="unexpected_error_desc">You can copy the details below and include them in a bug report.</string>
 </resources>

@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -43,14 +44,18 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.History
@@ -71,7 +76,9 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -102,12 +109,14 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -226,6 +235,7 @@ fun Scanner(
     sendText: (BarcodeResult) -> Unit
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     var currentResult by remember { mutableStateOf<BarcodeResult?>(null) }
 
@@ -249,15 +259,28 @@ fun Scanner(
     val cameraVM = viewModel<CameraViewModel>()
     val scope = rememberCoroutineScope()
 
-    // Show a Snackbar when JavaScript evaluation fails
+    val errorDialog = rememberDialogState()
+    var lastError by remember { mutableStateOf<Throwable?>(null) }
+    lastError?.let {
+        ErrorDetailsDialog(errorDialog, it)
+    }
+
     LaunchedEffect(cameraVM) {
-        cameraVM.jsErrors.collect { error ->
-            snackbarHostState.showSnackbar(
-                message = context.getString(R.string.js_error, error),
-                withDismissAction = true
+        cameraVM.errors.collect { error ->
+            if (error == null) return@collect
+            val result = snackbarHostState.showSnackbar(
+                message = resources.getString(error.template, error.error),
+                withDismissAction = true,
+                actionLabel = "View"
             )
+
+            if (result == SnackbarResult.ActionPerformed) {
+                lastError = error.throwable
+                errorDialog.open()
+            }
         }
     }
+
 
     // Surface external-output delivery status reported back by extensions (sent/failed).
     // A Snackbar on the scanner sits clear of the Send button (unlike a Toast).
@@ -1200,6 +1223,9 @@ fun KeyboardInputDialog(dialogState: DialogState) {
         }
     }) {
         Column {
+            Text(stringResource(R.string.manual_input_desc))
+            Spacer(Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = currentText,
                 modifier = Modifier
@@ -1232,6 +1258,59 @@ fun KeyboardInputDialog(dialogState: DialogState) {
 
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
+        }
+    }
+}
+
+@Composable
+fun ErrorDetailsDialog(dialogState: DialogState, error: Throwable) {
+    val stackTrace = remember(error) {
+        buildString {
+            appendLine(error.toString())
+            error.stackTrace.forEach { appendLine("\tat $it") }
+
+            var cause = error.cause
+            while (cause != null) {
+                appendLine()
+                appendLine("Caused by: $cause")
+                cause.stackTrace.forEach { appendLine("\tat $it") }
+                cause = cause.cause
+            }
+        }
+    }
+
+    InfoDialog(
+        dialogState,
+        title = stringResource(R.string.unexpected_error),
+        icon = {
+            Icon(Icons.Filled.Error, null, tint = MaterialTheme.colorScheme.error)
+        }
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(stringResource(R.string.unexpected_error_desc))
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 300.dp),
+                shape = MaterialTheme.shapes.small,
+                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceContainerLowest
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = stackTrace,
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+                }
+            }
         }
     }
 }

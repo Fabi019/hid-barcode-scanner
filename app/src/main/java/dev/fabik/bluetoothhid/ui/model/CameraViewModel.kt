@@ -15,6 +15,7 @@ import android.util.Log
 import android.util.Size
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.annotation.StringRes
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
@@ -49,6 +50,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.Binarizer
 import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
@@ -66,13 +68,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.totschnig.ocr.Line
 import org.totschnig.ocr.TextBlock
 import zxingcpp.BarcodeReader
@@ -82,7 +84,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.math.max
 import kotlin.math.min
 
@@ -96,9 +97,14 @@ class CameraViewModel : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
-    // Emits error messages when JavaScript evaluation fails
-    private val _jsErrors = MutableSharedFlow<String>(extraBufferCapacity = 1)
-    val jsErrors: SharedFlow<String> = _jsErrors.asSharedFlow()
+    data class Error(
+        @param:StringRes val template: Int,
+        val error: String,
+        val throwable: Throwable?
+    )
+
+    private val _errors = MutableSharedFlow<Error?>(extraBufferCapacity = 1)
+    val errors = _errors.asSharedFlow()
 
     private var surfaceMeteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
     private var cameraControl: CameraControl? = null
@@ -202,6 +208,7 @@ class CameraViewModel : ViewModel() {
         val analyzer = ZXingAnalyzer(
             _readerOptions,
             _scanDelay,
+            ::onBarcodeError,
             ::onBarcodeAnalyze,
             ::onBarcodeResult
         )
@@ -295,6 +302,16 @@ class CameraViewModel : ViewModel() {
             barcodeAnalyzer = null
             onCameraReady(null, null, null)
         }
+    }
+
+    fun onBarcodeError(throwable: Throwable) {
+        _errors.tryEmit(
+            Error(
+                R.string.detector_error,
+                throwable.localizedMessage ?: "Barcode detector failed",
+                throwable
+            )
+        )
     }
 
     fun onBarcodeAnalyze(source: Size, rotation: Int) {
@@ -829,7 +846,13 @@ class CameraViewModel : ViewModel() {
             onException = { throwable ->
                 // Emit the actual exception message for UI display (Snackbar in Scanner).
                 // console.log output goes through onOutput (null here) and is not shown as errors.
-                _jsErrors.tryEmit(throwable.message ?: "JS evaluation failed")
+                _errors.tryEmit(
+                    Error(
+                        R.string.js_error,
+                        throwable.localizedMessage ?: "JS evaluation failed",
+                        throwable
+                    )
+                )
             }
         )
 
@@ -840,10 +863,10 @@ class CameraViewModel : ViewModel() {
         Log.d(TAG, "Focusing at $tapCoords")
         surfaceMeteringPointFactory?.createPoint(tapCoords.x, tapCoords.y)?.let {
             val meteringAction = FocusMeteringAction.Builder(it).build()
-            suspendCoroutine {
+            suspendCancellableCoroutine { c ->
                 cameraControl?.startFocusAndMetering(meteringAction)?.addListener({
-                    it.resume(Unit)
-                }, Executors.newSingleThreadExecutor()) ?: it.resume(Unit)
+                    c.resume(Unit)
+                }, Executors.newSingleThreadExecutor()) ?: c.resume(Unit)
             }
         }
     }
