@@ -1,0 +1,3 @@
+- Fix custom overlay not updated directly
+- Improve error handling while scanning
+- Update barcode scanner library version
