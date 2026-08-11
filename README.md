@@ -78,8 +78,7 @@ actions without being logged in.
 
 ## Troubleshooting
 
-If you are unable to connect with a device you can try either of the steps below depending on how
-the app behaves.
+Below you find some common issues with possible solutions.
 If these don't help, feel free to open a new issue and describe your problem in detail.
 
 ### Connection dialog visible, but no connection possible
@@ -112,6 +111,24 @@ that says the Bluetooth proxy was successfully connected. Otherwise you may have
 or restart your device. This could also mean that your device does not support the Bluetooth HID profile.
 To test this, search for the app "Bluetooth HID Profile Tester" in the PlayStore and see what the result is.
 If the test is not successful, unfortunately your device is not supported.
+
+### QR/Barcode not detected
+
+Can be caused by very dense codes and/or not optimal lightning conditions.
+
+***Solutions:***
+
+- Increase the scan resolution to FHD or QHD
+- Set scan frequency to Fast/Fastest
+- Enable "Preview performance mode" (if supported by the camera)
+- Use phone torch or external lightning if scene is too dark
+- In "Advanced options":
+  - Enable "Try harder" (enabled by default as of v2.2.1)
+  - Enable "Try denoise" (only available since v2.2.1)
+  - If you are scanning barcodes that are rotated by +-90°, enable "Try rotate image"
+  - If you are scanning inverted QR/barcodes, enable "Try inverted"
+  - Reduce "Minimum scan-lines"
+  - Try out different binarizers
 
 ## Contributing
 
