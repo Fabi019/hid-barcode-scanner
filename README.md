@@ -130,6 +130,19 @@ Can be caused by very dense codes and/or not optimal lightning conditions.
   - Reduce "Minimum scan-lines"
   - Try out different binarizers
 
+### Stuck key/Lost keys after transmission
+
+Can happen due to connection instabilities.
+If the last key release packet was lost, this will cause the key to endlessly repeat on the PC 
+
+***Solution:***
+
+Toggling Bluetooth on the PC or sending a new key using the manual input should reset the stuck key.
+
+To reduce the chance of happening in the future: Increase the "Transmit delay" (>20ms). 
+Otherwise you could try to tweak the L2CAP QoS settings in the top right menu of the settings.
+Increasing the token rate/peak bandwith or decreasing the latency might help.
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
