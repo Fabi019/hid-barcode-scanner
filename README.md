@@ -40,7 +40,7 @@ Device list and Scanner screen. If you don't want to connect with any device now
 try out the scanner, pressing the 'Skip'-Button at the bottom of the paired devices will bring you
 directly to the scanner.
 
-Otherwise the app tries to connect with the selected device and automatically sends you to the
+Otherwise, the app tries to connect with the selected device and automatically sends you to the
 scanner once connected.
 
 <img alt="Devices" src="img/devices.png" width="200px" /> <img alt="Main" src="img/main.png" width="200px" />
@@ -186,7 +186,10 @@ If you want to add a new keyboard layout the following steps might help you:
 
 ## Connection Modes
 
-The app supports two connection modes: **HID** (default) and **RFCOMM** (Serial Port Profile). While HID mode works immediately by emulating a keyboard, RFCOMM mode requires additional setup and may need software on your PC to receive data.
+The app supports three connection modes: **HID** (default), **RFCOMM** (Serial Port Profile) and
+output to external plugins.
+While HID mode works immediately by emulating a keyboard, RFCOMM mode requires additional setup and
+may need software on your PC to receive data.
 
 ### When to use RFCOMM mode
 
@@ -266,6 +269,101 @@ while (true) {
 **Recommended for C# developers:** [InTheHand.Net.Bluetooth](https://github.com/inthehand/32feet) library provides better Bluetooth support that allows You more robust connection handling compared to System.IO.Ports.
 
 **Custom RFCOMM implementations:** If you need to adapt the RFCOMM data transmission to simulate specific physical COM scanner behavior (custom protocols, special formatting, etc.), we're open to implementing these features. Please open an issue describing your use case.
+
+## External plugins
+
+The app also supports sending the scanned value directly to all installed and enabled plugins.
+These can then be used to implement custom transmission protocols to send the codes for example over
+HTTP to a PC in the same network.
+
+### List of known plugins
+
+- [TCP Transport Plugin](https://github.com/WinLin97/hid-barcode-scanner-plugin-tcp) by WinLin97
+
+*If you want your plugin added to this list just let me know*
+
+### Create a new plugin
+
+Each plugin lives in a separate app. Following is an example manifest file that can be used as a
+starting point:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<application xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required permission for the plugin to be detected and receive scans -->
+    <uses-permission android:name="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS" />
+    <!-- Required to send plugin results back -->
+    <queries>
+        <package android:name="dev.fabik.bluetoothhid" />
+    </queries>
+
+    <application>
+        <activity>
+            <!-- Optional: Settings entry-point opened on long-press in the plugin picker -->
+            <intent-filter>
+                <action android:name="dev.fabik.bluetoothhid.plugin.action.SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Receives scans. Metadata is shown in the plugin picker. -->
+        <receiver android:name=".ScanReceiver" android:exported="true"
+            android:permission="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS">
+            <intent-filter>
+                <action android:name="dev.fabik.bluetoothhid.action.BARCODE_SCANNED" />
+            </intent-filter>
+            <meta-data android:name="dev.fabik.bluetoothhid.plugin.label"
+                android:value="Example Plugin" />
+            <meta-data android:name="dev.fabik.bluetoothhid.plugin.shortLabel"
+                android:value="Example" />
+            <meta-data android:name="dev.fabik.bluetoothhid.plugin.author"
+                android:value="The author" />
+        </receiver>
+
+        <!-- Lifecycle + health channel from the core (warm up / release / liveness ping). -->
+        <receiver android:name=".PluginControlReceiver" android:exported="true"
+            android:permission="dev.fabik.bluetoothhid.permission.RECEIVE_SCANS">
+            <intent-filter>
+                <action android:name="dev.fabik.bluetoothhid.plugin.action.SET_ENABLED" />
+                <action android:name="dev.fabik.bluetoothhid.plugin.action.PING" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
+```
+
+When the app receives an `BARCODE_SCANNED` broadcast, the following data is transmitted as `Extra`
+inside the intent.
+(All definitions of the various fields can be found in the
+file [ExternalProtocol.kt](https://github.com/Fabi019/hid-barcode-scanner/blob/main/app/src/main/java/dev/fabik/bluetoothhid/bt/ExternalProtocol.kt))
+
+- Protocol version
+- Scan id for responding to a scan
+- Raw value & Processed value
+- Format
+- Timestamp
+- Source and Scanner ID
+- Regex groups
+- Scan image name
+
+The external plugin must also react to any `action.PING` requests from the app by responding with an
+intent for example
+with the following content:
+
+```kotlin
+val intent = Intent("dev.fabik.bluetoothhid.plugin.action.STATUS").apply {
+    setPackage("dev.fabik.bluetoothhid")
+    putExtra("protocol_version", 1)
+    putExtra("package", ctx.packageName)
+    putExtra("running", true)
+    putExtra(
+        "state",
+        "IDLE"
+    )   // Supported states: IDLE, STARTING, CONNECTING, CONNECTED, LISTENING, ERROR, BLOCKED, NO_PERMISSION, UNKNOWN
+    putExtra("status_detail", "Example plugin connected")
+}
+ctx.sendBroadcast(intent)
+```
 
 ## License
 
