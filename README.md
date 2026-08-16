@@ -174,6 +174,9 @@ If you want to add a new keyboard layout the following steps might help you:
 1. The first step is to create the actual keyboard layout file, for this a great guide already
    exists in the layout for the [polish keyboard](app/src/main/assets/keymaps/pl.layout).
    The layout file always consists of a list of characters with the hid code and modifier.
+   Alternatively you can also use the latest Python script
+   from [#438](https://github.com/Fabi019/hid-barcode-scanner/issues/438)
+   to automatically generate the layout based on the data from <https://kbdlayout.info>
 2. Add the name of the layout to the `<string-array name="keyboard_layout_values">` for every
    available language under `app/src/main/res/values-*/strings.xml`
 3. Extend the `KeyboardLayout` enum
