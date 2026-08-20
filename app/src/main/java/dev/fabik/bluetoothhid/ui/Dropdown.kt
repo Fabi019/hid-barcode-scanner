@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Shield
@@ -223,7 +222,6 @@ fun SettingsDropdown() {
             if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.insecure_rfcomm)) },
-                    leadingIcon = { Icon(Icons.Default.Shield, null) },
                     trailingIcon = {
                         Checkbox(
                             checked = insecureRfcomm,
@@ -241,7 +239,6 @@ fun SettingsDropdown() {
                 var preserveUnsupportedPlaceholders by rememberPreference(PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS)
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.preserve_unsupported_placeholders)) },
-                    leadingIcon = { Icon(Icons.Default.DataObject, null) },
                     trailingIcon = {
                         Checkbox(
                             checked = preserveUnsupportedPlaceholders,
@@ -250,6 +247,20 @@ fun SettingsDropdown() {
                     },
                     onClick = {
                         preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
+                    }
+                )
+
+                var directApplyTemplate by rememberPreference(PreferenceStore.DIRECT_APPLY_TEMPLATE)
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.directly_apply_template)) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = directApplyTemplate,
+                            onCheckedChange = null
+                        )
+                    },
+                    onClick = {
+                        directApplyTemplate = !directApplyTemplate
                     }
                 )
             } else {

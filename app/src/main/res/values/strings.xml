@@ -469,4 +469,5 @@
     <string name="detector_error">Detector error: %s</string>
     <string name="unexpected_error">Unexpected error</string>
     <string name="unexpected_error_desc">You can copy the details below and include them in a bug report.</string>
+    <string name="directly_apply_template">Directly apply template</string>
 </resources>
