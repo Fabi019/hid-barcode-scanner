@@ -252,7 +252,8 @@ class BluetoothController(var context: Context) {
                 PreferenceStore.TEMPLATE_TEXT,
                 PreferenceStore.EXPAND_CODE,
                 PreferenceStore.PRESERVE_UNSUPPORTED_PLACEHOLDERS,
-                PreferenceStore.ENABLE_EXTERNAL_OUTPUT
+                PreferenceStore.ENABLE_EXTERNAL_OUTPUT,
+                PreferenceStore.DIRECT_APPLY_TEMPLATE
             ).distinctUntilChanged().debounce(200).collect {
                 val mode = PreferenceStore.CONNECTION_MODE.extractEnum(it)
                 if (currentConnectionMode != mode) {
@@ -289,7 +290,7 @@ class BluetoothController(var context: Context) {
                 // toggle is on (HID/RFCOMM + "also send to external plugins"). Reacts to both the
                 // mode and the toggle changing; start()/stop() are idempotent.
                 val externalActive = mode == ConnectionMode.EXTERNAL ||
-                    PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(it)
+                        PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(it)
                 if (externalActive) externalController.start() else externalController.stop()
 
                 autoConnectEnabled = PreferenceStore.AUTO_CONNECT.extract(it)
@@ -594,6 +595,7 @@ class BluetoothController(var context: Context) {
             val expand =
                 if (!withExtraKeys || extraKeys != ExtraKeys.CUSTOM) false
                 else PreferenceStore.EXPAND_CODE.extract(preferences)
+            val directlyApplyTemplate = PreferenceStore.DIRECT_APPLY_TEMPLATE.extract(preferences)
 
             // Get scanner ID
             val scannerID = getScannerID()
@@ -605,24 +607,25 @@ class BluetoothController(var context: Context) {
             // External output: active in EXTERNAL mode, or as a parallel "also send to external"
             // toggle in HID/RFCOMM mode. Uses the raw-text (RFCOMM) template path.
             val externalOutputEnabled = isExternalMode ||
-                PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(preferences)
+                    PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(preferences)
             if (externalOutputEnabled) {
-                val externalText = TemplateProcessor.processTemplate(
-                    string,
-                    template,
-                    TemplateProcessor.TemplateMode.RFCOMM,
-                    from,
-                    scanTimestamp,
-                    scannerID,
-                    barcodeType,
-                    preserveUnsupported,
-                    imageName,
-                    regexGroups
-                    // External receives the final text exactly like HID does: the simple extra-key
-                    // suffixes (ENTER/TAB/SPACE) apply here too — they double as the line
-                    // terminator for plugins, which forward the text verbatim. CUSTOM keeps using
-                    // the template ({ENTER} → \r\n there); NONE/CUSTOM have a null suffix.
-                ).let { text -> extraKeys.suffix?.let { text + it } ?: text }
+                val externalText =
+                    if (directlyApplyTemplate) string else TemplateProcessor.processTemplate(
+                        string,
+                        template,
+                        TemplateProcessor.TemplateMode.RFCOMM,
+                        from,
+                        scanTimestamp,
+                        scannerID,
+                        barcodeType,
+                        preserveUnsupported,
+                        imageName,
+                        regexGroups
+                        // External receives the final text exactly like HID does: the simple extra-key
+                        // suffixes (ENTER/TAB/SPACE) apply here too — they double as the line
+                        // terminator for plugins, which forward the text verbatim. CUSTOM keeps using
+                        // the template ({ENTER} → \r\n there); NONE/CUSTOM have a null suffix.
+                    ).let { text -> extraKeys.suffix?.let { text + it } ?: text }
                 externalController.publishScan(
                     rawValue = string,
                     processedValue = externalText,
@@ -638,18 +641,19 @@ class BluetoothController(var context: Context) {
             // Bluetooth output, by connection mode (EXTERNAL has no Bluetooth peer)
             when (currentConnectionMode) {
                 ConnectionMode.RFCOMM -> {
-                    val processedString = TemplateProcessor.processTemplate(
-                        string,
-                        template,
-                        TemplateProcessor.TemplateMode.RFCOMM,
-                        from,
-                        scanTimestamp,
-                        scannerID,
-                        barcodeType,
-                        preserveUnsupported,
-                        imageName,
-                        regexGroups
-                    )
+                    val processedString =
+                        if (directlyApplyTemplate) string else TemplateProcessor.processTemplate(
+                            string,
+                            template,
+                            TemplateProcessor.TemplateMode.RFCOMM,
+                            from,
+                            scanTimestamp,
+                            scannerID,
+                            barcodeType,
+                            preserveUnsupported,
+                            imageName,
+                            regexGroups
+                        )
                     rfcommController.sendProcessedData(processedString)
                 }
 
@@ -658,19 +662,20 @@ class BluetoothController(var context: Context) {
                     // (e.g. "{ENTER}") are expanded as real keypresses (true) or typed as literal
                     // text (false, default). Handled inside TemplateProcessor by escaping { } when
                     // expandCode=false; KeyboardSender no longer needs to know about it.
-                    val processedString = TemplateProcessor.processTemplate(
-                        string,
-                        template,
-                        TemplateProcessor.TemplateMode.HID,
-                        from,
-                        scanTimestamp,
-                        scannerID,
-                        barcodeType,
-                        preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
-                        scanImageFileName = imageName,
-                        regexGroups = regexGroups,
-                        expandCode = expand
-                    )
+                    val processedString =
+                        if (directlyApplyTemplate) string else TemplateProcessor.processTemplate(
+                            string,
+                            template,
+                            TemplateProcessor.TemplateMode.HID,
+                            from,
+                            scanTimestamp,
+                            scannerID,
+                            barcodeType,
+                            preserveUnsupportedPlaceholders = false,  // HID: pass all placeholders to KeyTranslator
+                            scanImageFileName = imageName,
+                            regexGroups = regexGroups,
+                            expandCode = expand
+                        )
                     // Store the precise typed-character count for undo (null = cancelled, not stored)
                     keyboardSender?.sendProcessedString(
                         processedString,

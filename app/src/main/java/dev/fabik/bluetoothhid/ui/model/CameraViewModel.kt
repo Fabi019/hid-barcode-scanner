@@ -62,6 +62,7 @@ import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlaySize
 import dev.fabik.bluetoothhid.utils.ScanFrequency
 import dev.fabik.bluetoothhid.utils.ScanImageFormat
 import dev.fabik.bluetoothhid.utils.ScanResolution
+import dev.fabik.bluetoothhid.utils.TemplateProcessor
 import dev.fabik.bluetoothhid.utils.TextMode
 import dev.fabik.bluetoothhid.utils.ZXingAnalyzer
 import kotlinx.coroutines.CancellationException
@@ -177,9 +178,7 @@ class CameraViewModel : ViewModel() {
                 }
             } else if (!value.contentEquals(lastBarcode)) {
                 Log.d(TAG, "New barcode detected: $value")
-
-                val formatIdx = ZXingAnalyzer.format2Index(format)
-                HistoryViewModel.addHistoryItem(value, formatIdx)
+                lastBarcode = value
 
                 val scanImageName = _saveScanPath?.let { path ->
                     image?.let { image ->
@@ -198,10 +197,24 @@ class CameraViewModel : ViewModel() {
                     }
                 }
 
+                var value = value
+                _directApplyTemplate?.let {
+                    value = TemplateProcessor.processTemplate(
+                        value,
+                        it,
+                        TemplateProcessor.TemplateMode.RFCOMM,
+                        barcodeType = ZXingAnalyzer.format2String(format),
+                        scanImageFileName = scanImageName,
+                        regexGroups = regexGroups
+                    )
+                }
+
+                val formatIdx = ZXingAnalyzer.format2Index(format)
+                HistoryViewModel.addHistoryItem(value!!, formatIdx)
+
                 viewModelScope.launch {
                     onBarcode(BarcodeResult(value, formatIdx, scanImageName, regexGroups))
                 }
-                lastBarcode = value
             }
         }
 
@@ -435,6 +448,7 @@ class CameraViewModel : ViewModel() {
     private var _saveScanFileName: String = "scan"
     private var _clearAfterTime: Long? = null
     private var _saveScanImageFormat: ScanImageFormat = ScanImageFormat.JPEG
+    private var _directApplyTemplate: String? = null
 
     fun updateScanParameters(
         fullyInside: Boolean,
@@ -448,8 +462,9 @@ class CameraViewModel : ViewModel() {
         saveScanFileName: String,
         clearAfterTime: Long?,
         saveScanImageFormat: ScanImageFormat,
-        multiCodeDetection: Boolean = false,
-        autoSend: Boolean = false
+        multiCodeDetection: Boolean,
+        autoSend: Boolean,
+        directApplyTemplate: String?,
     ) {
         _scanDelay = frequency.delayMs
         barcodeAnalyzer?.scanDelay = _scanDelay
@@ -478,6 +493,8 @@ class CameraViewModel : ViewModel() {
         _clearAfterTime = clearAfterTime
         this.multiCodeDetection = multiCodeDetection
         _autoSend = autoSend
+
+        _directApplyTemplate = directApplyTemplate
 
         Log.d(TAG, "Updated scan parameters")
     }
