@@ -219,6 +219,20 @@ fun SettingsDropdown() {
                 }
             )
 
+            var directApplyTemplate by rememberPreference(PreferenceStore.DIRECT_APPLY_TEMPLATE)
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.directly_apply_template)) },
+                trailingIcon = {
+                    Checkbox(
+                        checked = directApplyTemplate,
+                        onCheckedChange = null
+                    )
+                },
+                onClick = {
+                    directApplyTemplate = !directApplyTemplate
+                }
+            )
+
             if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.insecure_rfcomm)) },
@@ -247,20 +261,6 @@ fun SettingsDropdown() {
                     },
                     onClick = {
                         preserveUnsupportedPlaceholders = !preserveUnsupportedPlaceholders
-                    }
-                )
-
-                var directApplyTemplate by rememberPreference(PreferenceStore.DIRECT_APPLY_TEMPLATE)
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.directly_apply_template)) },
-                    trailingIcon = {
-                        Checkbox(
-                            checked = directApplyTemplate,
-                            onCheckedChange = null
-                        )
-                    },
-                    onClick = {
-                        directApplyTemplate = !directApplyTemplate
                     }
                 )
             } else {
