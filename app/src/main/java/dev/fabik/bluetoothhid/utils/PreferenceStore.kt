@@ -6,15 +6,14 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
 import android.util.Size
-import zxingcpp.BarcodeReader
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -37,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import zxingcpp.BarcodeReader
 
 // Active profile's DataStore — routes through ProfileManager so profile switches are reflected
 val Context.dataStore: DataStore<Preferences> get() = ProfileManager.currentStore(this)
@@ -239,6 +239,7 @@ open class PreferenceStore {
         val EXPAND_CODE = booleanPreferencesKey("expand_code") defaultsTo false
         val INSECURE_RFCOMM = booleanPreferencesKey("insecure_rfcomm") defaultsTo false
         val PRESERVE_UNSUPPORTED_PLACEHOLDERS = booleanPreferencesKey("preserve_unsupported_placeholders") defaultsTo false
+        val DIRECT_APPLY_TEMPLATE = booleanPreferencesKey("direct_apply_template") defaultsTo false
         val QOS_SERVICE_TYPE =
             intPreferencesKey("qos_service_type") enumDefaultsTo QosServiceType::fromIndex
         val QOS_TOKEN_RATE = intPreferencesKey("qos_token_rate") defaultsTo 800

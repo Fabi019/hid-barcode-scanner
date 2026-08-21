@@ -269,7 +269,9 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.CLEAR_AFTER_TIME,
         PreferenceStore.SAVE_SCAN_IMAGE_FORMAT,
         PreferenceStore.MULTI_CODE_DETECTION,
-        PreferenceStore.AUTO_SEND
+        PreferenceStore.AUTO_SEND,
+        PreferenceStore.TEMPLATE_TEXT,
+        PreferenceStore.DIRECT_APPLY_TEMPLATE
     )
 
     scanner?.let {
@@ -282,6 +284,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
             }.getOrNull()
             val saveScan = PreferenceStore.SAVE_SCAN.extract(it)
             val saveScanPath = PreferenceStore.SAVE_SCAN_PATH.extract(it)
+            val directApplyTemplate = PreferenceStore.DIRECT_APPLY_TEMPLATE.extract(it)
 
             viewModel.updateScanParameters(
                 PreferenceStore.FULL_INSIDE.extract(it),
@@ -296,7 +299,8 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.CLEAR_AFTER_TIME.extractEnum(it).value,
                 PreferenceStore.SAVE_SCAN_IMAGE_FORMAT.extractEnum(it),
                 PreferenceStore.MULTI_CODE_DETECTION.extract(it),
-                PreferenceStore.AUTO_SEND.extract(it)
+                PreferenceStore.AUTO_SEND.extract(it),
+                if (directApplyTemplate) PreferenceStore.TEMPLATE_TEXT.extract(it) else null
             )
         }
     }
