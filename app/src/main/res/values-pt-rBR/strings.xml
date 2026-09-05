@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BT Scanner</string>
+    <string name="scanner">Scanner</string>
+    <string name="send_to_device">Enviar para o dispositivo</string>
+    <string name="scan_code_to_start">Aponte a câmera para um código</string>
+    <string name="settings">Configurações</string>
+    <string name="connection">Conexão</string>
+    <string name="auto_connect">Conectar automaticamente</string>
+    <string name="auto_connect_desc">Conecta no último dispositivo ao abrir</string>
+    <string name="show_unnamed">Dispositivos sem nome</string>
+    <string name="show_unnamed_desc">Mostra aparelhos sem nome</string>
+    <string name="appearance">Aparência</string>
+    <string name="theme">Tema</string>
+    <string name="theme_desc">Claro, escuro ou sistema</string>
+    <string name="dynamic_theme">Tema dinâmico</string>
+    <string name="dynamic_theme_desc">Cores do sistema</string>
+    <string name="front_camera">Câmera frontal</string>
+    <string name="front_camera_desc">Usa a câmera frontal no lugar da traseira</string>
+    <string name="restrict_area">Restringir área de leitura</string>
+    <string name="restrict_area_desc">Mostra a área na tela</string>
+    <string name="overlay_type">Formato da área</string>
+    <string name="overlay_type_desc">Quadrado, retângulo ou personalizado</string>
+    <string name="full_inside">Código inteiro na área</string>
+    <string name="full_inside_desc">Só lê se o código estiver inteiro na área</string>
+    <string name="scan_freq">Velocidade de leitura</string>
+    <string name="scan_freq_desc">Mais rápido usa mais CPU</string>
+    <string name="scan_res">Resolução da leitura</string>
+    <string name="scan_res_desc">Mais alta demora mais</string>
+    <string name="auto_send">Enviar automaticamente</string>
+    <string name="auto_send_desc">Envia ao ler</string>
+    <string name="extra_keys">Teclas extras</string>
+    <string name="extra_keys_desc">Tecla no final de cada envio</string>
+    <string name="play_sound">Som de leitura</string>
+    <string name="play_sound_desc">Som ao ler código</string>
+    <string name="raw_value">Valor original</string>
+    <string name="raw_value_desc">Envia o código sem alterar</string>
+    <string name="about">Sobre</string>
+    <string name="repository">Repositório</string>
+    <string name="build_version">Versão</string>
+    <string name="confirm">Confirmar</string>
+    <string name="dismiss">Cancelar</string>
+    <string name="scanned_devices">Dispositivos encontrados</string>
+    <string name="swipe_refresh">(Puxe para baixo para atualizar)</string>
+    <string name="paired_devices">Dispositivos pareados</string>
+    <string name="no_paired_devices">(Nenhum dispositivo pareado)</string>
+    <string name="skip">Pular</string>
+    <string name="request_again">Pedir novamente</string>
+    <string name="exit">Sair</string>
+    <string name="send_delay">Atraso ao enviar</string>
+    <string name="send_delay_desc">Tempo entre cada caractere. Muito baixo pode pular caracteres ou prender teclas.</string>
+    <string name="send_delay_template">Atraso (ms): %.0f</string>
+    <string name="request_permission">Pedir permissão</string>
+    <string name="bluetooth_permission">Para conectar a outros dispositivos, permita o acesso a \'Dispositivos próximos\'.</string>
+    <string name="camera_permission">Para ler códigos, permita o acesso à \'Câmera\'.</string>
+    <string name="location_permission">A localização é necessária para encontrar dispositivos novos.</string>
+    <string name="location_enable">Ative a localização no celular.</string>
+    <string name="open_location_settings">Abrir localização</string>
+    <string name="connecting">Conectando…</string>
+    <string name="connect_help">Se não conectar, despareie o dispositivo nos dois lados e tente novamente por este app.</string>
+    <string name="haptic_feedback">Vibração na leitura</string>
+    <string name="haptic_feedback_desc">Vibração ao ler código</string>
+    <string name="auto_copy_to_clipboard">Copiar ao ler</string>
+    <string name="auto_copy_to_clipboard_desc">Copia para a área de transferência</string>
+    <string name="connected_with">Conectado a: %s</string>
+    <string name="click_to_connect">Toque para voltar.</string>
+    <string name="info">Informações</string>
+    <string name="name">Nome</string>
+    <string name="mac_address">Endereço MAC</string>
+    <string name="alias">Apelido</string>
+    <string name="type">Tipo</string>
+    <string name="clazz">Classe</string>
+    <string name="services">Serviços</string>
+    <string name="uuids">UUIDs</string>
+    <string name="code_types">Tipos de código</string>
+    <string name="code_types_desc">Só os tipos que você usa. Nenhum marcado = todos.</string>
+    <string name="code_types_desc_short">Só alguns tipos, leitura mais rápida</string>
+    <string name="bt_proxy_registered">BT-Proxy registrado!</string>
+    <string name="bt_proxy_error">Não foi possível obter o BT-Proxy! Tente reiniciar o app…</string>
+    <string name="bt_service_disconnected">BT-Service desconectado!</string>
+    <string name="bt_service_connected">BT-Service conectado!</string>
+    <string name="please_wait">Aguarde…</string>
+    <string name="copied_to_clipboard">Copiado para a área de transferência!</string>
+    <string name="devices">Dispositivos</string>
+    <string name="keyboard_layout">Layout do teclado</string>
+    <string name="keyboard_layout_desc">Para acentos ou teclado que não é QWERTY</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="more">Mais</string>
+    <string name="toggle_flash">Flash</string>
+    <string name="loading">Carregando…</string>
+    <string name="error">Erro</string>
+    <string name="failed_to_download">Não foi possível baixar o módulo de barcode do ML-Kit.</string>
+    <string name="ensure_internet_and_play">Verifique se há internet e se o Google Play Services está instalado.</string>
+    <string name="download_bundled">Ou baixe a versão bundled APK no GitHub, que já vem com o módulo.</string>
+    <string name="downloading_module">Solicitando o download do módulo de barcode do ML-Kit pelo Google Play.\n\nIsso só precisa ser feito uma vez — em geral ao instalar o APK ou limpar os dados do Google Play Services.</string>
+    <string name="unpair_device">Desparear %s?</string>
+    <string name="unpair_desc">O dispositivo é removido da lista de dispositivos pareados</string>
+    <string name="connect">Conectar</string>
+    <string name="unpair">Desparear</string>
+    <string name="error_code" formatted="false">Erro: %s (%s)</string>
+    <string name="downloading">Baixando…</string>
+    <string name="installing">Instalando…</string>
+    <string name="ok">OK</string>
+    <string name="reset_default">Restaurar padrões?</string>
+    <string name="reset_default_desc">Restaurar as configurações padrão?</string>
+    <string name="reset">Restaurar</string>
+    <string name="back">Voltar</string>
+    <string name="source_code">Código-fonte</string>
+    <string name="source_code_desc">Ver no GitHub</string>
+    <string name="report_issue">Relatar problema</string>
+    <string name="report_issue_desc">Abrir no GitHub</string>
+    <string name="rate">Avaliar no Google Play</string>
+    <string name="rate_desc">Se estiver gostando, avalie</string>
+    <string name="share">Compartilhar</string>
+    <string name="share_desc">Enviar o app para alguém</string>
+    <string name="share_via">Compartilhar via…</string>
+    <string name="refresh">Atualizar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="bluetooth_disabled">Bluetooth desligado</string>
+    <string name="enable_bluetooth">Ligue o Bluetooth nas configurações ou no botão abaixo.</string>
+    <string name="enable_bluetooth_btn">Ligar Bluetooth</string>
+    <string name="no_device">Nenhum dispositivo conectado</string>
+    <string name="highlight_type">Destaque do código</string>
+    <string name="highlight_type_desc">Caixa ou pontos no código</string>
+    <string name="auto_focus">Foco automático</string>
+    <string name="auto_focus_desc">Desligue para focar só ao toque</string>
+    <string name="bt_hid_service">Bluetooth HID Service</string>
+    <string name="service_running">Serviço em execução</string>
+    <string name="refresh_proxy">Atualizar proxy</string>
+    <string name="stop_proxy">Parar proxy</string>
+    <string name="proxy_waiting">Aguardando o BT-Proxy conectar…</string>
+    <string name="exit_confirm">Toque em Voltar novamente para sair</string>
+    <string name="allow_screen_rotation">Girar a tela</string>
+    <string name="allow_screen_rotation_desc">A tela gira com o celular</string>
+    <string name="fix_exposure">Exposição fixa</string>
+    <string name="fix_exposure_desc">Menos borrão com movimento</string>
+    <string name="filter_regex">Filtro regex</string>
+    <string name="filter_regex_desc">Só códigos que batem com a regex</string>
+    <string name="filter_desc_long">Aceita regex comum. Deixe vazio ou use .* para aceitar tudo. Se tiver um grupo "(…)", só essa parte é usada.</string>
+    <string name="custom_template">Template personalizado</string>
+    <string name="custom_templ_desc">Define o texto enviado</string>
+    <string name="custom_templ_desc_long" formatted="false">Defina \'Teclas extras\' como \'Personalizado\'.\n\n
+        Placeholders CODE:\n
+        • {CODE} - valor simples do barcode\n
+        • {CODE%N} - N-ésimo grupo de captura do regex (ex.: {CODE%1}, {CODE%2}); usa {CODE} se o grupo não existir ou se nenhum regex estiver definido\n
+        • Codificação: _HEX, _B64 podem ser combinados em qualquer ordem\n
+        • Exemplos: {CODE_HEX}, {CODE_B64}, {CODE_HEX_B64}, {HEX_B64_CODE}\n\n
+        Placeholders de data/hora com formatação opcional:\n
+        • {DATE} - data atual (padrão: yyyy-MM-dd)\n
+        • {TIME} - hora atual (padrão: HH:mm:ss)\n
+        • {DATETIME} - data e hora (padrão: yyyy-MM-dd HH:mm:ss)\n
+        • {SCAN_TIME} - timestamp da leitura (padrão: yyyy-MM-dd HH:mm:ss.SSS)\n
+        • Formato personalizado: {DATE[format]}, {TIME[format]}, {DATETIME[format]}, {SCAN_TIME[format]}\n\n
+        Padrões de formato:\n
+        • EEEE - dia da semana (nome completo), EEE - dia da semana (abreviado)\n
+        • MMMM - mês (nome completo), MMM - mês (abreviado), MM - mês (numérico)\n
+        • yyyy - ano (completo), yy - ano (dois últimos dígitos), dd - dia\n
+        • HH - hora (24h), hh - hora (12h), mm - minuto, ss - segundo, SSS - milissegundos, a - AM/PM\n
+        • Observação: texto entre aspas (\'texto\') aparece literalmente\n\n
+        Exemplos de formato:\n
+        • {DATE[dd.MM.yyyy]} → 03.10.2025\n
+        • {TIME[HH:mm:ss]} → 14:30:45\n
+        • {DATETIME[EEEE, MMMM dd yyyy]} → sexta-feira, outubro 03 2025\n
+        • {DATETIME[dd.MM.yyyy HH:mm]} → 03.10.2025 14:30\n
+        • {SCAN_TIME[dd/MM/yy HH:mm]} → 03/10/25 14:30\n\n
+        Placeholders de metadados:\n
+        • {CODE_TYPE} - tipo do barcode (QR_CODE, CODE_128, etc.)\n
+        • {SCAN_SOURCE} - origem dos dados (SCAN, HISTORY, MANUAL)\n
+        • {SCANNER_ID} - identificador do hardware do scanner\n
+        • {SCAN_IMAGE_NAME} - nome da imagem da leitura armazenada\n\n
+        Codificação universal (funciona com QUALQUER placeholder de dados):\n
+        • Adicione _HEX ou _B64 a qualquer placeholder, em qualquer ordem\n
+        • Exemplos: {DATE_HEX}, {TIME_B64}, {CODE_TYPE_HEX}, {DATETIME[dd.MM.yyyy]_B64}\n
+        • Combinação: {DATE[dd.MM.yyyy]_HEX_B64}, {CODE_TYPE_B64_HEX}\n\n
+        Codificação global (aplicada a toda a saída):\n
+        • {GLOBAL_HEX} - codifica o resultado inteiro em hexadecimal\n
+        • {GLOBAL_B64} - codifica o resultado inteiro em base64\n
+        • Combinações: {GLOBAL_HEX_B64}, {GLOBAL_B64_HEX}\n
+        • Observação: no modo RFCOMM, placeholders HID sem suporte são removidos ou mantidos como texto, conforme o menu.\n\n
+        Placeholders específicos de HID:\n
+        • Teclas: {F1–24}, {ENTER}, {ESC}, {TAB}, {BKSP}, {LEFT}, {RIGHT}, {UP}, {DOWN}\n
+        • Especiais: {SPACE}, {CR}, {LF}, {WAIT:n}\n
+        • Observação: no modo RFCOMM, só {TAB} e {ENTER} funcionam. A visibilidade dos outros se controla no menu.\n\n
+        Modificadores podem ser definidos colocando na frente os seguintes caracteres:\n
+        \t^: Shift\n
+        \t+: Ctrl\n
+        \t#: Alt\n
+        \t@: Meta\n
+        Exemplo: {+r} envia CTRL+R, {^#F1} envia SHIFT+ALT+F1, {WAIT:10} adiciona um atraso de 10 caracteres
+    </string>
+    <string name="camera">Câmera</string>
+    <string name="focus_mode">Modo de foco</string>
+    <string name="focus_mode_desc">Alguns modos bloqueiam o toque para focar</string>
+    <string name="search_by_value">Buscar pelo código</string>
+    <string name="history">Histórico</string>
+    <string name="search">Buscar</string>
+    <string name="clear_history">Limpar histórico</string>
+    <string name="clear_history_desc">Apagar o histórico?</string>
+    <string name="preview_mode_desc">Se o aparelho tiver suporte</string>
+    <string name="preview_performance_mode">Prévia em 60 FPS</string>
+    <string name="full_screen_scanner">Tela cheia</string>
+    <string name="full_screen_scanner_desc">O scanner ocupa a tela toda</string>
+    <string name="auto_zoom">Zoom automático</string>
+    <string name="zooms_in_on_codes_to_far_away">Aproxima quando o código está longe</string>
+    <string name="show_possible">Mostrar possíveis códigos</string>
+    <string name="highlights_possible_codes">Pontos nos possíveis códigos</string>
+    <string name="caps_lock_activated">Caps Lock ligado</string>
+    <string name="click_to_turn_off">Toque para desligar</string>
+    <string name="rfcomm_listening">Aguardando conexão</string>
+    <string name="rfcomm_listening_from_device">Aguardando conexão de %s</string>
+    <string name="keep_screen_on">Tela sempre ligada</string>
+    <string name="keep_screen_on_desc">Tela ligada durante a leitura</string>
+    <string name="private_mode">Esconder o código</string>
+    <string name="private_mode_desc">Esconde o código na tela</string>
+    <string name="camera_error">Erro da câmera!</string>
+    <string name="camera_error_desc">Não foi possível abrir a câmera. Reinicie o app ou o celular. Se continuar, relate no GitHub.</string>
+    <string name="press_run_to_evaluate">Toque em Executar para testar</string>
+    <string name="custom_javascript">JavaScript personalizado</string>
+    <string name="custom_js_desc">Altera o código com JS</string>
+    <string name="js_error">Erro JS: %s</string>
+    <string name="editor_desc">Escreva JavaScript para alterar o valor do código. Há duas constantes (\'format\' e \'code\'). A última linha é o resultado (não precisa de return).</string>
+    <string name="editor">Editor</string>
+    <string name="debug">Debug</string>
+    <string name="code">Código</string>
+    <string name="format">Formato</string>
+    <string name="output">Saída</string>
+    <string name="run">Executar</string>
+    <string name="export">Exportar</string>
+    <string name="export_csv">CSV</string>
+    <string name="export_json">JSON</string>
+    <string name="export_xml">XML</string>
+    <string name="export_lines">Linhas</string>
+    <string name="export_lines_description">texto com quebra de linha</string>
+    <string name="export_as">Exportar como</string>
+    <string name="import_text">Importar</string>
+    <string name="import_from">Importar de</string>
+    <string name="delete_selection">Excluir selecionados?</string>
+    <string name="delete_selection_desc">Excluir os itens selecionados?</string>
+    <string name="templates_in_value">Templates no código lido</string>
+    <string name="template_in_value_desc">Aplica template no código (precisa do personalizado)</string>
+    <string name="error_connecting_to_device">Erro ao conectar! Tentando reiniciar o serviço…</string>
+    <string name="developer_mode">Modo desenvolvedor</string>
+    <string name="custom_keys">Teclas personalizadas</string>
+    <string name="add_custom_key">Adicionar tecla</string>
+    <string name="add_custom_key_desc_long">Informe o caractere e o HID-code correspondente (não o scancode), com os modificadores. O HID-code do ENTER, por exemplo, é 28 (hex).</string>
+    <string name="character">Caractere</string>
+    <string name="hid_code_hex">HID-Code (HEX)</string>
+    <string name="modifier">Modificador</string>
+    <string name="test">Testar</string>
+    <string name="test_key">* Para testar a tecla, conecte um dispositivo.</string>
+    <string name="add_custom_key_desc">Mapeia caracteres para HID-codes</string>
+    <string name="define_custom_keys">Definir teclas</string>
+    <string name="add">Adicionar</string>
+    <string name="persistent_history">Guardar histórico</string>
+    <string name="persistent_history_desc">Mantém o histórico ao fechar o app</string>
+    <string name="multi_code_detection">Ler vários códigos</string>
+    <string name="multi_code_detection_desc">Lê todos os códigos da câmera de uma vez</string>
+    <string name="add_scan_area">Adicionar área</string>
+    <string name="delete_scan_area">Excluir área</string>
+    <string name="filter">Filtro</string>
+    <string name="date_range">Período</string>
+    <string name="select_types">Selecionar tipos</string>
+    <string name="clear">Limpar</string>
+    <string name="apply">Aplicar</string>
+    <string name="exclude_duplicates">Sem duplicatas</string>
+    <string name="save_to_file">Salvar em arquivo</string>
+    <string name="invalid_regex">Regex inválido</string>
+    <string name="template_error">O template precisa de pelo menos um CODE.</string>
+    <string name="template_error_duplicates">Não pode repetir componente: %1$s</string>
+    <string name="advanced_options">Opções avançadas</string>
+    <string name="advanced_opts_desc">Mais ajustes da leitura</string>
+    <string name="detection">Detecção</string>
+    <string name="try_harder">Insistir na leitura</string>
+    <string name="try_rotate_image">Tentar girar</string>
+    <string name="try_inverted">Tentar negativo</string>
+    <string name="try_downscale">Tentar em resolução menor</string>
+    <string name="minimum_scan_lines">Mínimo de linhas</string>
+    <string name="processing">Processamento</string>
+    <string name="binarizer">Binarizador</string>
+    <string name="downscale_factor">Fator de redução</string>
+    <string name="downscale_threshold">Limite de redução (px)</string>
+    <string name="parser">Parser</string>
+    <string name="text_mode">Modo texto</string>
+    <string name="send_with_volume_keys">Usar botões de volume</string>
+    <string name="send_vol_keys_desc">Ação dos botões de volume</string>
+    <string name="ocr_note_desc">O OCR precisa de outro app para ler o texto. Instale um dos apps abaixo.\nDá para escolher a versão ML-Kit ou Tesseract.\n(É um app de terceiros; eu não controlo.)</string>
+    <string name="ocr_note_bottom">Depois, use o botão no canto inferior direito do scanner.</string>
+    <string name="note">Observação</string>
+    <string name="ocr_app_github">OCR by mtotschnig (GitHub)</string>
+    <string name="ext_ocr_support">OCR externo</string>
+    <string name="scan_results">Leituras</string>
+    <string name="ocr_results_selection">Marque as linhas que devem ser enviadas.</string>
+    <string name="clear_after_send">Limpar depois de enviar</string>
+    <string name="clear_after_send_desc">Apaga o código depois de enviar na mão</string>
+    <string name="enable_undo_send">Desfazer último envio</string>
+    <string name="enable_undo_send_desc">Backspace no último código enviado</string>
+    <string name="undo_last_sent">Desfazer último envio</string>
+    <string name="manual_input">Digitar na mão</string>
+    <string name="include_extra_keys">Incluir teclas extras</string>
+    <string name="connection_mode">Modo de conexão</string>
+    <string name="connection_mode_desc">HID funciona como teclado. RFCOMM envia pela porta COM do Bluetooth (pode precisar de outro programa). No RFCOMM, o que não vale fica cinza.</string>
+    <string-array name="theme_values">
+        <item>Sistema</item>
+        <item>Claro</item>
+        <item>Escuro</item>
+    </string-array>
+    <string-array name="overlay_values">
+        <item>Quadrado (QR-Code)</item>
+        <item>Retângulo (Barcode)</item>
+        <item>Personalizado</item>
+    </string-array>
+    <string-array name="scan_freq_values">
+        <item>Máxima</item>
+        <item>Rápida (100ms)</item>
+        <item>Normal (500ms)</item>
+        <item>Lenta (1s)</item>
+    </string-array>
+    <string-array name="scan_res_values">
+        <item>SD (480P)</item>
+        <item>HD (720P)</item>
+        <item>FHD (1080P)</item>
+        <item>UHD (2160P)</item>
+    </string-array>
+    <string-array name="extra_keys_values">
+        <item>Nenhuma</item>
+        <item>Enter</item>
+        <item>Tab</item>
+        <item>Espaço</item>
+        <item>Personalizado</item>
+    </string-array>
+    <string-array name="keyboard_layout_values">
+        <item>Inglês (US)</item>
+        <item>Alemão (DE)</item>
+        <item>Francês (FR)</item>
+        <item>Inglês (GB)</item>
+        <item>Espanhol (ES)</item>
+        <item>Italiano (IT)</item>
+        <item>Turco Q (TR)</item>
+        <item>Polonês para programadores (PL)</item>
+        <item>Tcheco (CZ)</item>
+        <item>Português (PO)</item>
+        <item>Português (BR)</item>
+        <item>Francês (BE)</item>
+        <item>Húngaro (HU)</item>
+    </string-array>
+    <string-array name="highlight_values">
+        <item>Caixa</item>
+        <item>Pontos</item>
+    </string-array>
+    <string-array name="focus_mode_values">
+        <item>Automático</item>
+        <item>Manual</item>
+        <item>Macro</item>
+        <item>Contínuo</item>
+        <item>EDOF</item>
+        <item>Fixo (infinito)</item>
+        <item>Contínuo (rápido)</item>
+    </string-array>
+    <string-array name="connection_mode_values">
+        <item>Teclado HID</item>
+        <item>RFCOMM (SPP)</item>
+        <item>Só plugins externos</item>
+    </string-array>
+    <string name="external_output">Plugins externos</string>
+    <string name="external_output_desc">Apps que recebem o código lido</string>
+    <string name="external_no_plugins">Nenhum plugin instalado</string>
+    <string name="external_no_plugins_desc">Instale um plugin para mandar a leitura para outro app</string>
+    <string name="external_active">Plugin ativo</string>
+    <string name="external_active_desc">As leituras vão para os plugins ligados</string>
+    <string name="external_no_plugin_active">Nada está sendo enviado</string>
+    <string name="external_no_plugin_active_desc">A saída externa está ligada, mas nenhum plugin está ativo</string>
+    <string name="external_waiting">Aguardando plugin…</string>
+    <string name="external_waiting_desc">Abrindo o plugin. Aguarde…</string>
+    <string name="external_not_responding">Plugin sem resposta</string>
+    <string name="external_not_responding_desc">O plugin não abriu. Toque para tentar novamente, ou abra o plugin uma vez se acabou de instalar</string>
+    <string name="enable_external_output">Enviar também para plugins</string>
+    <string name="enable_external_output_desc">Manda a leitura aos plugins no HID/RFCOMM</string>
+    <string name="external_output_always_on">No modo de plugins, o envio externo fica sempre ligado</string>
+    <string name="external_long_press_hint">Toque e segure um plugin para abrir as configurações</string>
+    <string name="external_plugin_no_settings">Este plugin não tem configurações</string>
+    <string name="external_plugin_update_required">Plugin desatualizado — atualize o plugin</string>
+    <string name="external_plugin_no_permission">O plugin perdeu a permissão — reinstale</string>
+    <string name="external_plugin_blocked">O sistema bloqueou a abertura — permita o Autostart do plugin</string>
+    <string name="external_status_down">inativo</string>
+    <string name="external_status_connected">conectado</string>
+    <string name="external_status_waiting">aguardando</string>
+    <string name="external_result_prefix">Plugin</string>
+    <string name="external_result_sent">enviado</string>
+    <string name="external_result_failed">falhou</string>
+    <plurals name="export_items">
+        <item quantity="one">Exportar %1$d item</item>
+        <item quantity="other">Exportar %1$d itens</item>
+    </plurals>
+    <string name="insecure_rfcomm">RFCOMM sem criptografia</string>
+    <string name="insecure_rfcomm_desc">Aceita RFCOMM inseguro. Só use em aparelhos antigos que não fazem Bluetooth Serial Port Profile seguro.</string>
+    <string name="preserve_unsupported_placeholders">Manter placeholders sem suporte</string>
+    <string name="preserve_unsupported_placeholders_desc">No RFCOMM, deixa {F1}, {ESC} e afins no texto</string>
+    <string name="save_scan_image">Salvar foto da leitura</string>
+    <string name="save_scan_desc">Salva a foto no celular</string>
+    <string name="crop_mode">Recorte</string>
+    <string name="image_quality">Qualidade</string>
+    <string name="file_name_pattern">Nome do arquivo</string>
+    <string name="file_name_pattern_placeholder">Placeholder: {TIMESTAMP}, {TIMESTAMP_ISO}, {CODE}, {FORMAT}</string>
+    <string name="output_folder">Pasta de destino</string>
+    <string name="save_scan_image_hint">O nome de cada foto entra no template como {SCAN_IMAGE_NAME}. Dá para usar isso para puxar a imagem do celular.</string>
+    <string name="clear_after_time">Limpar se ficar parado</string>
+    <string name="clear_after_time_desc">Apaga o código se não ler nada nesse tempo</string>
+    <string-array name="clear_after_time_values">
+        <item>Nunca</item>
+        <item>1s</item>
+        <item>3s</item>
+        <item>5s</item>
+    </string-array>
+    <string name="image_format">Formato</string>
+    <string name="volume_up">Volume +</string>
+    <string name="volume_down">Volume −</string>
+    <string name="zoom_level">Zoom (%)</string>
+    <string name="trigger_on_key_release">Ao soltar o botão</string>
+    <string name="try_denoise">Tentar reduzir o ruído</string>
+    <string name="qos_settings">L2CAP QoS</string>
+    <string name="qos_description">Em geral não mude isso. Se a conexão oscilar, subir a taxa de token/banda ou baixar a latência pode ajudar. As alterações valem depois de reiniciar o app. Ver Bluetooth HID Specification v1.1.1, seção 5.2 e apêndice D.</string>
+    <string name="qos_service_type">Tipo de serviço</string>
+    <string name="qos_token_rate">Taxa de token (bytes/s)</string>
+    <string name="qos_token_bucket_size">Token bucket (bytes)</string>
+    <string name="qos_peak_bandwidth">Banda de pico (bytes/s)</string>
+    <string name="qos_latency">Latência (us)</string>
+    <string name="qos_delay_variation">Variação de atraso (us)</string>
+    <string name="export_settings">Exportar configurações</string>
+    <string name="import_settings">Importar configurações</string>
+    <string name="import_keys">Importar teclas</string>
+    <string name="export_keys">Exportar teclas</string>
+    <string name="import_settings_desc">Só substitui o que estiver no arquivo.</string>
+    <string name="import_keys_desc">Importar apaga as teclas que estão definidas agora.</string>
+    <string name="preview_stabilization">Estabilização</string>
+    <string name="preview_stabilization_desc">Se o aparelho tiver suporte</string>
+    <string name="initial_zoom">Zoom inicial</string>
+    <string name="initial_zoom_desc">Ao abrir a câmera</string>
+    <string name="zoom_gesture">Gesto de zoom</string>
+    <string name="zoom_gesture_desc">Pinça, deslize ou toque duplo</string>
+    <string-array name="zoom_gesture_values">
+        <item>Dois dedos</item>
+        <item>Deslizar</item>
+        <item>Toque duplo para zerar o zoom</item>
+    </string-array>
+    <string name="favourite_devices">Favoritos</string>
+    <string name="reset_favourites">Limpar favoritos</string>
+    <string name="toggle_favourite">Favoritar</string>
+    <string-array name="volume_keys_actions">
+        <item>Nada</item>
+        <item>Enviar</item>
+        <item>Limpar</item>
+        <item>OCR</item>
+        <item>Digitar</item>
+        <item>Flash</item>
+        <item>Zoom</item>
+        <item>Focar</item>
+    </string-array>
+    <string name="profiles">Perfis</string>
+    <string name="active_profile_desc">Toque para gerenciar</string>
+    <string name="manage_profiles">Gerenciar perfis</string>
+    <string name="add_profile">Novo perfil</string>
+    <string name="delete_profile">Excluir perfil</string>
+    <string name="profile_name">Nome do perfil</string>
+    <string name="profile_name_empty">Digite um nome</string>
+    <string name="profile_name_exists">Já existe um perfil com esse nome</string>
+    <string name="profile_default">Padrão</string>
+    <string name="manual_input_desc">Envia ao tocar em OK.</string>
+    <string name="detector_error">Erro na leitura: %s</string>
+    <string name="unexpected_error">Erro inesperado</string>
+    <string name="unexpected_error_desc">Copie os detalhes abaixo e cole ao relatar o problema.</string>
+    <string name="directly_apply_template">Aplicar template</string>
+    <string name="register_app_permission_error">Permissão negada pelo sistema. O modo HID não vai funcionar!</string>
+</resources>
