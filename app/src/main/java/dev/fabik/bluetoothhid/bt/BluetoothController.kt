@@ -435,7 +435,7 @@ class BluetoothController(var context: Context) {
 
         // Stop Bluetooth state monitoring
         bluetoothStateReceiver?.let {
-            context.unregisterReceiver(it)
+            runCatching { context.unregisterReceiver(it) }
             bluetoothStateReceiver = null
         }
 
