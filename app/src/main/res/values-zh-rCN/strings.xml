@@ -23,7 +23,7 @@
     <string name="full_inside">完全在区域内</string>
     <string name="full_inside_desc">码需完全位于扫描区域内</string>
     <string name="scan_freq">扫描频率</string>
-    <string name="scan_freq_desc">分析图像的间隔时间。更高的频率将导致更高的CPU使用率。</string>
+    <string name="scan_freq_desc">每次成功检测后的延迟时长</string>
     <string name="scan_res">扫描分辨率</string>
     <string name="scan_res_desc">被分析图像的分辨率。更高的分辨率需要更长的分析时间。</string>
     <string name="auto_send">自动发送</string>

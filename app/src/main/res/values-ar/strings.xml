@@ -12,7 +12,7 @@
     <string name="restrict_area_desc">سيظهر إطار حول المكان الذي ستتم قراءته</string>
     <string name="overlay_type_desc">تحديد شكل الإطار حول المنطقة المقروءة</string>
     <string name="full_inside_desc">يجب أن تكون الأكواد موجودة بالكامل داخل المنطقة المقروءة</string>
-    <string name="scan_freq_desc">الفترة الزمنية التي يتم فيها تحليل الصورة. كلما زادت زاد استهلاك وحدة المعالجة المركزية.</string>
+    <string name="scan_freq_desc">مدة التأخير بعد كل عملية كشف ناجحة</string>
     <string name="scan_res_desc">دقة الصورة التي يتم تحليلها. كلما زادت الدقة، زاد وقت التحليل.</string>
     <string name="auto_send">إرسال تلقائي</string>
     <string name="auto_send_desc">إرسال أي أكواد جديدة يتم اكتشافها</string>
