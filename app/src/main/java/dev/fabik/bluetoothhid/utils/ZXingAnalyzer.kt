@@ -12,7 +12,7 @@ class ZXingAnalyzer(
     var scanDelay: Int,
     private val onError: (error: Throwable) -> Unit,
     private val onAnalyze: (source: Size, rotation: Int) -> Unit,
-    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy, source: Size) -> Unit,
+    private val onResult: (barcodes: List<BarcodeReader.Result>, sourceImage: ImageProxy, source: Size, duration: Long) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     companion object {
@@ -76,8 +76,8 @@ class ZXingAnalyzer(
     }
 
     override fun analyze(image: ImageProxy) {
-        val currentTime = System.currentTimeMillis()
-        val deltaTime = currentTime - lastAnalyzedTimeStamp
+        val startTime = System.currentTimeMillis()
+        val deltaTime = startTime - lastAnalyzedTimeStamp
 
         val source =
             if (image.imageInfo.rotationDegrees == 90 || image.imageInfo.rotationDegrees == 270) {
@@ -104,10 +104,10 @@ class ZXingAnalyzer(
 
                     // Add delay only after something was detected
                     if (results.isNotEmpty()) {
-                        lastAnalyzedTimeStamp = currentTime
+                        lastAnalyzedTimeStamp = startTime
                     }
 
-                    onResult(results, image, source)
+                    onResult(results, image, source, System.currentTimeMillis() - startTime)
                 }
             }.onFailure {
                 Log.e(TAG, "Error analyzing image!", it)

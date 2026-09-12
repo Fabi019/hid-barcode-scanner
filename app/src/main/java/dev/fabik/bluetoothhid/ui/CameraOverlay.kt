@@ -328,11 +328,7 @@ fun DebugOverlay(viewModel: CameraViewModel) {
 
         // Draw the detector stats
         canvas.drawText(
-            "Detector latency: ${detectorTrace?.currentLatency} ms (Delta: ${
-                detectorTrace?.currentLatency?.minus(
-                    cameraTrace?.currentLatency ?: 0
-                )
-            } ms)",
+            "Detector latency: ${detectorTrace?.currentLatency} ms (Took: ${viewModel.detectorTime} ms)",
             10f,
             y + 50f,
             Paint().apply {

@@ -128,6 +128,7 @@ class CameraViewModel : ViewModel() {
 
     val cameraTrace = LatencyTrace(100)
     val detectorTrace = LatencyTrace(100)
+    var detectorTime = 0L
 
     private val cameraPreviewUseCase =
         Preview.Builder()
@@ -559,9 +560,11 @@ class CameraViewModel : ViewModel() {
     fun onBarcodeResult(
         result: List<BarcodeReader.Result>,
         sourceImage: ImageProxy,
-        source: Size
+        source: Size,
+        duration: Long
     ) {
         detectorTrace.trigger()
+        detectorTime = duration
 
         val allBarcodes = result.map {
             val cornerPoints = listOf(
