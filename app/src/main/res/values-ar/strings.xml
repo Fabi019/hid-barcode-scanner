@@ -3,8 +3,6 @@
     <string name="settings">الإعدادات</string>
     <string name="auto_connect">اتصال تلقائي</string>
     <string name="auto_connect_desc">الاتصال بآخر جهاز عند البدء</string>
-    <string name="show_unnamed">أجهزة بلا اسم</string>
-    <string name="show_unnamed_desc">يعرض الأجهزة التي لا تحمل اسما</string>
     <string name="theme_desc">تغيير سمة واجهة المستخدم المفضلة</string>
     <string name="front_camera">الكاميرا الأمامية</string>
     <string name="front_camera_desc">استخدام الكاميرا الأمامية بدلاً من الكاميرا الخلفية إذا كان الجهاز يدعم ذلك.</string>
@@ -18,8 +16,6 @@
     <string name="auto_send_desc">إرسال أي أكواد جديدة يتم اكتشافها</string>
     <string name="extra_keys_desc">حدد المفتاح الذي سيتم إضافته في نهاية كل نص يتم إرساله إلى الكمبيوتر.</string>
     <string name="play_sound_desc">تشغيل صوت عند قراءة كود</string>
-    <string name="confirm">تأكيد</string>
-    <string name="dismiss">إلغاء</string>
     <string name="paired_devices">الأجهزة المقترنة</string>
     <string name="no_paired_devices">(لم يتم العثور على أجهزة مقترنة)</string>
     <string name="skip">تخطي</string>
@@ -54,7 +50,6 @@
     <string name="keyboard_layout">تخطيط لوحة المفاتيح</string>
     <string name="keyboard_layout_desc">حدد تخطيط لوحة المفاتيح. غيّر التخطيط إذا كنت ترغب في كتابة أحرف خاصة أو إذا كنت لا تستخدم تخطيط QWERTY.</string>
     <string name="toggle_flash">تشغيل/إيقاف الفلاش</string>
-    <string name="ensure_internet_and_play">تأكد من وجود اتصال إنترنت نشط وأن خدمات جوجل بلاي مثبتة على جهازك.</string>
     <string name="unpair_desc">سيؤدي إلغاء الاقتران إلى إزالة الجهاز من قائمة الأجهزة المقترنة.</string>
     <string name="unpair">إلغاء الاقتران</string>
     <string name="reset_default">إعادة الضبط للوضع الافتراضي؟</string>
@@ -68,8 +63,6 @@
     <string name="enable_bluetooth">يُرجى تفعيل البلوتوث في إعدادات النظام أو بالنقر على الزر أدناه.</string>
     <string name="enable_bluetooth_btn">تفعيل البلوتوث</string>
     <string name="no_device">لا يوجد جهاز متصل</string>
-    <string name="auto_focus">تركيز العدسة التلقائي</string>
-    <string name="auto_focus_desc">قم بتعطيله إذا كنت ترغب فقط في التركيز عن طريق النقر على الشاشة</string>
     <string name="exit_confirm">اضغط مرة أخرى على زر الرجوع للخروج</string>
     <string name="allow_screen_rotation">السماح بدوران الشاشة</string>
     <string name="allow_screen_rotation_desc">يسمح للشاشة بالدوران عند تغيير اتجاه الجهاز</string>
@@ -86,8 +79,6 @@
     <string name="clear_history_desc">هل أنت متأكد أنك تريد حذف السجل؟</string>
     <string name="preview_mode_desc">يستخدم التقاط 60 إطارًا في الثانية، إذا كان ذلك متاحًا</string>
     <string name="full_screen_scanner_desc">سيتم عرض الماسح الضوئي على كامل الشاشة</string>
-    <string name="auto_zoom">تكبير (زووم) تلقائي</string>
-    <string name="zooms_in_on_codes_to_far_away">يقوم بالتكبير على الأكواد البعيدة جدا</string>
     <string name="caps_lock_activated">وضع الأحرف الكبيرة مُفعل</string>
     <string name="click_to_turn_off">انقر هنا لإيقاف تشغيله</string>
     <string name="keep_screen_on">إبقاء الشاشة قيد التشغيل</string>
@@ -106,7 +97,6 @@
     <string name="delete_selection_desc">هل أنت متأكد من رغبتك في حذف العناصر المحددة؟</string>
     <string name="templates_in_value">استبدال القوالب بقيمتها</string>
     <string name="template_in_value_desc">يستبدل القوالب بقيمة الكود (يتطلب قالبًا مخصصًا)</string>
-    <string name="error_connecting_to_device">خطأ في الاتصال بالجهاز! جاري محاولة إعادة تشغيل الخدمة…</string>
     <string name="developer_mode">وضع المطور</string>
     <string name="add_custom_key">إضافة مفتاح مخصص</string>
     <string name="add_custom_key_desc_long">أدخل الحرف والكود المقابل في محاكي لوحة المفاتيح بما في ذلك أي مفاتيح تعديل. على سبيل المثال، الكود لمفتاح ENTER هو 28 بالسداسي عشري.</string>

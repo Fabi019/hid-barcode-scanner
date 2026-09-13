@@ -8,8 +8,6 @@
     <string name="connection">Verbindung</string>
     <string name="auto_connect">Automatisch Verbinden</string>
     <string name="auto_connect_desc">Mit dem letzten Gerät beim Start verbinden</string>
-    <string name="show_unnamed">Unbenannte Geräte</string>
-    <string name="show_unnamed_desc">Zeigt Geräte ohne Namen an</string>
     <string name="appearance">Darstellung</string>
     <string name="theme">Design</string>
     <string name="theme_desc">Änderert das App-Design</string>
@@ -32,11 +30,7 @@
     <string name="extra_keys_desc">Tasten die jedem Text, der an den PC gesendet wird, angehängt werden sollen</string>
     <string name="play_sound">Scan Ton</string>
     <string name="play_sound_desc">Spielt einen Ton beim Scannen eines Codes ab.</string>
-    <string name="raw_value">Rohwert</string>
-    <string name="raw_value_desc">Verwendet den Rohwert des Codes</string>
     <string name="about">Über</string>
-    <string name="confirm">Bestätigen</string>
-    <string name="dismiss">Abbrechen</string>
     <string name="scanned_devices">Gescannte Geräte</string>
     <string name="swipe_refresh">(Von oben ziehen zum Aktualisieren)</string>
     <string name="paired_devices">Gekoppelte Geräte</string>
@@ -67,7 +61,6 @@
     <string name="type">Typ</string>
     <string name="clazz">Klasse</string>
     <string name="services">Service</string>
-    <string name="uuids">UUIDs</string>
     <string name="code_types">Code Typen</string>
     <string name="code_types_desc">Aktiviere nur benötigte Typen um die Scan-Geschwindigkeit zu verbessern. Wähle keinen um alle zu aktivieren.</string>
     <string name="bt_proxy_error">Fehler in BT-Proxy! Versuche die App neuzustarten…</string>
@@ -78,25 +71,14 @@
     <string name="devices">Geräte</string>
     <string name="keyboard_layout">Tastatur Layout</string>
     <string name="keyboard_layout_desc">Stellt das verwendete Tastatus Layout ein. Ändern, falls Sie Sonderzeichen eingeben möchten oder kein QWERTY-Layout verwenden.</string>
-    <string name="disconnect">Trennen</string>
     <string name="more">Mehr</string>
     <string name="toggle_flash">Blitz an/aus</string>
-    <string name="loading">Loading…</string>
-    <string name="error">Error</string>
-    <string name="failed_to_download">Der Download und die Installation des ML-Kit Barcode-Moduls sind fehlgeschlagen.</string>
-    <string name="ensure_internet_and_play">Stellen Sie sicher, dass Sie eine aktive Internetverbindung haben und dass die Google Play Services auf Ihrem Gerät installiert sind.</string>
-    <string name="download_bundled">Alternativ können Sie die bundled APK-Version von der GitHub-Seite herunterladen welche das Modul bereits enthält.</string>
-    <string name="downloading_module">Anforderung des Downloads und Installation des ML-Kit Barcode-Moduls über Google Play.\n\nDies muss nur einmal durchgeführt werden. Normalerweise, wenn Sie die App als APK installieren oder die Daten der Google Play Services löschen.</string>
     <string name="unpair_device">Entkoppeln von %s?</string>
     <string name="unpair_desc">Durch das Entkoppeln wird das Gerät aus der Liste der gekoppelten Geräte entfernt.</string>
     <string name="connect">Verbinden</string>
     <string name="unpair">Entkoppeln</string>
-    <string name="error_code" formatted="false">Fehler: %s (%s)</string>
-    <string name="downloading">Herunterladen…</string>
-    <string name="installing">Installieren…</string>
     <string name="reset_default">Auf Standard zurücksetzen?</string>
     <string name="reset_default_desc">Sind Sie sicher, dass Sie auf die Standardeinstellungen zurücksetzen wollen?</string>
-    <string name="ok">OK</string>
     <string name="reset">Zurücksetzen</string>
     <string name="back">Zurück</string>
     <string name="source_code">Source Code</string>
@@ -152,10 +134,6 @@
         <item>Französisch (BE)</item>
         <item>Ungarisch (HU)</item>
     </string-array>
-    <string-array name="highlight_values">
-        <item>Box</item>
-        <item>Punkte</item>
-    </string-array>
     <string name="scan_res_desc">Auflösung des analysierten Bilds. Höhere Auflösungen dauern länger zum Analysieren.</string>
     <string name="refresh">Aktualisieren</string>
     <string name="bluetooth_disabled">Bluetooth ist deaktiviert</string>
@@ -164,16 +142,10 @@
     <string name="cancel">Abbrechen</string>
     <string name="no_device">Kein Gerät verbunden</string>
     <string name="code_types_desc_short">Aktivieren Sie nur bestimmte Typen, um die Scangeschwindigkeit zu erhöhen</string>
-    <string name="highlight_type">Hervorhebungs Typ</string>
-    <string name="highlight_type_desc">Wähle aus wie erkannte Codes hervorgehoben werden</string>
-    <string name="auto_focus">Autofokus</string>
-    <string name="auto_focus_desc">Deaktivieren, falls Sie nur manuell fokussieren möchten</string>
     <string name="bt_hid_service">Bluetooth HID Service</string>
     <string name="service_running">Service läuft gerade</string>
     <string name="refresh_proxy">Proxy erneuern</string>
-    <string name="bt_proxy_registered">BT-Proxy registriert!</string>
     <string name="stop_proxy">Proxy beenden</string>
-    <string name="proxy_waiting">Warten bis der BT-Proxy verbunden ist…</string>
     <string name="exit_confirm">Zum Beenden erneut zurück drücken</string>
     <string name="allow_screen_rotation">Bildschirmdrehung freischalten</string>
     <string name="allow_screen_rotation_desc">Erlaubt die automatische Drehung des Bildschirms</string>
@@ -254,10 +226,6 @@
     <string name="preview_performance_mode">Leistungsmodus für Vorschau</string>
     <string name="full_screen_scanner_desc">Scanner wird im Vollbild angezeigt</string>
     <string name="full_screen_scanner">Scanner im Vollbild</string>
-    <string name="auto_zoom">Auto-Zoom</string>
-    <string name="zooms_in_on_codes_to_far_away">Vergrößert zu weit entfernte Codes</string>
-    <string name="show_possible">Zeige mögliche</string>
-    <string name="highlights_possible_codes">Hebt mögliche Codes mit Punkten hervor</string>
     <string name="caps_lock_activated">Caps Lock ist aktiviert</string>
     <string name="click_to_turn_off">Drücke hier zum deaktivieren</string>
     <string name="rfcomm_listening">Auf Verbindung hören</string>
@@ -295,7 +263,6 @@
     <string name="delete_selection_desc">Bist du sicher, dass du die Auswahl löschen willst?</string>
     <string name="templates_in_value">Templates im Code</string>
     <string name="template_in_value_desc">Ersetzt Templates aus dem Code-Wert (Benötigt benutzerdefiniertes Template)</string>
-    <string name="error_connecting_to_device">Fehler bei der Verbindung mit dem Gerät! Starte service neu…</string>
     <string name="developer_mode">Entwicklermodus</string>
     <string name="custom_keys">Eigene Tasten</string>
     <string name="add_custom_key">Eigene Taste hinzufügen</string>
@@ -338,7 +305,6 @@
         <item>Nur externe Plugins</item>
     </string-array>
     <string name="external_output">Externe Ausgabe-Plugins</string>
-    <string name="external_output_desc">Installierte Erweiterungs-Apps, die gescannte Werte empfangen</string>
     <string name="external_no_plugins">Keine Erweiterungs-Apps installiert</string>
     <string name="external_no_plugins_desc">Installiere eine Plugin-App, um Scans extern weiterzuleiten</string>
     <string name="external_active">Externe Ausgabe aktiv</string>
@@ -349,9 +315,7 @@
     <string name="external_waiting_desc">Externes Plugin wird gestartet — einen Moment</string>
     <string name="external_not_responding">Plugin antwortet nicht</string>
     <string name="external_not_responding_desc">Das externe Plugin ist nicht gestartet. Zum Wiederholen tippen, oder einmal öffnen, falls gerade installiert</string>
-    <string name="enable_external_output">Externe Ausgabe aktivieren</string>
     <string name="enable_external_output_desc">Scans zusätzlich an aktivierte Plugins weiterleiten (im HID-/RFCOMM-Modus)</string>
-    <string name="external_output_always_on">Externe Ausgabe ist im Modus „Nur externe Plugins“ immer aktiv</string>
     <string name="external_long_press_hint">Lange auf ein Plugin drücken, um dessen Einstellungen zu öffnen</string>
     <string name="external_plugin_no_settings">Dieses Plugin hat keine Einstellungen</string>
     <string name="external_plugin_update_required">Inkompatible Plugin-Version – Plugin aktualisieren</string>
@@ -366,7 +330,6 @@
     <string name="insecure_rfcomm">Unsichere RFCOMM</string>
     <string name="insecure_rfcomm_desc">Diese Option ermöglicht unsichere RFCOMM-Verbindungen. Nur für ältere Geräte verwenden, die keine sicheren Verbindungen über Bluetooth Serial Port Profile unterstützen.</string>
     <string name="preserve_unsupported_placeholders">Nicht unterstützte Platzhalter behalten</string>
-    <string name="preserve_unsupported_placeholders_desc">HID-spezifische Platzhalter (z.B. {F1}, {ESC}) als Text behalten, anstatt sie im RFCOMM-Modus zu entfernen</string>
     <string name="rfcomm_listening_from_device">Warten auf Verbindung von %s</string>
     <string name="save_scan_image">Scan-Bild speichern</string>
     <string name="save_scan_desc">Speichert das gescannte Bild auf dem Gerät</string>

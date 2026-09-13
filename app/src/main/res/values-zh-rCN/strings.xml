@@ -7,8 +7,6 @@
     <string name="connection">连接</string>
     <string name="auto_connect">自动连接</string>
     <string name="auto_connect_desc">启动时自动连接最后使用的设备</string>
-    <string name="show_unnamed">未命名设备</string>
-    <string name="show_unnamed_desc">显示没有名称的设备</string>
     <string name="appearance">外观</string>
     <string name="theme">主题</string>
     <string name="theme_desc">更改首选界面主题</string>
@@ -32,13 +30,8 @@
     <string name="extra_keys_desc">指定在发送到PC的每条文本末尾追加的按键</string>
     <string name="play_sound">扫描提示音</string>
     <string name="play_sound_desc">扫描到码时播放提示音</string>
-    <string name="raw_value">原始值</string>
-    <string name="raw_value_desc">使用码的原始值</string>
     <string name="about">关于</string>
-    <string name="repository">仓库</string>
     <string name="build_version">版本</string>
-    <string name="confirm">确认</string>
-    <string name="dismiss">取消</string>
     <string name="scanned_devices">已扫描设备</string>
     <string name="swipe_refresh">(从顶部下拉刷新)</string>
     <string name="paired_devices">已配对设备</string>
@@ -79,11 +72,9 @@
     <string name="type">类型</string>
     <string name="clazz">类别</string>
     <string name="services">服务</string>
-    <string name="uuids">UUID</string>
     <string name="code_types">码类型</string>
     <string name="code_types_desc">仅启用所需类型以提高扫描速度。不选则启用全部。</string>
     <string name="code_types_desc_short">仅启用特定类型以提高扫描速度</string>
-    <string name="bt_proxy_registered">蓝牙代理已注册！</string>
     <string name="bt_proxy_error">无法获取蓝牙代理！请尝试重启应用…</string>
     <string name="bt_service_disconnected">蓝牙服务已断开！</string>
     <string name="bt_service_connected">蓝牙服务已连接！</string>
@@ -93,23 +84,12 @@
     <string name="keyboard_layout">键盘布局</string>
     <string name="keyboard_layout_desc">设置键盘布局。如需输入特殊字符或非QWERTY布局，请更改此项。</string>
     <string name="build_version_desc" translatable="false">%s v%s-%s (构建 %d)</string>
-    <string name="disconnect">断开连接</string>
     <string name="more">更多</string>
     <string name="toggle_flash">切换闪光灯</string>
-    <string name="loading">正在加载…</string>
-    <string name="error">错误</string>
-    <string name="failed_to_download">下载并安装ML-Kit条码模块失败。</string>
-    <string name="ensure_internet_and_play">请确保设备有活跃的网络连接并且已安装Google Play服务。</string>
-    <string name="download_bundled">或者，您可以从GitHub页面下载包含该模块的捆绑APK版本。</string>
-    <string name="downloading_module">正在通过Google Play请求下载并安装ML-Kit条码模块。\n\n此操作只需执行一次。通常在安装APK或清除Google Play服务数据后需要。</string>
     <string name="unpair_device">取消配对 %s？</string>
     <string name="unpair_desc">取消配对将从您的已配对设备列表中移除该设备。</string>
     <string name="connect">连接</string>
     <string name="unpair">取消配对</string>
-    <string name="error_code" formatted="false">错误: %s (%s)</string>
-    <string name="downloading">正在下载…</string>
-    <string name="installing">正在安装…</string>
-    <string name="ok">确定</string>
     <string name="reset_default">重置为默认？</string>
     <string name="reset_default_desc">确定要重置为默认设置吗？</string>
     <string name="reset">重置</string>
@@ -129,15 +109,10 @@
     <string name="enable_bluetooth">请在系统设置中启用蓝牙，或点击下方按钮。</string>
     <string name="enable_bluetooth_btn">启用蓝牙</string>
     <string name="no_device">无设备连接</string>
-    <string name="highlight_type">高亮类型</string>
-    <string name="highlight_type_desc">选择检测到的码如何高亮显示</string>
-    <string name="auto_focus">自动对焦</string>
-    <string name="auto_focus_desc">禁用后，仅通过点击屏幕进行对焦</string>
     <string name="bt_hid_service">蓝牙HID服务</string>
     <string name="service_running">服务正在运行</string>
     <string name="refresh_proxy">刷新代理</string>
     <string name="stop_proxy">停止代理</string>
-    <string name="proxy_waiting">正在等待蓝牙代理连接…</string>
     <string name="exit_confirm">再按一次返回键退出</string>
     <string name="allow_screen_rotation">允许屏幕旋转</string>
     <string name="allow_screen_rotation_desc">当设备方向改变时允许屏幕旋转</string>
@@ -209,10 +184,6 @@
     <string name="preview_performance_mode">预览性能模式</string>
     <string name="full_screen_scanner">全屏扫码器</string>
     <string name="full_screen_scanner_desc">扫码器将全屏显示</string>
-    <string name="auto_zoom">自动缩放</string>
-    <string name="zooms_in_on_codes_to_far_away">对距离过远的码进行放大</string>
-    <string name="show_possible">显示可能的码</string>
-    <string name="highlights_possible_codes">用点高亮显示可能的码</string>
     <string name="caps_lock_activated">大写锁定已激活</string>
     <string name="click_to_turn_off">点击此处关闭</string>
     <string name="rfcomm_listening">正在监听连接</string>
@@ -248,7 +219,6 @@
     <string name="delete_selection_desc">确定要删除所选项目吗？</string>
     <string name="templates_in_value">值中的模板</string>
     <string name="template_in_value_desc">在代码值中展开模板（需要自定义模板）</string>
-    <string name="error_connecting_to_device">连接设备时出错！正在尝试重启服务…</string>
     <string name="developer_mode">开发者模式</string>
     <string name="custom_keys">自定义按键</string>
     <string name="add_custom_key">添加自定义按键</string>
@@ -346,10 +316,6 @@
         <item>法语 (比利时)</item>
         <item>匈牙利语 (匈牙利)</item>
     </string-array>
-    <string-array name="highlight_values">
-        <item>方框</item>
-        <item>点阵</item>
-    </string-array>
     <string-array name="focus_mode_values">
         <item>自动</item>
         <item>手动</item>
@@ -371,7 +337,6 @@
     <string name="insecure_rfcomm">不安全的RFCOMM</string>
     <string name="insecure_rfcomm_desc">此选项启用不安全的RFCOMM连接。仅适用于不支持使用蓝牙串行端口配置文件的安全连接的旧设备。</string>
     <string name="preserve_unsupported_placeholders">保留不支持的占位符</string>
-    <string name="preserve_unsupported_placeholders_desc">在RFCOMM模式下，将HID特定占位符（例如 {F1}, {ESC}）保留为文本而非移除</string>
     <string name="save_scan_image">保存扫描图片</string>
     <string name="save_scan_desc">将扫描图片存储在设备上</string>
     <string name="crop_mode">裁剪模式</string>

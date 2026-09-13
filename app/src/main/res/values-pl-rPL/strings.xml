@@ -8,8 +8,6 @@
     <string name="connection">Połączenie</string>
     <string name="auto_connect">Automatyczne połączenie</string>
     <string name="auto_connect_desc">Przy starcie łącz z ostatnim urządzeniem</string>
-    <string name="show_unnamed">Nienazwane urządzenia</string>
-    <string name="show_unnamed_desc">Pokazuje urządzenia bez nazwy</string>
     <string name="appearance">Wygląd</string>
     <string name="theme">Motyw</string>
     <string name="theme_desc">Zmień preferowany motyw UI</string>
@@ -33,13 +31,8 @@
     <string name="extra_keys_desc">Określa, który klawisz ma być dołączany na końcu każdego wysyłanego tekstu</string>
     <string name="play_sound">Dźwięk skanowania</string>
     <string name="play_sound_desc">Odtwórz dźwięk podczas skanowania kodu</string>
-    <string name="raw_value">Wartość surowa</string>
-    <string name="raw_value_desc">Używa nieprzetworzonej wartości z kodu</string>
     <string name="about">Informacje o aplikacji</string>
-    <string name="repository" translatable="true">Repozytorium</string>
     <string name="build_version" translatable="true">Wersja</string>
-    <string name="confirm">Potwierdź</string>
-    <string name="dismiss">Anuluj</string>
     <string name="scanned_devices">Wykryte urządzenia</string>
     <string name="swipe_refresh">(Przeciągnij w dół, aby odświeżyć)</string>
     <string name="paired_devices">Urządzenia sparowane</string>
@@ -70,11 +63,9 @@
     <string name="type">Typ</string>
     <string name="clazz">Klasa</string>
     <string name="services">Usługi</string>
-    <string name="uuids">UUIDs</string>
     <string name="code_types">Typ kodu</string>
     <string name="code_types_desc">Aby zwiększyć szybkość skanowania, zaznacz tylko żądane typy kodów. Jeśli chcesz włączyć wszystkie, pozostaw wszystkie niezaznaczone.</string>
     <string name="code_types_desc_short">Włącz tylko określone typy, aby zwiększyć szybkość skanowania</string>
-    <string name="bt_proxy_registered">Zarejestrowano BT-Proxy!</string>
     <string name="bt_proxy_error">Nie można uzyskać BT-Proxy! Spróbuj ponownie uruchomić aplikację…</string>
     <string name="bt_service_disconnected">Usługa BT rozłączona!</string>
     <string name="bt_service_connected">Usługa BT połączona!</string>
@@ -83,23 +74,12 @@
     <string name="devices">Urządzenia</string>
     <string name="keyboard_layout">Układ klawiatury</string>
     <string name="keyboard_layout_desc">Ustawienia układu klawiatury. Zmień, jeśli chcesz wpisywać znaki specjalne lub nie używasz układu QWERTY.</string>
-    <string name="disconnect">Rozłącz</string>
     <string name="more">Więcej</string>
     <string name="toggle_flash">Włącz lampę błyskową</string>
-    <string name="loading">Ładowanie…</string>
-    <string name="error">Błąd</string>
-    <string name="failed_to_download">Nie udało się pobrać i zainstalować modułu kodów kreskowych ML-Kit.</string>
-    <string name="ensure_internet_and_play">Upewnij się, że masz aktywne połączenie internetowe i że usługi Google Play są zainstalowane na Twoim urządzeniu.</string>
-    <string name="download_bundled">Możesz również pobrać wersję bundled APK ze strony GitHub, która zawiera ten moduł.</string>
-    <string name="downloading_module">Żądanie pobrania i zainstalowania modułu ML-Kit Barcode za pośrednictwem Google Play.\n\nTrzeba to zrobić tylko raz. Zwykle podczas instalowania aplikacji jako APK lub czyszczenia danych Usług Google Play.</string>
     <string name="unpair_device">Rozparować z %s?</string>
     <string name="unpair_desc">Rozparowanie spowoduje usunięcie urządzenia z listy sparowanych urządzeń.</string>
     <string name="connect">Połącz</string>
     <string name="unpair">Rozparowanie</string>
-    <string name="error_code" formatted="false">Błąd: %s (%s)</string>
-    <string name="downloading">Pobieranie…</string>
-    <string name="installing">Instalowanie…</string>
-    <string name="ok">OK</string>
     <string name="reset_default">Reset do ustawień domyślnych?</string>
     <string name="reset_default_desc">Czy na pewno chcesz przywrócić ustawienia domyślne?</string>
     <string name="reset">Przywróć domyślne</string>
@@ -119,15 +99,10 @@
     <string name="enable_bluetooth">Proszę włączyć Bluetooth w ustawieniach systemu lub klikając poniższy przycisk.</string>
     <string name="enable_bluetooth_btn">Włącz Bluetooth</string>
     <string name="no_device">Żadne urządzenie nie jest podłączone</string>
-    <string name="highlight_type">Typ wyróżnienia</string>
-    <string name="highlight_type_desc">Wybierz jak wyróżniać kody</string>
-    <string name="auto_focus">Auto-focus</string>
-    <string name="auto_focus_desc">Wyłącz, jeśli chcesz ustawiać ostrość przez dotknięcie ekranu.</string>
     <string name="bt_hid_service">Usługa Bluetooth HID</string>
     <string name="service_running">Usługa jest uruchomiona</string>
     <string name="refresh_proxy">Odśwież proxy</string>
     <string name="stop_proxy">Zatrzymaj proxy</string>
-    <string name="proxy_waiting">Oczekiwanie na BT-Proxy, aby połączyć…</string>
     <string name="exit_confirm">Naciśnij ponownie przycisk Wstecz, aby wyjść</string>
     <string name="allow_screen_rotation">Zezwalaj na obracanie ekranu</string>
     <string name="allow_screen_rotation_desc">Umożliwia obracanie ekranu przy zmianie orientacji urządzenia</string>
@@ -199,10 +174,6 @@
     <string name="preview_performance_mode">Zwiększ wydajność podglądu</string>
     <string name="full_screen_scanner">Skaner w trybie pełnoekranowym</string>
     <string name="full_screen_scanner_desc">Skaner zostanie wyświetlony na pełnym ekranie</string>
-    <string name="auto_zoom">Automatyczne powiększanie</string>
-    <string name="zooms_in_on_codes_to_far_away">Przybliża kody, które są zbyt daleko</string>
-    <string name="show_possible">Pokaż możliwe</string>
-    <string name="highlights_possible_codes">Wyróżnia możliwe kody kropkami</string>
     <string name="caps_lock_activated">Caps Lock jest włączony</string>
     <string name="click_to_turn_off">Kliknij tutaj, aby wyłączyć</string>
     <string name="rfcomm_listening">Nasłuchiwanie</string>
@@ -237,7 +208,6 @@
     <string name="delete_selection_desc">Czy na pewno chcesz usunąć wybrane elementy?</string>
     <string name="templates_in_value">Szablony w wartości</string>
     <string name="template_in_value_desc">Rozwiń szablony w wartości kodu (wymaga opcji "Własny szablon")</string>
-    <string name="error_connecting_to_device">Błąd połączenia z urządzeniem! Próba ponownego uruchomienia usługi…</string>
     <string name="developer_mode">Tryb dewelopera</string>
     <string name="connection_mode">Tryb połączenia</string>
     <string name="connection_mode_desc">HID emuluje klawiaturę, RFCOMM wysyła dane przez port COM Bluetooth (może wymagać dodatkowego oprogramowania). Nieobsługiwane ustawienia będą wyszarzone w trybie RFCOMM.</string>
@@ -285,10 +255,6 @@
         <item>Francuski (BE)</item>
         <item>Węgierski (HU)</item>
     </string-array>
-    <string-array name="highlight_values">
-        <item>Ramka</item>
-        <item>Kropki</item>
-    </string-array>
     <string-array name="focus_mode_values">
         <item>Auto</item>
         <item>Ręczny</item>
@@ -304,7 +270,6 @@
         <item>Wyjście tylko do wtyczek</item>
     </string-array>
     <string name="external_output">Wyjście do wtyczek</string>
-    <string name="external_output_desc">Zainstalowane aplikacje-rozszerzenia, które odbierają zeskanowane wartości</string>
     <string name="external_no_plugins">Brak zainstalowanych wtyczek</string>
     <string name="external_no_plugins_desc">Zainstaluj wtyczkę, aby przekazywać skany na zewnątrz</string>
     <string name="external_active">Wyjście do wtyczek aktywne</string>
@@ -315,9 +280,7 @@
     <string name="external_waiting_desc">Uruchamiam wtyczkę zewnętrzną — chwila</string>
     <string name="external_not_responding">Wtyczka nie odpowiada</string>
     <string name="external_not_responding_desc">Wtyczka zewnętrzna nie wystartowała. Dotknij, aby ponowić, lub otwórz ją raz, jeśli dopiero zainstalowana</string>
-    <string name="enable_external_output">Włącz wyjście do wtyczek</string>
     <string name="enable_external_output_desc">Przekazuj skany do włączonych wtyczek także w trybie HID/RFCOMM</string>
-    <string name="external_output_always_on">W trybie „Tylko zewnętrzne wtyczki” wyjście do wtyczek jest zawsze włączone</string>
     <string name="external_long_press_hint">Przytrzymaj wtyczkę, aby otworzyć jej ustawienia</string>
     <string name="external_plugin_no_settings">Ta wtyczka nie posiada ustawień</string>
     <string name="external_plugin_update_required">Niezgodna wersja wtyczki — zaktualizuj wtyczkę</string>
@@ -350,7 +313,6 @@
     <string name="multi_code_detection">Wykrywanie wielu kodów</string>
     <string name="multi_code_detection_desc">Wykrywa i kolejkuje wszystkie kody kreskowe widoczne w kadrze jednocześnie</string>
     <string name="add_scan_area">Dodaj obszar</string>
-    <string name="delete_scan_area">Usuń obszar</string>
     <string name="filter">Filtr</string>
     <string name="date_range">Zakres dat</string>
     <string name="select_types">Wybierz typy</string>
@@ -392,7 +354,6 @@
     <string name="insecure_rfcomm">Niebezpieczne RFCOMM</string>
     <string name="insecure_rfcomm_desc">Ta opcja umożliwia akceptowanie niebezpiecznych połączeń RFCOMM. Używaj tylko dla starszych urządzeń, które nie obsługują bezpiecznych połączeń Bluetooth Serial Port Profile.</string>
     <string name="preserve_unsupported_placeholders">Zachowaj nieobsługiwane placeholdery</string>
-    <string name="preserve_unsupported_placeholders_desc">Zachowaj placeholdery specyficzne dla HID (np. {F1}, {ESC}) jako tekst zamiast ich usuwać w trybie RFCOMM</string>
     <string name="rfcomm_listening_from_device">Oczekiwanie na połączenie od %s</string>
     <string-array name="clear_after_time_values">
         <item>Nigdy</item>

@@ -8,8 +8,6 @@
     <string name="connection">Conexão</string>
     <string name="auto_connect">Conectar automaticamente</string>
     <string name="auto_connect_desc">Conecta no último dispositivo ao abrir</string>
-    <string name="show_unnamed">Dispositivos sem nome</string>
-    <string name="show_unnamed_desc">Mostra aparelhos sem nome</string>
     <string name="appearance">Aparência</string>
     <string name="theme">Tema</string>
     <string name="theme_desc">Claro, escuro ou sistema</string>
@@ -33,13 +31,8 @@
     <string name="extra_keys_desc">Tecla no final de cada envio</string>
     <string name="play_sound">Som de leitura</string>
     <string name="play_sound_desc">Som ao ler código</string>
-    <string name="raw_value">Valor original</string>
-    <string name="raw_value_desc">Envia o código sem alterar</string>
     <string name="about">Sobre</string>
-    <string name="repository">Repositório</string>
     <string name="build_version">Versão</string>
-    <string name="confirm">Confirmar</string>
-    <string name="dismiss">Cancelar</string>
     <string name="scanned_devices">Dispositivos encontrados</string>
     <string name="swipe_refresh">(Puxe para baixo para atualizar)</string>
     <string name="paired_devices">Dispositivos pareados</string>
@@ -71,11 +64,9 @@
     <string name="type">Tipo</string>
     <string name="clazz">Classe</string>
     <string name="services">Serviços</string>
-    <string name="uuids">UUIDs</string>
     <string name="code_types">Tipos de código</string>
     <string name="code_types_desc">Só os tipos que você usa. Nenhum marcado = todos.</string>
     <string name="code_types_desc_short">Só alguns tipos, leitura mais rápida</string>
-    <string name="bt_proxy_registered">BT-Proxy registrado!</string>
     <string name="bt_proxy_error">Não foi possível obter o BT-Proxy! Tente reiniciar o app…</string>
     <string name="bt_service_disconnected">BT-Service desconectado!</string>
     <string name="bt_service_connected">BT-Service conectado!</string>
@@ -84,23 +75,12 @@
     <string name="devices">Dispositivos</string>
     <string name="keyboard_layout">Layout do teclado</string>
     <string name="keyboard_layout_desc">Para acentos ou teclado que não é QWERTY</string>
-    <string name="disconnect">Desconectar</string>
     <string name="more">Mais</string>
     <string name="toggle_flash">Flash</string>
-    <string name="loading">Carregando…</string>
-    <string name="error">Erro</string>
-    <string name="failed_to_download">Não foi possível baixar o módulo de barcode do ML-Kit.</string>
-    <string name="ensure_internet_and_play">Verifique se há internet e se o Google Play Services está instalado.</string>
-    <string name="download_bundled">Ou baixe a versão bundled APK no GitHub, que já vem com o módulo.</string>
-    <string name="downloading_module">Solicitando o download do módulo de barcode do ML-Kit pelo Google Play.\n\nIsso só precisa ser feito uma vez — em geral ao instalar o APK ou limpar os dados do Google Play Services.</string>
     <string name="unpair_device">Desparear %s?</string>
     <string name="unpair_desc">O dispositivo é removido da lista de dispositivos pareados</string>
     <string name="connect">Conectar</string>
     <string name="unpair">Desparear</string>
-    <string name="error_code" formatted="false">Erro: %s (%s)</string>
-    <string name="downloading">Baixando…</string>
-    <string name="installing">Instalando…</string>
-    <string name="ok">OK</string>
     <string name="reset_default">Restaurar padrões?</string>
     <string name="reset_default_desc">Restaurar as configurações padrão?</string>
     <string name="reset">Restaurar</string>
@@ -120,15 +100,10 @@
     <string name="enable_bluetooth">Ligue o Bluetooth nas configurações ou no botão abaixo.</string>
     <string name="enable_bluetooth_btn">Ligar Bluetooth</string>
     <string name="no_device">Nenhum dispositivo conectado</string>
-    <string name="highlight_type">Destaque do código</string>
-    <string name="highlight_type_desc">Caixa ou pontos no código</string>
-    <string name="auto_focus">Foco automático</string>
-    <string name="auto_focus_desc">Desligue para focar só ao toque</string>
     <string name="bt_hid_service">Bluetooth HID Service</string>
     <string name="service_running">Serviço em execução</string>
     <string name="refresh_proxy">Atualizar proxy</string>
     <string name="stop_proxy">Parar proxy</string>
-    <string name="proxy_waiting">Aguardando o BT-Proxy conectar…</string>
     <string name="exit_confirm">Toque em Voltar novamente para sair</string>
     <string name="allow_screen_rotation">Girar a tela</string>
     <string name="allow_screen_rotation_desc">A tela gira com o celular</string>
@@ -200,10 +175,6 @@
     <string name="preview_performance_mode">Prévia em 60 FPS</string>
     <string name="full_screen_scanner">Tela cheia</string>
     <string name="full_screen_scanner_desc">O scanner ocupa a tela toda</string>
-    <string name="auto_zoom">Zoom automático</string>
-    <string name="zooms_in_on_codes_to_far_away">Aproxima quando o código está longe</string>
-    <string name="show_possible">Mostrar possíveis códigos</string>
-    <string name="highlights_possible_codes">Pontos nos possíveis códigos</string>
     <string name="caps_lock_activated">Caps Lock ligado</string>
     <string name="click_to_turn_off">Toque para desligar</string>
     <string name="rfcomm_listening">Aguardando conexão</string>
@@ -238,7 +209,6 @@
     <string name="delete_selection_desc">Excluir os itens selecionados?</string>
     <string name="templates_in_value">Templates no código lido</string>
     <string name="template_in_value_desc">Aplica template no código (precisa do personalizado)</string>
-    <string name="error_connecting_to_device">Erro ao conectar! Tentando reiniciar o serviço…</string>
     <string name="developer_mode">Modo desenvolvedor</string>
     <string name="custom_keys">Teclas personalizadas</string>
     <string name="add_custom_key">Adicionar tecla</string>
@@ -256,7 +226,6 @@
     <string name="multi_code_detection">Ler vários códigos</string>
     <string name="multi_code_detection_desc">Lê todos os códigos da câmera de uma vez</string>
     <string name="add_scan_area">Adicionar área</string>
-    <string name="delete_scan_area">Excluir área</string>
     <string name="filter">Filtro</string>
     <string name="date_range">Período</string>
     <string name="select_types">Selecionar tipos</string>
@@ -343,10 +312,6 @@
         <item>Francês (BE)</item>
         <item>Húngaro (HU)</item>
     </string-array>
-    <string-array name="highlight_values">
-        <item>Caixa</item>
-        <item>Pontos</item>
-    </string-array>
     <string-array name="focus_mode_values">
         <item>Automático</item>
         <item>Manual</item>
@@ -362,7 +327,6 @@
         <item>Só plugins externos</item>
     </string-array>
     <string name="external_output">Plugins externos</string>
-    <string name="external_output_desc">Apps que recebem o código lido</string>
     <string name="external_no_plugins">Nenhum plugin instalado</string>
     <string name="external_no_plugins_desc">Instale um plugin para mandar a leitura para outro app</string>
     <string name="external_active">Plugin ativo</string>
@@ -373,9 +337,7 @@
     <string name="external_waiting_desc">Abrindo o plugin. Aguarde…</string>
     <string name="external_not_responding">Plugin sem resposta</string>
     <string name="external_not_responding_desc">O plugin não abriu. Toque para tentar novamente, ou abra o plugin uma vez se acabou de instalar</string>
-    <string name="enable_external_output">Enviar também para plugins</string>
     <string name="enable_external_output_desc">Manda a leitura aos plugins no HID/RFCOMM</string>
-    <string name="external_output_always_on">No modo de plugins, o envio externo fica sempre ligado</string>
     <string name="external_long_press_hint">Toque e segure um plugin para abrir as configurações</string>
     <string name="external_plugin_no_settings">Este plugin não tem configurações</string>
     <string name="external_plugin_update_required">Plugin desatualizado — atualize o plugin</string>
@@ -394,7 +356,6 @@
     <string name="insecure_rfcomm">RFCOMM sem criptografia</string>
     <string name="insecure_rfcomm_desc">Aceita RFCOMM inseguro. Só use em aparelhos antigos que não fazem Bluetooth Serial Port Profile seguro.</string>
     <string name="preserve_unsupported_placeholders">Manter placeholders sem suporte</string>
-    <string name="preserve_unsupported_placeholders_desc">No RFCOMM, deixa {F1}, {ESC} e afins no texto</string>
     <string name="save_scan_image">Salvar foto da leitura</string>
     <string name="save_scan_desc">Salva a foto no celular</string>
     <string name="crop_mode">Recorte</string>
