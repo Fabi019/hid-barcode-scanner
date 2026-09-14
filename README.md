@@ -147,7 +147,7 @@ Increasing the token rate/peak bandwith or decreasing the latency might help.
 
 The engine for running JavaScript is provided by the system WebView.
 Normally this should be pre-installed as "Android System WebView".
-In case this is missing, you will get the above error. You might be able
+In case this is missing, you will get the above error. On a rooted device you might be able
 to install an alternative WebView for example [cromite](https://github.com/uazo/cromite).
 Installation guide: https://github.com/bromite/bromite/wiki/Installing-SystemWebView
 
