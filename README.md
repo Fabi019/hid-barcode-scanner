@@ -164,6 +164,16 @@ If you have a suggestion that would make this better, please fork the repo and c
 5. Push to the Branch (`git push origin feature/AmazingFeature`)
 6. Open a Pull Request
 
+### Adding new translation
+
+To add a new supported language first create a new folder `values-<language code>` in [app/src/main/res](app/src/main/res). 
+A list of all supported language codes can be found here: <https://android.googlesource.com/platform/frameworks/base/+/main/core/res/res/values/locale_config.xml>.
+
+Next you can copy the English [`strings.xml`](app/src/main/res/values/strings.xml) file into the newly created folder.
+Using this as a base you can now translate each individual `string`/`string-array` into the target language.
+Not every item needs to be translated. When a translation does not exist, Android automatically falls back to the English translation.
+Only array elements either need to be fully translated or removed as a whole.
+
 ### Adding new keyboard layout
 
 When the app sends a code to the connected device it doesn't send characters directly.
