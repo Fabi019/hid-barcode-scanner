@@ -449,7 +449,13 @@ fun BluetoothDisabledCard() {
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = { context.startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)) },
+                onClick = {
+                    runCatching {
+                        context.startActivity(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                    }.onFailure {
+                        Log.e("Devices", "Failed to request enable bluetooth", it)
+                    }
+                },
             ) {
                 Text(stringResource(R.string.enable_bluetooth_btn))
             }
