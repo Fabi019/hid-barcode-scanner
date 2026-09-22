@@ -21,11 +21,13 @@ import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalMirrorMode
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.MirrorMode
 import androidx.camera.core.Preview
 import androidx.camera.core.SessionConfig
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
@@ -88,6 +90,7 @@ import kotlin.coroutines.resume
 import kotlin.math.max
 import kotlin.math.min
 
+@ExperimentalMirrorMode
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class CameraViewModel : ViewModel() {
     companion object {
@@ -137,6 +140,7 @@ class CameraViewModel : ViewModel() {
                     .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                     .build()
             )
+            .setMirrorMode(MirrorMode.MIRROR_MODE_OFF)
             .build().apply {
                 setSurfaceProvider { newSurfaceRequest ->
                     _surfaceRequest.update { newSurfaceRequest }
