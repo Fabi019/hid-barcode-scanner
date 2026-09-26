@@ -233,6 +233,8 @@ fun SettingsDropdown() {
                 }
             )
 
+            ExternalInputOptionsModal()
+
             if (connectionMode == ConnectionMode.RFCOMM.ordinal) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.insecure_rfcomm)) },

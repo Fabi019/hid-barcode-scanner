@@ -168,6 +168,18 @@ fun NavGraph() {
         }
     }
 
+    ExternalInputReceiver { code, format, source ->
+        CoroutineScope(Dispatchers.IO).launch {
+            controller?.sendString(
+                code,
+                true,
+                source ?: "EXTERNAL_INPUT",
+                System.currentTimeMillis(),
+                format
+            )
+        }
+    }
+
     // Listen for changes in the current device
     LaunchedEffect(currentDevice) {
         // When connected to a device, navigate to the scanner

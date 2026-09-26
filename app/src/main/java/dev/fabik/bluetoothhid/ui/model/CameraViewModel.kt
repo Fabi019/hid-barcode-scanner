@@ -90,7 +90,6 @@ import kotlin.coroutines.resume
 import kotlin.math.max
 import kotlin.math.min
 
-@ExperimentalMirrorMode
 // based on: https://medium.com/androiddevelopers/getting-started-with-camerax-in-jetpack-compose-781c722ca0c4
 class CameraViewModel : ViewModel() {
     companion object {
@@ -134,6 +133,7 @@ class CameraViewModel : ViewModel() {
     var detectorTime = 0L
 
     private val cameraPreviewUseCase =
+        @ExperimentalMirrorMode
         Preview.Builder()
             .setResolutionSelector(
                 ResolutionSelector.Builder()
