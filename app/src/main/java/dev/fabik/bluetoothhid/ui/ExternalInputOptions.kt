@@ -43,6 +43,7 @@ import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getMultiPreferenceState
 import dev.fabik.bluetoothhid.utils.getPreferenceState
+import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.runBlocking
 
 const val EXTERNAL_INPUT_INTENT_ACTION = "dev.fabik.bluetoothhid.action.EXTERNAL_INPUT"
@@ -124,6 +125,8 @@ private fun ExternalInputOptionsContent() {
 
 @Composable
 private fun ExternalInputHeader() {
+    val context = LocalContext.current
+
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
         Text(
             stringResource(R.string.external_input),
@@ -132,6 +135,17 @@ private fun ExternalInputHeader() {
         IconButton(
             onClick = {
                 runBlocking {
+                    arrayOf(
+                        PreferenceStore.EXT_INPUT_KEY_VALUE,
+                        PreferenceStore.EXT_INPUT_KEY_TYPE,
+                        PreferenceStore.EXT_INPUT_KEY_SOURCE,
+                    ).forEach {
+                        context.setPreference(it, it.defaultValue)
+                    }
+                    context.setPreference(
+                        PreferenceStore.ENABLE_EXTERNAL_INPUT,
+                        PreferenceStore.ENABLE_EXTERNAL_INPUT.defaultValue
+                    )
                 }
             },
             modifier = Modifier
