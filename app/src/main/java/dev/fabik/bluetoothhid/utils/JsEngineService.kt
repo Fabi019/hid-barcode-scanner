@@ -22,7 +22,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import kotlin.runCatching
 
 class JsEngineService : Service() {
     companion object {
