@@ -54,7 +54,7 @@ fun ExternalInputOptionsModal() {
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     DropdownMenuItem(
-        text = { Text("External input") },
+        text = { Text(stringResource(R.string.external_input)) },
         onClick = {
             showSheet = true
         }
@@ -84,7 +84,7 @@ private fun ExternalInputOptionsContent() {
         ExternalInputHeader()
 
         Text(
-            "Allows the app to receive external input using Intents sent to the app with action:",
+            stringResource(R.string.ext_input_desc),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -97,17 +97,26 @@ private fun ExternalInputOptionsContent() {
             )
         }
 
-        AdvancedToggleOption("Enabled", PreferenceStore.ENABLE_EXTERNAL_INPUT)
+        AdvancedToggleOption(
+            stringResource(R.string.enabled),
+            PreferenceStore.ENABLE_EXTERNAL_INPUT
+        )
 
         Text(
-            "Specify the keys used to extract the scan parameters from the 'Extra' values passed in the Intent.",
+            stringResource(R.string.ext_input_extra_desc),
             style = MaterialTheme.typography.bodyMedium
         )
 
-        AdvancedTextField("Value extra", PreferenceStore.EXT_INPUT_KEY_VALUE) { it.toString() }
-        AdvancedTextField("Format/type extra", PreferenceStore.EXT_INPUT_KEY_TYPE) { it.toString() }
         AdvancedTextField(
-            "Scan source extra",
+            stringResource(R.string.value_extra),
+            PreferenceStore.EXT_INPUT_KEY_VALUE
+        ) { it.toString() }
+        AdvancedTextField(
+            stringResource(R.string.format_extra),
+            PreferenceStore.EXT_INPUT_KEY_TYPE
+        ) { it.toString() }
+        AdvancedTextField(
+            stringResource(R.string.source_extra),
             PreferenceStore.EXT_INPUT_KEY_SOURCE
         ) { it.toString() }
     }
@@ -117,7 +126,7 @@ private fun ExternalInputOptionsContent() {
 private fun ExternalInputHeader() {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
         Text(
-            "External input",
+            stringResource(R.string.external_input),
             style = MaterialTheme.typography.titleLarge,
         )
         IconButton(

@@ -432,4 +432,11 @@
     <string name="unexpected_error_desc">You can copy the details below and include them in a bug report.</string>
     <string name="directly_apply_template">Directly apply template</string>
     <string name="register_app_permission_error">Permission denied by system. HID mode will not work!</string>
+    <string name="external_input">External input</string>
+    <string name="ext_input_desc">Allows the app to receive external input using broadcast Intents sent while running with the action:</string>
+    <string name="enabled">Enabled</string>
+    <string name="ext_input_extra_desc">Specify the keys used to extract the scan parameters from the \'Extra\' values passed with the Intent.</string>
+    <string name="value_extra">Value extra</string>
+    <string name="format_extra">Format/type extra</string>
+    <string name="source_extra">Scan source extra</string>
 </resources>
