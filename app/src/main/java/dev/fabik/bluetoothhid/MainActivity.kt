@@ -14,8 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fabik.bluetoothhid.bt.BluetoothController
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
+import dev.fabik.bluetoothhid.output.OutputManager
 import dev.fabik.bluetoothhid.ui.NavGraph
 import dev.fabik.bluetoothhid.ui.RequiresBluetoothPermission
 import dev.fabik.bluetoothhid.ui.theme.BluetoothHIDTheme
@@ -28,7 +28,7 @@ import dev.fabik.bluetoothhid.utils.getPreferenceState
 import dev.fabik.bluetoothhid.utils.rememberJsEngineService
 import kotlinx.coroutines.runBlocking
 
-val LocalController = staticCompositionLocalOf<BluetoothController?> {
+val LocalController = staticCompositionLocalOf<OutputManager?> {
     null
 }
 
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                             val jsEngineService = rememberJsEngineService(this)
 
                             CompositionLocalProvider(
-                                LocalController provides bluetoothService?.getController(),
+                                LocalController provides bluetoothService?.getOutputManager(),
                                 LocalJsEngineService provides jsEngineService
                             ) {
                                 NavGraph()

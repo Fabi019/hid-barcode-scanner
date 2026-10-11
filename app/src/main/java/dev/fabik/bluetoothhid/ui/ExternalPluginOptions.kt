@@ -49,11 +49,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.fabik.bluetoothhid.R
-import dev.fabik.bluetoothhid.bt.ExternalController
 import dev.fabik.bluetoothhid.bt.ExternalPlugin
 import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.bt.PluginState
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
+import dev.fabik.bluetoothhid.output.external.ExternalChannel
+import dev.fabik.bluetoothhid.output.external.ExternalController
 import dev.fabik.bluetoothhid.ui.theme.StatusConnected
 import dev.fabik.bluetoothhid.ui.theme.StatusDown
 import dev.fabik.bluetoothhid.ui.theme.StatusWaiting
@@ -141,17 +142,19 @@ fun ExternalPluginsContent() {
 
     // Bind (without starting) the already-running BT service to read live plugin liveness reported
     // by the heartbeat. Null binder (service not up) → empty map → rows just show no status dot.
-    val controller = rememberBluetoothControllerService(context, startStop = false)?.getController()
-    val health by (controller?.externalPluginHealthFlow
+    val outputManager =
+        rememberBluetoothControllerService(context, startStop = false)?.getOutputManager()
+    val external = outputManager?.channel<ExternalChannel>()
+    val health by (external?.pluginHealthFlow
         ?.collectAsState(initial = emptyMap())
         ?: remember { mutableStateOf(emptyMap<String, ExternalController.PluginHealth>()) })
 
     // While the picker is open, poll plugin status for near-live dots: ping immediately (fresh on
     // open) then every few seconds. Auto-cancels when the sheet closes (effect leaves composition),
     // so it never runs in the background or drains the battery.
-    LaunchedEffect(controller) {
-        while (controller != null) {
-            controller.requestExternalStatus()
+    LaunchedEffect(external) {
+        while (external != null) {
+            external.requestStatus()
             delay(STATUS_POLL_INTERVAL_MS)
         }
     }

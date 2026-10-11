@@ -59,6 +59,7 @@ import dev.fabik.bluetoothhid.bt.Key
 import dev.fabik.bluetoothhid.bt.KeyTranslator
 import dev.fabik.bluetoothhid.bt.Keymap
 import dev.fabik.bluetoothhid.bt.rememberBluetoothControllerService
+import dev.fabik.bluetoothhid.output.hid.HidChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -229,8 +230,9 @@ fun AddCustomKeyDialog(
             val context = LocalContext.current
 
             // Settings activity does not have the bluetooth controller via context
-            val controller = rememberBluetoothControllerService(context, false)
-            val currentDevice by controller?.getController()?.currentDevice?.collectAsStateWithLifecycle()
+            val outputManager =
+                rememberBluetoothControllerService(context, false)?.getOutputManager()
+            val currentDevice by outputManager?.currentDevice?.collectAsStateWithLifecycle()
                 ?: remember { mutableStateOf(null) }
 
             Button(
@@ -240,7 +242,7 @@ fun AddCustomKeyDialog(
                         val modifier = valueModifier ?: return@runCatching
 
                         CoroutineScope(Dispatchers.IO).launch {
-                            controller?.getController()?.keyboardSender?.sendKey(
+                            outputManager?.channel<HidChannel>()?.keyboardSender?.sendKey(
                                 modifier to hidCode
                             )
                         }

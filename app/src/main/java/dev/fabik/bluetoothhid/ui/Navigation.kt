@@ -24,6 +24,7 @@ import dev.fabik.bluetoothhid.History
 import dev.fabik.bluetoothhid.LocalController
 import dev.fabik.bluetoothhid.R
 import dev.fabik.bluetoothhid.Scanner
+import dev.fabik.bluetoothhid.output.ScanEvent
 import dev.fabik.bluetoothhid.ui.model.BarcodeResult
 import dev.fabik.bluetoothhid.utils.ConnectionMode
 import dev.fabik.bluetoothhid.utils.PreferenceStore
@@ -112,18 +113,18 @@ fun NavGraph() {
                 // Unbounded channel ensures every barcode result is queued even during active sends
                 val sendQueue = remember { Channel<BarcodeResult>(Channel.UNLIMITED) }
 
-                // Sequential queue processor — each sendString awaits completion before next item
+                // Sequential queue processor — each send awaits completion before next item
                 LaunchedEffect(controller) {
                     for (result in sendQueue) {
                         val barcodeType = ZXingAnalyzer.index2String(result.format)
-                        controller?.sendString(
-                            result.text,
-                            true,
-                            "SCAN",
-                            null,
-                            barcodeType,
-                            imageName = result.imageName,
-                            regexGroups = result.regexGroups
+                        controller?.send(
+                            ScanEvent(
+                                result.text,
+                                source = "SCAN",
+                                barcodeType = barcodeType,
+                                imageName = result.imageName,
+                                regexGroups = result.regexGroups
+                            )
                         )
                     }
                 }
@@ -155,12 +156,13 @@ fun NavGraph() {
                 History(onBack) { historyEntry ->
                     CoroutineScope(Dispatchers.IO).launch {
                         val barcodeType = historyEntry.format.let { ZXingAnalyzer.index2String(it) }
-                        controller?.sendString(
-                            historyEntry.value,
-                            true,
-                            "HISTORY",
-                            historyEntry.timestamp,
-                            barcodeType
+                        controller?.send(
+                            ScanEvent(
+                                historyEntry.value,
+                                source = "HISTORY",
+                                timestamp = historyEntry.timestamp,
+                                barcodeType = barcodeType
+                            )
                         )
                     }
                 }
@@ -170,12 +172,12 @@ fun NavGraph() {
 
     ExternalInputReceiver { code, format, source ->
         CoroutineScope(Dispatchers.IO).launch {
-            controller?.sendString(
-                code,
-                true,
-                source ?: "EXTERNAL_INPUT",
-                System.currentTimeMillis(),
-                format
+            controller?.send(
+                ScanEvent(
+                    code,
+                    source = source ?: "EXTERNAL_INPUT",
+                    barcodeType = format
+                )
             )
         }
     }

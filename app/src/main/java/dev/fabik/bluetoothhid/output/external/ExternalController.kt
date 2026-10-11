@@ -1,13 +1,16 @@
-package dev.fabik.bluetoothhid.bt
+package dev.fabik.bluetoothhid.output.external
 
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.bt.ExternalProtocol
+import dev.fabik.bluetoothhid.bt.PluginState
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.getPreference
 import dev.fabik.bluetoothhid.utils.setPreference
@@ -26,9 +29,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Bridges scans to external transport extensions via broadcast Intents (see [ExternalProtocol]).
+ * Bridges scans to external transport extensions via broadcast Intents (see [dev.fabik.bluetoothhid.bt.ExternalProtocol]).
  *
  * The core owns scanning + processing; an extension owns the actual protocol (TCP/HTTP/MQTT/…),
  * its settings and its connection lifecycle. This is how non-Bluetooth transports stay OUT of
@@ -36,11 +40,11 @@ import java.util.UUID
  * and enable it in the plugin list.
  *
  * Channels (all targeted by package + permission-protected for core→extension):
- *  - core → extension: [ExternalProtocol.ACTION_BARCODE_SCANNED] per enabled package,
- *  - core → extension: [ExternalProtocol.ACTION_PLUGIN_SET_ENABLED] lifecycle (warm up / release),
- *  - core → extension: [ExternalProtocol.ACTION_PLUGIN_PING] liveness probe,
- *  - extension → core: optional [ExternalProtocol.ACTION_SEND_RESULT] surfaced via [lastResultFlow],
- *  - extension → core: optional [ExternalProtocol.ACTION_PLUGIN_STATUS] surfaced via [pluginHealthFlow].
+ *  - core → extension: [dev.fabik.bluetoothhid.bt.ExternalProtocol.ACTION_BARCODE_SCANNED] per enabled package,
+ *  - core → extension: [dev.fabik.bluetoothhid.bt.ExternalProtocol.ACTION_PLUGIN_SET_ENABLED] lifecycle (warm up / release),
+ *  - core → extension: [dev.fabik.bluetoothhid.bt.ExternalProtocol.ACTION_PLUGIN_PING] liveness probe,
+ *  - extension → core: optional [dev.fabik.bluetoothhid.bt.ExternalProtocol.ACTION_SEND_RESULT] surfaced via [lastResultFlow],
+ *  - extension → core: optional [dev.fabik.bluetoothhid.bt.ExternalProtocol.ACTION_PLUGIN_STATUS] surfaced via [pluginHealthFlow].
  *
  * Self-healing: a plugin's transport lives in its own (foreground) service, which the OS can kill.
  * The core can't observe that directly, so it pings each enabled plugin on an interval; a missing
@@ -86,7 +90,7 @@ class ExternalController(private val context: Context) {
         /** Machine-readable transport state; UNKNOWN for a state name this core doesn't know yet. */
         val state: PluginState = PluginState.UNKNOWN,
         /**
-         * Plugin's [ExternalProtocol.PROTOCOL_VERSION]. Versioning shipped with the contract
+         * Plugin's [dev.fabik.bluetoothhid.bt.ExternalProtocol.PROTOCOL_VERSION]. Versioning shipped with the contract
          * itself, so every plugin sends it — anything ≠ ours (incl. a defensive 0 for "absent")
          * means the two apps drifted apart and renders as "update the plugin".
          */
@@ -270,14 +274,14 @@ class ExternalController(private val context: Context) {
     // Short display names for attributing results, resolved once per package: the receiver's
     // shortLabel meta-data (e.g. "TCP"), falling back to the full picker label, the app label,
     // then the bare package name.
-    private val labelCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val labelCache = ConcurrentHashMap<String, String>()
 
     private fun pluginShortLabel(pkg: String): String = labelCache.getOrPut(pkg) {
         runCatching {
             val pm = context.packageManager
             pm.queryBroadcastReceivers(
                 Intent(ExternalProtocol.ACTION_BARCODE_SCANNED).setPackage(pkg),
-                android.content.pm.PackageManager.GET_META_DATA
+                PackageManager.GET_META_DATA
             ).firstNotNullOfOrNull {
                 it.activityInfo?.metaData?.let { meta ->
                     meta.getString(ExternalProtocol.META_PLUGIN_SHORT_LABEL)
@@ -367,7 +371,7 @@ class ExternalController(private val context: Context) {
 
     // Resolved receiver components per "pkg|action". A plugin's receiver class rarely changes, so we
     // cache it; getOrPut still resolves newly-installed plugins lazily.
-    private val receiverCache = java.util.concurrent.ConcurrentHashMap<String, List<ComponentName>>()
+    private val receiverCache = ConcurrentHashMap<String, List<ComponentName>>()
 
     private fun resolveReceivers(pkg: String, action: String): List<ComponentName> {
         receiverCache["$pkg|$action"]?.let { return it }

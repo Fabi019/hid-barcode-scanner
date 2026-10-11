@@ -128,6 +128,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.ExternalProtocol
 import dev.fabik.bluetoothhid.bt.KeyTranslator
+import dev.fabik.bluetoothhid.output.ScanEvent
+import dev.fabik.bluetoothhid.output.external.ExternalChannel
+import dev.fabik.bluetoothhid.output.external.ExternalController
+import dev.fabik.bluetoothhid.output.hid.HidChannel
+import dev.fabik.bluetoothhid.output.rfcomm.RfcommChannel
 import dev.fabik.bluetoothhid.ui.CameraPreviewContent
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.DialogState
@@ -288,7 +293,7 @@ fun Scanner(
     // ExternalController), so no extra wrapper here: a second prefix just made it noisy.
     val controller = LocalController.current
     LaunchedEffect(controller) {
-        controller?.externalLastResultFlow?.collect { result ->
+        controller?.channel<ExternalChannel>()?.lastResultFlow?.collect { result ->
             snackbarHostState.showSnackbar(
                 message = result,
                 duration = SnackbarDuration.Short
@@ -300,7 +305,7 @@ fun Scanner(
     // starts immediately instead of waiting for the next heartbeat — the readiness card below then
     // shows "waiting → not responding → active" as their status comes back.
     LaunchedEffect(controller) {
-        controller?.warmUpExternalPlugins()
+        controller?.channel<ExternalChannel>()?.warmUp()
     }
 
     Scaffold(
@@ -754,7 +759,7 @@ private fun SendToDeviceFAB(onClick: () -> Unit) {
 
     controller?.let {
         val isSending by controller.isSending.collectAsStateWithLifecycle()
-        val lastSentCharCount by controller.lastSentCharCount.collectAsStateWithLifecycle()
+        val canUndoSend by controller.canUndo.collectAsStateWithLifecycle()
         val enableUndoSend by context.getPreferenceStateDefault(PreferenceStore.ENABLE_UNDO_SEND)
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
         val isHidMode = connectionMode != ConnectionMode.RFCOMM.ordinal
@@ -763,10 +768,11 @@ private fun SendToDeviceFAB(onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Undo button: HID mode only — visible when undo is enabled and a completed send exists
-            if (isHidMode && !isSending && enableUndoSend && lastSentCharCount != null) {
+            // Undo button: only the HID channel supports undo — visible when undo is enabled
+            // and a completed send exists
+            if (!isSending && enableUndoSend && canUndoSend) {
                 SmallFloatingActionButton(
-                    onClick = { scope.launch { controller.undoLastSent() } },
+                    onClick = { scope.launch { controller.undo() } },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 ) {
@@ -781,7 +787,7 @@ private fun SendToDeviceFAB(onClick: () -> Unit) {
                     icon = { Icon(Icons.Default.Close, stringResource(R.string.cancel)) },
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    onClick = { controller.cancelSending() }
+                    onClick = { controller.cancelSend() }
                 )
             } else {
                 ExtendedFloatingActionButton(
@@ -956,24 +962,25 @@ fun CapsLockWarning() {
     val controller = LocalController.current
     val scope = rememberCoroutineScope()
 
-    controller?.let {
-        val isCaps by controller.isCapsLockOn.collectAsStateWithLifecycle()
+    // Caps lock state comes from the HID host output report, so only the HID channel is relevant
+    val hid = controller?.channel<HidChannel>()
+    val isCaps by (hid?.isCapsLockOn?.collectAsStateWithLifecycle()
+        ?: remember { mutableStateOf(false) })
 
-        // Only show Caps Lock warning when we have an active HID connection
-        // keyboardSender is only available when HID device is connected
-        val shouldShowWarning = isCaps && (controller.keyboardSender != null)
+    // Only show Caps Lock warning when we have an active HID connection
+    // keyboardSender is only available when HID device is connected
+    val shouldShowWarning = isCaps && (hid?.keyboardSender != null)
 
-        ElevatedWarningCard(
-            message = stringResource(R.string.caps_lock_activated),
-            subMessage = stringResource(R.string.click_to_turn_off),
-            onClick = {
-                scope.launch {
-                    controller.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
-                }
-            },
-            visible = shouldShowWarning
-        )
-    }
+    ElevatedWarningCard(
+        message = stringResource(R.string.caps_lock_activated),
+        subMessage = stringResource(R.string.click_to_turn_off),
+        onClick = {
+            scope.launch {
+                hid?.keyboardSender?.sendKey(KeyTranslator.CAPS_LOCK_KEY)
+            }
+        },
+        visible = shouldShowWarning
+    )
 }
 
 /**
@@ -990,7 +997,8 @@ fun DeviceStatusIndicator() {
     controller?.let {
         val currentDevice by controller.currentDevice.collectAsStateWithLifecycle()
         val connectionMode by context.getPreferenceState(PreferenceStore.CONNECTION_MODE)
-        val isRFCOMMListening by controller.isRFCOMMListeningFlow.collectAsStateWithLifecycle()
+        val isRFCOMMListening by (controller.channel<RfcommChannel>()?.isListening
+            ?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) })
         val isExternal = connectionMode == ConnectionMode.EXTERNAL.ordinal
 
         var dismissed by rememberSaveable { mutableStateOf(false) }
@@ -1051,13 +1059,16 @@ fun ExternalPluginIndicator() {
     // Only engaged as the sole mode (EXTERNAL) or in parallel with HID/RFCOMM (the toggle).
     if (!isExternal && externalOutputEnabled != true) return
 
-    val isExternalActive by controller.externalActiveFlow.collectAsStateWithLifecycle()
+    val external = controller.channel<ExternalChannel>()
+    val isExternalActive by (external?.isActiveFlow?.collectAsStateWithLifecycle()
+        ?: remember { mutableStateOf(false) })
     val enabledPlugins by context.getPreferenceState(PreferenceStore.ENABLED_EXTERNAL_PLUGINS)
     // "Enabled" is just stored package names — intersect with what's actually installed so a stale
     // entry (plugin uninstalled while still enabled) doesn't masquerade as "waiting for a plugin".
     val installed = remember { ExternalProtocol.discover(context).map { it.packageName }.toSet() }
     val enabled = (enabledPlugins ?: emptySet()) intersect installed
-    val pluginHealth by controller.externalPluginHealthFlow.collectAsStateWithLifecycle()
+    val pluginHealth by (external?.pluginHealthFlow?.collectAsStateWithLifecycle()
+        ?: remember { mutableStateOf(emptyMap<String, ExternalController.PluginHealth>()) })
     val anyRunning = enabled.any { pluginHealth[it]?.running == true }
 
     // Give the plugin a grace window to come up before declaring it unresponsive.
@@ -1090,7 +1101,7 @@ fun ExternalPluginIndicator() {
         message = stringResource(msgRes),
         subMessage = stringResource(subRes),
         // Tap to retry only makes sense in the "not responding" state
-        onClick = { if (notResponding) controller.warmUpExternalPlugins() },
+        onClick = { if (notResponding) external?.warmUp() },
         onDismiss = { dismissed = true },
         visible = !dismissed
     )
@@ -1217,7 +1228,9 @@ fun KeyboardInputDialog(dialogState: DialogState) {
     ConfirmDialog(dialogState, stringResource(R.string.manual_input), enabled, onConfirm = {
         scope.launch {
             sendingInProgress = true
-            controller?.sendString(currentText.text.toString(), extraKeys, "MANUAL", null, null)
+            controller?.send(
+                ScanEvent(currentText.text.toString(), source = "MANUAL", withExtraKeys = extraKeys)
+            )
         }.invokeOnCompletion {
             close()
         }

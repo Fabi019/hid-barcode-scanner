@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.bluetooth.BluetoothManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -15,6 +16,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -22,15 +24,31 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.Lifecycle
 import dev.fabik.bluetoothhid.MainActivity
 import dev.fabik.bluetoothhid.R
+import dev.fabik.bluetoothhid.output.ChannelEvent
+import dev.fabik.bluetoothhid.output.OutputManager
+import dev.fabik.bluetoothhid.output.OutputSelection
+import dev.fabik.bluetoothhid.output.external.ExternalChannel
+import dev.fabik.bluetoothhid.output.external.ExternalController
+import dev.fabik.bluetoothhid.output.hid.HidChannel
+import dev.fabik.bluetoothhid.output.rfcomm.RfcommChannel
+import dev.fabik.bluetoothhid.output.rfcomm.RfcommController
 import dev.fabik.bluetoothhid.utils.ComposableLifecycle
+import dev.fabik.bluetoothhid.utils.ConnectionMode
+import dev.fabik.bluetoothhid.utils.PreferenceStore
+import dev.fabik.bluetoothhid.utils.getPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class BluetoothService : Service() {
 
     companion object {
+        private const val TAG = "BTService"
         private const val CHANNEL_ID = "bt_hid_service"
 
         const val ACTION_REGISTER = "register"
@@ -38,36 +56,77 @@ class BluetoothService : Service() {
     }
 
     private val binder = LocalBinder()
-    private var controller: BluetoothController? = null
+    private var outputManager: OutputManager? = null
+    private lateinit var serviceScope: CoroutineScope
 
     inner class LocalBinder : Binder() {
-        fun getController(): BluetoothController? = controller
+        fun getOutputManager(): OutputManager? = outputManager
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onCreate() {
-        controller = BluetoothController(this)
+        serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        // Register controller once when service is created
-        CoroutineScope(Dispatchers.IO).launch {
-            controller?.register()
+        val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+        val adapter = bluetoothManager.adapter
+
+        val channels = mapOf(
+            ConnectionMode.HID to HidChannel(this, adapter, KeyTranslator(this), serviceScope),
+            ConnectionMode.RFCOMM to RfcommChannel(
+                this, RfcommController(this, adapter), serviceScope
+            ),
+            ConnectionMode.EXTERNAL to ExternalChannel(
+                this,
+                ExternalController(this),
+                scannerId = { adapter.name },
+            ),
+        )
+
+        // Primary mode from the CONNECTION_MODE preference; the ENABLE_EXTERNAL_OUTPUT toggle
+        // additionally runs the external channel as a parallel mirror in HID/RFCOMM mode
+        // (in EXTERNAL mode external output is implied/always on — no mirror needed).
+        val selection = getPreferences(
+            PreferenceStore.CONNECTION_MODE,
+            PreferenceStore.ENABLE_EXTERNAL_OUTPUT
+        ).map {
+            val primary = PreferenceStore.CONNECTION_MODE.extractEnum(it)
+            val mirrors =
+                if (primary != ConnectionMode.EXTERNAL &&
+                    PreferenceStore.ENABLE_EXTERNAL_OUTPUT.extract(it)
+                ) setOf(ConnectionMode.EXTERNAL) else emptySet()
+            OutputSelection(primary, mirrors)
+        }
+
+        val manager = OutputManager(channels, selection, serviceScope)
+        outputManager = manager
+
+        // Surface channel notices (proxy connected/disconnected, registration errors) as toasts —
+        // same feedback the old controller provided directly.
+        serviceScope.launch {
+            manager.events.collect { event ->
+                if (event is ChannelEvent.Notice) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(applicationContext, getString(event.res), Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }
         }
     }
 
     override fun onDestroy() {
-        controller?.unregister()
-        controller = null
+        runBlocking { outputManager?.stop() }
+        outputManager = null
+        serviceScope.cancel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Debug actions to stop service and register controller again
+        // Debug actions to stop the service and restart the primary channel
         if (intent?.action == ACTION_REGISTER) {
-            runBlocking {
-                controller?.register()
-            }
+            serviceScope.launch { outputManager?.restartPrimary() }
         } else if (intent?.action == ACTION_STOP) {
-            controller?.unregister()
+            runBlocking { outputManager?.stop() }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
@@ -108,7 +167,7 @@ class BluetoothService : Service() {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
                 )
             }.onFailure {
-                Log.e("BTService", "Error starting foreground service!", it)
+                Log.e(TAG, "Error starting foreground service!", it)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -163,6 +222,7 @@ fun rememberBluetoothControllerService(
                     }.onFailure {
                         Log.e("BTService", "Failed to start service", it)
                     }
+
                 Lifecycle.Event.ON_DESTROY -> {
                     if ((context as? Activity)?.isChangingConfigurations == false) {
                         context.stopService(intent)

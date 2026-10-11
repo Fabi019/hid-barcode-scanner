@@ -3,7 +3,6 @@ package dev.fabik.bluetoothhid
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.os.Build
 import android.util.Log
@@ -52,7 +51,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +67,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.fabik.bluetoothhid.bt.removeBond
+import dev.fabik.bluetoothhid.output.ChannelState
+import dev.fabik.bluetoothhid.output.hid.HidChannel
 import dev.fabik.bluetoothhid.ui.ConfirmDialog
 import dev.fabik.bluetoothhid.ui.DevicesDropdown
 import dev.fabik.bluetoothhid.ui.LoadingDialog
@@ -95,6 +96,9 @@ import kotlinx.coroutines.launch
 fun Devices(onSkip: () -> Unit) = with(viewModel<DevicesViewModel>()) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val controller = LocalController.current
+    // Adapter-level state (scan, paired devices) lives on the HID channel for now — it is
+    // registered in the manager regardless of the selected mode.
+    val hid = controller?.channel<HidChannel>()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -110,8 +114,8 @@ fun Devices(onSkip: () -> Unit) = with(viewModel<DevicesViewModel>()) {
                     }
                     IconButton(
                         onClick = {
-                            if (!isScanning) refresh(controller)
-                            else controller?.cancelScan()
+                            if (!isScanning) refresh(hid)
+                            else hid?.cancelScan()
                         },
                         modifier = Modifier.tooltip(
                             if (isScanning) stringResource(R.string.cancel)
@@ -144,28 +148,27 @@ fun Devices(onSkip: () -> Unit) = with(viewModel<DevicesViewModel>()) {
 fun DevicesViewModel.DeviceContent() {
     val dialogState = rememberDialogState()
     val controller = LocalController.current
+    val hid = controller?.channel<HidChannel>()
 
-    DisposableEffect(controller) {
-        val listener = controller?.let {
+    LaunchedEffect(hid) {
+        hid?.let {
             isScanning = it.isScanning
             isBluetoothEnabled = it.bluetoothEnabled
 
             if (pairedDevices.isEmpty()) {
                 pairedDevices.addAll(it.pairedDevices)
             }
-
-            it.registerListener { _, state ->
-                dialogState.openState = when (state) {
-                    BluetoothProfile.STATE_CONNECTING -> true
-                    BluetoothProfile.STATE_DISCONNECTING -> true
-                    else -> false // Only close if connected or fully disconnected
-                }
-            }
         }
+    }
 
-        onDispose {
-            listener?.let {
-                controller.unregisterListener(it)
+    // Connection state of the primary channel drives the "connecting" dialog
+    LaunchedEffect(controller) {
+        controller?.state?.collect { state ->
+            dialogState.openState = when (state) {
+                is ChannelState.Connecting -> true
+                is ChannelState.Connected, is ChannelState.Waiting,
+                is ChannelState.Ready, is ChannelState.Stopped,
+                is ChannelState.Failed -> false
             }
         }
     }
@@ -179,7 +182,7 @@ fun DevicesViewModel.DeviceContent() {
     BroadcastListener()
 
     PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = {
-        refresh(controller)
+        refresh(hid)
     }) {
         if (!isBluetoothEnabled) {
             BluetoothDisabledCard()
