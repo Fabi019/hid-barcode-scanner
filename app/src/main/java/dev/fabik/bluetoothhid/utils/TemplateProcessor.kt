@@ -2,6 +2,8 @@ package dev.fabik.bluetoothhid.utils
 
 import android.util.Base64
 import android.util.Log
+import dev.fabik.bluetoothhid.bt.KeyTranslator
+import dev.fabik.bluetoothhid.utils.TemplateProcessor.escapeBracesForHID
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -153,6 +155,9 @@ object TemplateProcessor {
     private fun escapeBracesForHID(value: String): String =
         value.replace('{', ESCAPED_OPEN_BRACE).replace('}', ESCAPED_CLOSE_BRACE)
 
+    private fun restoreEscapedBraces(text: String): String =
+        text.replace(ESCAPED_OPEN_BRACE, '{').replace(ESCAPED_CLOSE_BRACE, '}')
+
     /**
      * Applies global encoding in HID mode - encodes only text, preserves key placeholders.
      *
@@ -290,16 +295,26 @@ object TemplateProcessor {
 
         // Begin template processing
         var processedTemplate = template
+        var data = data
+        var regexGroups = regexGroups
+
+        // When expand code: replace code placeholders with the value before processing other placeholders later
+        // Otherwise: when in HID mode, braces must be escaped otherwise they are replaced by KeyTranslator
+        if (expandCode) {
+            processedTemplate = processedTemplate.replace(Regex("\\{CODE\\}"), data)
+        } else if (mode == TemplateMode.HID) {
+            data = escapeBracesForHID(data)
+            regexGroups = regexGroups.map {
+                escapeBracesForHID(it)
+            }
+        }
 
         // Phase 0: Process {CODE%N} capture group placeholders
         // {CODE%1} = first capture group, {CODE%2} = second, etc.
         // Falls back to data (first group / full match) if the group doesn't exist.
-        // In HID mode with expandCode=false, escape { } in the substituted value so that
-        // any HID template tokens embedded in the regex group are typed as literal text.
         processedTemplate = processedTemplate.replace(Regex("\\{CODE%(\\d+)\\}")) { match ->
             val groupIndex = match.groupValues[1].toIntOrNull() ?: 0
-            val value = regexGroups.getOrElse(groupIndex - 1) { data }
-            if (!expandCode && mode == TemplateMode.HID) escapeBracesForHID(value) else value
+            regexGroups.getOrElse(groupIndex - 1) { data }
         }
 
         // Phase 1: Extract and remove global encoding placeholders
@@ -322,9 +337,6 @@ object TemplateProcessor {
 
             // Prepare encodings list
             var allEncodings: List<String> = emptyList()
-            // Track whether this placeholder's value comes from barcode data,
-            // so we can optionally escape HID template tokens in it (see expandCode).
-            var isCodeDerived = false
 
             // Get raw value for the placeholder
             val rawValue = try {
@@ -359,10 +371,7 @@ object TemplateProcessor {
                                 val format = optionalFormat.ifEmpty { "yyyy-MM-dd HH:mm:ss" }
                                 SimpleDateFormat(format, Locale.getDefault()).format(now)
                             }
-                            "CODE" -> {
-                                isCodeDerived = true
-                                data
-                            }
+                            "CODE" -> data
                             "SPACE" -> " "
                             "CR" -> "\r"
                             "LF" -> "\n"
@@ -378,17 +387,9 @@ object TemplateProcessor {
             // When encodings are present ({CODE_HEX}, {CODE_B64} etc.), the encoding itself
             // eliminates any { } in the barcode value (they become "7b"/"7d" in hex, or
             // vanish into base64).  Encoding must receive the RAW value so it produces the
-            // correct bytes; escaping before encoding would encode the sentinel codepoints
-            // instead of the original braces.
-            //
-            // When there are no encodings and the value is CODE-derived, we escape { } so
-            // that HID template tokens embedded in the barcode (e.g. "{ENTER}") are typed
-            // as literal text by KeyTranslator rather than expanded as real keypresses —
-            // unless expandCode=true, in which case we intentionally leave them intact.
+            // correct bytes
             if (allEncodings.isNotEmpty()) {
-                applyEncodings(rawValue, allEncodings, hexFormat)
-            } else if (isCodeDerived && !expandCode && mode == TemplateMode.HID) {
-                escapeBracesForHID(rawValue)
+                applyEncodings(restoreEscapedBraces(rawValue), allEncodings, hexFormat)
             } else {
                 rawValue
             }
