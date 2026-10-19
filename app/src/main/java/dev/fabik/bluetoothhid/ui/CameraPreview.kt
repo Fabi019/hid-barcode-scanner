@@ -109,7 +109,10 @@ fun CameraPreviewContent(
     ComposableLifecycle(lifecycleOwner) { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> isPaused = false
-            Lifecycle.Event.ON_PAUSE -> isPaused = true
+            Lifecycle.Event.ON_PAUSE -> {
+                isPaused = true
+                viewModel.forgetSentCodes()
+            }
             else -> {}
         }
     }
@@ -270,6 +273,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
         PreferenceStore.SAVE_SCAN_IMAGE_FORMAT,
         PreferenceStore.MULTI_CODE_DETECTION,
         PreferenceStore.AUTO_SEND,
+        PreferenceStore.MULTI_CODE_IGNORE_DUPLICATES,
         PreferenceStore.TEMPLATE_TEXT,
         PreferenceStore.DIRECT_APPLY_TEMPLATE
     )
@@ -300,6 +304,7 @@ fun CameraPreviewPreferences(viewModel: CameraViewModel) {
                 PreferenceStore.SAVE_SCAN_IMAGE_FORMAT.extractEnum(it),
                 PreferenceStore.MULTI_CODE_DETECTION.extract(it),
                 PreferenceStore.AUTO_SEND.extract(it),
+                PreferenceStore.MULTI_CODE_IGNORE_DUPLICATES.extract(it),
                 if (directApplyTemplate) PreferenceStore.TEMPLATE_TEXT.extract(it) else null
             )
         }

@@ -471,6 +471,7 @@ class CameraViewModel : ViewModel() {
         saveScanImageFormat: ScanImageFormat,
         multiCodeDetection: Boolean,
         autoSend: Boolean,
+        ignoreDuplicates: Boolean,
         directApplyTemplate: String?,
     ) {
         _scanDelay = frequency.delayMs
@@ -500,6 +501,7 @@ class CameraViewModel : ViewModel() {
         _clearAfterTime = clearAfterTime
         this.multiCodeDetection = multiCodeDetection
         _autoSend = autoSend
+        _ignoreDuplicates = ignoreDuplicates
 
         _directApplyTemplate = directApplyTemplate
 
@@ -555,6 +557,9 @@ class CameraViewModel : ViewModel() {
 
     var multiCodeDetection: Boolean = false
     private var _autoSend: Boolean = false
+    private var _ignoreDuplicates: Boolean = false
+
+    fun forgetSentCodes() = recentlySent.clear()
 
     data class Barcode(
         var value: String?,
@@ -630,7 +635,8 @@ class CameraViewModel : ViewModel() {
         if (_autoSend) {
             // Auto-send: queue all barcodes in this frame that were not sent recently
             val now = System.currentTimeMillis()
-            val graceMs = _clearAfterTime ?: DEFAULT_RESEND_GRACE_MS
+            val graceMs =
+                if (_ignoreDuplicates) Long.MAX_VALUE else _clearAfterTime ?: DEFAULT_RESEND_GRACE_MS
             if (allBarcodes.isEmpty()) {
                 recentlySent.expire(now, graceMs)
                 if (lastBarcode != null) {

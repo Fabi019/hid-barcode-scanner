@@ -97,6 +97,7 @@ import dev.fabik.bluetoothhid.utils.LocalDataStore
 import dev.fabik.bluetoothhid.utils.PreferenceStore
 import dev.fabik.bluetoothhid.utils.ProfileManager
 import dev.fabik.bluetoothhid.utils.rememberEnumPreference
+import dev.fabik.bluetoothhid.utils.rememberPreference
 import dev.fabik.bluetoothhid.utils.setPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -671,6 +672,17 @@ internal fun buildScannerSettings(
             desc = strings[R.string.multi_code_detection_desc],
             icon = Icons.Default.QrCode2,
             preference = PreferenceStore.MULTI_CODE_DETECTION
+        )
+    }
+
+    add {
+        val multiCode by rememberPreference(PreferenceStore.MULTI_CODE_DETECTION)
+        SwitchPreference(
+            title = strings[R.string.multi_code_ignore_duplicates],
+            desc = strings[R.string.multi_code_ignore_duplicates_desc],
+            icon = Icons.Default.FilterAlt,
+            enabled = multiCode == true,
+            preference = PreferenceStore.MULTI_CODE_IGNORE_DUPLICATES
         )
     }
 

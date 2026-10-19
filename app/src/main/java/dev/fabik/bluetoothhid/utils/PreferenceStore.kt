@@ -277,6 +277,8 @@ open class PreferenceStore {
         val OVERLAY_TYPE = intPreferencesKey("overlay_type").enumDefaultsTo(OverlayType::fromIndex)
         val AUTO_SEND = booleanPreferencesKey("auto_send") defaultsTo false
         val MULTI_CODE_DETECTION = booleanPreferencesKey("multi_code_detection") defaultsTo false
+        val MULTI_CODE_IGNORE_DUPLICATES =
+            booleanPreferencesKey("multi_code_ignore_duplicates") defaultsTo false
         val PLAY_SOUND = booleanPreferencesKey("play_sound") defaultsTo false
         val VIBRATE = booleanPreferencesKey("vibrate") defaultsTo false
         val AUTO_COPY_TO_CLIPBOARD = booleanPreferencesKey("auto_copy_to_clipboard") defaultsTo false
