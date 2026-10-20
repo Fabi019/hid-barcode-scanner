@@ -58,6 +58,7 @@ import dev.fabik.bluetoothhid.utils.CropMode
 import dev.fabik.bluetoothhid.utils.FocusMode
 import dev.fabik.bluetoothhid.utils.JsEngineService
 import dev.fabik.bluetoothhid.utils.LatencyTrace
+import dev.fabik.bluetoothhid.utils.RecentCodes
 import dev.fabik.bluetoothhid.utils.ScanAreaData
 import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlayOffset
 import dev.fabik.bluetoothhid.utils.ScanAreaData.Companion.toOverlaySize
@@ -94,6 +95,7 @@ import kotlin.math.min
 class CameraViewModel : ViewModel() {
     companion object {
         const val TAG = "CameraViewModel"
+        const val DEFAULT_RESEND_GRACE_MS = 1000L
     }
 
     // Used to set up a link between the Camera and your UI.
@@ -469,6 +471,7 @@ class CameraViewModel : ViewModel() {
         saveScanImageFormat: ScanImageFormat,
         multiCodeDetection: Boolean,
         autoSend: Boolean,
+        ignoreDuplicates: Boolean,
         directApplyTemplate: String?,
     ) {
         _scanDelay = frequency.delayMs
@@ -498,6 +501,7 @@ class CameraViewModel : ViewModel() {
         _clearAfterTime = clearAfterTime
         this.multiCodeDetection = multiCodeDetection
         _autoSend = autoSend
+        _ignoreDuplicates = ignoreDuplicates
 
         _directApplyTemplate = directApplyTemplate
 
@@ -548,12 +552,14 @@ class CameraViewModel : ViewModel() {
     private val _detectedBarcodes = MutableStateFlow<List<Barcode>>(emptyList())
     val detectedBarcodes: StateFlow<List<Barcode>> = _detectedBarcodes.asStateFlow()
 
-    // Tracks which barcodes have already been queued in the current "scene"
-    // Cleared when the frame contains no barcodes (camera moved away)
-    private val sentInSession = mutableSetOf<String>()
+    // Barcodes already auto-sent; one is sent again only after it has been out of view for a while
+    private val recentlySent = RecentCodes()
 
     var multiCodeDetection: Boolean = false
     private var _autoSend: Boolean = false
+    private var _ignoreDuplicates: Boolean = false
+
+    fun forgetSentCodes() = recentlySent.clear()
 
     data class Barcode(
         var value: String?,
@@ -627,9 +633,12 @@ class CameraViewModel : ViewModel() {
         _detectedBarcodes.update { allBarcodes }
 
         if (_autoSend) {
-            // Auto-send: queue all new barcodes in this frame (dedup within session)
+            // Auto-send: queue all barcodes in this frame that were not sent recently
+            val now = System.currentTimeMillis()
+            val graceMs =
+                if (_ignoreDuplicates) Long.MAX_VALUE else _clearAfterTime ?: DEFAULT_RESEND_GRACE_MS
             if (allBarcodes.isEmpty()) {
-                sentInSession.clear()
+                recentlySent.expire(now, graceMs)
                 if (lastBarcode != null) {
                     _currentBarcode.update { null }
                     onBarcodeDetected(null, BarcodeReader.Format.NONE, null, emptyList())
@@ -638,10 +647,9 @@ class CameraViewModel : ViewModel() {
                 return
             }
 
-            val newBarcodes = allBarcodes.filter { !sentInSession.contains(it.value) }
-            newBarcodes.forEach { barcode ->
-                if (barcode.value != null) {
-                    sentInSession.add(barcode.value!!)
+            val unseen = recentlySent.markSeen(allBarcodes.mapNotNull { it.value }, now, graceMs)
+            allBarcodes.forEach { barcode ->
+                if (barcode.value in unseen) {
                     processAndDispatch(
                         barcode,
                         sourceImage,
@@ -653,7 +661,7 @@ class CameraViewModel : ViewModel() {
             // Manual multi-code: barcodes are exposed via _detectedBarcodes for the picker UI.
             // No auto-send — user selects from the picker. Clear session when frame is empty.
             if (allBarcodes.isEmpty()) {
-                sentInSession.clear()
+                recentlySent.clear()
                 _currentBarcode.update { null }
             }
         } else {

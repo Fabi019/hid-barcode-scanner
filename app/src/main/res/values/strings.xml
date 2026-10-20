@@ -226,6 +226,8 @@
     <string name="persistent_history_desc">Remembers the scan history</string>
     <string name="multi_code_detection">Multi-code detection</string>
     <string name="multi_code_detection_desc">Detect and queue all barcodes visible in the frame at once</string>
+    <string name="multi_code_ignore_duplicates">Ignore duplicates during multi-code scan</string>
+    <string name="multi_code_ignore_duplicates_desc">Auto-send each code only once until the scanner is closed</string>
     <string name="add_scan_area">Add area</string>
     <string name="filter">Filter</string>
     <string name="date_range">Date range</string>
