@@ -92,7 +92,10 @@ open class KeyboardSender(
             }
         } finally {
             // Always release all keys at the end, even if cancelled
-            sendKey(0, 0)
+            repeat(3) {
+                sendKey(0, 0, releaseKey = false)
+                delay(sendDelay)
+            }
         }
 
         return charCount
